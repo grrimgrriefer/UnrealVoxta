@@ -4,5 +4,5 @@
 
 ATalkToMeCppUEGameModeBase::ATalkToMeCppUEGameModeBase()
 {
-	DefaultPawnClass = ATtmGameCharacter::StaticClass();
+	DefaultPawnClass = ATestGameCharacter::StaticClass();
 }

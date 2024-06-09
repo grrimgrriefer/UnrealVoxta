@@ -11,5 +11,6 @@ public class TalkToMeCppUEEditorTarget : TargetRules
 		DefaultBuildSettings = BuildSettingsVersion.V4;
 		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_3;
 		ExtraModuleNames.Add("TalkToMeCppUE");
+		ExtraModuleNames.Add("Voxta");
 	}
 }

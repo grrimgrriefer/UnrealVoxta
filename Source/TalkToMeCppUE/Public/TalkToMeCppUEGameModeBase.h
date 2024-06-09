@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "TtmGameCharacter.h"
+#include "TestGameCharacter.h"
 #include "GameFramework/GameModeBase.h"
 #include "TalkToMeCppUEGameModeBase.generated.h"
 
