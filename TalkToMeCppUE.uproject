@@ -10,7 +10,8 @@
 			"LoadingPhase": "Default",
 			"AdditionalDependencies": [
 				"Engine",
-				"Voxta"
+				"Voxta",
+				"SignalR"
 			]
 		},
 		{
@@ -19,8 +20,14 @@
 			"LoadingPhase": "Default",
 			"AdditionalDependencies": [
 				"Engine",
-				"CoreUObject"
+				"CoreUObject",
+				"SignalR"
 			]
+		},
+		{
+			"Name": "SignalR",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
 		}
 	],
 	"Plugins": [

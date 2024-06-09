@@ -1,0 +1,17 @@
+= TalkToMeCPPUE - An Unreal Engine C++ client implementation for Voxta
+
+_Made in collaboration with https://twitter.com/DZnnah[DZnnah]_
+
+Windows c++ implementation: https://github.com/grrimgrriefer/TalkToMeCPP[TalkToMeCPP]
+
+Internally relies on: https://github.com/FrozenStormInteractive/Unreal-SignalR[Unreal-SignalR]
+
+== Dev Progress
+
+[ :fire: ]   Set-up utility (SignalR, Logging, AudioApi, etc)
+
+[ :black_square_button: ]   Port Voxta code from TalkToMeCPP to Unreal
+
+[ :black_square_button: ]   Swap windows code for UE utility to ensure cross-platform compatibility
+
+[ :black_square_button: ]   Create a demo by hooking up playback to MetaHuman
