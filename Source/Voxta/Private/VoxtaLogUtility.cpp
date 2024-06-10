@@ -20,10 +20,13 @@ void VoxtaLogUtility::RegisterVoxtaLogger()
 
 void VoxtaLogUtility::Serialize(const TCHAR* Message, ELogVerbosity::Type Verbosity, const class FName& Category)
 {
-	if (Category == m_voxtaLogCategory)
+	if (Category == m_voxtaLogCategory || Category == m_signalRLogCategory || Category == m_httpLogCategory)
 	{
 		FString templateMsg = FString(TEXT("[{0}]: {1} -> {2}"));
-		FString formattedMsg = FString::Format(*templateMsg, { ToString(Verbosity), FDateTime::Now().ToString(TEXT("%Y-%m-%d %H:%M:%S")), Message });
+		FString formattedMsg = FString::Format(*templateMsg, {
+			ToString(Verbosity),
+			FDateTime::Now().ToString(TEXT("%Y-%m-%d %H:%M:%S")),
+			Message });
 
 		FColor color;
 		switch (Verbosity)

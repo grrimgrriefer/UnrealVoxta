@@ -18,5 +18,7 @@ protected:
 	virtual void Serialize(const TCHAR* Message, ELogVerbosity::Type Verbosity, const class FName& Category) override;
 
 private:
-	FName m_voxtaLogCategory = TEXT("VoxtaLog");
+	const FName m_voxtaLogCategory = TEXT("VoxtaLog");
+	const FName m_signalRLogCategory = TEXT("LogSignalR");
+	const FName m_httpLogCategory = TEXT("LogHttp");
 };
