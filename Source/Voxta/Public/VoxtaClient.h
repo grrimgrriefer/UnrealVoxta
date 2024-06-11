@@ -45,6 +45,8 @@ private:
 	VoxtaApiResponseHandler m_voxtaResponseApi;
 
 	VoxtaClientState m_currentState = VoxtaClientState::Disconnected;
+	TUniquePtr<CharData> m_userData;
+
 	const FString m_sendMessageEventName = TEXT("SendMessage");
 	const FString m_receiveMessageEventName = TEXT("ReceiveMessage");
 
@@ -59,4 +61,5 @@ private:
 	void OnMessageSent(const FSignalRInvokeResult& result);
 
 	bool HandleResponse(const TMap<FString, FSignalRValue>& responseData);
+	void HandleWelcomeResponse(const ServerResponseBase& response);
 };

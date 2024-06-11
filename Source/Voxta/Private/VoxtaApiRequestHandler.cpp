@@ -17,3 +17,10 @@ FSignalRValue VoxtaApiRequestHandler::GetAuthenticateRequestData() const
 		}) }
 	});
 }
+
+FSignalRValue VoxtaApiRequestHandler::GetLoadCharactersListData() const
+{
+	return FSignalRValue(TMap<FString, FSignalRValue> {
+		{ API_STRING("$type"), API_SIGNALR_STRING("loadCharactersList") }
+	});
+}

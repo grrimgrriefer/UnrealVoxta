@@ -16,7 +16,7 @@ enum class ServerResponseType : uint8
 	SpeechTranscription		UMETA(DisplayName = "SpeechTranscription")
 };
 
-class VOXTADATA_API ServerResponseBase
+struct ServerResponseBase
 {
 public:
 	virtual ~ServerResponseBase() = default;

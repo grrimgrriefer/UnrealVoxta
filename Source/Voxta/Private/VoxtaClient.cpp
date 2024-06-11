@@ -3,6 +3,8 @@
 #include "VoxtaClient.h"
 #include "SignalRSubsystem.h"
 #include "VoxtaDefines.h"
+#include "ServerResponseBase.h"
+#include "ServerResponseWelcome.h"
 
 UVoxtaClient::UVoxtaClient()
 {
@@ -156,4 +158,13 @@ bool UVoxtaClient::HandleResponse(const TMap<FString, FSignalRValue>& responseDa
 		default:
 			return false;
 	}
+}
+
+void UVoxtaClient::HandleWelcomeResponse(const ServerResponseBase& response)
+{
+	auto derivedResponse = dynamic_cast<const ServerResponseWelcome*>(&response);
+	m_userData = MakeUnique<CharData>(derivedResponse->m_user);
+	UE_LOGFMT(VoxtaLog, Log, "Authenticated with Voxta Server. Welcome {user}.", m_userData->m_name);
+	m_currentState = VoxtaClientState::Authenticated;
+	SendMessageToServer(m_voxtaRequestApi.GetLoadCharactersListData());
 }

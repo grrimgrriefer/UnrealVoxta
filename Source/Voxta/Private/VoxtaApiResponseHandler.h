@@ -4,7 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "VoxtaDefines.h"
-#include "ServerResponseBase.h"
+#include "SignalRValue.h"
+#include "VoxtaData/Public/ServerResponseBase.h"
+#include "VoxtaData/Public/ServerResponseWelcome.h"
 
 class VoxtaApiResponseHandler
 {
@@ -23,5 +25,10 @@ public:
 		API_STRING("speechPlaybackComplete")
 	};
 
-	ServerResponseBase GetResponseData(const TMap<FString, FSignalRValue>& serverResponseData) const;
+	TUniquePtr<ServerResponseBase> GetResponseData(
+		const TMap<FString, FSignalRValue>& serverResponseData) const;
+
+private:
+	TUniquePtr<ServerResponseWelcome> GetWelcomeResponse(
+		const TMap<FString, FSignalRValue>& serverResponseData) const;
 };
