@@ -3,8 +3,6 @@
 #include "VoxtaClient.h"
 #include "SignalRSubsystem.h"
 #include "VoxtaDefines.h"
-#include "ServerResponseBase.h"
-#include "ServerResponseWelcome.h"
 
 UVoxtaClient::UVoxtaClient()
 {
@@ -145,11 +143,24 @@ bool UVoxtaClient::HandleResponse(const TMap<FString, FSignalRValue>& responseDa
 		using enum ServerResponseType;
 		case Welcome:
 		{
-			UE_LOGFMT(VoxtaLog, Log, "Logged in sucessfully");
-			HandleWelcomeResponse(*response);
-			return true;
+			auto derivedResponse = StaticCast<const ServerResponseWelcome*>(response.Get());
+			if (derivedResponse)
+			{
+				UE_LOGFMT(VoxtaLog, Log, "Logged in sucessfully");
+				HandleWelcomeResponse(*derivedResponse);
+				return true;
+			}
 		}
 		case CharacterList:
+		{
+			auto derivedResponse = StaticCast<const ServerResponseCharacterList*>(response.Get());
+			if (derivedResponse)
+			{
+				UE_LOGFMT(VoxtaLog, Log, "Fetched {count} characters sucessfully", derivedResponse->m_characters.Num());
+				HandleCharacterListResponse(*derivedResponse);
+				return true;
+			}
+		}
 		case CharacterLoaded:
 		case ChatStarted:
 		case ChatMessage:
@@ -158,13 +169,23 @@ bool UVoxtaClient::HandleResponse(const TMap<FString, FSignalRValue>& responseDa
 		default:
 			return false;
 	}
+	return false;
 }
 
-void UVoxtaClient::HandleWelcomeResponse(const ServerResponseBase& response)
+void UVoxtaClient::HandleWelcomeResponse(const ServerResponseWelcome& response)
 {
-	auto derivedResponse = dynamic_cast<const ServerResponseWelcome*>(&response);
-	m_userData = MakeUnique<CharData>(derivedResponse->m_user);
+	m_userData = MakeUnique<CharData>(response.m_user);
 	UE_LOGFMT(VoxtaLog, Log, "Authenticated with Voxta Server. Welcome {user}.", m_userData->m_name);
 	m_currentState = VoxtaClientState::Authenticated;
 	SendMessageToServer(m_voxtaRequestApi.GetLoadCharactersListData());
+}
+
+void UVoxtaClient::HandleCharacterListResponse(const ServerResponseCharacterList& response)
+{
+	m_characterList.Empty();
+	for (auto& charElement : response.m_characters)
+	{
+		m_characterList.Emplace(MakeUnique<CharData>(charElement));
+	}
+	m_currentState = VoxtaClientState::CharacterLobby;
 }

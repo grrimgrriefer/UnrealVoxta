@@ -11,7 +11,8 @@
 			"AdditionalDependencies": [
 				"Engine",
 				"Voxta",
-				"SignalR"
+				"SignalR",
+				"VoxtaData"
 			]
 		},
 		{

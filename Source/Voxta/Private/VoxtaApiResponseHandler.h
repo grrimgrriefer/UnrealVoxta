@@ -7,6 +7,7 @@
 #include "SignalRValue.h"
 #include "VoxtaData/Public/ServerResponseBase.h"
 #include "VoxtaData/Public/ServerResponseWelcome.h"
+#include "VoxtaData/Public/ServerResponseCharacterList.h"
 
 class VoxtaApiResponseHandler
 {
@@ -30,5 +31,8 @@ public:
 
 private:
 	TUniquePtr<ServerResponseWelcome> GetWelcomeResponse(
+		const TMap<FString, FSignalRValue>& serverResponseData) const;
+
+	TUniquePtr<ServerResponseCharacterList> GetCharacterListLoadedResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
 };
