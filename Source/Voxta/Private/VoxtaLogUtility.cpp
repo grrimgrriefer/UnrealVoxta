@@ -22,12 +22,6 @@ void VoxtaLogUtility::Serialize(const TCHAR* Message, ELogVerbosity::Type Verbos
 {
 	if (Category == m_voxtaLogCategory || Category == m_signalRLogCategory || Category == m_httpLogCategory)
 	{
-		FString templateMsg = FString(TEXT("[{0}]: {1} -> {2}"));
-		FString formattedMsg = FString::Format(*templateMsg, {
-			ToString(Verbosity),
-			FDateTime::Now().ToString(TEXT("%Y-%m-%d %H:%M:%S")),
-			Message });
-
 		FColor color;
 		switch (Verbosity)
 		{
@@ -44,6 +38,9 @@ void VoxtaLogUtility::Serialize(const TCHAR* Message, ELogVerbosity::Type Verbos
 				break;
 		}
 
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, color, formattedMsg);
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, color, FString::Format(*FString(TEXT("[{0}]: {1} -> {2}")), {
+			ToString(Verbosity),
+			FDateTime::Now().ToString(TEXT("%Y-%m-%d %H:%M:%S")),
+			Message }));
 	}
 }

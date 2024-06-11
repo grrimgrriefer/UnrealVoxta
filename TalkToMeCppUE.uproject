@@ -21,8 +21,14 @@
 			"AdditionalDependencies": [
 				"Engine",
 				"CoreUObject",
-				"SignalR"
+				"SignalR",
+				"VoxtaData"
 			]
+		},
+		{
+			"Name": "VoxtaData",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
 		},
 		{
 			"Name": "SignalR",

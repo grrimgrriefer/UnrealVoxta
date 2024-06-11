@@ -7,6 +7,7 @@
 #include "Voxta/Private/VoxtaLogUtility.h"
 #include "SignalR/Private/HubConnection.h"
 #include "Voxta/Private/VoxtaApiRequestHandler.h"
+#include "Voxta/Private/VoxtaApiResponseHandler.h"
 #include "VoxtaClient.generated.h"
 
 UENUM(BlueprintType)
@@ -31,6 +32,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:
 	void StartConnection();
@@ -40,14 +42,21 @@ private:
 	VoxtaLogUtility m_logUtility;
 	TSharedPtr<IHubConnection> m_hub;
 	VoxtaApiRequestHandler m_voxtaRequestApi;
+	VoxtaApiResponseHandler m_voxtaResponseApi;
 
 	VoxtaClientState m_currentState = VoxtaClientState::Disconnected;
 	const FString m_sendMessageEventName = TEXT("SendMessage");
+	const FString m_receiveMessageEventName = TEXT("ReceiveMessage");
 
+	void StartListeningToServer();
+
+	void OnReceivedMessage(const TArray<FSignalRValue>& Arguments);
 	void OnConnected();
 	void OnConnectionError(const FString& error);
 	void OnClosed();
 
 	void SendMessageToServer(const FSignalRValue& message);
 	void OnMessageSent(const FSignalRInvokeResult& result);
+
+	bool HandleResponse(const TMap<FString, FSignalRValue>& responseData);
 };

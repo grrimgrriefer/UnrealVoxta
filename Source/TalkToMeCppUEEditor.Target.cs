@@ -12,6 +12,7 @@ public class TalkToMeCppUEEditorTarget : TargetRules
 		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_3;
 		ExtraModuleNames.Add("TalkToMeCppUE");
 		ExtraModuleNames.Add("Voxta");
+		ExtraModuleNames.Add("VoxtaData");
 		ExtraModuleNames.Add("SignalR");
 	}
 }
