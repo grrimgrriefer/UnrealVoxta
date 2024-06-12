@@ -12,7 +12,8 @@
 				"Engine",
 				"Voxta",
 				"SignalR",
-				"VoxtaData"
+				"VoxtaData",
+				"UMG"
 			]
 		},
 		{

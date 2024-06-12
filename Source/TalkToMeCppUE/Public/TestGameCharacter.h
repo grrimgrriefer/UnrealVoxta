@@ -25,5 +25,6 @@ protected:
 private:
 	UPROPERTY(EditAnywhere)
 	UCameraComponent* m_camera;
-	UVoxtaClient* m_voxtaClient;	
+
+	UVoxtaClient* m_voxtaClient;
 };

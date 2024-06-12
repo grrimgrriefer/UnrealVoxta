@@ -5,4 +5,5 @@
 ATalkToMeCppUEGameModeBase::ATalkToMeCppUEGameModeBase()
 {
 	DefaultPawnClass = ATestGameCharacter::StaticClass();
+	HUDClass = ATalkToMeCppUeHUD::StaticClass();
 }

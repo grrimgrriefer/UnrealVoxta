@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "TestGameCharacter.h"
+#include "TalkToMeCppUeHUD.h"
 #include "GameFramework/GameModeBase.h"
 #include "TalkToMeCppUEGameModeBase.generated.h"
 
