@@ -1,6 +1,7 @@
 // Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
 
 #include "TestGameCharacter.h"
+#include "Kismet/GameplayStatics.h"
 
 ATestGameCharacter::ATestGameCharacter()
 {
@@ -17,6 +18,7 @@ void ATestGameCharacter::StartVoxtaClient()
 void ATestGameCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	SetupHud();
 }
 
 void ATestGameCharacter::Tick(float DeltaTime)
@@ -29,4 +31,12 @@ void ATestGameCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	PlayerInputComponent->BindAction(TEXT("StartVoxta"), IE_Pressed, this, &ATestGameCharacter::StartVoxtaClient);
+}
+
+void ATestGameCharacter::SetupHud()
+{
+	m_hud = UGameplayStatics::GetPlayerController(this, 0)->GetHUD<ATalkToMeCppUeHUD>();
+
+	m_voxtaClient->OnVoxtaClientStateChangedDelegate.AddUniqueDynamic(m_hud, &ATalkToMeCppUeHUD::VoxtaClientStateChanged);
+	m_voxtaClient->OnVoxtaClientCharacterLoadedDelegate.AddUniqueDynamic(m_hud, &ATalkToMeCppUeHUD::VoxtaClientCharacterLoaded);
 }

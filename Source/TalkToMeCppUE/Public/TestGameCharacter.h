@@ -5,7 +5,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "Camera/CameraComponent.h"
-#include <Voxta/Public/VoxtaClient.h>
+#include "Voxta/Public/VoxtaClient.h"
+#include "TalkToMeCppUeHUD.h"
 #include "TestGameCharacter.generated.h"
 
 UCLASS()
@@ -25,6 +26,8 @@ protected:
 private:
 	UPROPERTY(EditAnywhere)
 	UCameraComponent* m_camera;
-
 	UVoxtaClient* m_voxtaClient;
+	ATalkToMeCppUeHUD* m_hud;
+
+	void SetupHud();
 };

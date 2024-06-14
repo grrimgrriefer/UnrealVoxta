@@ -8,9 +8,9 @@
 
 struct ServerResponseCharacterList : public ServerResponseBase
 {
-	const TArray<CharData> m_characters;
+	const TArray<FCharData> m_characters;
 
-	explicit ServerResponseCharacterList(const TArray<CharData>& characters) :
+	explicit ServerResponseCharacterList(const TArray<FCharData>& characters) :
 		m_characters(characters)
 	{
 	}

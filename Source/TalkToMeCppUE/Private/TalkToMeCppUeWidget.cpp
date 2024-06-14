@@ -2,12 +2,24 @@
 
 #include "TalkToMeCppUeWidget.h"
 
-void UTalkToMeCppUeWidget::NativeConstruct()
+void UTalkToMeCppUeWidget::UpdateLabelWithState(VoxtaClientState newState)
 {
-	Super::NativeConstruct();
-
-	if (ItemTitle)
+	if (StatusLabel)
 	{
-		ItemTitle->SetText(FText::FromString(TEXT("Hello world!")));
+		StatusLabel->SetText(FText::FromName(StaticEnum<VoxtaClientState>()->GetNameByValue(StaticCast<int64>(newState))));
+	}
+}
+
+void UTalkToMeCppUeWidget::AddCharacterOption(const FCharData& charData)
+{
+	if (CharScrollBox)
+	{
+		UTextBlock* textBlock = NewObject<UTextBlock>(UTextBlock::StaticClass());
+		textBlock->SetText(FText::FromString(charData.m_name));
+
+		UButton* testButton = NewObject<UButton>(this, UButton::StaticClass());
+		testButton->AddChild(textBlock);
+
+		CharScrollBox->AddChild(testButton);
 	}
 }

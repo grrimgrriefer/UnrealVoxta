@@ -8,9 +8,9 @@
 
 struct ServerResponseWelcome : public ServerResponseBase
 {
-	const CharData m_user;
+	const FCharData m_user;
 
-	explicit ServerResponseWelcome(const CharData& userData) :
+	explicit ServerResponseWelcome(const FCharData& userData) :
 		m_user(userData)
 	{
 	}

@@ -37,7 +37,7 @@ void UVoxtaClient::StartConnection()
 		return;
 	}
 
-	m_currentState = VoxtaClientState::Connecting;
+	SetState(VoxtaClientState::Connecting);
 	m_hub = GEngine->GetEngineSubsystem<USignalRSubsystem>()->CreateHubConnection(FString::Format(*API_STRING("http://{0}:{1}/hub"), {
 		TEXT("192.168.178.8"),
 		TEXT("5384")
@@ -56,7 +56,7 @@ void UVoxtaClient::Disconnect()
 		UE_LOGFMT(VoxtaLog, Warning, "VoxtaClient is currently not connected, ignoring disconnect attempt");
 		return;
 	}
-	m_currentState = VoxtaClientState::Terminated;
+	SetState(VoxtaClientState::Terminated);
 	m_hub->Stop();
 }
 
@@ -83,14 +83,15 @@ void UVoxtaClient::OnReceivedMessage(const TArray<FSignalRValue>& Arguments)
 	{
 		if (!HandleResponse(Arguments[0].AsObject()))
 		{
-			UE_LOGFMT(VoxtaLog, Warning, "Received server response that is not (yet) supported.");
+			UE_LOGFMT(VoxtaLog, Warning, "Received server response that is not (yet) supported: {type}",
+				Arguments[0].AsObject()[API_STRING("$type")].AsString());
 		}
 	}
 	catch (const std::exception& ex)
 	{
 		FString error(TEXT("Something went wrong while parsing the server response: "));
 		error += ex.what();
-		UE_LOGFMT(VoxtaLog, Error, "Received server response that is not (yet) supported.", error);
+		UE_LOGFMT(VoxtaLog, Error, "Received server response that is not (yet) supported: {error}", error);
 	}
 }
 
@@ -174,9 +175,9 @@ bool UVoxtaClient::HandleResponse(const TMap<FString, FSignalRValue>& responseDa
 
 void UVoxtaClient::HandleWelcomeResponse(const ServerResponseWelcome& response)
 {
-	m_userData = MakeUnique<CharData>(response.m_user);
+	m_userData = MakeUnique<FCharData>(response.m_user);
 	UE_LOGFMT(VoxtaLog, Log, "Authenticated with Voxta Server. Welcome {user}.", m_userData->m_name);
-	m_currentState = VoxtaClientState::Authenticated;
+	SetState(VoxtaClientState::Authenticated);
 	SendMessageToServer(m_voxtaRequestApi.GetLoadCharactersListData());
 }
 
@@ -185,7 +186,14 @@ void UVoxtaClient::HandleCharacterListResponse(const ServerResponseCharacterList
 	m_characterList.Empty();
 	for (auto& charElement : response.m_characters)
 	{
-		m_characterList.Emplace(MakeUnique<CharData>(charElement));
+		m_characterList.Emplace(MakeUnique<FCharData>(charElement));
+		OnVoxtaClientCharacterLoadedDelegate.Broadcast(charElement);
 	}
-	m_currentState = VoxtaClientState::CharacterLobby;
+	SetState(VoxtaClientState::CharacterLobby);
+}
+
+void UVoxtaClient::SetState(VoxtaClientState newState)
+{
+	m_currentState = newState;
+	OnVoxtaClientStateChangedDelegate.Broadcast(m_currentState);
 }

@@ -8,6 +8,7 @@
 #include "SignalR/Private/HubConnection.h"
 #include "Voxta/Private/VoxtaApiRequestHandler.h"
 #include "Voxta/Private/VoxtaApiResponseHandler.h"
+#include "VoxtaData/Public/CharData.h"
 #include "VoxtaData/Public/ServerResponseBase.h"
 #include "VoxtaData/Public/ServerResponseWelcome.h"
 #include "VoxtaData/Public/ServerResponseCharacterList.h"
@@ -24,6 +25,9 @@ enum class VoxtaClientState : uint8
 	Terminated			UMETA(DisplayName = "Terminated")
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientStateChangedSignature, VoxtaClientState, newState);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientCharacterLoadedSignature, const FCharData&, charData);
+
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class VOXTA_API UVoxtaClient : public UActorComponent
 {
@@ -38,6 +42,12 @@ protected:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FVoxtaClientStateChangedSignature OnVoxtaClientStateChangedDelegate;
+
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FVoxtaClientCharacterLoadedSignature OnVoxtaClientCharacterLoadedDelegate;
+
 	void StartConnection();
 	void Disconnect();
 
@@ -48,8 +58,8 @@ private:
 	VoxtaApiResponseHandler m_voxtaResponseApi;
 
 	VoxtaClientState m_currentState = VoxtaClientState::Disconnected;
-	TUniquePtr<CharData> m_userData;
-	TArray<TUniquePtr<const CharData>> m_characterList;
+	TUniquePtr<FCharData> m_userData;
+	TArray<TUniquePtr<const FCharData>> m_characterList;
 
 	const FString m_sendMessageEventName = TEXT("SendMessage");
 	const FString m_receiveMessageEventName = TEXT("ReceiveMessage");
@@ -67,4 +77,6 @@ private:
 	bool HandleResponse(const TMap<FString, FSignalRValue>& responseData);
 	void HandleWelcomeResponse(const ServerResponseWelcome& response);
 	void HandleCharacterListResponse(const ServerResponseCharacterList& response);
+
+	void SetState(VoxtaClientState newState);
 };

@@ -5,11 +5,10 @@
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
 #include "TalkToMeCppUeWidget.h"
+#include "VoxtaClient.h"
+#include "VoxtaData/Public/CharData.h"
 #include "TalkToMeCppUeHUD.generated.h"
 
-/**
- *
- */
 UCLASS()
 class TALKTOMECPPUE_API ATalkToMeCppUeHUD : public AHUD
 {
@@ -22,4 +21,16 @@ public:
 	class UTalkToMeCppUeWidget* hudWidget;
 
 	virtual void BeginPlay() override;
+
+	UFUNCTION()
+	void VoxtaClientStateChanged(VoxtaClientState newState)
+	{
+		hudWidget->UpdateLabelWithState(newState);
+	};
+
+	UFUNCTION()
+	void VoxtaClientCharacterLoaded(const FCharData& charData)
+	{
+		hudWidget->AddCharacterOption(charData);
+	};
 };
