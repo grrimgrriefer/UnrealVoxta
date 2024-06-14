@@ -4,25 +4,46 @@
 
 ATalkToMeCppUeHUD::ATalkToMeCppUeHUD()
 {
-	// notice that at this point we can't guarantee that the playerController is actually constructed yet, so we can't get a reference to it
 	static ConstructorHelpers::FClassFinder<UTalkToMeCppUeWidget> hudWidgetObj(TEXT("/Game/UI/BP_UI"));
 	if (hudWidgetObj.Succeeded())
 	{
-		hudWidgetClass = hudWidgetObj.Class;
+		m_hudWidgetClass = hudWidgetObj.Class;
 	}
 	else
 	{
-		// hudWidgetObj not found
-		hudWidgetClass = nullptr;
+		m_hudWidgetClass = nullptr;
 	}
 }
 
 void ATalkToMeCppUeHUD::BeginPlay()
 {
 	Super::BeginPlay();
-	if (hudWidgetClass)
+	if (m_hudWidgetClass)
 	{
-		hudWidget = CreateWidget<UTalkToMeCppUeWidget>(this->GetOwningPlayerController(), this->hudWidgetClass);
-		hudWidget->AddToViewport();
+		m_hudWidget = CreateWidget<UTalkToMeCppUeWidget>(this->GetOwningPlayerController(), this->m_hudWidgetClass);
+		m_hudWidget->AddToViewport();
+
+		m_hudWidget->OnCharButtonClickedDelegate.AddUniqueDynamic(this, &ATalkToMeCppUeHUD::OnCharButtonClicked);
 	}
+
+	APlayerController* playerController = GetWorld()->GetFirstPlayerController();
+	if (playerController)
+	{
+		playerController->bShowMouseCursor = true;
+	}
+}
+
+void ATalkToMeCppUeHUD::VoxtaClientStateChanged(VoxtaClientState newState)
+{
+	m_hudWidget->UpdateLabelWithState(newState);
+}
+
+void ATalkToMeCppUeHUD::VoxtaClientCharacterLoaded(const FCharData& charData)
+{
+	m_hudWidget->AddCharacterOption(charData);
+}
+
+void ATalkToMeCppUeHUD::OnCharButtonClicked(FString charID)
+{
+	OnCharButtonClickedDelegate.Broadcast(charID);
 }

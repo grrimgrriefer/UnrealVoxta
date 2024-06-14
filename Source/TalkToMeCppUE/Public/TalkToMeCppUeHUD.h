@@ -7,6 +7,8 @@
 #include "TalkToMeCppUeWidget.h"
 #include "VoxtaClient.h"
 #include "VoxtaData/Public/CharData.h"
+#include "Containers/StringFwd.h"
+#include "Voxta/Private/VoxtaLogUtility.h"
 #include "TalkToMeCppUeHUD.generated.h"
 
 UCLASS()
@@ -17,20 +19,20 @@ class TALKTOMECPPUE_API ATalkToMeCppUeHUD : public AHUD
 public:
 	ATalkToMeCppUeHUD();
 
-	class UClass* hudWidgetClass;
-	class UTalkToMeCppUeWidget* hudWidget;
-
 	virtual void BeginPlay() override;
 
-	UFUNCTION()
-	void VoxtaClientStateChanged(VoxtaClientState newState)
-	{
-		hudWidget->UpdateLabelWithState(newState);
-	};
+	UPROPERTY()
+	FCharButtonClickedSignature OnCharButtonClickedDelegate;
 
 	UFUNCTION()
-	void VoxtaClientCharacterLoaded(const FCharData& charData)
-	{
-		hudWidget->AddCharacterOption(charData);
-	};
+	void VoxtaClientStateChanged(VoxtaClientState newState);
+	UFUNCTION()
+	void VoxtaClientCharacterLoaded(const FCharData& charData);
+
+private:
+	class UClass* m_hudWidgetClass;
+	class UTalkToMeCppUeWidget* m_hudWidget;
+
+	UFUNCTION()
+	void OnCharButtonClicked(FString charID);
 };

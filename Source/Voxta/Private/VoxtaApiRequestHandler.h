@@ -10,4 +10,5 @@ class VoxtaApiRequestHandler
 public:
 	FSignalRValue GetAuthenticateRequestData() const;
 	FSignalRValue GetLoadCharactersListData() const;
+	FSignalRValue GetLoadCharacterRequestData(const FString& characterId) const;
 };

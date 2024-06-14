@@ -17,9 +17,16 @@ void UTalkToMeCppUeWidget::AddCharacterOption(const FCharData& charData)
 		UTextBlock* textBlock = NewObject<UTextBlock>(UTextBlock::StaticClass());
 		textBlock->SetText(FText::FromString(charData.m_name));
 
-		UButton* testButton = NewObject<UButton>(this, UButton::StaticClass());
+		UButtonWithParameter* testButton = NewObject<UButtonWithParameter>(this, UButtonWithParameter::StaticClass());
 		testButton->AddChild(textBlock);
 
+		testButton->Initialize(charData.m_id);
+		testButton->OnClickedWithParam.AddUniqueDynamic(this, &UTalkToMeCppUeWidget::SelectCharacter);
 		CharScrollBox->AddChild(testButton);
 	}
+}
+
+void UTalkToMeCppUeWidget::SelectCharacter(FString charId)
+{
+	OnCharButtonClickedDelegate.Broadcast(charId);
 }

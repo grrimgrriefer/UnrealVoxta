@@ -51,6 +51,9 @@ public:
 	void StartConnection();
 	void Disconnect();
 
+	UFUNCTION()
+	void LoadCharacter(FString charID);
+
 private:
 	VoxtaLogUtility m_logUtility;
 	TSharedPtr<IHubConnection> m_hub;

@@ -60,6 +60,13 @@ void UVoxtaClient::Disconnect()
 	m_hub->Stop();
 }
 
+void UVoxtaClient::LoadCharacter(FString charID)
+{
+	UE_LOGFMT(VoxtaLog, Warning, "Loading character {charID}", charID);
+
+	SendMessageToServer(m_voxtaRequestApi.GetLoadCharacterRequestData(charID));
+}
+
 void UVoxtaClient::StartListeningToServer()
 {
 	m_hub->On(m_receiveMessageEventName).BindUObject(this, &UVoxtaClient::OnReceivedMessage);
