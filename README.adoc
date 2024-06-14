@@ -5,6 +5,14 @@ _Made in collaboration with https://twitter.com/DZnnah[DZnnah]_
 This repo contains the Unreal-Engine (5.3) port of the https://github.com/grrimgrriefer/TalkToMeCPP[TalkToMeCPP (Windows c++)] +
 *Note:* Uses third-party SignalR client: link:Source/SignalR/License.txt[LICENSE]
 
+== Structure
+
+.The code is separated in 4 modules
+* SignalR: Contains the Unreal port of the SignalR c++ client.
+* TalkToMeCppUE: Contains demo-project related files.
+* Voxta: A stateful client for the encapsulation of the Voxta server API.
+* VoxtaData: The models which encapsulate the Voxta data in easy-to-use data objects. (i.e. data structs)
+
 == Dev Progress
 
 [ :heavy_check_mark: ]   Project set-up (SignalR, Logging, C++ module separation, etc)
