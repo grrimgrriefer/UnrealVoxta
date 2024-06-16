@@ -7,8 +7,10 @@
 #include "TalkToMeCppUeWidget.h"
 #include "VoxtaClient.h"
 #include "VoxtaData/Public/CharData.h"
+#include "VoxtaData/Public/ChatMessage.h"
 #include "Containers/StringFwd.h"
 #include "Voxta/Private/VoxtaLogUtility.h"
+#include "Logging/StructuredLog.h"
 #include "TalkToMeCppUeHUD.generated.h"
 
 UCLASS()
@@ -28,6 +30,8 @@ public:
 	void VoxtaClientStateChanged(VoxtaClientState newState);
 	UFUNCTION()
 	void VoxtaClientCharacterLoaded(const FCharData& charData);
+	UFUNCTION()
+	void RegisterTextMessage(const FCharData& sender, const FChatMessage& message);
 
 private:
 	class UClass* m_hudWidgetClass;

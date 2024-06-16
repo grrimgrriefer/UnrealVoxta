@@ -8,6 +8,7 @@
 #include "Components/ScrollBox.h"
 #include "ButtonWithParameter.h"
 #include "VoxtaClient.h"
+#include "Logging/StructuredLog.h"
 #include "TalkToMeCppUeWidget.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCharButtonClickedSignature, FString, charID);
@@ -27,8 +28,12 @@ public:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UScrollBox> CharScrollBox;
 
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	TObjectPtr<UScrollBox> ChatLogScrollBox;
+
 	void UpdateLabelWithState(VoxtaClientState newState);
-	void AddCharacterOption(const FCharData& charData);
+	void RegisterCharacterOption(const FCharData& charData);
+	void RegisterTextMessage(const FCharData& sender, const FString& message);
 
 protected:
 	UFUNCTION()

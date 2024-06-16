@@ -8,9 +8,9 @@ struct VoxtaServiceData
 {
 	enum class ServiceType
 	{
-		TEXT_GEN,
-		SPEECH_TO_TEXT,
-		TEXT_TO_SPEECH
+		TextGen,
+		SpeechToText,
+		TextToSpeech
 	};
 
 	ServiceType m_serviceType;

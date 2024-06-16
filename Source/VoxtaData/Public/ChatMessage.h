@@ -3,15 +3,23 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ChatMessage.generated.h"
 
-struct ChatMessage
+USTRUCT()
+struct FChatMessage
 {
-	FString m_text;
-	TArray<FString> m_audioUrls;
-	const FString m_messageId;
-	const FString m_charId;
+	GENERATED_BODY()
 
-	explicit ChatMessage(FString messageId,
+	FString m_text = "";
+	TArray<FString> m_audioUrls = {};
+	FString m_messageId = "";
+	FString m_charId = "";
+
+	FChatMessage()
+	{
+	};
+
+	explicit FChatMessage(FString messageId,
 			FString charID,
 			FString text) :
 		m_text(text),
@@ -20,7 +28,7 @@ struct ChatMessage
 	{
 	}
 
-	explicit ChatMessage(FString messageId, FString charID) :
+	explicit FChatMessage(FString messageId, FString charID) :
 		m_messageId(messageId),
 		m_charId(charID)
 	{

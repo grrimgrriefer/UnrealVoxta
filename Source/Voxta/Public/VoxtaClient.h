@@ -9,6 +9,7 @@
 #include "Voxta/Private/VoxtaApiRequestHandler.h"
 #include "Voxta/Private/VoxtaApiResponseHandler.h"
 #include "VoxtaData/Public/CharData.h"
+#include "VoxtaData/Public/ChatMessage.h"
 #include "VoxtaData/Public/ServerResponseBase.h"
 #include "VoxtaData/Public/ServerResponseWelcome.h"
 #include "VoxtaData/Public/ServerResponseCharacterList.h"
@@ -22,12 +23,14 @@ enum class VoxtaClientState : uint8
 	Connecting			UMETA(DisplayName = "Connecting"),
 	Authenticated		UMETA(DisplayName = "Authenticated"),
 	CharacterLobby		UMETA(DisplayName = "CharacterLobby"),
+	StartingChat		UMETA(DisplayName = "StartingChat"),
 	Chatting			UMETA(DisplayName = "Chatting"),
 	Terminated			UMETA(DisplayName = "Terminated")
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientStateChangedSignature, VoxtaClientState, newState);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientCharacterLoadedSignature, const FCharData&, charData);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FVoxtaClientCharacterMessageReceivedSignature, const FCharData&, sender, const FChatMessage&, message);
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class VOXTA_API UVoxtaClient : public UActorComponent
@@ -48,6 +51,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Events")
 	FVoxtaClientCharacterLoadedSignature OnVoxtaClientCharacterLoadedDelegate;
+
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FVoxtaClientCharacterMessageReceivedSignature OnVoxtaClientCharacterMessageReceived;
 
 	void StartConnection();
 	void Disconnect();

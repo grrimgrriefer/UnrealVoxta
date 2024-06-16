@@ -8,7 +8,7 @@
 
 struct ChatSession
 {
-	TArray<TUniquePtr<ChatMessage>> m_chatMessages;
+	TArray<TUniquePtr<FChatMessage>> m_chatMessages;
 	TArray<const FCharData*> m_characters;
 	const FString m_chatId;
 	const FString m_sessionId;

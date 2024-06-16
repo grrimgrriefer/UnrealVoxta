@@ -96,9 +96,9 @@ TUniquePtr<ServerResponseChatStarted> VoxtaApiResponseHandler::GetChatStartedRes
 	using enum VoxtaServiceData::ServiceType;
 	TMap<const VoxtaServiceData::ServiceType, const VoxtaServiceData> services;
 	TMap<VoxtaServiceData::ServiceType, FString> serviceTypes = {
-		{ TEXT_GEN, "textGen" },
-		{ SPEECH_TO_TEXT, "speechToText" },
-		{ TEXT_TO_SPEECH, "textToSpeech" }
+		{ TextGen, "textGen" },
+		{ SpeechToText, "speechToText" },
+		{ TextToSpeech, "textToSpeech" }
 	};
 
 	for (const auto& [enumType, stringValue] : serviceTypes)
@@ -134,8 +134,8 @@ TUniquePtr<ServerResponseChatMessage> VoxtaApiResponseHandler::GetReplyChunkRepo
 		serverResponseData[API_STRING("sessionId")].AsString(),
 		static_cast<int>(serverResponseData[API_STRING("startIndex")].AsDouble()),
 		static_cast<int>(serverResponseData[API_STRING("endIndex")].AsDouble()),
-		serverResponseData[API_STRING("sessionId")].AsString(),
-		serverResponseData[API_STRING("sessionId")].AsString());
+		serverResponseData[API_STRING("text")].AsString(),
+		serverResponseData[API_STRING("audioUrl")].AsString());
 }
 
 TUniquePtr<ServerResponseChatMessage> VoxtaApiResponseHandler::GetReplyEndReponseResponse(

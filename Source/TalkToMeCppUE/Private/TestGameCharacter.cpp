@@ -39,6 +39,7 @@ void ATestGameCharacter::SetupHud()
 
 	m_voxtaClient->OnVoxtaClientStateChangedDelegate.AddUniqueDynamic(m_hud, &ATalkToMeCppUeHUD::VoxtaClientStateChanged);
 	m_voxtaClient->OnVoxtaClientCharacterLoadedDelegate.AddUniqueDynamic(m_hud, &ATalkToMeCppUeHUD::VoxtaClientCharacterLoaded);
+	m_voxtaClient->OnVoxtaClientCharacterMessageReceived.AddUniqueDynamic(m_hud, &ATalkToMeCppUeHUD::RegisterTextMessage);
 
 	m_hud->OnCharButtonClickedDelegate.AddUniqueDynamic(m_voxtaClient, &UVoxtaClient::LoadCharacter);
 }

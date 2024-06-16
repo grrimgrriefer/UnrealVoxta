@@ -40,7 +40,12 @@ void ATalkToMeCppUeHUD::VoxtaClientStateChanged(VoxtaClientState newState)
 
 void ATalkToMeCppUeHUD::VoxtaClientCharacterLoaded(const FCharData& charData)
 {
-	m_hudWidget->AddCharacterOption(charData);
+	m_hudWidget->RegisterCharacterOption(charData);
+}
+
+void ATalkToMeCppUeHUD::RegisterTextMessage(const FCharData& sender, const FChatMessage& message)
+{
+	m_hudWidget->RegisterTextMessage(sender, message.m_text);
 }
 
 void ATalkToMeCppUeHUD::OnCharButtonClicked(FString charID)

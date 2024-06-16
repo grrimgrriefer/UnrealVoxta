@@ -63,6 +63,7 @@ void UVoxtaClient::Disconnect()
 void UVoxtaClient::LoadCharacter(FString charID)
 {
 	SendMessageToServer(m_voxtaRequestApi.GetLoadCharacterRequestData(charID));
+	SetState(VoxtaClientState::StartingChat);
 }
 
 void UVoxtaClient::StartListeningToServer()
@@ -254,19 +255,19 @@ bool UVoxtaClient::HandleChatStartedResponse(const ServerResponseChatStarted& re
 		}
 	}
 
-	if (!response.m_services.Contains(VoxtaServiceData::ServiceType::SPEECH_TO_TEXT))
+	if (!response.m_services.Contains(VoxtaServiceData::ServiceType::SpeechToText))
 	{
-		UE_LOGFMT(VoxtaLog, Error, "No valid Speech_To_Text service is active on the server.");
+		UE_LOGFMT(VoxtaLog, Error, "No valid SpeechToText service is active on the server.");
 		return false;
 	}
-	if (!response.m_services.Contains(VoxtaServiceData::ServiceType::TEXT_GEN))
+	if (!response.m_services.Contains(VoxtaServiceData::ServiceType::TextGen))
 	{
-		UE_LOGFMT(VoxtaLog, Error, "No valid Text_Gen service is active on the server.");
+		UE_LOGFMT(VoxtaLog, Error, "No valid TextGen service is active on the server.");
 		return false;
 	}
-	if (!response.m_services.Contains(VoxtaServiceData::ServiceType::TEXT_TO_SPEECH))
+	if (!response.m_services.Contains(VoxtaServiceData::ServiceType::TextToSpeech))
 	{
-		UE_LOGFMT(VoxtaLog, Error, "No valid Text_To_Speech service is active on the server.");
+		UE_LOGFMT(VoxtaLog, Error, "No valid TextToSpeech service is active on the server.");
 		return false;
 	}
 
@@ -284,13 +285,13 @@ void UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessage& re
 	{
 		case MESSAGE_START:
 		{
-			m_chatSession->m_chatMessages.Emplace(MakeUnique<ChatMessage>(
+			m_chatSession->m_chatMessages.Emplace(MakeUnique<FChatMessage>(
 				response.m_messageId, response.m_senderId));
 			break;
 		}
 		case MESSAGE_CHUNK:
 		{
-			auto chatMessage = messages.FindByPredicate([response] (const TUniquePtr<ChatMessage>& InItem)
+			auto chatMessage = messages.FindByPredicate([response] (const TUniquePtr<FChatMessage>& InItem)
 			{
 				return InItem->m_messageId == response.m_messageId;
 			});
@@ -304,7 +305,7 @@ void UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessage& re
 		}
 		case MESSAGE_END:
 		{
-			auto chatMessage = messages.FindByPredicate([response] (const TUniquePtr<ChatMessage>& InItem)
+			auto chatMessage = messages.FindByPredicate([response] (const TUniquePtr<FChatMessage>& InItem)
 			{
 				return InItem->m_messageId == response.m_messageId;
 			});
@@ -317,6 +318,7 @@ void UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessage& re
 				if (character)
 				{
 					UE_LOGFMT(VoxtaLog, Log, "Char speaking message end: {0}", chatMessage->Get()->m_text);
+					OnVoxtaClientCharacterMessageReceived.Broadcast(*character->Get(), *chatMessage->Get());
 				}
 			}
 			break;
