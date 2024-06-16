@@ -12,6 +12,7 @@
 #include "VoxtaData/Public/ServerResponseBase.h"
 #include "VoxtaData/Public/ServerResponseWelcome.h"
 #include "VoxtaData/Public/ServerResponseCharacterList.h"
+#include "VoxtaData/Public/ChatSession.h"
 #include "VoxtaClient.generated.h"
 
 UENUM(BlueprintType)
@@ -63,6 +64,7 @@ private:
 	VoxtaClientState m_currentState = VoxtaClientState::Disconnected;
 	TUniquePtr<FCharData> m_userData;
 	TArray<TUniquePtr<const FCharData>> m_characterList;
+	TUniquePtr<ChatSession> m_chatSession;
 
 	const FString m_sendMessageEventName = TEXT("SendMessage");
 	const FString m_receiveMessageEventName = TEXT("ReceiveMessage");
@@ -80,6 +82,9 @@ private:
 	bool HandleResponse(const TMap<FString, FSignalRValue>& responseData);
 	void HandleWelcomeResponse(const ServerResponseWelcome& response);
 	void HandleCharacterListResponse(const ServerResponseCharacterList& response);
+	bool HandleCharacterLoadedResponse(const ServerResponseCharacterLoaded& response);
+	bool HandleChatStartedResponse(const ServerResponseChatStarted& response);
+	void HandleChatMessageResponse(const ServerResponseChatMessage& response);
 
 	void SetState(VoxtaClientState newState);
 };

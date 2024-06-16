@@ -25,4 +25,6 @@ This repo contains the Unreal-Engine (5.3) port of the https://github.com/grrimg
 
 [ :black_square_button: ]   Create a demo by hooking up playback to MetaHuman
 
+[ :black_square_button: ]   Turn relevant C++ modules into a plugin
+
 [ :black_square_button: ]   Unit testing? (not sure if applicable for UE)
