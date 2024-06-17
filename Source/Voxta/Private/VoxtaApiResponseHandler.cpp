@@ -36,6 +36,10 @@ TUniquePtr<ServerResponseBase> VoxtaApiResponseHandler::GetResponseData(
 	{
 		return GetReplyEndReponseResponse(serverResponseData);
 	}
+	else if (type == "update")
+	{
+		return GetChatUpdateResponse(serverResponseData);
+	}
 	else
 	{
 		UE_LOGFMT(VoxtaLog, Error, "Failed to process VoxtaApiResponse of type: {type}.", type);
@@ -145,5 +149,15 @@ TUniquePtr<ServerResponseChatMessage> VoxtaApiResponseHandler::GetReplyEndRepons
 		ServerResponseChatMessage::MessageType::MESSAGE_END,
 		serverResponseData[API_STRING("messageId")].AsString(),
 		serverResponseData[API_STRING("senderId")].AsString(),
+		serverResponseData[API_STRING("sessionId")].AsString());
+}
+
+TUniquePtr<ServerResponseChatUpdate> VoxtaApiResponseHandler::GetChatUpdateResponse(
+	const TMap<FString, FSignalRValue>& serverResponseData) const
+{
+	return MakeUnique<ServerResponseChatUpdate>(
+		serverResponseData[API_STRING("messageId")].AsString(),
+		serverResponseData[API_STRING("senderId")].AsString(),
+		serverResponseData[API_STRING("text")].AsString(),
 		serverResponseData[API_STRING("sessionId")].AsString());
 }

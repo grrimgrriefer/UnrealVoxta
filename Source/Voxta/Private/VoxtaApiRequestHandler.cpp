@@ -51,3 +51,14 @@ FSignalRValue VoxtaApiRequestHandler::GetStartChatRequestData(const FCharData* c
 		{ API_STRING("character"), FSignalRValue(characterParams) }
 	});
 }
+
+FSignalRValue VoxtaApiRequestHandler::GetSendUserMessageData(const FString& sessionId, const FString& userInputText) const
+{
+	return FSignalRValue(TMap<FString, FSignalRValue> {
+		{ API_STRING("$type"), API_SIGNALR_STRING("send") },
+		{ API_STRING("sessionId"), FSignalRValue(sessionId) },
+		{ API_STRING("text"), FSignalRValue(userInputText) },
+		{ API_STRING("doReply"), API_SIGNALR_STRING("true") },
+		{ API_STRING("doCharacterActionInference"), API_SIGNALR_STRING("false") }
+	});
+}

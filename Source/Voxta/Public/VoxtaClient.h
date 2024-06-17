@@ -53,13 +53,16 @@ public:
 	FVoxtaClientCharacterLoadedSignature OnVoxtaClientCharacterLoadedDelegate;
 
 	UPROPERTY(BlueprintAssignable, Category = "Events")
-	FVoxtaClientCharacterMessageReceivedSignature OnVoxtaClientCharacterMessageReceived;
+	FVoxtaClientCharacterMessageReceivedSignature OnVoxtaClientChatMessageAdded;
 
 	void StartConnection();
 	void Disconnect();
 
 	UFUNCTION()
 	void LoadCharacter(FString charID);
+
+	UFUNCTION()
+	void SendUserInput(FString inputText);
 
 private:
 	VoxtaLogUtility m_logUtility;
@@ -91,6 +94,7 @@ private:
 	bool HandleCharacterLoadedResponse(const ServerResponseCharacterLoaded& response);
 	bool HandleChatStartedResponse(const ServerResponseChatStarted& response);
 	void HandleChatMessageResponse(const ServerResponseChatMessage& response);
+	void HandleChatUpdateResponse(const ServerResponseChatUpdate& response);
 
 	void SetState(VoxtaClientState newState);
 };

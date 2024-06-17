@@ -11,6 +11,7 @@
 #include "VoxtaData/Public/ServerResponseCharacterLoaded.h"
 #include "VoxtaData/Public/ServerResponseChatStarted.h"
 #include "VoxtaData/Public/ServerResponseChatMessage.h"
+#include "VoxtaData/Public/ServerResponseChatUpdate.h"
 #include "VoxtaData/Public/VoxtaServiceData.h"
 
 class VoxtaApiResponseHandler
@@ -53,5 +54,8 @@ private:
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
 
 	TUniquePtr<ServerResponseChatMessage> GetReplyEndReponseResponse(
+		const TMap<FString, FSignalRValue>& serverResponseData) const;
+
+	TUniquePtr<ServerResponseChatUpdate> GetChatUpdateResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
 };

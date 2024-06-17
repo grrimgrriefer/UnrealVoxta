@@ -2,6 +2,11 @@
 
 #include "TalkToMeCppUeWidget.h"
 
+void UTalkToMeCppUeWidget::InitializeWidget()
+{
+	UserInputField->OnTextCommitted.AddUniqueDynamic(this, &UTalkToMeCppUeWidget::UserInputSubmitted);
+}
+
 void UTalkToMeCppUeWidget::UpdateLabelWithState(VoxtaClientState newState)
 {
 	if (StatusLabel)
@@ -56,4 +61,9 @@ void UTalkToMeCppUeWidget::RegisterTextMessage(const FCharData& sender, const FS
 void UTalkToMeCppUeWidget::SelectCharacter(FString charId)
 {
 	OnCharButtonClickedDelegate.Broadcast(charId);
+}
+
+void UTalkToMeCppUeWidget::UserInputSubmitted(const FText& Text, ETextCommit::Type CommitType)
+{
+	OnUserInputFieldSubmittedDelegate.Broadcast(Text.ToString());
 }

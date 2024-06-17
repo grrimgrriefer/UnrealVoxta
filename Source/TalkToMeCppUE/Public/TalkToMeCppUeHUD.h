@@ -26,6 +26,9 @@ public:
 	UPROPERTY()
 	FCharButtonClickedSignature OnCharButtonClickedDelegate;
 
+	UPROPERTY()
+	FInputFieldSignature OnUserInputFieldSubmittedDelegate;
+
 	UFUNCTION()
 	void VoxtaClientStateChanged(VoxtaClientState newState);
 	UFUNCTION()
@@ -39,4 +42,7 @@ private:
 
 	UFUNCTION()
 	void OnCharButtonClicked(FString charID);
+
+	UFUNCTION()
+	void OnUserInputFieldSubmitted(FString inputText);
 };

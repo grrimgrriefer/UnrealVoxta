@@ -23,7 +23,9 @@ void ATalkToMeCppUeHUD::BeginPlay()
 		m_hudWidget = CreateWidget<UTalkToMeCppUeWidget>(this->GetOwningPlayerController(), this->m_hudWidgetClass);
 		m_hudWidget->AddToViewport();
 
+		m_hudWidget->InitializeWidget();
 		m_hudWidget->OnCharButtonClickedDelegate.AddUniqueDynamic(this, &ATalkToMeCppUeHUD::OnCharButtonClicked);
+		m_hudWidget->OnUserInputFieldSubmittedDelegate.AddUniqueDynamic(this, &ATalkToMeCppUeHUD::OnUserInputFieldSubmitted);
 	}
 
 	APlayerController* playerController = GetWorld()->GetFirstPlayerController();
@@ -51,4 +53,9 @@ void ATalkToMeCppUeHUD::RegisterTextMessage(const FCharData& sender, const FChat
 void ATalkToMeCppUeHUD::OnCharButtonClicked(FString charID)
 {
 	OnCharButtonClickedDelegate.Broadcast(charID);
+}
+
+void ATalkToMeCppUeHUD::OnUserInputFieldSubmitted(FString inputText)
+{
+	OnUserInputFieldSubmittedDelegate.Broadcast(inputText);
 }

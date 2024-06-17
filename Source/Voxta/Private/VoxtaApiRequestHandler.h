@@ -14,4 +14,5 @@ public:
 	FSignalRValue GetLoadCharactersListData() const;
 	FSignalRValue GetLoadCharacterRequestData(const FString& characterId) const;
 	FSignalRValue GetStartChatRequestData(const FCharData* charData) const;
+	FSignalRValue GetSendUserMessageData(const FString& sessionId, const FString& userInputText) const;
 };

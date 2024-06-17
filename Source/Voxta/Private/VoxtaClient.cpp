@@ -66,6 +66,11 @@ void UVoxtaClient::LoadCharacter(FString charID)
 	SetState(VoxtaClientState::StartingChat);
 }
 
+void UVoxtaClient::SendUserInput(FString inputText)
+{
+	SendMessageToServer(m_voxtaRequestApi.GetSendUserMessageData(m_chatSession->m_sessionId, inputText));
+}
+
 void UVoxtaClient::StartListeningToServer()
 {
 	m_hub->On(m_receiveMessageEventName).BindUObject(this, &UVoxtaClient::OnReceivedMessage);
@@ -199,6 +204,15 @@ bool UVoxtaClient::HandleResponse(const TMap<FString, FSignalRValue>& responseDa
 			}
 		}
 		case ChatUpdate:
+		{
+			auto derivedResponse = StaticCast<const ServerResponseChatUpdate*>(response.Get());
+			if (derivedResponse)
+			{
+				UE_LOGFMT(VoxtaLog, Log, "Chat Message received sucessfully");
+				HandleChatUpdateResponse(*derivedResponse);
+				return true;
+			}
+		}
 		case SpeechTranscription:
 		default:
 			return false;
@@ -317,12 +331,45 @@ void UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessage& re
 				});
 				if (character)
 				{
-					UE_LOGFMT(VoxtaLog, Log, "Char speaking message end: {0}", chatMessage->Get()->m_text);
-					OnVoxtaClientCharacterMessageReceived.Broadcast(*character->Get(), *chatMessage->Get());
+					UE_LOGFMT(VoxtaLog, Log, "Char speaking message end: {0} -> {1}", character->Get()->m_name, chatMessage->Get()->m_text);
+					OnVoxtaClientChatMessageAdded.Broadcast(*character->Get(), *chatMessage->Get());
 				}
 			}
 			break;
 		}
+	}
+}
+
+void UVoxtaClient::HandleChatUpdateResponse(const ServerResponseChatUpdate& response)
+{
+	if (response.m_sessionId == m_chatSession->m_sessionId)
+	{
+		if (m_chatSession->m_chatMessages.ContainsByPredicate(
+			[response] (const TUniquePtr<FChatMessage>& InItem)
+			{
+				return InItem->m_messageId == response.m_messageId;
+			}))
+		{
+			UE_LOGFMT(VoxtaLog, Error, "Recieved chat update for a message that already exists, needs implementation. {0} {1}", response.m_senderId, response.m_text);
+		}
+		else
+		{
+			m_chatSession->m_chatMessages.Emplace(MakeUnique<FChatMessage>(response.m_messageId, response.m_senderId, response.m_text));
+			if (m_userData.Get()->m_id != response.m_senderId)
+			{
+				UE_LOGFMT(VoxtaLog, Error, "Recieved chat update for a non-user character, needs implementation. {0} {1}", response.m_senderId, response.m_text);
+			}
+			auto chatMessage = m_chatSession->m_chatMessages.FindByPredicate([response] (const TUniquePtr<FChatMessage>& InItem)
+			{
+				return InItem->m_messageId == response.m_messageId;
+			});
+			UE_LOGFMT(VoxtaLog, Log, "Char speaking message end: {0} -> {1}", m_userData.Get()->m_name, chatMessage->Get()->m_text);
+			OnVoxtaClientChatMessageAdded.Broadcast(*m_userData.Get(), *chatMessage->Get());
+		}
+	}
+	else
+	{
+		UE_LOGFMT(VoxtaLog, Warning, "Recieved chat update for a different session?: {0} {1}", response.m_senderId, response.m_text);
 	}
 }
 
