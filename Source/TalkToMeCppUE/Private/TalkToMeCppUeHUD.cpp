@@ -47,7 +47,12 @@ void ATalkToMeCppUeHUD::VoxtaClientCharacterLoaded(const FCharData& charData)
 
 void ATalkToMeCppUeHUD::RegisterTextMessage(const FCharData& sender, const FChatMessage& message)
 {
-	m_hudWidget->RegisterTextMessage(sender, message.m_text);
+	m_hudWidget->RegisterTextMessage(sender, message.m_messageId, message.m_text);
+}
+
+void ATalkToMeCppUeHUD::RemoveTextMessage(const FChatMessage& message)
+{
+	m_hudWidget->RemoveTextMessage(message.m_messageId);
 }
 
 void ATalkToMeCppUeHUD::OnCharButtonClicked(FString charID)

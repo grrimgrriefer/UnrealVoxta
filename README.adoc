@@ -17,14 +17,18 @@ This repo contains the Unreal-Engine (5.3) port of the https://github.com/grrimg
 
 [ :heavy_check_mark: ]   Project set-up (SignalR, Logging, C++ module separation, etc)
 
-[ :fire: ]   Port text-chat code from TalkToMeCPP to Unreal
+[ :heavy_check_mark: ]   Port text-chat code from TalkToMeCPP to Unreal
 
-[ :fire: ]   Add temporary UI for debugging
+[ :heavy_check_mark: ]   Add temporary UI for debugging
+
+[ :fire: ]   Code cleanup & refactoring
 
 [ :black_square_button: ]   Swap windows audio API for UE to ensure cross-platform compatibility
 
+[ :black_square_button: ]   Expose main functionality to blueprints & swap UI c++ code with exclusive blueprint
+
 [ :black_square_button: ]   Create a demo by hooking up playback to MetaHuman
 
-[ :black_square_button: ]   Turn relevant C++ modules into a plugin
+[ :black_square_button: ]   Wrap modules into a plugin
 
 [ :black_square_button: ]   Unit testing? (not sure if applicable for UE)

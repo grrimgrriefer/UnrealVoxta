@@ -28,7 +28,8 @@ public:
 		API_STRING("speechRecognitionStart"),
 		API_STRING("recordingRequest"),
 		API_STRING("recordingStatus"),
-		API_STRING("speechPlaybackComplete")
+		API_STRING("speechPlaybackComplete"),
+		API_STRING("memoryUpdated")
 	};
 
 	TUniquePtr<ServerResponseBase> GetResponseData(
@@ -54,6 +55,9 @@ private:
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
 
 	TUniquePtr<ServerResponseChatMessage> GetReplyEndReponseResponse(
+		const TMap<FString, FSignalRValue>& serverResponseData) const;
+
+	TUniquePtr<ServerResponseChatMessage> GetReplyCancelledResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
 
 	TUniquePtr<ServerResponseChatUpdate> GetChatUpdateResponse(

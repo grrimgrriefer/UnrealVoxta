@@ -31,6 +31,7 @@ enum class VoxtaClientState : uint8
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientStateChangedSignature, VoxtaClientState, newState);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientCharacterLoadedSignature, const FCharData&, charData);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FVoxtaClientCharacterMessageReceivedSignature, const FCharData&, sender, const FChatMessage&, message);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientCharacterMessageRemovedSignature, const FChatMessage&, message);
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class VOXTA_API UVoxtaClient : public UActorComponent
@@ -54,6 +55,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Events")
 	FVoxtaClientCharacterMessageReceivedSignature OnVoxtaClientChatMessageAdded;
+
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FVoxtaClientCharacterMessageRemovedSignature OnVoxtaClientChatMessageRemoved;
 
 	void StartConnection();
 	void Disconnect();

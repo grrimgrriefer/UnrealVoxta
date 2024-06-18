@@ -36,6 +36,10 @@ TUniquePtr<ServerResponseBase> VoxtaApiResponseHandler::GetResponseData(
 	{
 		return GetReplyEndReponseResponse(serverResponseData);
 	}
+	else if (type == "replyCancelled")
+	{
+		return GetReplyCancelledResponse(serverResponseData);
+	}
 	else if (type == "update")
 	{
 		return GetChatUpdateResponse(serverResponseData);
@@ -149,6 +153,15 @@ TUniquePtr<ServerResponseChatMessage> VoxtaApiResponseHandler::GetReplyEndRepons
 		ServerResponseChatMessage::MessageType::MESSAGE_END,
 		serverResponseData[API_STRING("messageId")].AsString(),
 		serverResponseData[API_STRING("senderId")].AsString(),
+		serverResponseData[API_STRING("sessionId")].AsString());
+}
+
+TUniquePtr<ServerResponseChatMessage> VoxtaApiResponseHandler::GetReplyCancelledResponse(
+	const TMap<FString, FSignalRValue>& serverResponseData) const
+{
+	return MakeUnique<ServerResponseChatMessage>(
+		ServerResponseChatMessage::MessageType::MESSAGE_CANCELLED,
+		serverResponseData[API_STRING("messageId")].AsString(),
 		serverResponseData[API_STRING("sessionId")].AsString());
 }
 

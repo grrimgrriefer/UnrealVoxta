@@ -53,6 +53,7 @@ void FConnection::Send(const FString& Data)
 {
     if (Connection.IsValid())
     {
+		UE_LOG(LogSignalR, Log, TEXT("Sending: %s"), *Data);
         Connection->Send(Data);
     }
     else
@@ -235,6 +236,7 @@ void FConnection::StartWebSocket()
         {
             if (TSharedPtr<FConnection> SharedSelf = Self.Pin())
             {
+				UE_LOG(LogSignalR, Log, TEXT("Received: %s"), *MessageString);
                 SharedSelf->OnMessageEvent.Broadcast(MessageString);
             }
         });

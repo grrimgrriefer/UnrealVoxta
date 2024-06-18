@@ -5,6 +5,7 @@
 void UTalkToMeCppUeWidget::InitializeWidget()
 {
 	UserInputField->OnTextCommitted.AddUniqueDynamic(this, &UTalkToMeCppUeWidget::UserInputSubmitted);
+	UserInputField->SetIsEnabled(false);
 }
 
 void UTalkToMeCppUeWidget::UpdateLabelWithState(VoxtaClientState newState)
@@ -24,6 +25,10 @@ void UTalkToMeCppUeWidget::UpdateLabelWithState(VoxtaClientState newState)
 			}
 		}
 	}
+	if (UserInputField && newState == VoxtaClientState::Chatting)
+	{
+		UserInputField->SetIsEnabled(true);
+	}
 }
 
 void UTalkToMeCppUeWidget::RegisterCharacterOption(const FCharData& charData)
@@ -32,6 +37,8 @@ void UTalkToMeCppUeWidget::RegisterCharacterOption(const FCharData& charData)
 	{
 		UTextBlock* textBlock = NewObject<UTextBlock>(UTextBlock::StaticClass());
 		textBlock->SetText(FText::FromString(charData.m_name));
+		textBlock->SetShadowColorAndOpacity(FLinearColor::Black);
+		textBlock->SetShadowOffset(FVector2D(2));
 
 		UButtonWithParameter* testButton = NewObject<UButtonWithParameter>(this, UButtonWithParameter::StaticClass());
 		testButton->AddChild(textBlock);
@@ -42,7 +49,7 @@ void UTalkToMeCppUeWidget::RegisterCharacterOption(const FCharData& charData)
 	}
 }
 
-void UTalkToMeCppUeWidget::RegisterTextMessage(const FCharData& sender, const FString& message)
+void UTalkToMeCppUeWidget::RegisterTextMessage(const FCharData& sender, const FString& messageId, const FString& message)
 {
 	if (ChatLogScrollBox)
 	{
@@ -52,9 +59,23 @@ void UTalkToMeCppUeWidget::RegisterTextMessage(const FCharData& sender, const FS
 			message
 			})));
 
-		textBlock->bWrapWithInvalidationPanel = true;
+		textBlock->SetShadowColorAndOpacity(FLinearColor::Black);
+		textBlock->SetShadowOffset(FVector2D(2));
+		textBlock->SetAutoWrapText(true);
 
+		m_messages.Add(messageId, textBlock);
 		ChatLogScrollBox->AddChild(textBlock);
+	}
+}
+
+void UTalkToMeCppUeWidget::RemoveTextMessage(const FString& messageId)
+{
+	if (ChatLogScrollBox)
+	{
+		if (m_messages.Contains(messageId))
+		{
+			ChatLogScrollBox->RemoveChild(m_messages[messageId]);
+		}
 	}
 }
 
@@ -65,5 +86,11 @@ void UTalkToMeCppUeWidget::SelectCharacter(FString charId)
 
 void UTalkToMeCppUeWidget::UserInputSubmitted(const FText& Text, ETextCommit::Type CommitType)
 {
-	OnUserInputFieldSubmittedDelegate.Broadcast(Text.ToString());
+	if (CommitType == ETextCommit::OnEnter && !Text.IsEmptyOrWhitespace())
+	{
+		UE_LOGFMT(LogCore, Log, "Holdonaminute");
+
+		OnUserInputFieldSubmittedDelegate.Broadcast(Text.ToString());
+		UserInputField->SetText(FText::GetEmpty());
+	}
 }

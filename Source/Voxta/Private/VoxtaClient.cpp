@@ -208,7 +208,7 @@ bool UVoxtaClient::HandleResponse(const TMap<FString, FSignalRValue>& responseDa
 			auto derivedResponse = StaticCast<const ServerResponseChatUpdate*>(response.Get());
 			if (derivedResponse)
 			{
-				UE_LOGFMT(VoxtaLog, Log, "Chat Message received sucessfully");
+				UE_LOGFMT(VoxtaLog, Log, "Chat Update received sucessfully");
 				HandleChatUpdateResponse(*derivedResponse);
 				return true;
 			}
@@ -299,7 +299,7 @@ void UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessage& re
 	{
 		case MESSAGE_START:
 		{
-			m_chatSession->m_chatMessages.Emplace(MakeUnique<FChatMessage>(
+			messages.Emplace(MakeUnique<FChatMessage>(
 				response.m_messageId, response.m_senderId));
 			break;
 		}
@@ -337,6 +337,17 @@ void UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessage& re
 			}
 			break;
 		}
+		case MESSAGE_CANCELLED:
+		{
+			int index = messages.IndexOfByPredicate([response] (const TUniquePtr<FChatMessage>& InItem)
+			{
+				return InItem->m_messageId == response.m_messageId;
+			});
+			OnVoxtaClientChatMessageRemoved.Broadcast(*messages[index].Get());
+
+			messages[index].Reset();
+			messages.RemoveAt(index);
+		}
 	}
 }
 
@@ -344,8 +355,7 @@ void UVoxtaClient::HandleChatUpdateResponse(const ServerResponseChatUpdate& resp
 {
 	if (response.m_sessionId == m_chatSession->m_sessionId)
 	{
-		if (m_chatSession->m_chatMessages.ContainsByPredicate(
-			[response] (const TUniquePtr<FChatMessage>& InItem)
+		if (m_chatSession->m_chatMessages.ContainsByPredicate([response] (const TUniquePtr<FChatMessage>& InItem)
 			{
 				return InItem->m_messageId == response.m_messageId;
 			}))

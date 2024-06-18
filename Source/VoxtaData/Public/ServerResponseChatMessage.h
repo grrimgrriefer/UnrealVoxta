@@ -11,7 +11,8 @@ struct ServerResponseChatMessage : ServerResponseBase
 	{
 		MESSAGE_START,
 		MESSAGE_CHUNK,
-		MESSAGE_END
+		MESSAGE_END,
+		MESSAGE_CANCELLED
 	};
 
 	const MessageType m_messageType;
@@ -20,8 +21,17 @@ struct ServerResponseChatMessage : ServerResponseBase
 	const FString m_sessionId;
 	const int m_startIndex = 0;
 	const int m_endIndex = 0;
-	const FString m_messageText = "";
-	const FString m_audioUrlPath = "";
+	const FString m_messageText;
+	const FString m_audioUrlPath;
+
+	explicit ServerResponseChatMessage(MessageType type,
+		FString messageId,
+		FString sessionId) :
+		m_messageType(type),
+		m_messageId(messageId),
+		m_sessionId(sessionId)
+	{
+	}
 
 	explicit ServerResponseChatMessage(MessageType type,
 			FString messageId,

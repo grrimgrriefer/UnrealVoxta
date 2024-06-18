@@ -44,7 +44,8 @@ public:
 
 	void UpdateLabelWithState(VoxtaClientState newState);
 	void RegisterCharacterOption(const FCharData& charData);
-	void RegisterTextMessage(const FCharData& sender, const FString& message);
+	void RegisterTextMessage(const FCharData& sender, const FString& messageId, const FString& message);
+	void RemoveTextMessage(const FString& messageId);
 
 protected:
 	UFUNCTION()
@@ -52,4 +53,7 @@ protected:
 
 	UFUNCTION()
 	void UserInputSubmitted(const FText& text, ETextCommit::Type commitMethod);
+
+private:
+	TMap<FString, UTextBlock*> m_messages;
 };

@@ -31,6 +31,10 @@ void VoxtaLogUtility::Serialize(const TCHAR* Message, ELogVerbosity::Type Verbos
 			case ELogVerbosity::Display:
 			case ELogVerbosity::Log:
 				color = FColor::Cyan;
+				if (Category == m_signalRLogCategory || Category == m_httpLogCategory)
+				{
+					return;
+				}
 				break;
 			case ELogVerbosity::Error:
 			default:

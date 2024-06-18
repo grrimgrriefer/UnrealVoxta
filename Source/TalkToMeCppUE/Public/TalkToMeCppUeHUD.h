@@ -35,6 +35,8 @@ public:
 	void VoxtaClientCharacterLoaded(const FCharData& charData);
 	UFUNCTION()
 	void RegisterTextMessage(const FCharData& sender, const FChatMessage& message);
+	UFUNCTION()
+	void RemoveTextMessage(const FChatMessage& message);
 
 private:
 	class UClass* m_hudWidgetClass;
