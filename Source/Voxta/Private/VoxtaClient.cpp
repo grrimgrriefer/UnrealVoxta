@@ -60,9 +60,9 @@ void UVoxtaClient::Disconnect()
 	m_hub->Stop();
 }
 
-void UVoxtaClient::LoadCharacter(FString charID)
+void UVoxtaClient::LoadCharacter(FString charId)
 {
-	SendMessageToServer(m_voxtaRequestApi.GetLoadCharacterRequestData(charID));
+	SendMessageToServer(m_voxtaRequestApi.GetLoadCharacterRequestData(charId));
 	SetState(VoxtaClientState::StartingChat);
 }
 

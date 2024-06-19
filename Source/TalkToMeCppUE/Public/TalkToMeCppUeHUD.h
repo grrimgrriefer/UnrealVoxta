@@ -8,11 +8,12 @@
 #include "VoxtaClient.h"
 #include "VoxtaData/Public/CharData.h"
 #include "VoxtaData/Public/ChatMessage.h"
-#include "Containers/StringFwd.h"
-#include "Voxta/Private/VoxtaLogUtility.h"
-#include "Logging/StructuredLog.h"
 #include "TalkToMeCppUeHUD.generated.h"
 
+/// <summary>
+/// Class that manages the UTalkToMeCppUeWidget instance and handles all communication between
+/// it and the VoxtaClient.
+/// </summary>
 UCLASS()
 class TALKTOMECPPUE_API ATalkToMeCppUeHUD : public AHUD
 {
@@ -21,20 +22,54 @@ class TALKTOMECPPUE_API ATalkToMeCppUeHUD : public AHUD
 public:
 	ATalkToMeCppUeHUD();
 
-	virtual void BeginPlay() override;
-
+	/// <summary>
+	/// Event fired when the user has clicked on a button linked to a specific character, with
+	/// the intention of loading that character into a chat conversation.
+	/// </summary>
 	UPROPERTY()
-	FCharButtonClickedSignature OnCharButtonClickedDelegate;
+	FCharButtonClickedEventCallback OnCharButtonClickedEvent;
 
+	/// <summary>
+	/// Event fired when the user has pressed ENTER after providing some text in the EditableTextBox
+	/// </summary>
 	UPROPERTY()
-	FInputFieldSignature OnUserInputFieldSubmittedDelegate;
+	FInputCommittedEventCallback OnUserInputCommittedEvent;
 
+	/// <summary>
+	/// Notify the UTalkToMeCppUeWidget instance of the newly active state, causing it to configure itself
+	/// for the provided state.
+	/// Should only be invoked based on VoxtaClient events.
+	/// </summary>
+	/// <param name="newState">The new active state.</param>
 	UFUNCTION()
 	void VoxtaClientStateChanged(VoxtaClientState newState);
+
+	/// <summary>
+	/// Notify the UTalkToMeCppUeWidget of a new selectable Character being present for the user.
+	/// Should only be invoked based on VoxtaClient events.
+	/// </summary>
+	/// <param name="charData">The FCharData of the newly selectable character.</param>
 	UFUNCTION()
 	void VoxtaClientCharacterLoaded(const FCharData& charData);
+
+	/// <summary>
+	/// Notify the UTalkToMeCppUeWidget of a new text message uttered by a character.
+	/// Should only be invoked based on VoxtaClient events.
+	///
+	/// Note: This is used for both AI characters and for user messages.
+	/// </summary>
+	/// <param name="sender">The FCharData of the character that is says the message.</param>
+	/// <param name="message">The FChatMessage containing all the relevant data of the message that has to
+	/// be added to the log.</param>
 	UFUNCTION()
 	void RegisterTextMessage(const FCharData& sender, const FChatMessage& message);
+
+	/// <summary>
+	/// Notify the UTalkToMeCppUeWidget of a specific a chat message being deleted.
+	/// Should only be invoked based on VoxtaClient events.
+	/// </summary>
+	/// <param name="messageId">The VoxtaServer messageId, that was tied to the message when it was
+	/// sent via the RegisterTextMessage function.</param>
 	UFUNCTION()
 	void RemoveTextMessage(const FChatMessage& message);
 
@@ -43,8 +78,13 @@ private:
 	class UTalkToMeCppUeWidget* m_hudWidget;
 
 	UFUNCTION()
-	void OnCharButtonClicked(FString charID);
+	void OnCharButtonClicked(FString charId);
 
 	UFUNCTION()
 	void OnUserInputFieldSubmitted(FString inputText);
+
+	///~ Begin AHUD overrides.
+protected:
+	virtual void BeginPlay() override;
+	///~ End AHUD bindings.
 };

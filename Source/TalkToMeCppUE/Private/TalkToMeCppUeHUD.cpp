@@ -24,20 +24,18 @@ void ATalkToMeCppUeHUD::BeginPlay()
 		m_hudWidget->AddToViewport();
 
 		m_hudWidget->InitializeWidget();
-		m_hudWidget->OnCharButtonClickedDelegate.AddUniqueDynamic(this, &ATalkToMeCppUeHUD::OnCharButtonClicked);
-		m_hudWidget->OnUserInputFieldSubmittedDelegate.AddUniqueDynamic(this, &ATalkToMeCppUeHUD::OnUserInputFieldSubmitted);
+		m_hudWidget->OnCharButtonClickedEvent.AddUniqueDynamic(this, &ATalkToMeCppUeHUD::OnCharButtonClicked);
+		m_hudWidget->OnUserInputCommittedEvent.AddUniqueDynamic(this, &ATalkToMeCppUeHUD::OnUserInputFieldSubmitted);
 	}
-
-	APlayerController* playerController = GetWorld()->GetFirstPlayerController();
-	if (playerController)
+	else
 	{
-		playerController->bShowMouseCursor = true;
+		UE_LOGFMT(LogCore, Error, "Failed to instance UTalkToMeCppUeWidget, as the class was null.");
 	}
 }
 
 void ATalkToMeCppUeHUD::VoxtaClientStateChanged(VoxtaClientState newState)
 {
-	m_hudWidget->UpdateLabelWithState(newState);
+	m_hudWidget->ConfigureWidgetForState(newState);
 }
 
 void ATalkToMeCppUeHUD::VoxtaClientCharacterLoaded(const FCharData& charData)
@@ -55,12 +53,12 @@ void ATalkToMeCppUeHUD::RemoveTextMessage(const FChatMessage& message)
 	m_hudWidget->RemoveTextMessage(message.m_messageId);
 }
 
-void ATalkToMeCppUeHUD::OnCharButtonClicked(FString charID)
+void ATalkToMeCppUeHUD::OnCharButtonClicked(FString charId)
 {
-	OnCharButtonClickedDelegate.Broadcast(charID);
+	OnCharButtonClickedEvent.Broadcast(charId);
 }
 
 void ATalkToMeCppUeHUD::OnUserInputFieldSubmitted(FString inputText)
 {
-	OnUserInputFieldSubmittedDelegate.Broadcast(inputText);
+	OnUserInputCommittedEvent.Broadcast(inputText);
 }

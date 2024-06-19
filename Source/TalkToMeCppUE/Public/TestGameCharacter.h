@@ -9,25 +9,47 @@
 #include "TalkToMeCppUeHUD.h"
 #include "TestGameCharacter.generated.h"
 
+/// <summary>
+/// Most basic pawn setup for debugging purposes.
+/// Has ownership of the VoxtaClient, managing it's lifecycle and it's bindings to the engine and hud.
+/// </summary>
 UCLASS()
 class TALKTOMECPPUE_API ATestGameCharacter : public APawn
 {
 	GENERATED_BODY()
 
 public:
+	/// <summary>
+	/// Default constructor, adds the of the UCameraComponent and UVoxtaClient components.
+	/// </summary>
 	ATestGameCharacter();
-	void StartVoxtaClient();
-	virtual void Tick(float DeltaTime) override;
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-protected:
-	virtual void BeginPlay() override;
+	/// <summary>
+	/// Starts the VoxtaClient connection & sets up the binding with the HUD.
+	/// </summary>
+	void StartVoxtaClient();
 
 private:
-	UPROPERTY(EditAnywhere)
 	UCameraComponent* m_camera;
 	UVoxtaClient* m_voxtaClient;
 	ATalkToMeCppUeHUD* m_hud;
 
-	void SetupHud();
+	/// <summary>
+	/// Connects the events between the UVoxtaClient and the ATalkToMeCppUeHUD.
+	/// </summary>
+	/// <returns>True if connection was established.</returns>
+	bool TryConnectToHud();
+
+	/// <summary>
+	/// Cleans up the bindings between the UVoxtaClient and the ATalkToMeCppUeHUD.
+	/// </summary>
+	/// <returns>True if connection was established.</returns>
+	bool TryDisconnectToHud();
+
+	///~ Begin APawn overrides.
+protected:
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	///~ End APawn overrides.
 };

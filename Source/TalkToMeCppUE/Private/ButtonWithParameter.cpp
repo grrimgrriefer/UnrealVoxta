@@ -5,11 +5,19 @@
 
 void UButtonWithParameter::Initialize(FString value)
 {
-	OnClicked.AddDynamic(this, &UButtonWithParameter::OnClick);
+	OnClicked.AddDynamic(this, &UButtonWithParameter::OnClickInternal);
 	m_parameterValue = value;
 }
 
-void UButtonWithParameter::OnClick()
+void UButtonWithParameter::BeginDestroy()
+{
+	Super::BeginDestroy();
+
+	// Unbind the delegate to prevent it from being called after the object is destroyed.
+	OnClicked.RemoveDynamic(this, &UButtonWithParameter::OnClickInternal);
+}
+
+void UButtonWithParameter::OnClickInternal()
 {
 	OnClickedWithParam.Broadcast(m_parameterValue);
 }

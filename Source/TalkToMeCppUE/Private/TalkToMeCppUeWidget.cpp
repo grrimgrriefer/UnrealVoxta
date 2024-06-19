@@ -1,14 +1,35 @@
 // Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
 
 #include "TalkToMeCppUeWidget.h"
+#include "ButtonWithParameter.h"
+#include "Logging/StructuredLog.h"
 
 void UTalkToMeCppUeWidget::InitializeWidget()
 {
-	UserInputField->OnTextCommitted.AddUniqueDynamic(this, &UTalkToMeCppUeWidget::UserInputSubmitted);
+	UserInputField->OnTextCommitted.AddUniqueDynamic(this, &UTalkToMeCppUeWidget::OnUserInputCommittedInternal);
 	UserInputField->SetIsEnabled(false);
 }
 
-void UTalkToMeCppUeWidget::UpdateLabelWithState(VoxtaClientState newState)
+void UTalkToMeCppUeWidget::CleanupWidget()
+{
+	if (CharScrollBox)
+	{
+		TArray<UWidget*> children = CharScrollBox->GetAllChildren();
+		for (UWidget* child : children)
+		{
+			if (UButtonWithParameter* button = Cast<UButtonWithParameter>(child))
+			{
+				button->OnClickedWithParam.RemoveAll(this);
+			}
+		}
+	}
+	if (UserInputField)
+	{
+		UserInputField->OnTextCommitted.RemoveAll(this);
+	}
+}
+
+void UTalkToMeCppUeWidget::ConfigureWidgetForState(VoxtaClientState newState)
 {
 	if (StatusLabel)
 	{
@@ -40,12 +61,12 @@ void UTalkToMeCppUeWidget::RegisterCharacterOption(const FCharData& charData)
 		textBlock->SetShadowColorAndOpacity(FLinearColor::Black);
 		textBlock->SetShadowOffset(FVector2D(2));
 
-		UButtonWithParameter* testButton = NewObject<UButtonWithParameter>(this, UButtonWithParameter::StaticClass());
-		testButton->AddChild(textBlock);
+		UButtonWithParameter* characterButton = NewObject<UButtonWithParameter>(this, UButtonWithParameter::StaticClass());
+		characterButton->AddChild(textBlock);
 
-		testButton->Initialize(charData.m_id);
-		testButton->OnClickedWithParam.AddUniqueDynamic(this, &UTalkToMeCppUeWidget::SelectCharacter);
-		CharScrollBox->AddChild(testButton);
+		characterButton->Initialize(charData.m_id);
+		characterButton->OnClickedWithParam.AddUniqueDynamic(this, &UTalkToMeCppUeWidget::OnCharacterButtonClickedInternal);
+		CharScrollBox->AddChild(characterButton);
 	}
 }
 
@@ -76,21 +97,20 @@ void UTalkToMeCppUeWidget::RemoveTextMessage(const FString& messageId)
 		{
 			ChatLogScrollBox->RemoveChild(m_messages[messageId]);
 		}
+		m_messages.Remove(messageId);
 	}
 }
 
-void UTalkToMeCppUeWidget::SelectCharacter(FString charId)
+void UTalkToMeCppUeWidget::OnCharacterButtonClickedInternal(FString charId)
 {
-	OnCharButtonClickedDelegate.Broadcast(charId);
+	OnCharButtonClickedEvent.Broadcast(charId);
 }
 
-void UTalkToMeCppUeWidget::UserInputSubmitted(const FText& Text, ETextCommit::Type CommitType)
+void UTalkToMeCppUeWidget::OnUserInputCommittedInternal(const FText& Text, ETextCommit::Type CommitType)
 {
 	if (CommitType == ETextCommit::OnEnter && !Text.IsEmptyOrWhitespace())
 	{
-		UE_LOGFMT(LogCore, Log, "Holdonaminute");
-
-		OnUserInputFieldSubmittedDelegate.Broadcast(Text.ToString());
+		OnUserInputCommittedEvent.Broadcast(Text.ToString());
 		UserInputField->SetText(FText::GetEmpty());
 	}
 }

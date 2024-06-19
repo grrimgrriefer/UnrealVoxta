@@ -63,7 +63,7 @@ public:
 	void Disconnect();
 
 	UFUNCTION()
-	void LoadCharacter(FString charID);
+	void LoadCharacter(FString charId);
 
 	UFUNCTION()
 	void SendUserInput(FString inputText);

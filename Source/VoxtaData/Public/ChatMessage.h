@@ -20,17 +20,17 @@ struct FChatMessage
 	};
 
 	explicit FChatMessage(FString messageId,
-			FString charID,
+			FString charId,
 			FString text) :
 		m_text(text),
 		m_messageId(messageId),
-		m_charId(charID)
+		m_charId(charId)
 	{
 	}
 
-	explicit FChatMessage(FString messageId, FString charID) :
+	explicit FChatMessage(FString messageId, FString charId) :
 		m_messageId(messageId),
-		m_charId(charID)
+		m_charId(charId)
 	{
 	}
 };
