@@ -1,0 +1,24 @@
+// Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "CharDataBase.h"
+#include "UserCharData.generated.h"
+
+/// <summary>
+/// Data struct that contains all the relevant information for an AI character.
+/// </summary>
+USTRUCT()
+struct FUserCharData : public FCharDataBase
+{
+	GENERATED_BODY()
+
+public:
+	explicit FUserCharData(FStringView id,
+		FStringView name) : FCharDataBase(id, name)
+	{
+	}
+
+	explicit FUserCharData() : FCharDataBase() {}
+};

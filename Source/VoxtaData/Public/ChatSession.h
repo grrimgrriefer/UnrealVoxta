@@ -8,13 +8,14 @@
 
 struct ChatSession
 {
+public:
 	TArray<TUniquePtr<FChatMessage>> m_chatMessages;
-	TArray<const FCharData*> m_characters;
+	TArray<const FAiCharData*> m_characters;
 	const FString m_chatId;
 	const FString m_sessionId;
 	const TMap<const VoxtaServiceData::ServiceType, const VoxtaServiceData> m_services; // Assumes we don't allow the user to disable / enable services while chatting
 
-	explicit ChatSession(const TArray<const FCharData*>& characters,
+	explicit ChatSession(const TArray<const FAiCharData*>& characters,
 			FString chatId,
 			FString sessionId,
 			const TMap<const VoxtaServiceData::ServiceType, const VoxtaServiceData>& services) :

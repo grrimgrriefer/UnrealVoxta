@@ -8,11 +8,11 @@
 #include "SignalR/Private/HubConnection.h"
 #include "Voxta/Private/VoxtaApiRequestHandler.h"
 #include "Voxta/Private/VoxtaApiResponseHandler.h"
-#include "VoxtaData/Public/CharData.h"
+#include "VoxtaData/Public/AiCharData.h"
 #include "VoxtaData/Public/ChatMessage.h"
-#include "VoxtaData/Public/ServerResponseBase.h"
-#include "VoxtaData/Public/ServerResponseWelcome.h"
-#include "VoxtaData/Public/ServerResponseCharacterList.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseBase.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseWelcome.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseCharacterList.h"
 #include "VoxtaData/Public/ChatSession.h"
 #include "VoxtaClient.generated.h"
 
@@ -29,8 +29,8 @@ enum class VoxtaClientState : uint8
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientStateChangedSignature, VoxtaClientState, newState);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientCharacterLoadedSignature, const FCharData&, charData);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FVoxtaClientCharacterMessageReceivedSignature, const FCharData&, sender, const FChatMessage&, message);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientCharacterLoadedSignature, const FAiCharData&, charData);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FVoxtaClientCharacterMessageReceivedSignature, const FCharDataBase&, sender, const FChatMessage&, message);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientCharacterMessageRemovedSignature, const FChatMessage&, message);
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
@@ -75,8 +75,8 @@ private:
 	VoxtaApiResponseHandler m_voxtaResponseApi;
 
 	VoxtaClientState m_currentState = VoxtaClientState::Disconnected;
-	TUniquePtr<FCharData> m_userData;
-	TArray<TUniquePtr<const FCharData>> m_characterList;
+	TUniquePtr<FUserCharData> m_userData;
+	TArray<TUniquePtr<const FAiCharData>> m_characterList;
 	TUniquePtr<ChatSession> m_chatSession;
 
 	const FString m_sendMessageEventName = TEXT("SendMessage");

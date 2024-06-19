@@ -3,7 +3,7 @@
 #include "ButtonWithParameter.h"
 #include <Logging/StructuredLog.h>
 
-void UButtonWithParameter::Initialize(FString value)
+void UButtonWithParameter::Initialize(FStringView value)
 {
 	OnClicked.AddDynamic(this, &UButtonWithParameter::OnClickInternal);
 	m_parameterValue = value;
@@ -13,7 +13,6 @@ void UButtonWithParameter::BeginDestroy()
 {
 	Super::BeginDestroy();
 
-	// Unbind the delegate to prevent it from being called after the object is destroyed.
 	OnClicked.RemoveDynamic(this, &UButtonWithParameter::OnClickInternal);
 }
 

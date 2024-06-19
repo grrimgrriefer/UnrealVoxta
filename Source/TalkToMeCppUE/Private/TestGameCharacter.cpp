@@ -59,6 +59,7 @@ bool ATestGameCharacter::TryConnectToHud()
 
 		return true;
 	}
+	UE_LOGFMT(LogCore, Error, "Failed to connect the HUD and the VoxtaClient with each other.");
 	return false;
 }
 
@@ -66,15 +67,15 @@ bool ATestGameCharacter::TryDisconnectToHud()
 {
 	if (m_voxtaClient && m_hud)
 	{
-		m_voxtaClient->OnVoxtaClientStateChangedDelegate.RemoveAll(this);
-		m_voxtaClient->OnVoxtaClientCharacterLoadedDelegate.RemoveAll(this);
-		m_voxtaClient->OnVoxtaClientChatMessageAdded.RemoveAll(this);
-		m_voxtaClient->OnVoxtaClientChatMessageRemoved.RemoveAll(this);
+		m_voxtaClient->OnVoxtaClientStateChangedDelegate.RemoveDynamic(m_hud, &ATalkToMeCppUeHUD::VoxtaClientStateChanged);
+		m_voxtaClient->OnVoxtaClientCharacterLoadedDelegate.RemoveDynamic(m_hud, &ATalkToMeCppUeHUD::VoxtaClientCharacterLoaded);
+		m_voxtaClient->OnVoxtaClientChatMessageAdded.RemoveDynamic(m_hud, &ATalkToMeCppUeHUD::RegisterTextMessage);
+		m_voxtaClient->OnVoxtaClientChatMessageRemoved.RemoveDynamic(m_hud, &ATalkToMeCppUeHUD::RemoveTextMessage);
 
-		m_hud->OnCharButtonClickedEvent.RemoveAll(this);
-		m_hud->OnUserInputCommittedEvent.RemoveAll(this);
-
+		m_hud->OnCharButtonClickedEvent.RemoveDynamic(m_voxtaClient, &UVoxtaClient::LoadCharacter);
+		m_hud->OnUserInputCommittedEvent.RemoveDynamic(m_voxtaClient, &UVoxtaClient::SendUserInput);
 		return true;
 	}
+	UE_LOGFMT(LogCore, Warning, "Failed to disconnect the HUD and the VoxtaClient with each other.");
 	return false;
 }

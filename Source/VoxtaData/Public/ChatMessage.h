@@ -10,14 +10,12 @@ struct FChatMessage
 {
 	GENERATED_BODY()
 
-	FString m_text = "";
-	TArray<FString> m_audioUrls = {};
-	FString m_messageId = "";
-	FString m_charId = "";
+public:
+	FString m_text;
+	TArray<FString> m_audioUrls;
 
-	FChatMessage()
-	{
-	};
+	FString GetMessageId() const { return m_messageId; };
+	FString GetCharId() const { return m_charId; };
 
 	explicit FChatMessage(FString messageId,
 			FString charId,
@@ -33,4 +31,10 @@ struct FChatMessage
 		m_charId(charId)
 	{
 	}
+
+	explicit FChatMessage() {};
+
+private:
+	FString m_messageId;
+	FString m_charId;
 };

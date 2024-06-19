@@ -5,8 +5,9 @@
 #include "CoreMinimal.h"
 #include "ServerResponseBase.h"
 
-struct ServerResponseCharacterLoaded : public ServerResponseBase
+struct ServerResponseCharacterLoaded : public IServerResponseBase
 {
+public:
 	const FString m_characterId;
 	const bool m_enableThinkingSpeech;
 

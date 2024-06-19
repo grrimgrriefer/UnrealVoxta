@@ -5,8 +5,9 @@
 #include "CoreMinimal.h"
 #include "ServerResponseBase.h"
 
-struct ServerResponseChatUpdate : ServerResponseBase
+struct ServerResponseChatUpdate : IServerResponseBase
 {
+public:
 	const FString m_messageId;
 	const FString m_senderId;
 	const FString m_text;

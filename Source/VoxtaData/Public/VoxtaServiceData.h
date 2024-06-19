@@ -6,6 +6,7 @@
 
 struct VoxtaServiceData
 {
+public:
 	enum class ServiceType
 	{
 		TextGen,
@@ -13,9 +14,9 @@ struct VoxtaServiceData
 		TextToSpeech
 	};
 
-	ServiceType m_serviceType;
-	FString m_serviceName;
-	FString m_serviceId;
+	const ServiceType m_serviceType;
+	const FString m_serviceName;
+	const FString m_serviceId;
 
 	explicit VoxtaServiceData(ServiceType type,
 			FString name,

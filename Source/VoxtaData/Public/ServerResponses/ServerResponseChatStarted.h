@@ -6,8 +6,9 @@
 #include "ServerResponseBase.h"
 #include "VoxtaData/Public/VoxtaServiceData.h"
 
-struct ServerResponseChatStarted : public ServerResponseBase
+struct ServerResponseChatStarted : public IServerResponseBase
 {
+public:
 	const TArray<FString> m_characterIds;
 	const TMap<const VoxtaServiceData::ServiceType, const VoxtaServiceData> m_services;
 	const FString m_userId;

@@ -19,4 +19,8 @@ void ATalkToMeCppUEGameModeBase::StartPlay()
 	{
 		playerController->bShowMouseCursor = true;
 	}
+	else
+	{
+		UE_LOGFMT(LogCore, Warning, "Failed to find the PlayerController, so the GameMode couldn't make the cursor visible.");
+	}
 }

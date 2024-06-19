@@ -12,20 +12,21 @@ void UTalkToMeCppUeWidget::InitializeWidget()
 
 void UTalkToMeCppUeWidget::CleanupWidget()
 {
-	if (CharScrollBox)
+	if (CharScrollBox && UserInputField)
 	{
 		TArray<UWidget*> children = CharScrollBox->GetAllChildren();
 		for (UWidget* child : children)
 		{
 			if (UButtonWithParameter* button = Cast<UButtonWithParameter>(child))
 			{
-				button->OnClickedWithParam.RemoveAll(this);
+				button->OnClickedWithParam.RemoveDynamic(this, &UTalkToMeCppUeWidget::OnCharacterButtonClickedInternal);
 			}
 		}
+		UserInputField->OnTextCommitted.RemoveDynamic(this, &UTalkToMeCppUeWidget::OnUserInputCommittedInternal);
 	}
-	if (UserInputField)
+	else
 	{
-		UserInputField->OnTextCommitted.RemoveAll(this);
+		UE_LOGFMT(LogCore, Warning, "Failed to cleanup  UTalkToMeCppUeWidget, as the class was null.");
 	}
 }
 
@@ -52,31 +53,31 @@ void UTalkToMeCppUeWidget::ConfigureWidgetForState(VoxtaClientState newState)
 	}
 }
 
-void UTalkToMeCppUeWidget::RegisterCharacterOption(const FCharData& charData)
+void UTalkToMeCppUeWidget::RegisterCharacterOption(const FAiCharData& charData)
 {
 	if (CharScrollBox)
 	{
 		UTextBlock* textBlock = NewObject<UTextBlock>(UTextBlock::StaticClass());
-		textBlock->SetText(FText::FromString(charData.m_name));
+		textBlock->SetText(FText::FromStringView(charData.GetName()));
 		textBlock->SetShadowColorAndOpacity(FLinearColor::Black);
 		textBlock->SetShadowOffset(FVector2D(2));
 
 		UButtonWithParameter* characterButton = NewObject<UButtonWithParameter>(this, UButtonWithParameter::StaticClass());
 		characterButton->AddChild(textBlock);
 
-		characterButton->Initialize(charData.m_id);
+		characterButton->Initialize(charData.GetId());
 		characterButton->OnClickedWithParam.AddUniqueDynamic(this, &UTalkToMeCppUeWidget::OnCharacterButtonClickedInternal);
 		CharScrollBox->AddChild(characterButton);
 	}
 }
 
-void UTalkToMeCppUeWidget::RegisterTextMessage(const FCharData& sender, const FString& messageId, const FString& message)
+void UTalkToMeCppUeWidget::RegisterTextMessage(const FCharDataBase& sender, const FString& messageId, const FString& message)
 {
 	if (ChatLogScrollBox)
 	{
 		UTextBlock* textBlock = NewObject<UTextBlock>(UTextBlock::StaticClass());
 		textBlock->SetText(FText::FromString(FString::Format(*API_STRING("{0}: {1}"), {
-			sender.m_name,
+			sender.GetName(),
 			message
 			})));
 

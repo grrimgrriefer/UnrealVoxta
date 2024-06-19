@@ -5,13 +5,13 @@
 #include "CoreMinimal.h"
 #include "VoxtaDefines.h"
 #include "SignalRValue.h"
-#include "VoxtaData/Public/ServerResponseBase.h"
-#include "VoxtaData/Public/ServerResponseWelcome.h"
-#include "VoxtaData/Public/ServerResponseCharacterList.h"
-#include "VoxtaData/Public/ServerResponseCharacterLoaded.h"
-#include "VoxtaData/Public/ServerResponseChatStarted.h"
-#include "VoxtaData/Public/ServerResponseChatMessage.h"
-#include "VoxtaData/Public/ServerResponseChatUpdate.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseBase.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseWelcome.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseCharacterList.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseCharacterLoaded.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseChatStarted.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseChatMessage.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseChatUpdate.h"
 #include "VoxtaData/Public/VoxtaServiceData.h"
 
 class VoxtaApiResponseHandler
@@ -32,7 +32,7 @@ public:
 		API_STRING("memoryUpdated")
 	};
 
-	TUniquePtr<ServerResponseBase> GetResponseData(
+	TUniquePtr<IServerResponseBase> GetResponseData(
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
 
 private:

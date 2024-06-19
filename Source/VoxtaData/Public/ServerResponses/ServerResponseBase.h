@@ -16,9 +16,9 @@ enum class ServerResponseType : uint8
 	SpeechTranscription		UMETA(DisplayName = "SpeechTranscription")
 };
 
-struct ServerResponseBase
+struct IServerResponseBase
 {
 public:
-	virtual ~ServerResponseBase() = default;
+	virtual ~IServerResponseBase() = default;
 	virtual ServerResponseType GetType() = 0;
 };

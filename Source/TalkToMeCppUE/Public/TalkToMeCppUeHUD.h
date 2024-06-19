@@ -6,7 +6,7 @@
 #include "GameFramework/HUD.h"
 #include "TalkToMeCppUeWidget.h"
 #include "VoxtaClient.h"
-#include "VoxtaData/Public/CharData.h"
+#include "VoxtaData/Public/AiCharData.h"
 #include "VoxtaData/Public/ChatMessage.h"
 #include "TalkToMeCppUeHUD.generated.h"
 
@@ -50,7 +50,7 @@ public:
 	/// </summary>
 	/// <param name="charData">The FCharData of the newly selectable character.</param>
 	UFUNCTION()
-	void VoxtaClientCharacterLoaded(const FCharData& charData);
+	void VoxtaClientCharacterLoaded(const FAiCharData& charData);
 
 	/// <summary>
 	/// Notify the UTalkToMeCppUeWidget of a new text message uttered by a character.
@@ -62,7 +62,7 @@ public:
 	/// <param name="message">The FChatMessage containing all the relevant data of the message that has to
 	/// be added to the log.</param>
 	UFUNCTION()
-	void RegisterTextMessage(const FCharData& sender, const FChatMessage& message);
+	void RegisterTextMessage(const FCharDataBase& sender, const FChatMessage& message);
 
 	/// <summary>
 	/// Notify the UTalkToMeCppUeWidget of a specific a chat message being deleted.
@@ -86,5 +86,6 @@ private:
 	///~ Begin AHUD overrides.
 protected:
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	///~ End AHUD bindings.
 };

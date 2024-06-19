@@ -4,13 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "ServerResponseBase.h"
-#include "CharData.h"
+#include "UserCharData.h"
 
-struct ServerResponseWelcome : public ServerResponseBase
+struct ServerResponseWelcome : public IServerResponseBase
 {
-	const FCharData m_user;
+public:
+	const FUserCharData m_user;
 
-	explicit ServerResponseWelcome(const FCharData& userData) :
+	explicit ServerResponseWelcome(const FUserCharData& userData) :
 		m_user(userData)
 	{
 	}

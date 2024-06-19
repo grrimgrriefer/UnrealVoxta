@@ -3,7 +3,7 @@
 #include "VoxtaApiResponseHandler.h"
 #include "VoxtaLogUtility.h"
 
-TUniquePtr<ServerResponseBase> VoxtaApiResponseHandler::GetResponseData(
+TUniquePtr<IServerResponseBase> VoxtaApiResponseHandler::GetResponseData(
 	const TMap<FString, FSignalRValue>& serverResponseData) const
 {
 	using enum ServerResponseType;
@@ -56,22 +56,23 @@ TUniquePtr<ServerResponseWelcome> VoxtaApiResponseHandler::GetWelcomeResponse(
 {
 	auto& user = serverResponseData[API_STRING("user")].AsObject();
 	return MakeUnique<ServerResponseWelcome>(
-		FCharData(user[API_STRING("id")].AsString(), user[API_STRING("name")].AsString()));
+		FUserCharData(user[API_STRING("id")].AsString(), user[API_STRING("name")].AsString()));
 }
 
 TUniquePtr<ServerResponseCharacterList> VoxtaApiResponseHandler::GetCharacterListLoadedResponse(
 	const TMap<FString, FSignalRValue>& serverResponseData) const
 {
 	auto& charArray = serverResponseData[API_STRING("characters")].AsArray();
-	TArray<FCharData> chars;
+	TArray<FAiCharData> chars;
 	chars.Reserve(charArray.Num());
 	for (auto& charElement : charArray)
 	{
 		auto& characterData = charElement.AsObject();
-		auto character = FCharData(characterData[API_STRING("id")].AsString(), characterData[API_STRING("name")].AsString());
-		character.m_creatorNotes = characterData.Contains(API_STRING("creatorNotes")) ? characterData[API_STRING("creatorNotes")].AsString() : "";
-		character.m_explicitContent = characterData.Contains(API_STRING("explicitContent")) ? characterData[API_STRING("explicitContent")].AsBool() : false;
-		character.m_favorite = characterData.Contains(API_STRING("favorite")) ? characterData[API_STRING("favorite")].AsBool() : false;
+		auto character = FAiCharData(characterData[API_STRING("id")].AsString(),
+			characterData[API_STRING("name")].AsString(),
+			characterData.Contains(API_STRING("creatorNotes")) ? characterData[API_STRING("creatorNotes")].AsString() : "",
+			characterData.Contains(API_STRING("explicitContent")) ? characterData[API_STRING("explicitContent")].AsBool() : false,
+			characterData.Contains(API_STRING("favorite")) ? characterData[API_STRING("favorite")].AsBool() : false);
 		chars.Emplace(character);
 	}
 	return MakeUnique<ServerResponseCharacterList>(chars);

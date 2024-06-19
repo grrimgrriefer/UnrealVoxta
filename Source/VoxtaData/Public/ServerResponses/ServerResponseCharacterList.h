@@ -4,13 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "ServerResponseBase.h"
-#include "CharData.h"
+#include "AiCharData.h"
 
-struct ServerResponseCharacterList : public ServerResponseBase
+struct ServerResponseCharacterList : public IServerResponseBase
 {
-	const TArray<FCharData> m_characters;
+public:
+	const TArray<FAiCharData> m_characters;
 
-	explicit ServerResponseCharacterList(const TArray<FCharData>& characters) :
+	explicit ServerResponseCharacterList(const TArray<FAiCharData>& characters) :
 		m_characters(characters)
 	{
 	}

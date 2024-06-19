@@ -64,7 +64,7 @@ public:
 	/// also sets up the binding so OnCharButtonClickedEvent is triggered when the button is pressed.
 	/// </summary>
 	/// <param name="charData">The FCharData of the character that should be loaded when the button is pressed.</param>
-	void RegisterCharacterOption(const FCharData& charData);
+	void RegisterCharacterOption(const FAiCharData& charData);
 
 	/// <summary>
 	/// Add a new text message to the bottom of the chat log.
@@ -72,7 +72,7 @@ public:
 	/// <param name="sender">The FCharData of the character that is says the message.</param>
 	/// <param name="messageId">The VoxtaServer messageId, to keep track of edits and deletions.</param>
 	/// <param name="message">The text of the message itself.</param>
-	void RegisterTextMessage(const FCharData& sender, const FString& messageId, const FString& message);
+	void RegisterTextMessage(const FCharDataBase& sender, const FString& messageId, const FString& message);
 
 	/// <summary>
 	/// If a chat message is found with a matching messageId,

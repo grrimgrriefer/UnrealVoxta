@@ -33,13 +33,13 @@ FSignalRValue VoxtaApiRequestHandler::GetLoadCharacterRequestData(const FString&
 	});
 }
 
-FSignalRValue VoxtaApiRequestHandler::GetStartChatRequestData(const FCharData* charData) const
+FSignalRValue VoxtaApiRequestHandler::GetStartChatRequestData(const FAiCharData* charData) const
 {
-	FString explicitContent = charData->m_explicitContent ? "True" : "False";
+	FString explicitContent = charData->GetIsAllowedExplicitContent() ? "True" : "False";
 
 	auto characterParams = TMap<FString, FSignalRValue>{
-		{ API_STRING("id"), FSignalRValue(charData->m_id) },
-		{ API_STRING("name"), FSignalRValue(charData->m_name) },
+		{ API_STRING("id"), API_SIGNALR_STRINGVIEW(charData->GetId()) },
+		{ API_STRING("name"), API_SIGNALR_STRINGVIEW(charData->GetName()) },
 		{ API_STRING("explicitContent"), FSignalRValue(explicitContent) } };
 
 	return FSignalRValue(TMap<FString, FSignalRValue>{
@@ -47,7 +47,7 @@ FSignalRValue VoxtaApiRequestHandler::GetStartChatRequestData(const FCharData* c
 		{ API_STRING("contextKey"), API_SIGNALR_STRING("") },
 		{ API_STRING("context"), API_SIGNALR_STRING("") },
 		{ API_STRING("chatId"), FSignalRValue(FGuid::NewGuid().ToString()) },
-		{ API_STRING("characterId"), FSignalRValue(charData->m_id) },
+		{ API_STRING("characterId"), API_SIGNALR_STRINGVIEW(charData->GetId()) },
 		{ API_STRING("character"), FSignalRValue(characterParams) }
 	});
 }

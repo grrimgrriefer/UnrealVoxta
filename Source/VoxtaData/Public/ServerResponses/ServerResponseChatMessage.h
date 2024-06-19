@@ -5,8 +5,9 @@
 #include "CoreMinimal.h"
 #include "ServerResponseBase.h"
 
-struct ServerResponseChatMessage : ServerResponseBase
+struct ServerResponseChatMessage : IServerResponseBase
 {
+public:
 	enum class MessageType
 	{
 		MESSAGE_START,

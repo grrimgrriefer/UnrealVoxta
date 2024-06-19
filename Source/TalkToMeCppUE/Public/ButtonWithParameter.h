@@ -29,7 +29,7 @@ public:
 	/// by the user.
 	/// </summary>
 	/// <param name="value">The value to be stored and returned through the event.</param>
-	void Initialize(FString value);
+	void Initialize(FStringView value);
 
 private:
 	FString m_parameterValue;

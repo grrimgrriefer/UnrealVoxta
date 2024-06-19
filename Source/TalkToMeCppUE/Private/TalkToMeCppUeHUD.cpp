@@ -4,6 +4,7 @@
 
 ATalkToMeCppUeHUD::ATalkToMeCppUeHUD()
 {
+	// TODO: turn this into blueprint assignable value
 	static ConstructorHelpers::FClassFinder<UTalkToMeCppUeWidget> hudWidgetObj(TEXT("/Game/UI/BP_UI"));
 	if (hudWidgetObj.Succeeded())
 	{
@@ -29,7 +30,27 @@ void ATalkToMeCppUeHUD::BeginPlay()
 	}
 	else
 	{
-		UE_LOGFMT(LogCore, Error, "Failed to instance UTalkToMeCppUeWidget, as the class was null.");
+		UE_LOGFMT(LogCore, Error, "Failed to instantiate UTalkToMeCppUeWidget, as the class was null.");
+	}
+}
+
+void ATalkToMeCppUeHUD::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+	if (m_hudWidget)
+	{
+		m_hudWidget->OnCharButtonClickedEvent.RemoveDynamic(this, &ATalkToMeCppUeHUD::OnCharButtonClicked);
+		m_hudWidget->OnUserInputCommittedEvent.RemoveDynamic(this, &ATalkToMeCppUeHUD::OnUserInputFieldSubmitted);
+
+		OnCharButtonClickedEvent.Clear();
+		OnUserInputCommittedEvent.Clear();
+
+		m_hudWidget->RemoveFromParent();
+		m_hudWidget = nullptr;
+	}
+	else
+	{
+		UE_LOGFMT(LogCore, Error, "Failed to instantiate UTalkToMeCppUeWidget, as the class was null.");
 	}
 }
 
@@ -38,19 +59,19 @@ void ATalkToMeCppUeHUD::VoxtaClientStateChanged(VoxtaClientState newState)
 	m_hudWidget->ConfigureWidgetForState(newState);
 }
 
-void ATalkToMeCppUeHUD::VoxtaClientCharacterLoaded(const FCharData& charData)
+void ATalkToMeCppUeHUD::VoxtaClientCharacterLoaded(const FAiCharData& charData)
 {
 	m_hudWidget->RegisterCharacterOption(charData);
 }
 
-void ATalkToMeCppUeHUD::RegisterTextMessage(const FCharData& sender, const FChatMessage& message)
+void ATalkToMeCppUeHUD::RegisterTextMessage(const FCharDataBase& sender, const FChatMessage& message)
 {
-	m_hudWidget->RegisterTextMessage(sender, message.m_messageId, message.m_text);
+	m_hudWidget->RegisterTextMessage(sender, message.GetMessageId(), message.m_text);
 }
 
 void ATalkToMeCppUeHUD::RemoveTextMessage(const FChatMessage& message)
 {
-	m_hudWidget->RemoveTextMessage(message.m_messageId);
+	m_hudWidget->RemoveTextMessage(message.GetMessageId());
 }
 
 void ATalkToMeCppUeHUD::OnCharButtonClicked(FString charId)

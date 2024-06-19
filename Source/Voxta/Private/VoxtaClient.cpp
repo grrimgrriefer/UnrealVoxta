@@ -222,8 +222,8 @@ bool UVoxtaClient::HandleResponse(const TMap<FString, FSignalRValue>& responseDa
 
 void UVoxtaClient::HandleWelcomeResponse(const ServerResponseWelcome& response)
 {
-	m_userData = MakeUnique<FCharData>(response.m_user);
-	UE_LOGFMT(VoxtaLog, Log, "Authenticated with Voxta Server. Welcome {user}.", m_userData->m_name);
+	m_userData = MakeUnique<FUserCharData>(response.m_user);
+	UE_LOGFMT(VoxtaLog, Log, "Authenticated with Voxta Server. Welcome {user}.", m_userData->GetName());
 	SetState(VoxtaClientState::Authenticated);
 	SendMessageToServer(m_voxtaRequestApi.GetLoadCharactersListData());
 }
@@ -233,7 +233,7 @@ void UVoxtaClient::HandleCharacterListResponse(const ServerResponseCharacterList
 	m_characterList.Empty();
 	for (auto& charElement : response.m_characters)
 	{
-		m_characterList.Emplace(MakeUnique<FCharData>(charElement));
+		m_characterList.Emplace(MakeUnique<FAiCharData>(charElement));
 		OnVoxtaClientCharacterLoadedDelegate.Broadcast(charElement);
 	}
 	SetState(VoxtaClientState::CharacterLobby);
@@ -241,9 +241,9 @@ void UVoxtaClient::HandleCharacterListResponse(const ServerResponseCharacterList
 
 bool UVoxtaClient::HandleCharacterLoadedResponse(const ServerResponseCharacterLoaded& response)
 {
-	auto character = m_characterList.FindByPredicate([response] (const TUniquePtr<const FCharData>& InItem)
+	auto character = m_characterList.FindByPredicate([response] (const TUniquePtr<const FAiCharData>& InItem)
 	{
-		return InItem->m_id == response.m_characterId;
+		return InItem->GetId() == response.m_characterId;
 	});
 
 	if (character)
@@ -260,10 +260,10 @@ bool UVoxtaClient::HandleCharacterLoadedResponse(const ServerResponseCharacterLo
 
 bool UVoxtaClient::HandleChatStartedResponse(const ServerResponseChatStarted& response)
 {
-	TArray<const FCharData*> characters;
-	for (const TUniquePtr<const FCharData>& UniquePtr : m_characterList)
+	TArray<const FAiCharData*> characters;
+	for (const TUniquePtr<const FAiCharData>& UniquePtr : m_characterList)
 	{
-		if (response.m_characterIds.Contains(UniquePtr->m_id))
+		if (response.m_characterIds.Contains(UniquePtr->GetId()))
 		{
 			characters.Add(UniquePtr.Get());
 		}
@@ -307,7 +307,7 @@ void UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessage& re
 		{
 			auto chatMessage = messages.FindByPredicate([response] (const TUniquePtr<FChatMessage>& InItem)
 			{
-				return InItem->m_messageId == response.m_messageId;
+				return InItem->GetMessageId() == response.m_messageId;
 			});
 			if (chatMessage)
 			{
@@ -321,17 +321,17 @@ void UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessage& re
 		{
 			auto chatMessage = messages.FindByPredicate([response] (const TUniquePtr<FChatMessage>& InItem)
 			{
-				return InItem->m_messageId == response.m_messageId;
+				return InItem->GetMessageId() == response.m_messageId;
 			});
 			if (chatMessage)
 			{
-				auto character = m_characterList.FindByPredicate([response] (const TUniquePtr<const FCharData>& InItem)
+				auto character = m_characterList.FindByPredicate([response] (const TUniquePtr<const FAiCharData>& InItem)
 				{
-					return InItem->m_id == response.m_senderId;
+					return InItem->GetId() == response.m_senderId;
 				});
 				if (character)
 				{
-					UE_LOGFMT(VoxtaLog, Log, "Char speaking message end: {0} -> {1}", character->Get()->m_name, chatMessage->Get()->m_text);
+					UE_LOGFMT(VoxtaLog, Log, "Char speaking message end: {0} -> {1}", character->Get()->GetName(), chatMessage->Get()->m_text);
 					OnVoxtaClientChatMessageAdded.Broadcast(*character->Get(), *chatMessage->Get());
 				}
 			}
@@ -341,7 +341,7 @@ void UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessage& re
 		{
 			int index = messages.IndexOfByPredicate([response] (const TUniquePtr<FChatMessage>& InItem)
 			{
-				return InItem->m_messageId == response.m_messageId;
+				return InItem->GetMessageId() == response.m_messageId;
 			});
 			OnVoxtaClientChatMessageRemoved.Broadcast(*messages[index].Get());
 
@@ -357,7 +357,7 @@ void UVoxtaClient::HandleChatUpdateResponse(const ServerResponseChatUpdate& resp
 	{
 		if (m_chatSession->m_chatMessages.ContainsByPredicate([response] (const TUniquePtr<FChatMessage>& InItem)
 			{
-				return InItem->m_messageId == response.m_messageId;
+				return InItem->GetMessageId() == response.m_messageId;
 			}))
 		{
 			UE_LOGFMT(VoxtaLog, Error, "Recieved chat update for a message that already exists, needs implementation. {0} {1}", response.m_senderId, response.m_text);
@@ -365,15 +365,15 @@ void UVoxtaClient::HandleChatUpdateResponse(const ServerResponseChatUpdate& resp
 		else
 		{
 			m_chatSession->m_chatMessages.Emplace(MakeUnique<FChatMessage>(response.m_messageId, response.m_senderId, response.m_text));
-			if (m_userData.Get()->m_id != response.m_senderId)
+			if (m_userData.Get()->GetId() != response.m_senderId)
 			{
 				UE_LOGFMT(VoxtaLog, Error, "Recieved chat update for a non-user character, needs implementation. {0} {1}", response.m_senderId, response.m_text);
 			}
 			auto chatMessage = m_chatSession->m_chatMessages.FindByPredicate([response] (const TUniquePtr<FChatMessage>& InItem)
 			{
-				return InItem->m_messageId == response.m_messageId;
+				return InItem->GetMessageId() == response.m_messageId;
 			});
-			UE_LOGFMT(VoxtaLog, Log, "Char speaking message end: {0} -> {1}", m_userData.Get()->m_name, chatMessage->Get()->m_text);
+			UE_LOGFMT(VoxtaLog, Log, "Char speaking message end: {0} -> {1}", m_userData.Get()->GetName(), chatMessage->Get()->m_text);
 			OnVoxtaClientChatMessageAdded.Broadcast(*m_userData.Get(), *chatMessage->Get());
 		}
 	}
