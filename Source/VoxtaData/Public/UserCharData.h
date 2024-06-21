@@ -7,7 +7,8 @@
 #include "UserCharData.generated.h"
 
 /// <summary>
-/// Data struct that contains all the relevant information for an AI character.
+/// Read-only data struct containing all the relevant information for the
+/// character representing the User (player).
 /// </summary>
 USTRUCT()
 struct FUserCharData : public FCharDataBase
@@ -15,8 +16,8 @@ struct FUserCharData : public FCharDataBase
 	GENERATED_BODY()
 
 public:
-	explicit FUserCharData(FStringView id,
-		FStringView name) : FCharDataBase(id, name)
+	explicit FUserCharData(FStringView id, FStringView name) :
+		FCharDataBase(id, name)
 	{
 	}
 

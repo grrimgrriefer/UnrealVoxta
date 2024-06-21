@@ -123,21 +123,19 @@ TUniquePtr<ServerResponseChatStarted> VoxtaApiResponseHandler::GetChatStartedRes
 		chars, services, serverResponseData[API_STRING("chatId")].AsString(), serverResponseData[API_STRING("sessionId")].AsString());
 }
 
-TUniquePtr<ServerResponseChatMessage> VoxtaApiResponseHandler::GetReplyStartReponseResponse(
+TUniquePtr<ServerResponseChatMessageStart> VoxtaApiResponseHandler::GetReplyStartReponseResponse(
 	const TMap<FString, FSignalRValue>& serverResponseData) const
 {
-	return MakeUnique<ServerResponseChatMessage>(
-		ServerResponseChatMessage::MessageType::MESSAGE_START,
+	return MakeUnique<ServerResponseChatMessageStart>(
 		serverResponseData[API_STRING("messageId")].AsString(),
 		serverResponseData[API_STRING("senderId")].AsString(),
 		serverResponseData[API_STRING("sessionId")].AsString());
 }
 
-TUniquePtr<ServerResponseChatMessage> VoxtaApiResponseHandler::GetReplyChunkReponseResponse(
+TUniquePtr<ServerResponseChatMessageChunk> VoxtaApiResponseHandler::GetReplyChunkReponseResponse(
 	const TMap<FString, FSignalRValue>& serverResponseData) const
 {
-	return MakeUnique<ServerResponseChatMessage>(
-		ServerResponseChatMessage::MessageType::MESSAGE_CHUNK,
+	return MakeUnique<ServerResponseChatMessageChunk>(
 		serverResponseData[API_STRING("messageId")].AsString(),
 		serverResponseData[API_STRING("senderId")].AsString(),
 		serverResponseData[API_STRING("sessionId")].AsString(),
@@ -147,21 +145,19 @@ TUniquePtr<ServerResponseChatMessage> VoxtaApiResponseHandler::GetReplyChunkRepo
 		serverResponseData[API_STRING("audioUrl")].AsString());
 }
 
-TUniquePtr<ServerResponseChatMessage> VoxtaApiResponseHandler::GetReplyEndReponseResponse(
+TUniquePtr<ServerResponseChatMessageEnd> VoxtaApiResponseHandler::GetReplyEndReponseResponse(
 	const TMap<FString, FSignalRValue>& serverResponseData) const
 {
-	return MakeUnique<ServerResponseChatMessage>(
-		ServerResponseChatMessage::MessageType::MESSAGE_END,
+	return MakeUnique<ServerResponseChatMessageEnd>(
 		serverResponseData[API_STRING("messageId")].AsString(),
 		serverResponseData[API_STRING("senderId")].AsString(),
 		serverResponseData[API_STRING("sessionId")].AsString());
 }
 
-TUniquePtr<ServerResponseChatMessage> VoxtaApiResponseHandler::GetReplyCancelledResponse(
+TUniquePtr<ServerResponseChatMessageCancelled> VoxtaApiResponseHandler::GetReplyCancelledResponse(
 	const TMap<FString, FSignalRValue>& serverResponseData) const
 {
-	return MakeUnique<ServerResponseChatMessage>(
-		ServerResponseChatMessage::MessageType::MESSAGE_CANCELLED,
+	return MakeUnique<ServerResponseChatMessageCancelled>(
 		serverResponseData[API_STRING("messageId")].AsString(),
 		serverResponseData[API_STRING("sessionId")].AsString());
 }

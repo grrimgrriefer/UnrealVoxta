@@ -10,7 +10,10 @@
 #include "VoxtaData/Public/ServerResponses/ServerResponseCharacterList.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseCharacterLoaded.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseChatStarted.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseChatMessage.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseChatMessageStart.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseChatMessageChunk.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseChatMessageEnd.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseChatMessageCancelled.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseChatUpdate.h"
 #include "VoxtaData/Public/VoxtaServiceData.h"
 
@@ -48,16 +51,16 @@ private:
 	TUniquePtr<ServerResponseChatStarted> GetChatStartedResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
 
-	TUniquePtr<ServerResponseChatMessage> GetReplyStartReponseResponse(
+	TUniquePtr<ServerResponseChatMessageStart> GetReplyStartReponseResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
 
-	TUniquePtr<ServerResponseChatMessage> GetReplyChunkReponseResponse(
+	TUniquePtr<ServerResponseChatMessageChunk> GetReplyChunkReponseResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
 
-	TUniquePtr<ServerResponseChatMessage> GetReplyEndReponseResponse(
+	TUniquePtr<ServerResponseChatMessageEnd> GetReplyEndReponseResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
 
-	TUniquePtr<ServerResponseChatMessage> GetReplyCancelledResponse(
+	TUniquePtr<ServerResponseChatMessageCancelled> GetReplyCancelledResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
 
 	TUniquePtr<ServerResponseChatUpdate> GetChatUpdateResponse(

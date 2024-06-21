@@ -97,7 +97,7 @@ private:
 	void HandleCharacterListResponse(const ServerResponseCharacterList& response);
 	bool HandleCharacterLoadedResponse(const ServerResponseCharacterLoaded& response);
 	bool HandleChatStartedResponse(const ServerResponseChatStarted& response);
-	void HandleChatMessageResponse(const ServerResponseChatMessage& response);
+	void HandleChatMessageResponse(const IServerResponseChatMessageBase& response);
 	void HandleChatUpdateResponse(const ServerResponseChatUpdate& response);
 
 	void SetState(VoxtaClientState newState);

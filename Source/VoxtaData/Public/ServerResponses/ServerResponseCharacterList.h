@@ -6,6 +6,10 @@
 #include "ServerResponseBase.h"
 #include "AiCharData.h"
 
+/// <summary>
+/// Read-only data struct containing the relevant data of the 'charactersListLoaded' response
+/// from the VoxtaServer.
+/// </summary>
 struct ServerResponseCharacterList : public IServerResponseBase
 {
 public:
@@ -16,7 +20,8 @@ public:
 	{
 	}
 
-	ServerResponseType GetType() final
+	///<inheritdoc />
+	ServerResponseType GetType() const final
 	{
 		return ServerResponseType::CharacterList;
 	}

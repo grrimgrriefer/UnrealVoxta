@@ -6,6 +6,10 @@
 #include "ChatMessage.h"
 #include "VoxtaServiceData.h"
 
+/// <summary>
+/// Data struct containing all the relevant information regarding a chat session
+/// between the user and AI characters.
+/// </summary>
 struct ChatSession
 {
 public:
@@ -13,11 +17,12 @@ public:
 	TArray<const FAiCharData*> m_characters;
 	const FString m_chatId;
 	const FString m_sessionId;
-	const TMap<const VoxtaServiceData::ServiceType, const VoxtaServiceData> m_services; // Assumes we don't allow the user to disable / enable services while chatting
+	// TODO: Add functionality for runtime disabling / enabling of services.
+	const TMap<const VoxtaServiceData::ServiceType, const VoxtaServiceData> m_services; //
 
 	explicit ChatSession(const TArray<const FAiCharData*>& characters,
-			FString chatId,
-			FString sessionId,
+			FStringView chatId,
+			FStringView sessionId,
 			const TMap<const VoxtaServiceData::ServiceType, const VoxtaServiceData>& services) :
 		m_characters(characters),
 		m_chatId(chatId),

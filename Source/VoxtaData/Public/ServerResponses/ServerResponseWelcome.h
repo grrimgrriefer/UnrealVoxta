@@ -6,6 +6,10 @@
 #include "ServerResponseBase.h"
 #include "UserCharData.h"
 
+/// <summary>
+/// Read-only data struct containing the relevant data of the 'welcome' response
+/// from the VoxtaServer.
+/// </summary>
 struct ServerResponseWelcome : public IServerResponseBase
 {
 public:
@@ -16,7 +20,11 @@ public:
 	{
 	}
 
-	ServerResponseType GetType() final
+	/// <summary>
+	/// Identifies the response type as Welcome.
+	/// </summary>
+	/// <returns>Returns MessageType::Welcome.</returns>
+	ServerResponseType GetType() const final
 	{
 		return ServerResponseType::Welcome;
 	}

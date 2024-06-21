@@ -6,7 +6,9 @@
 #include "CharDataBase.generated.h"
 
 /// <summary>
-/// Data struct that contains all the relevant information for an AI character.
+/// Base struct that contains all the relevant information for an AI character.
+///
+/// NOTE: This is not abstract due to USTRUCT, but should be considered as such.
 /// </summary>
 USTRUCT()
 struct FCharDataBase
@@ -17,8 +19,7 @@ public:
 	FStringView GetId() const { return m_id; }
 	FStringView GetName() const { return m_name; }
 
-	explicit FCharDataBase(FStringView id,
-		FStringView name) :
+	explicit FCharDataBase(FStringView id, FStringView name) :
 		m_id(id),
 		m_name(name)
 	{

@@ -6,6 +6,10 @@
 #include "ServerResponseBase.h"
 #include "VoxtaData/Public/VoxtaServiceData.h"
 
+/// <summary>
+/// Read-only data struct containing the relevant data of the 'chatStarted' response
+/// from the VoxtaServer.
+/// </summary>
 struct ServerResponseChatStarted : public IServerResponseBase
 {
 public:
@@ -15,11 +19,11 @@ public:
 	const FString m_chatId;
 	const FString m_sessionId;
 
-	explicit ServerResponseChatStarted(FString userId,
+	explicit ServerResponseChatStarted(FStringView userId,
 			const TArray<FString>& characterIds,
 			const TMap<const VoxtaServiceData::ServiceType, const VoxtaServiceData>& services,
-			FString chatId,
-			FString sessionId) :
+			FStringView chatId,
+			FStringView sessionId) :
 		m_characterIds(characterIds),
 		m_services(services),
 		m_userId(userId),
@@ -28,7 +32,11 @@ public:
 	{
 	}
 
-	ServerResponseType GetType() final
+	/// <summary>
+	/// Identifies the response type as ChatStarted.
+	/// </summary>
+	/// <returns>Returns MessageType::ChatStarted.</returns>
+	ServerResponseType GetType() const final
 	{
 		return ServerResponseType::ChatStarted;
 	}

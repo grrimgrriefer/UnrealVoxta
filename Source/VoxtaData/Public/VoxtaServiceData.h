@@ -4,6 +4,10 @@
 
 #include "CoreMinimal.h"
 
+/// <summary>
+/// Read-only data struct containing the data to identify a VoxtaService
+/// when using the Voxta API.
+/// </summary>
 struct VoxtaServiceData
 {
 public:
@@ -19,8 +23,8 @@ public:
 	const FString m_serviceId;
 
 	explicit VoxtaServiceData(ServiceType type,
-			FString name,
-			FString id) :
+			FStringView name,
+			FStringView id) :
 		m_serviceType(type),
 		m_serviceName(name),
 		m_serviceId(id)

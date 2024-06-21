@@ -71,7 +71,7 @@ void ATalkToMeCppUeHUD::RegisterTextMessage(const FCharDataBase& sender, const F
 
 void ATalkToMeCppUeHUD::RemoveTextMessage(const FChatMessage& message)
 {
-	m_hudWidget->RemoveTextMessage(message.GetMessageId());
+	m_hudWidget->RemoveTextMessage(FString(message.GetMessageId()));
 }
 
 void ATalkToMeCppUeHUD::OnCharButtonClicked(FString charId)

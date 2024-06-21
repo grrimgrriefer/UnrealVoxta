@@ -195,7 +195,7 @@ bool UVoxtaClient::HandleResponse(const TMap<FString, FSignalRValue>& responseDa
 		}
 		case ChatMessage:
 		{
-			auto derivedResponse = StaticCast<const ServerResponseChatMessage*>(response.Get());
+			auto derivedResponse = StaticCast<const IServerResponseChatMessageBase*>(response.Get());
 			if (derivedResponse)
 			{
 				UE_LOGFMT(VoxtaLog, Log, "Chat Message received sucessfully");
@@ -291,43 +291,46 @@ bool UVoxtaClient::HandleChatStartedResponse(const ServerResponseChatStarted& re
 	return true;
 }
 
-void UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessage& response)
+void UVoxtaClient::HandleChatMessageResponse(const IServerResponseChatMessageBase& response)
 {
 	auto& messages = m_chatSession->m_chatMessages;
-	using enum ServerResponseChatMessage::MessageType;
-	switch (response.m_messageType)
+	using enum IServerResponseChatMessageBase::MessageType;
+	switch (response.GetMessageType())
 	{
-		case MESSAGE_START:
+		case MessageStart:
 		{
+			auto derivedResponse = StaticCast<const ServerResponseChatMessageStart*>(&response);
 			messages.Emplace(MakeUnique<FChatMessage>(
-				response.m_messageId, response.m_senderId));
+				derivedResponse->m_messageId, derivedResponse->m_senderId));
 			break;
 		}
-		case MESSAGE_CHUNK:
+		case MessageChunk:
 		{
-			auto chatMessage = messages.FindByPredicate([response] (const TUniquePtr<FChatMessage>& InItem)
+			auto derivedResponse = StaticCast<const ServerResponseChatMessageChunk*>(&response);
+			auto chatMessage = messages.FindByPredicate([derivedResponse] (const TUniquePtr<FChatMessage>& InItem)
 			{
-				return InItem->GetMessageId() == response.m_messageId;
+				return InItem->GetMessageId() == derivedResponse->m_messageId;
 			});
 			if (chatMessage)
 			{
-				(*chatMessage)->m_text.Append((*chatMessage)->m_text.IsEmpty() ? response.m_messageText
-					: FString::Format(*API_STRING(" {0}"), { response.m_messageText }));
-				(*chatMessage)->m_audioUrls.Emplace(response.m_audioUrlPath);
+				(*chatMessage)->m_text.Append((*chatMessage)->m_text.IsEmpty() ? derivedResponse->m_messageText
+					: FString::Format(*API_STRING(" {0}"), { derivedResponse->m_messageText }));
+				(*chatMessage)->m_audioUrls.Emplace(derivedResponse->m_audioUrlPath);
 			}
 			break;
 		}
-		case MESSAGE_END:
+		case MessageEnd:
 		{
-			auto chatMessage = messages.FindByPredicate([response] (const TUniquePtr<FChatMessage>& InItem)
+			auto derivedResponse = StaticCast<const ServerResponseChatMessageEnd*>(&response);
+			auto chatMessage = messages.FindByPredicate([derivedResponse] (const TUniquePtr<FChatMessage>& InItem)
 			{
-				return InItem->GetMessageId() == response.m_messageId;
+				return InItem->GetMessageId() == derivedResponse->m_messageId;
 			});
 			if (chatMessage)
 			{
-				auto character = m_characterList.FindByPredicate([response] (const TUniquePtr<const FAiCharData>& InItem)
+				auto character = m_characterList.FindByPredicate([derivedResponse] (const TUniquePtr<const FAiCharData>& InItem)
 				{
-					return InItem->GetId() == response.m_senderId;
+					return InItem->GetId() == derivedResponse->m_senderId;
 				});
 				if (character)
 				{
@@ -337,11 +340,12 @@ void UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessage& re
 			}
 			break;
 		}
-		case MESSAGE_CANCELLED:
+		case MessageCancelled:
 		{
-			int index = messages.IndexOfByPredicate([response] (const TUniquePtr<FChatMessage>& InItem)
+			auto derivedResponse = StaticCast<const ServerResponseChatMessageCancelled*>(&response);
+			int index = messages.IndexOfByPredicate([derivedResponse] (const TUniquePtr<FChatMessage>& InItem)
 			{
-				return InItem->GetMessageId() == response.m_messageId;
+				return InItem->GetMessageId() == derivedResponse->m_messageId;
 			});
 			OnVoxtaClientChatMessageRemoved.Broadcast(*messages[index].Get());
 

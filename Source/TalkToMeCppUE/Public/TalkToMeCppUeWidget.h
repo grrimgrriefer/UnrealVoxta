@@ -72,7 +72,7 @@ public:
 	/// <param name="sender">The FCharData of the character that is says the message.</param>
 	/// <param name="messageId">The VoxtaServer messageId, to keep track of edits and deletions.</param>
 	/// <param name="message">The text of the message itself.</param>
-	void RegisterTextMessage(const FCharDataBase& sender, const FString& messageId, const FString& message);
+	void RegisterTextMessage(const FCharDataBase& sender, FStringView messageId, FStringView message);
 
 	/// <summary>
 	/// If a chat message is found with a matching messageId,

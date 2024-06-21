@@ -20,10 +20,11 @@ public:
 	bool GetIsFavorite() const { return m_isFavorite; };
 
 	explicit FAiCharData(FStringView id,
-		FStringView name,
-		FStringView creatorNotes,
-		bool isExplicitContent,
-		bool isFavorite) : FCharDataBase(id, name),
+			FStringView name,
+			FStringView creatorNotes,
+			bool isExplicitContent,
+			bool isFavorite) :
+		FCharDataBase(id, name),
 		m_creatorNotes(creatorNotes),
 		m_allowedExplicitContent(isExplicitContent),
 		m_isFavorite(isFavorite)

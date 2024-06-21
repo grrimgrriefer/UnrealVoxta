@@ -71,7 +71,7 @@ void UTalkToMeCppUeWidget::RegisterCharacterOption(const FAiCharData& charData)
 	}
 }
 
-void UTalkToMeCppUeWidget::RegisterTextMessage(const FCharDataBase& sender, const FString& messageId, const FString& message)
+void UTalkToMeCppUeWidget::RegisterTextMessage(const FCharDataBase& sender, FStringView messageId, FStringView message)
 {
 	if (ChatLogScrollBox)
 	{
@@ -85,7 +85,7 @@ void UTalkToMeCppUeWidget::RegisterTextMessage(const FCharDataBase& sender, cons
 		textBlock->SetShadowOffset(FVector2D(2));
 		textBlock->SetAutoWrapText(true);
 
-		m_messages.Add(messageId, textBlock);
+		m_messages.Add(FString(messageId), textBlock);
 		ChatLogScrollBox->AddChild(textBlock);
 	}
 }

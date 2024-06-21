@@ -5,6 +5,10 @@
 #include "CoreMinimal.h"
 #include "ServerResponseBase.h"
 
+/// <summary>
+/// Read-only data struct containing the relevant data of the 'update' response
+/// from the VoxtaServer.
+/// </summary>
 struct ServerResponseChatUpdate : IServerResponseBase
 {
 public:
@@ -13,10 +17,10 @@ public:
 	const FString m_text;
 	const FString m_sessionId;
 
-	explicit ServerResponseChatUpdate(FString messageId,
-			FString senderId,
-			FString text,
-			FString sessionId) :
+	explicit ServerResponseChatUpdate(FStringView messageId,
+			FStringView senderId,
+			FStringView text,
+			FStringView sessionId) :
 		m_messageId(messageId),
 		m_senderId(senderId),
 		m_text(text),
@@ -24,7 +28,11 @@ public:
 	{
 	}
 
-	ServerResponseType GetType() final
+	/// <summary>
+	/// Identifies the response type as ChatUpdate.
+	/// </summary>
+	/// <returns>Returns MessageType::ChatUpdate.</returns>
+	ServerResponseType GetType() const final
 	{
 		return ServerResponseType::ChatUpdate;
 	}
