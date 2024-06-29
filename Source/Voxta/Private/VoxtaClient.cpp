@@ -32,10 +32,13 @@ void UVoxtaClient::StartConnection()
 		return;
 	}
 
+	m_hostAddress = TEXT("192.168.178.8");
+	m_hostPort = TEXT("5384");
+
 	SetState(VoxtaClientState::Connecting);
 	m_hub = GEngine->GetEngineSubsystem<USignalRSubsystem>()->CreateHubConnection(FString::Format(*API_STRING("http://{0}:{1}/hub"), {
-		TEXT("192.168.178.8"),
-		TEXT("5384")
+		m_hostAddress,
+		m_hostPort
 		}));
 
 	StartListeningToServer();
@@ -66,6 +69,21 @@ void UVoxtaClient::SendUserInput(FString inputText)
 {
 	// TODO: check if we are in chatting state before sending user input
 	SendMessageToServer(m_voxtaRequestApi.GetSendUserMessageData(m_chatSession->m_sessionId, inputText));
+}
+
+const ChatSession* UVoxtaClient::GetChatSession() const
+{
+	return m_chatSession.Get();
+}
+
+FStringView UVoxtaClient::GetServerAddress() const
+{
+	return m_hostAddress;
+}
+
+FStringView UVoxtaClient::GetServerPort() const
+{
+	return m_hostPort;
 }
 
 void UVoxtaClient::StartListeningToServer()

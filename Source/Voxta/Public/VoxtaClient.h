@@ -97,6 +97,10 @@ public:
 	UFUNCTION()
 	void SendUserInput(FString inputText);
 
+	const ChatSession* GetChatSession() const;
+	FStringView GetServerAddress() const;
+	FStringView GetServerPort() const;
+
 private:
 	VoxtaLogUtility m_logUtility;
 	TSharedPtr<IHubConnection> m_hub;
@@ -107,6 +111,9 @@ private:
 	TUniquePtr<FUserCharData> m_userData;
 	TArray<TUniquePtr<const FAiCharData>> m_characterList;
 	TUniquePtr<ChatSession> m_chatSession;
+
+	FString m_hostAddress;
+	FString m_hostPort;
 
 	const FString m_sendMessageEventName = TEXT("SendMessage");
 	const FString m_receiveMessageEventName = TEXT("ReceiveMessage");

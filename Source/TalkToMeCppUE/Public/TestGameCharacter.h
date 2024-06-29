@@ -7,6 +7,7 @@
 #include "Camera/CameraComponent.h"
 #include "Voxta/Public/VoxtaClient.h"
 #include "TalkToMeCppUeHUD.h"
+#include "VoxtaAudioPlayback.h"
 #include "TestGameCharacter.generated.h"
 
 /// <summary>
@@ -33,6 +34,7 @@ private:
 	UCameraComponent* m_camera;
 	UVoxtaClient* m_voxtaClient;
 	ATalkToMeCppUeHUD* m_hud;
+	UVoxtaAudioPlayback* m_audioPlaybackHandler;
 
 	/// <summary>
 	/// Connects the events between the UVoxtaClient and the ATalkToMeCppUeHUD.
@@ -45,6 +47,9 @@ private:
 	/// </summary>
 	/// <returns>True if connection was established.</returns>
 	bool TryDisconnectToHud();
+
+	UFUNCTION()
+	void VoxtaClientStateChanged(VoxtaClientState newState);
 
 	///~ Begin APawn overrides.
 protected:

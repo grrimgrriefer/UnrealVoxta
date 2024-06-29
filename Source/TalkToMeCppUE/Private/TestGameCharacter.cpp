@@ -20,7 +20,7 @@ void ATestGameCharacter::StartVoxtaClient()
 void ATestGameCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
+	m_voxtaClient->VoxtaClientStateChangedEvent.AddDynamic(this, &ATestGameCharacter::VoxtaClientStateChanged);
 	m_hud = UGameplayStatics::GetPlayerController(this, 0)->GetHUD<ATalkToMeCppUeHUD>();
 	if (!TryConnectToHud())
 	{
@@ -31,6 +31,7 @@ void ATestGameCharacter::BeginPlay()
 void ATestGameCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
+	m_voxtaClient->VoxtaClientStateChangedEvent.RemoveDynamic(this, &ATestGameCharacter::VoxtaClientStateChanged);
 	if (!TryDisconnectToHud() && EndPlayReason != EEndPlayReason::Quit)
 	{
 		UE_LOGFMT(LogCore, Error, "Failed to clean up the bindings between the ATestGameCharacter and the ATalkToMeCppUeHUD.");
@@ -49,7 +50,7 @@ bool ATestGameCharacter::TryConnectToHud()
 {
 	if (m_voxtaClient && m_hud)
 	{
-		m_voxtaClient->VoxtaClientStateChangedEvent.AddUniqueDynamic(m_hud, &ATalkToMeCppUeHUD::VoxtaClientStateChanged);
+		m_voxtaClient->VoxtaClientStateChangedEvent.AddDynamic(m_hud, &ATalkToMeCppUeHUD::VoxtaClientStateChanged);
 		m_voxtaClient->VoxtaClientCharacterRegisteredEvent.AddUniqueDynamic(m_hud, &ATalkToMeCppUeHUD::VoxtaClientCharacterRegistered);
 		m_voxtaClient->VoxtaClientCharMessageAddedEvent.AddUniqueDynamic(m_hud, &ATalkToMeCppUeHUD::AddTextMessage);
 		m_voxtaClient->VoxtaClientCharMessageRemovedEvent.AddUniqueDynamic(m_hud, &ATalkToMeCppUeHUD::RemoveTextMessage);
@@ -78,4 +79,17 @@ bool ATestGameCharacter::TryDisconnectToHud()
 	}
 	UE_LOGFMT(LogCore, Warning, "Failed to disconnect the HUD and the VoxtaClient with each other.");
 	return false;
+}
+
+void ATestGameCharacter::VoxtaClientStateChanged(VoxtaClientState newState)
+{
+	if (newState == VoxtaClientState::Chatting)
+	{
+		for (const FAiCharData* aiCharacter : m_voxtaClient->GetChatSession()->m_characters)
+		{
+			FString componentName = FString::Format(*FString(TEXT("AudioPlayback {0}")), { aiCharacter->GetName() });
+			m_audioPlaybackHandler = NewObject<UVoxtaAudioPlayback>(this, *componentName);
+			m_audioPlaybackHandler->InitializeAudioPlayback(m_voxtaClient, aiCharacter->GetId());
+		}
+	}
 }
