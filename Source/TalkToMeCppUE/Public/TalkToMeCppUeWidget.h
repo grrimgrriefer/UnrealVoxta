@@ -31,13 +31,13 @@ public:
 	/// the intention of loading that character into a chat conversation.
 	/// </summary>
 	UPROPERTY()
-	FCharButtonClickedEventCallback OnCharButtonClickedEvent;
+	FCharButtonClickedEventCallback CharButtonClickedEvent;
 
 	/// <summary>
 	/// Event fired when the user has pressed ENTER after providing some text in the EditableTextBox
 	/// </summary>
 	UPROPERTY()
-	FInputCommittedEventCallback OnUserInputCommittedEvent;
+	FInputCommittedEventCallback UserInputCommittedEvent;
 
 	/// <summary>
 	/// Sets up the bindings for the inputfield and ensures the proper elements
@@ -72,7 +72,7 @@ public:
 	/// <param name="sender">The FCharData of the character that is says the message.</param>
 	/// <param name="messageId">The VoxtaServer messageId, to keep track of edits and deletions.</param>
 	/// <param name="message">The text of the message itself.</param>
-	void RegisterTextMessage(const FCharDataBase& sender, FStringView messageId, FStringView message);
+	void AddTextMessage(const FCharDataBase& sender, FStringView messageId, FStringView message);
 
 	/// <summary>
 	/// If a chat message is found with a matching messageId,
@@ -100,9 +100,20 @@ protected:
 private:
 	TMap<FString, UTextBlock*> m_messages;
 
+	/// <summary>
+	/// Automatically invoked when one of the buttons tied to a character is clicked.
+	/// It will in turn broadcast a click event with the charId as parameter of the event.
+	/// </summary>
+	/// <param name="charId">The FCharDataBase::m_id of the character tied to the button clicked.</param>
 	UFUNCTION()
 	void OnCharacterButtonClickedInternal(FString charId);
 
+	/// <summary>
+	/// Automatically invoked when the EditableTextBox::OnTextCommitted is triggered.
+	/// This happens when the user presses enter or the text box loses focus.
+	/// </summary>
+	/// <param name="text">The text that the user had written in the textbox.</param>
+	/// <param name="commitMethod">The type of trigger that caused this function to be invoked.</param>
 	UFUNCTION()
 	void OnUserInputCommittedInternal(const FText& text, ETextCommit::Type commitMethod);
 };

@@ -20,7 +20,8 @@
 class VoxtaApiResponseHandler
 {
 public:
-	// Currently ignored messages
+	// Message types that the internal VoxtaClient will consider to be 'safe to ignore'
+	// any message not recognized and not
 	const TSet<FString> ignoredMessageTypes{
 		API_STRING("chatStarting"),
 		API_STRING("chatLoadingMessage"),
@@ -35,10 +36,17 @@ public:
 		API_STRING("memoryUpdated")
 	};
 
+	/// <summary>
+	/// Deserialize a reponse from the VoxtaServer into an easily queried object.
+	/// </summary>
+	/// <param name="serverResponseData">The raw response fromt the Voxta server</param>
+	/// <returns>A pointer to the deserialized object.</returns>
 	TUniquePtr<IServerResponseBase> GetResponseData(
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
 
 private:
+	///~ Begin internal deserialize helpers.
+
 	TUniquePtr<ServerResponseWelcome> GetWelcomeResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
 
@@ -65,4 +73,5 @@ private:
 
 	TUniquePtr<ServerResponseChatUpdate> GetChatUpdateResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
+	///~ End internal deserialize helpers.
 };

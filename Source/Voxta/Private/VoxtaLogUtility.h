@@ -11,11 +11,17 @@ DECLARE_LOG_CATEGORY_EXTERN(VoxtaLog, Log, All);
 class VoxtaLogUtility : public FOutputDevice
 {
 public:
-	void RegisterVoxtaLogger();
 	~VoxtaLogUtility();
 
+	/// <summary>
+	/// Add the VoxtaLogUtility to the GlobalLogSingleton.
+	/// </summary>
+	void RegisterVoxtaLogger();
+
+	///~ Begin FOutputDevice overrides.
 protected:
 	virtual void Serialize(const TCHAR* Message, ELogVerbosity::Type Verbosity, const class FName& Category) override;
+	///~ End FOutputDevice overrides.
 
 private:
 	const FName m_voxtaLogCategory = TEXT("VoxtaLog");

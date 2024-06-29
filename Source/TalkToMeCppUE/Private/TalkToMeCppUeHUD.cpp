@@ -25,8 +25,8 @@ void ATalkToMeCppUeHUD::BeginPlay()
 		m_hudWidget->AddToViewport();
 
 		m_hudWidget->InitializeWidget();
-		m_hudWidget->OnCharButtonClickedEvent.AddUniqueDynamic(this, &ATalkToMeCppUeHUD::OnCharButtonClicked);
-		m_hudWidget->OnUserInputCommittedEvent.AddUniqueDynamic(this, &ATalkToMeCppUeHUD::OnUserInputFieldSubmitted);
+		m_hudWidget->CharButtonClickedEvent.AddUniqueDynamic(this, &ATalkToMeCppUeHUD::OnCharButtonClicked);
+		m_hudWidget->UserInputCommittedEvent.AddUniqueDynamic(this, &ATalkToMeCppUeHUD::OnUserInputFieldSubmitted);
 	}
 	else
 	{
@@ -39,11 +39,11 @@ void ATalkToMeCppUeHUD::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 	if (m_hudWidget)
 	{
-		m_hudWidget->OnCharButtonClickedEvent.RemoveDynamic(this, &ATalkToMeCppUeHUD::OnCharButtonClicked);
-		m_hudWidget->OnUserInputCommittedEvent.RemoveDynamic(this, &ATalkToMeCppUeHUD::OnUserInputFieldSubmitted);
+		m_hudWidget->CharButtonClickedEvent.RemoveDynamic(this, &ATalkToMeCppUeHUD::OnCharButtonClicked);
+		m_hudWidget->UserInputCommittedEvent.RemoveDynamic(this, &ATalkToMeCppUeHUD::OnUserInputFieldSubmitted);
 
-		OnCharButtonClickedEvent.Clear();
-		OnUserInputCommittedEvent.Clear();
+		CharButtonClickedEvent.Clear();
+		UserInputCommittedEvent.Clear();
 
 		m_hudWidget->RemoveFromParent();
 		m_hudWidget = nullptr;
@@ -59,14 +59,14 @@ void ATalkToMeCppUeHUD::VoxtaClientStateChanged(VoxtaClientState newState)
 	m_hudWidget->ConfigureWidgetForState(newState);
 }
 
-void ATalkToMeCppUeHUD::VoxtaClientCharacterLoaded(const FAiCharData& charData)
+void ATalkToMeCppUeHUD::VoxtaClientCharacterRegistered(const FAiCharData& charData)
 {
 	m_hudWidget->RegisterCharacterOption(charData);
 }
 
-void ATalkToMeCppUeHUD::RegisterTextMessage(const FCharDataBase& sender, const FChatMessage& message)
+void ATalkToMeCppUeHUD::AddTextMessage(const FCharDataBase& sender, const FChatMessage& message)
 {
-	m_hudWidget->RegisterTextMessage(sender, message.GetMessageId(), message.m_text);
+	m_hudWidget->AddTextMessage(sender, message.GetMessageId(), message.m_text);
 }
 
 void ATalkToMeCppUeHUD::RemoveTextMessage(const FChatMessage& message)
@@ -76,10 +76,10 @@ void ATalkToMeCppUeHUD::RemoveTextMessage(const FChatMessage& message)
 
 void ATalkToMeCppUeHUD::OnCharButtonClicked(FString charId)
 {
-	OnCharButtonClickedEvent.Broadcast(charId);
+	CharButtonClickedEvent.Broadcast(charId);
 }
 
 void ATalkToMeCppUeHUD::OnUserInputFieldSubmitted(FString inputText)
 {
-	OnUserInputCommittedEvent.Broadcast(inputText);
+	UserInputCommittedEvent.Broadcast(inputText);
 }

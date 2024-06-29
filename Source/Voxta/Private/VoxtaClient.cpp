@@ -24,11 +24,6 @@ void UVoxtaClient::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 }
 
-void UVoxtaClient::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-}
-
 void UVoxtaClient::StartConnection()
 {
 	if (m_currentState != VoxtaClientState::Disconnected)
@@ -60,14 +55,16 @@ void UVoxtaClient::Disconnect()
 	m_hub->Stop();
 }
 
-void UVoxtaClient::LoadCharacter(FString charId)
+void UVoxtaClient::StartChatWithCharacter(FString charId)
 {
+	// TODO: check if character is registered first before trying to initiate a chat
 	SendMessageToServer(m_voxtaRequestApi.GetLoadCharacterRequestData(charId));
 	SetState(VoxtaClientState::StartingChat);
 }
 
 void UVoxtaClient::SendUserInput(FString inputText)
 {
+	// TODO: check if we are in chatting state before sending user input
 	SendMessageToServer(m_voxtaRequestApi.GetSendUserMessageData(m_chatSession->m_sessionId, inputText));
 }
 
@@ -79,30 +76,21 @@ void UVoxtaClient::StartListeningToServer()
 	m_hub->OnClosed().AddUObject(this, &UVoxtaClient::OnClosed);
 }
 
-void UVoxtaClient::OnReceivedMessage(const TArray<FSignalRValue>& Arguments)
+void UVoxtaClient::OnReceivedMessage(const TArray<FSignalRValue>& arguments)
 {
 	if (m_currentState == VoxtaClientState::Disconnected || m_currentState == VoxtaClientState::Terminated)
 	{
 		UE_LOGFMT(VoxtaLog, Warning, "Tried to process a message with the connection already severed, skipping processing of remaining response data.");
 		return;
 	}
-	if (Arguments.IsEmpty() || Arguments[0].GetType() != FSignalRValue::EValueType::Object)
+	if (arguments.IsEmpty() || arguments[0].GetType() != FSignalRValue::EValueType::Object)
 	{
 		UE_LOGFMT(VoxtaLog, Error, "Received invalid message from server.");
 	}
-	else try
+	else if (!HandleResponse(arguments[0].AsObject()))
 	{
-		if (!HandleResponse(Arguments[0].AsObject()))
-		{
-			UE_LOGFMT(VoxtaLog, Warning, "Received server response that is not (yet) supported: {type}",
-				Arguments[0].AsObject()[API_STRING("$type")].AsString());
-		}
-	}
-	catch (const std::exception& ex)
-	{
-		FString error(TEXT("Something went wrong while parsing the server response: "));
-		error += ex.what();
-		UE_LOGFMT(VoxtaLog, Error, "Received server response that is not (yet) supported: {error}", error);
+		UE_LOGFMT(VoxtaLog, Warning, "Received server response that is not (yet) supported: {type}",
+			arguments[0].AsObject()[API_STRING("$type")].AsString());
 	}
 }
 
@@ -234,7 +222,7 @@ void UVoxtaClient::HandleCharacterListResponse(const ServerResponseCharacterList
 	for (auto& charElement : response.m_characters)
 	{
 		m_characterList.Emplace(MakeUnique<FAiCharData>(charElement));
-		OnVoxtaClientCharacterLoadedDelegate.Broadcast(charElement);
+		VoxtaClientCharacterRegisteredEvent.Broadcast(charElement);
 	}
 	SetState(VoxtaClientState::CharacterLobby);
 }
@@ -335,7 +323,7 @@ void UVoxtaClient::HandleChatMessageResponse(const IServerResponseChatMessageBas
 				if (character)
 				{
 					UE_LOGFMT(VoxtaLog, Log, "Char speaking message end: {0} -> {1}", character->Get()->GetName(), chatMessage->Get()->m_text);
-					OnVoxtaClientChatMessageAdded.Broadcast(*character->Get(), *chatMessage->Get());
+					VoxtaClientCharMessageAddedEvent.Broadcast(*character->Get(), *chatMessage->Get());
 				}
 			}
 			break;
@@ -347,7 +335,7 @@ void UVoxtaClient::HandleChatMessageResponse(const IServerResponseChatMessageBas
 			{
 				return InItem->GetMessageId() == derivedResponse->m_messageId;
 			});
-			OnVoxtaClientChatMessageRemoved.Broadcast(*messages[index].Get());
+			VoxtaClientCharMessageRemovedEvent.Broadcast(*messages[index].Get());
 
 			messages[index].Reset();
 			messages.RemoveAt(index);
@@ -378,7 +366,7 @@ void UVoxtaClient::HandleChatUpdateResponse(const ServerResponseChatUpdate& resp
 				return InItem->GetMessageId() == response.m_messageId;
 			});
 			UE_LOGFMT(VoxtaLog, Log, "Char speaking message end: {0} -> {1}", m_userData.Get()->GetName(), chatMessage->Get()->m_text);
-			OnVoxtaClientChatMessageAdded.Broadcast(*m_userData.Get(), *chatMessage->Get());
+			VoxtaClientCharMessageAddedEvent.Broadcast(*m_userData.Get(), *chatMessage->Get());
 		}
 	}
 	else
@@ -390,5 +378,5 @@ void UVoxtaClient::HandleChatUpdateResponse(const ServerResponseChatUpdate& resp
 void UVoxtaClient::SetState(VoxtaClientState newState)
 {
 	m_currentState = newState;
-	OnVoxtaClientStateChangedDelegate.Broadcast(m_currentState);
+	VoxtaClientStateChangedEvent.Broadcast(m_currentState);
 }

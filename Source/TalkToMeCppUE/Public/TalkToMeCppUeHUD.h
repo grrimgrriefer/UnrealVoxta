@@ -27,13 +27,13 @@ public:
 	/// the intention of loading that character into a chat conversation.
 	/// </summary>
 	UPROPERTY()
-	FCharButtonClickedEventCallback OnCharButtonClickedEvent;
+	FCharButtonClickedEventCallback CharButtonClickedEvent;
 
 	/// <summary>
 	/// Event fired when the user has pressed ENTER after providing some text in the EditableTextBox
 	/// </summary>
 	UPROPERTY()
-	FInputCommittedEventCallback OnUserInputCommittedEvent;
+	FInputCommittedEventCallback UserInputCommittedEvent;
 
 	/// <summary>
 	/// Notify the UTalkToMeCppUeWidget instance of the newly active state, causing it to configure itself
@@ -50,7 +50,7 @@ public:
 	/// </summary>
 	/// <param name="charData">The FCharData of the newly selectable character.</param>
 	UFUNCTION()
-	void VoxtaClientCharacterLoaded(const FAiCharData& charData);
+	void VoxtaClientCharacterRegistered(const FAiCharData& charData);
 
 	/// <summary>
 	/// Notify the UTalkToMeCppUeWidget of a new text message uttered by a character.
@@ -62,14 +62,14 @@ public:
 	/// <param name="message">The FChatMessage containing all the relevant data of the message that has to
 	/// be added to the log.</param>
 	UFUNCTION()
-	void RegisterTextMessage(const FCharDataBase& sender, const FChatMessage& message);
+	void AddTextMessage(const FCharDataBase& sender, const FChatMessage& message);
 
 	/// <summary>
 	/// Notify the UTalkToMeCppUeWidget of a specific a chat message being deleted.
 	/// Should only be invoked based on VoxtaClient events.
 	/// </summary>
 	/// <param name="messageId">The VoxtaServer messageId, that was tied to the message when it was
-	/// sent via the RegisterTextMessage function.</param>
+	/// sent via the AddTextMessage function.</param>
 	UFUNCTION()
 	void RemoveTextMessage(const FChatMessage& message);
 
@@ -77,9 +77,19 @@ private:
 	class UClass* m_hudWidgetClass;
 	class UTalkToMeCppUeWidget* m_hudWidget;
 
+	/// <summary>
+	/// Automatically invoked when one of the buttons tied to a character is clicked.
+	/// It will rebroadcast the event to a public API that can be used to bind external systems (like VoxtaClient) to.
+	/// </summary>
+	/// <param name="charId">The FCharDataBase::m_id of the character tied to the button clicked.</param>
 	UFUNCTION()
 	void OnCharButtonClicked(FString charId);
 
+	/// <summary>
+	/// Automatically invoked when the user has pressed ENTER after providing some text in the
+	/// EditableTextBox of the widget.
+	/// </summary>
+	/// <param name="inputText">The text that the user had written in the textbox.</param>
 	UFUNCTION()
 	void OnUserInputFieldSubmitted(FString inputText);
 

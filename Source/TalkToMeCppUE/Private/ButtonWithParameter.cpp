@@ -18,5 +18,5 @@ void UButtonWithParameter::BeginDestroy()
 
 void UButtonWithParameter::OnClickInternal()
 {
-	OnClickedWithParam.Broadcast(m_parameterValue);
+	ClickedWithParamEvent.Broadcast(m_parameterValue);
 }

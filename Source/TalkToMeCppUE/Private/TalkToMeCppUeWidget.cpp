@@ -19,7 +19,7 @@ void UTalkToMeCppUeWidget::CleanupWidget()
 		{
 			if (UButtonWithParameter* button = Cast<UButtonWithParameter>(child))
 			{
-				button->OnClickedWithParam.RemoveDynamic(this, &UTalkToMeCppUeWidget::OnCharacterButtonClickedInternal);
+				button->ClickedWithParamEvent.RemoveDynamic(this, &UTalkToMeCppUeWidget::OnCharacterButtonClickedInternal);
 			}
 		}
 		UserInputField->OnTextCommitted.RemoveDynamic(this, &UTalkToMeCppUeWidget::OnUserInputCommittedInternal);
@@ -66,12 +66,12 @@ void UTalkToMeCppUeWidget::RegisterCharacterOption(const FAiCharData& charData)
 		characterButton->AddChild(textBlock);
 
 		characterButton->Initialize(charData.GetId());
-		characterButton->OnClickedWithParam.AddUniqueDynamic(this, &UTalkToMeCppUeWidget::OnCharacterButtonClickedInternal);
+		characterButton->ClickedWithParamEvent.AddUniqueDynamic(this, &UTalkToMeCppUeWidget::OnCharacterButtonClickedInternal);
 		CharScrollBox->AddChild(characterButton);
 	}
 }
 
-void UTalkToMeCppUeWidget::RegisterTextMessage(const FCharDataBase& sender, FStringView messageId, FStringView message)
+void UTalkToMeCppUeWidget::AddTextMessage(const FCharDataBase& sender, FStringView messageId, FStringView message)
 {
 	if (ChatLogScrollBox)
 	{
@@ -104,14 +104,14 @@ void UTalkToMeCppUeWidget::RemoveTextMessage(const FString& messageId)
 
 void UTalkToMeCppUeWidget::OnCharacterButtonClickedInternal(FString charId)
 {
-	OnCharButtonClickedEvent.Broadcast(charId);
+	CharButtonClickedEvent.Broadcast(charId);
 }
 
 void UTalkToMeCppUeWidget::OnUserInputCommittedInternal(const FText& Text, ETextCommit::Type CommitType)
 {
 	if (CommitType == ETextCommit::OnEnter && !Text.IsEmptyOrWhitespace())
 	{
-		OnUserInputCommittedEvent.Broadcast(Text.ToString());
+		UserInputCommittedEvent.Broadcast(Text.ToString());
 		UserInputField->SetText(FText::GetEmpty());
 	}
 }

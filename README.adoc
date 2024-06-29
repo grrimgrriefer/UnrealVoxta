@@ -21,9 +21,9 @@ This repo contains the Unreal-Engine (5.3) port of the https://github.com/grrimg
 
 [ :heavy_check_mark: ]   Add temporary UI for debugging
 
-[ :fire: ]   Code cleanup & refactoring
+[ :heavy_check_mark: ]   Code cleanup & refactoring
 
-[ :black_square_button: ]   Swap windows audio API for UE to ensure cross-platform compatibility
+[ :fire: ]   Swap windows audio API for UE to ensure cross-platform compatibility
 
 [ :black_square_button: ]   Expose main functionality to blueprints & swap UI c++ code with exclusive blueprint
 
@@ -32,3 +32,14 @@ This repo contains the Unreal-Engine (5.3) port of the https://github.com/grrimg
 [ :black_square_button: ]   Wrap modules into a plugin
 
 [ :black_square_button: ]   Unit testing? (not sure if applicable for UE)
+
+== Running the project
+
+.Steps to get this up and running
+. Clone the repository.
+. Right-click on the .UProject and select the option to Generate VS files.
+. Configure the startup project to be TalkToMeCPPUE
+. Select DevelopmentEditor with Win64 and run the debugger.
+. Ensure you have your Voxta Server running and press play in the editor once it's started up.
+
+Blueprint is not yet supported, will be soonish though.
