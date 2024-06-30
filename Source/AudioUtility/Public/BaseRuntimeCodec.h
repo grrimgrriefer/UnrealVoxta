@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Features/IModularFeature.h"
+#include "AudioStructs.h"
 
 /**
  * Base runtime codec

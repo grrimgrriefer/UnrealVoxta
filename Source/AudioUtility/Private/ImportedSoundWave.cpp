@@ -7,7 +7,7 @@
 #include "Engine/Engine.h"
 #include "AudioThread.h"
 #include "AudioDeviceHandle.h"
-#include "Codecs/RAW_RuntimeCodec.h"
+#include "RAW_RuntimeCodec.h"
 
 UImportedSoundWave::UImportedSoundWave(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -20,9 +20,7 @@ UImportedSoundWave::UImportedSoundWave(const FObjectInitializer& ObjectInitializ
 {
 	ensure(PCMBufferInfo);
 
-#if UE_VERSION_NEWER_THAN(5, 0, 0)
 	SetImportedSampleRate(0);
-#endif
 	SetSampleRate(0);
 	NumChannels = 0;
 	Duration = 0;
@@ -36,7 +34,7 @@ UImportedSoundWave* UImportedSoundWave::CreateImportedSoundWave()
 {
 	if (!IsInGameThread())
 	{
-		UE_LOG(LogRuntimeAudioImporter, Error, TEXT("Unable to create a sound wave outside of the game thread"));
+		UE_LOG(AudioLog, Error, TEXT("Unable to create a sound wave outside of the game thread"));
 		return nullptr;
 	}
 
@@ -77,7 +75,7 @@ void UImportedSoundWave::DuplicateSoundWave(bool bUseSharedAudioBuffer, const FO
 	UImportedSoundWave* DuplicatedSoundWave = NewObject<UImportedSoundWave>(GetOuter());
 	if (!DuplicatedSoundWave)
 	{
-		UE_LOG(LogRuntimeAudioImporter, Error, TEXT("Failed to duplicate the imported sound wave '%s'"), *GetName());
+		UE_LOG(AudioLog, Error, TEXT("Failed to duplicate the imported sound wave '%s'"), *GetName());
 		Result.ExecuteIfBound(false, nullptr);
 		return;
 	}
@@ -100,79 +98,6 @@ Audio::EAudioMixerStreamDataFormat::Type UImportedSoundWave::GetGeneratedPCMData
 {
 	return Audio::EAudioMixerStreamDataFormat::Type::Float;
 }
-
-#if WITH_RUNTIMEAUDIOIMPORTER_METASOUND_SUPPORT
-TSharedPtr<Audio::IProxyData> UImportedSoundWave::CreateProxyData(const Audio::FProxyDataInitParams& InitParams)
-{
-	if (SoundWaveDataPtr)
-	{
-		SoundWaveDataPtr->InitializeDataFromSoundWave(*this);
-		SoundWaveDataPtr->OverrideRuntimeFormat(Audio::NAME_OGG);
-	}
-	return USoundWave::CreateProxyData(InitParams);
-}
-
-bool UImportedSoundWave::InitAudioResource(FName Format)
-{
-	// Only OGG format is supported for audio resource initialization
-	if (Format != Audio::NAME_OGG)
-	{
-		UE_LOG(LogRuntimeAudioImporter, Error, TEXT("RuntimeAudioImporter does not support audio format '%s' for initialization. Supported format: %s"), *Format.ToString(), *Audio::NAME_OGG.ToString());
-		return false;
-	}
-
-	if (SoundWaveDataPtr->GetResourceSize() > 0)
-	{
-		return true;
-	}
-
-	FDecodedAudioStruct DecodedAudioInfo;
-	{
-		FRAIScopeLock Lock(&*DataGuard);
-		{
-			DecodedAudioInfo.PCMInfo = GetPCMBuffer();
-			FSoundWaveBasicStruct SoundWaveBasicInfo;
-			{
-				SoundWaveBasicInfo.NumOfChannels = NumChannels;
-				SoundWaveBasicInfo.SampleRate = GetSampleRate();
-				SoundWaveBasicInfo.Duration = Duration;
-			}
-			DecodedAudioInfo.SoundWaveBasicInfo = SoundWaveBasicInfo;
-		}
-	}
-
-	FVORBIS_RuntimeCodec VorbisCodec;
-	FEncodedAudioStruct EncodedAudioInfo;
-	if (!VorbisCodec.Encode(MoveTemp(DecodedAudioInfo), EncodedAudioInfo, 100))
-	{
-		UE_LOG(LogRuntimeAudioImporter, Error, TEXT("Something went wrong while encoding Vorbis audio data"));
-		return false;
-	}
-
-	if (EncodedAudioInfo.AudioData.GetView().Num() <= 0)
-	{
-		return false;
-	}
-
-	FByteBulkData CompressedBulkData;
-
-	// Filling in the compressed data
-	{
-		CompressedBulkData.Lock(LOCK_READ_WRITE);
-		FMemory::Memcpy(CompressedBulkData.Realloc(EncodedAudioInfo.AudioData.GetView().Num()), EncodedAudioInfo.AudioData.GetView().GetData(), EncodedAudioInfo.AudioData.GetView().Num());
-		CompressedBulkData.Unlock();
-	}
-
-	USoundWave::InitAudioResource(CompressedBulkData);
-	return true;
-}
-
-bool UImportedSoundWave::IsSeekable() const
-{
-	FRAIScopeLock Lock(&*DataGuard);
-	return PCMBufferInfo.IsValid() && PCMBufferInfo.Get()->PCMData.GetView().Num() > 0 && PCMBufferInfo.Get()->PCMNumOfFrames > 0;
-}
-#endif
 
 int32 UImportedSoundWave::OnGeneratePCMAudio(TArray<uint8>& OutAudio, int32 NumSamples)
 {
@@ -204,7 +129,7 @@ int32 UImportedSoundWave::OnGeneratePCMAudio(TArray<uint8>& OutAudio, int32 NumS
 		// Ensure we got a valid PCM data
 		if (RetrievedPCMDataSize <= 0 || !RetrievedPCMDataPtr)
 		{
-			UE_LOG(LogRuntimeAudioImporter, Error, TEXT("Unable to get PCM audio from imported sound wave since the retrieved PCM data is invalid"));
+			UE_LOG(AudioLog, Error, TEXT("Unable to get PCM audio from imported sound wave since the retrieved PCM data is invalid"));
 			return 0;
 		}
 
@@ -246,7 +171,7 @@ int32 UImportedSoundWave::OnGeneratePCMAudio(TArray<uint8>& OutAudio, int32 NumS
 
 void UImportedSoundWave::BeginDestroy()
 {
-	UE_LOG(LogRuntimeAudioImporter, Warning, TEXT("Imported sound wave ('%s') data will be cleared because it is being unloaded"), *GetName());
+	UE_LOG(AudioLog, Warning, TEXT("Imported sound wave ('%s') data will be cleared because it is being unloaded"), *GetName());
 
 	Super::BeginDestroy();
 }
@@ -257,14 +182,9 @@ void UImportedSoundWave::Parse(FAudioDevice* AudioDevice, const UPTRINT NodeWave
 
 	if (ActiveSound.PlaybackTime == 0.f)
 	{
-		UE_LOG(LogRuntimeAudioImporter, Log, TEXT("The playback time for the sound wave '%s' will be set to '%f'"), *GetName(), ParseParams.StartTime);
+		UE_LOG(AudioLog, Log, TEXT("The playback time for the sound wave '%s' will be set to '%f'"), *GetName(), ParseParams.StartTime);
 		RewindPlaybackTime_Internal(ParseParams.StartTime);
 	}
-
-#if UE_VERSION_OLDER_THAN(5, 0, 0)
-	// In UE 4.27 and older, the engine can't play a procedural sound wave if the playback time is not zero, so we have to set it to zero
-	const_cast<FSoundParseParameters&>(ParseParams).StartTime = 0;
-#endif
 
 	// Stopping all other active sounds that are using the same sound wave, so that only one sound wave can be played at a time
 	const TArray<FActiveSound*>& ActiveSounds = AudioDevice->GetActiveSounds();
@@ -272,7 +192,7 @@ void UImportedSoundWave::Parse(FAudioDevice* AudioDevice, const UPTRINT NodeWave
 	{
 		if (ActiveSoundPtr->GetSound() == this && ActiveSoundPtr->IsPlayingAudio() && &ActiveSound != ActiveSoundPtr)
 		{
-			UE_LOG(LogRuntimeAudioImporter, Warning, TEXT("Stopping the active sound '%s' because it is using the same sound wave '%s' (only one imported sound wave can be played at a time)"), *ActiveSoundPtr->GetOwnerName(), *GetName());
+			UE_LOG(AudioLog, Warning, TEXT("Stopping the active sound '%s' because it is using the same sound wave '%s' (only one imported sound wave can be played at a time)"), *ActiveSoundPtr->GetOwnerName(), *GetName());
 			AudioDevice->StopActiveSound(ActiveSoundPtr);
 		}
 	}
@@ -283,7 +203,7 @@ void UImportedSoundWave::Parse(FAudioDevice* AudioDevice, const UPTRINT NodeWave
 	{
 		if (!PlaybackFinishedBroadcast)
 		{
-			UE_LOG(LogRuntimeAudioImporter, Warning, TEXT("Playback of the sound wave '%s' has been completed"), *GetName());
+			UE_LOG(AudioLog, Warning, TEXT("Playback of the sound wave '%s' has been completed"), *GetName());
 
 			PlaybackFinishedBroadcast = true;
 
@@ -308,13 +228,13 @@ void UImportedSoundWave::Parse(FAudioDevice* AudioDevice, const UPTRINT NodeWave
 		{
 			if (bStopSoundOnPlaybackFinish)
 			{
-				UE_LOG(LogRuntimeAudioImporter, Log, TEXT("Playback of the sound wave '%s' has reached the end and will be stopped"), *GetName());
+				UE_LOG(AudioLog, Log, TEXT("Playback of the sound wave '%s' has reached the end and will be stopped"), *GetName());
 				AudioDevice->StopActiveSound(&ActiveSound);
 			}
 		}
 		else
 		{
-			UE_LOG(LogRuntimeAudioImporter, Log, TEXT("The sound wave '%s' will be looped"), *GetName());
+			UE_LOG(AudioLog, Log, TEXT("The sound wave '%s' will be looped"), *GetName());
 			ActiveSound.PlaybackTime = 0.f;
 			RewindPlaybackTime_Internal(0.f);
 		}
@@ -338,9 +258,7 @@ void UImportedSoundWave::PopulateAudioDataFromDecodedInfo(FDecodedAudioStruct&& 
 	const FString DecodedAudioInfoString = DecodedAudioInfo.ToString();
 
 	Duration = DecodedAudioInfo.SoundWaveBasicInfo.Duration;
-#if UE_VERSION_NEWER_THAN(5, 0, 0)
 	SetImportedSampleRate(0);
-#endif
 	SetSampleRate(DecodedAudioInfo.SoundWaveBasicInfo.SampleRate);
 	NumChannels = DecodedAudioInfo.SoundWaveBasicInfo.NumOfChannels;
 	ImportedAudioFormat = DecodedAudioInfo.SoundWaveBasicInfo.AudioFormat;
@@ -373,7 +291,7 @@ void UImportedSoundWave::PopulateAudioDataFromDecodedInfo(FDecodedAudioStruct&& 
 					}
 					else
 					{
-						UE_LOG(LogRuntimeAudioImporter, Warning, TEXT("Unable to broadcast OnPopulateAudioDataNative and OnPopulateAudioData delegates because the streaming sound wave has been destroyed"));
+						UE_LOG(AudioLog, Warning, TEXT("Unable to broadcast OnPopulateAudioDataNative and OnPopulateAudioData delegates because the streaming sound wave has been destroyed"));
 					}
 				});
 			}
@@ -397,13 +315,13 @@ void UImportedSoundWave::PopulateAudioDataFromDecodedInfo(FDecodedAudioStruct&& 
 					}
 					else
 					{
-						UE_LOG(LogRuntimeAudioImporter, Warning, TEXT("Unable to broadcast OnPopulateAudioStateNative and OnPopulateAudioState delegates because the streaming sound wave has been destroyed"));
+						UE_LOG(AudioLog, Warning, TEXT("Unable to broadcast OnPopulateAudioStateNative and OnPopulateAudioState delegates because the streaming sound wave has been destroyed"));
 					}
 				});
 			}
 	}
 
-	UE_LOG(LogRuntimeAudioImporter, Log, TEXT("The audio data has been populated successfully. Information about audio data:\n%s"), *DecodedAudioInfoString);
+	UE_LOG(AudioLog, Log, TEXT("The audio data has been populated successfully. Information about audio data:\n%s"), *DecodedAudioInfoString);
 }
 
 void UImportedSoundWave::PrepareSoundWaveForMetaSounds(const FOnPrepareSoundWaveForMetaSoundsResult& Result)
@@ -437,17 +355,17 @@ void UImportedSoundWave::PrepareSoundWaveForMetaSounds(const FOnPrepareSoundWave
 	const bool bSucceeded = InitAudioResource(Audio::NAME_OGG);
 	if (bSucceeded)
 	{
-		UE_LOG(LogRuntimeAudioImporter, Log, TEXT("Successfully prepared the sound wave '%s' for MetaSounds"), *GetName());
+		UE_LOG(AudioLog, Log, TEXT("Successfully prepared the sound wave '%s' for MetaSounds"), *GetName());
 	}
 	else
 	{
-		UE_LOG(LogRuntimeAudioImporter, Error, TEXT("Failed to initialize audio resource to prepare the sound wave '%s' for MetaSounds"), *GetName());
+		UE_LOG(AudioLog, Error, TEXT("Failed to initialize audio resource to prepare the sound wave '%s' for MetaSounds"), *GetName());
 	}
 
 	ExecuteResult(bSucceeded);
 
 #else
-	UE_LOG(LogRuntimeAudioImporter, Error, TEXT("PrepareSoundWaveForMetaSounds works only for Unreal Engine version >= 5.3 and if explicitly enabled in RuntimeAudioImporter.Build.cs"));
+	UE_LOG(AudioLog, Error, TEXT("PrepareSoundWaveForMetaSounds works only for Unreal Engine version >= 5.3 and if explicitly enabled in RuntimeAudioImporter.Build.cs"));
 	Result.ExecuteIfBound(false);
 #endif
 }
@@ -455,7 +373,7 @@ void UImportedSoundWave::PrepareSoundWaveForMetaSounds(const FOnPrepareSoundWave
 void UImportedSoundWave::ReleaseMemory()
 {
 	FRAIScopeLock Lock(&*DataGuard);
-	UE_LOG(LogRuntimeAudioImporter, Warning, TEXT("Releasing memory for the sound wave '%s'"), *GetName());
+	UE_LOG(AudioLog, Warning, TEXT("Releasing memory for the sound wave '%s'"), *GetName());
 	PCMBufferInfo->PCMData.Empty();
 	PCMBufferInfo->PCMNumOfFrames = 0;
 	Duration = 0;
@@ -502,7 +420,7 @@ bool UImportedSoundWave::RewindPlaybackTime_Internal(float PlaybackTime)
 {
 	if (PlaybackTime > Duration)
 	{
-		UE_LOG(LogRuntimeAudioImporter, Error, TEXT("Unable to rewind playback time for the imported sound wave '%s' by time '%f' because total length is '%f'"), *GetName(), PlaybackTime, Duration);
+		UE_LOG(AudioLog, Error, TEXT("Unable to rewind playback time for the imported sound wave '%s' by time '%f' because total length is '%f'"), *GetName(), PlaybackTime, Duration);
 		return false;
 	}
 
@@ -513,19 +431,19 @@ bool UImportedSoundWave::SetInitialDesiredSampleRate(int32 DesiredSampleRate)
 {
 	if (PCMBufferInfo->PCMData.GetView().Num() > 0)
 	{
-		UE_LOG(LogRuntimeAudioImporter, Error, TEXT("Unable to set the initial desired sample rate for the imported sound wave '%s' to '%d' because the PCM data has already been populated"), *GetName(), DesiredSampleRate);
+		UE_LOG(AudioLog, Error, TEXT("Unable to set the initial desired sample rate for the imported sound wave '%s' to '%d' because the PCM data has already been populated"), *GetName(), DesiredSampleRate);
 		return false;
 	}
 
 	if (DesiredSampleRate <= 0)
 	{
-		UE_LOG(LogRuntimeAudioImporter, Error, TEXT("Unable to set the initial desired sample rate for the imported sound wave '%s' to '%d' because the sample rate must be greater than zero"), *GetName(), DesiredSampleRate);
+		UE_LOG(AudioLog, Error, TEXT("Unable to set the initial desired sample rate for the imported sound wave '%s' to '%d' because the sample rate must be greater than zero"), *GetName(), DesiredSampleRate);
 		return false;
 	}
 
 	InitialDesiredSampleRate = DesiredSampleRate;
 	SampleRate = DesiredSampleRate;
-	UE_LOG(LogRuntimeAudioImporter, Log, TEXT("Successfully set the initial desired sample rate for the imported sound wave '%s' to '%d'"), *GetName(), DesiredSampleRate);
+	UE_LOG(AudioLog, Log, TEXT("Successfully set the initial desired sample rate for the imported sound wave '%s' to '%d'"), *GetName(), DesiredSampleRate);
 	return true;
 }
 
@@ -533,19 +451,19 @@ bool UImportedSoundWave::SetInitialDesiredNumOfChannels(int32 DesiredNumOfChanne
 {
 	if (PCMBufferInfo->PCMData.GetView().Num() > 0)
 	{
-		UE_LOG(LogRuntimeAudioImporter, Error, TEXT("Unable to set the initial desired number of channels for the imported sound wave '%s' to '%d' because the PCM data has already been populated"), *GetName(), DesiredNumOfChannels);
+		UE_LOG(AudioLog, Error, TEXT("Unable to set the initial desired number of channels for the imported sound wave '%s' to '%d' because the PCM data has already been populated"), *GetName(), DesiredNumOfChannels);
 		return false;
 	}
 
 	if (DesiredNumOfChannels <= 0)
 	{
-		UE_LOG(LogRuntimeAudioImporter, Error, TEXT("Unable to set the initial desired number of channels for the imported sound wave '%s' to '%d' because the number of channels must be greater than zero"), *GetName(), DesiredNumOfChannels);
+		UE_LOG(AudioLog, Error, TEXT("Unable to set the initial desired number of channels for the imported sound wave '%s' to '%d' because the number of channels must be greater than zero"), *GetName(), DesiredNumOfChannels);
 		return false;
 	}
 
 	InitialDesiredNumOfChannels = DesiredNumOfChannels;
 	NumChannels = DesiredNumOfChannels;
-	UE_LOG(LogRuntimeAudioImporter, Log, TEXT("Successfully set the initial desired number of channels for the imported sound wave '%s' to '%d'"), *GetName(), DesiredNumOfChannels);
+	UE_LOG(AudioLog, Log, TEXT("Successfully set the initial desired number of channels for the imported sound wave '%s' to '%d'"), *GetName(), DesiredNumOfChannels);
 	return true;
 }
 
@@ -553,13 +471,13 @@ bool UImportedSoundWave::ResampleSoundWave(int32 NewSampleRate)
 {
 	if (NewSampleRate == GetSampleRate())
 	{
-		UE_LOG(LogRuntimeAudioImporter, Warning, TEXT("Skipping resampling the imported sound wave '%s' because the new sample rate '%d' is the same as the current sample rate '%d'"), *GetName(), NewSampleRate, GetSampleRate());
+		UE_LOG(AudioLog, Warning, TEXT("Skipping resampling the imported sound wave '%s' because the new sample rate '%d' is the same as the current sample rate '%d'"), *GetName(), NewSampleRate, GetSampleRate());
 		return true;
 	}
 
 	if (NewSampleRate <= 0)
 	{
-		UE_LOG(LogRuntimeAudioImporter, Error, TEXT("Unable to resample the imported sound wave '%s' to sample rate '%d' because the sample rate must be greater than zero"), *GetName(), NewSampleRate);
+		UE_LOG(AudioLog, Error, TEXT("Unable to resample the imported sound wave '%s' to sample rate '%d' because the sample rate must be greater than zero"), *GetName(), NewSampleRate);
 		return false;
 	}
 
@@ -570,11 +488,11 @@ bool UImportedSoundWave::ResampleSoundWave(int32 NewSampleRate)
 
 	if (!FRAW_RuntimeCodec::ResampleRAWData(SourcePCMData, GetNumOfChannels(), GetSampleRate(), NewSampleRate, NewPCMData))
 	{
-		UE_LOG(LogRuntimeAudioImporter, Error, TEXT("Failed to resample the imported sound wave '%s' from sample rate '%d' to sample rate '%d'"), *GetName(), GetSampleRate(), NewSampleRate);
+		UE_LOG(AudioLog, Error, TEXT("Failed to resample the imported sound wave '%s' from sample rate '%d' to sample rate '%d'"), *GetName(), GetSampleRate(), NewSampleRate);
 		return false;
 	}
 
-	UE_LOG(LogRuntimeAudioImporter, Log, TEXT("Successfully resampled the imported sound wave '%s' from sample rate '%d' to sample rate '%d'"), *GetName(), GetSampleRate(), NewSampleRate);
+	UE_LOG(AudioLog, Log, TEXT("Successfully resampled the imported sound wave '%s' from sample rate '%d' to sample rate '%d'"), *GetName(), GetSampleRate(), NewSampleRate);
 	SampleRate = NewSampleRate;
 	{
 		PCMBufferInfo->PCMNumOfFrames = NewPCMData.Num() / GetNumOfChannels();
@@ -587,13 +505,13 @@ bool UImportedSoundWave::MixSoundWaveChannels(int32 NewNumOfChannels)
 {
 	if (NewNumOfChannels == GetNumOfChannels())
 	{
-		UE_LOG(LogRuntimeAudioImporter, Warning, TEXT("Skipping mixing the imported sound wave '%s' because the new number of channels '%d' is the same as the current number of channels '%d'"), *GetName(), NewNumOfChannels, GetNumOfChannels());
+		UE_LOG(AudioLog, Warning, TEXT("Skipping mixing the imported sound wave '%s' because the new number of channels '%d' is the same as the current number of channels '%d'"), *GetName(), NewNumOfChannels, GetNumOfChannels());
 		return true;
 	}
 
 	if (NewNumOfChannels <= 0)
 	{
-		UE_LOG(LogRuntimeAudioImporter, Error, TEXT("Unable to mix the imported sound wave '%s' to number of channels '%d' because the number of channels must be greater than zero"), *GetName(), NewNumOfChannels);
+		UE_LOG(AudioLog, Error, TEXT("Unable to mix the imported sound wave '%s' to number of channels '%d' because the number of channels must be greater than zero"), *GetName(), NewNumOfChannels);
 		return false;
 	}
 
@@ -604,11 +522,11 @@ bool UImportedSoundWave::MixSoundWaveChannels(int32 NewNumOfChannels)
 
 	if (!FRAW_RuntimeCodec::MixChannelsRAWData(SourcePCMData, GetSampleRate(), GetNumOfChannels(), NewNumOfChannels, NewPCMData))
 	{
-		UE_LOG(LogRuntimeAudioImporter, Error, TEXT("Failed to mix the imported sound wave '%s' from number of channels '%d' to number of channels '%d'"), *GetName(), GetNumOfChannels(), NewNumOfChannels);
+		UE_LOG(AudioLog, Error, TEXT("Failed to mix the imported sound wave '%s' from number of channels '%d' to number of channels '%d'"), *GetName(), GetNumOfChannels(), NewNumOfChannels);
 		return false;
 	}
 
-	UE_LOG(LogRuntimeAudioImporter, Log, TEXT("Successfully mixed the imported sound wave '%s' from number of channels '%d' to number of channels '%d'"), *GetName(), GetNumOfChannels(), NewNumOfChannels);
+	UE_LOG(AudioLog, Log, TEXT("Successfully mixed the imported sound wave '%s' from number of channels '%d' to number of channels '%d'"), *GetName(), GetNumOfChannels(), NewNumOfChannels);
 	NumChannels = NewNumOfChannels;
 	{
 		PCMBufferInfo->PCMNumOfFrames = NewPCMData.Num() / GetNumOfChannels();
@@ -646,7 +564,7 @@ void UImportedSoundWave::StopPlayback(const UObject* WorldContextObject, const F
 
 	if (!GEngine)
 	{
-		UE_LOG(LogRuntimeAudioImporter, Error, TEXT("Unable to stop the playback of the sound wave '%s' because GEngine is invalid"), *GetName());
+		UE_LOG(AudioLog, Error, TEXT("Unable to stop the playback of the sound wave '%s' because GEngine is invalid"), *GetName());
 		ExecuteResult(false);
 		return;
 	}
@@ -654,23 +572,19 @@ void UImportedSoundWave::StopPlayback(const UObject* WorldContextObject, const F
 	UWorld* ThisWorld = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
 	if (!ThisWorld)
 	{
-		UE_LOG(LogRuntimeAudioImporter, Error, TEXT("Unable to stop the playback of the sound wave '%s' because the world context object is invalid"), *GetName());
+		UE_LOG(AudioLog, Error, TEXT("Unable to stop the playback of the sound wave '%s' because the world context object is invalid"), *GetName());
 		ExecuteResult(false);
 		return;
 	}
 
-#if UE_VERSION_OLDER_THAN(4, 25, 0)
-	if (FAudioDevice* AudioDevice = ThisWorld->GetAudioDevice())
-#else
 	if (FAudioDeviceHandle AudioDevice = ThisWorld->GetAudioDevice())
-#endif
 	{
 		const TArray<FActiveSound*>& ActiveSounds = AudioDevice->GetActiveSounds();
 		for (FActiveSound* ActiveSoundPtr : ActiveSounds)
 		{
 			if (ActiveSoundPtr->GetSound() == this && ActiveSoundPtr->IsPlayingAudio())
 			{
-				UE_LOG(LogRuntimeAudioImporter, Warning, TEXT("Stopping the active sound '%s' playing the sound wave '%s'"), *ActiveSoundPtr->GetOwnerName(), *GetName());
+				UE_LOG(AudioLog, Warning, TEXT("Stopping the active sound '%s' playing the sound wave '%s'"), *ActiveSoundPtr->GetOwnerName(), *GetName());
 				AudioDevice->StopActiveSound(ActiveSoundPtr);
 
 				// Only one sound wave can be played at a time, so we can stop the loop here
@@ -680,7 +594,7 @@ void UImportedSoundWave::StopPlayback(const UObject* WorldContextObject, const F
 		}
 	}
 
-	UE_LOG(LogRuntimeAudioImporter, Warning, TEXT("The sound wave '%s' is not playing"), *GetName());
+	UE_LOG(AudioLog, Warning, TEXT("The sound wave '%s' is not playing"), *GetName());
 	ExecuteResult(true);
 }
 
@@ -694,7 +608,7 @@ bool UImportedSoundWave::SetNumOfPlayedFrames_Internal(uint32 NumOfFrames)
 {
 	if (NumOfFrames < 0 || NumOfFrames > PCMBufferInfo->PCMNumOfFrames)
 	{
-		UE_LOG(LogRuntimeAudioImporter, Error, TEXT("Cannot change the current frame for the imported sound wave '%s' to frame '%d' because the total number of frames is '%d'"), *GetName(), NumOfFrames, PCMBufferInfo->PCMNumOfFrames);
+		UE_LOG(AudioLog, Error, TEXT("Cannot change the current frame for the imported sound wave '%s' to frame '%d' because the total number of frames is '%d'"), *GetName(), NumOfFrames, PCMBufferInfo->PCMNumOfFrames);
 		return false;
 	}
 
@@ -743,11 +657,7 @@ float UImportedSoundWave::GetDurationConst_Internal() const
 	return Duration;
 }
 
-float UImportedSoundWave::GetDuration()
-#if UE_VERSION_OLDER_THAN(5, 0, 0)
-#else
-const
-#endif
+float UImportedSoundWave::GetDuration() const
 {
 	return GetDurationConst();
 }
@@ -814,34 +724,30 @@ bool UImportedSoundWave::IsPlaying(const UObject* WorldContextObject) const
 
 	if (!GEngine)
 	{
-		UE_LOG(LogRuntimeAudioImporter, Error, TEXT("Unable to check if the sound wave '%s' is playing because GEngine is invalid"), *GetName());
+		UE_LOG(AudioLog, Error, TEXT("Unable to check if the sound wave '%s' is playing because GEngine is invalid"), *GetName());
 		return false;
 	}
 
 	UWorld* ThisWorld = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
 	if (!ThisWorld)
 	{
-		UE_LOG(LogRuntimeAudioImporter, Error, TEXT("Unable to check if the sound wave '%s' is playing because the world context object is invalid"), *GetName());
+		UE_LOG(AudioLog, Error, TEXT("Unable to check if the sound wave '%s' is playing because the world context object is invalid"), *GetName());
 		return false;
 	}
 
-#if UE_VERSION_OLDER_THAN(4, 25, 0)
-	if (FAudioDevice* AudioDevice = ThisWorld->GetAudioDevice())
-#else
 	if (FAudioDeviceHandle AudioDevice = ThisWorld->GetAudioDevice())
-#endif
 	{
 		const TArray<FActiveSound*>& ActiveSounds = AudioDevice->GetActiveSounds();
 		for (FActiveSound* ActiveSoundPtr : ActiveSounds)
 		{
 			if (ActiveSoundPtr->GetSound() == this && ActiveSoundPtr->IsPlayingAudio())
 			{
-				UE_LOG(LogRuntimeAudioImporter, Log, TEXT("The sound wave '%s' is playing by the owner '%s' and audio component '%s'"), *GetName(), *ActiveSoundPtr->GetOwnerName(), *ActiveSoundPtr->GetAudioComponentName());
+				UE_LOG(AudioLog, Log, TEXT("The sound wave '%s' is playing by the owner '%s' and audio component '%s'"), *GetName(), *ActiveSoundPtr->GetOwnerName(), *ActiveSoundPtr->GetAudioComponentName());
 				return true;
 			}
 		}
 	}
-	UE_LOG(LogRuntimeAudioImporter, Log, TEXT("The sound wave '%s' is not playing"), *GetName());
+	UE_LOG(AudioLog, Log, TEXT("The sound wave '%s' is not playing"), *GetName());
 	return false;
 }
 
@@ -862,7 +768,7 @@ bool UImportedSoundWave::GetAudioHeaderInfo(FRuntimeAudioHeaderInfo& HeaderInfo)
 
 	if (!PCMBufferInfo.IsValid())
 	{
-		UE_LOG(LogRuntimeAudioImporter, Error, TEXT("Failed to retrieve audio header information due to an invalid PCM buffer"));
+		UE_LOG(AudioLog, Error, TEXT("Failed to retrieve audio header information due to an invalid PCM buffer"));
 		return false;
 	}
 

@@ -1,17 +1,15 @@
 ﻿// Georgy Treshchev 2024.
 
-#include "Codecs/RuntimeCodecFactory.h"
-#include "Codecs/BaseRuntimeCodec.h"
+#include "RuntimeCodecFactory.h"
+#include "BaseRuntimeCodec.h"
 #include "Features/IModularFeatures.h"
 #include "Misc/Paths.h"
 
-#include "RuntimeAudioImporterDefines.h"
+#include "AudioStructs.h"
 
 TArray<FBaseRuntimeCodec*> FRuntimeCodecFactory::GetCodecs()
 {
-#if UE_VERSION_NEWER_THAN(5, 1, 0)
 	IModularFeatures::FScopedLockModularFeatureList ScopedLockModularFeatureList;
-#endif
 	TArray<FBaseRuntimeCodec*> AvailableCodecs = IModularFeatures::Get().GetModularFeatureImplementations<FBaseRuntimeCodec>(GetModularFeatureName());
 	return AvailableCodecs;
 }
@@ -31,7 +29,7 @@ TArray<FBaseRuntimeCodec*> FRuntimeCodecFactory::GetCodecs(const FString& FilePa
 
 	if (Codecs.Num() == 0)
 	{
-		UE_LOG(LogRuntimeAudioImporter, Warning, TEXT("Failed to determine the audio codec for '%s' using its file name"), *FilePath);
+		UE_LOG(AudioLog, Warning, TEXT("Failed to determine the audio codec for '%s' using its file name"), *FilePath);
 	}
 
 	return Codecs;
@@ -50,7 +48,7 @@ TArray<FBaseRuntimeCodec*> FRuntimeCodecFactory::GetCodecs(ERuntimeAudioFormat A
 
 	if (Codecs.Num() == 0)
 	{
-		UE_LOG(LogRuntimeAudioImporter, Error, TEXT("Failed to determine the audio codec for the %s format"), *UEnum::GetValueAsString(AudioFormat));
+		UE_LOG(AudioLog, Error, TEXT("Failed to determine the audio codec for the %s format"), *UEnum::GetValueAsString(AudioFormat));
 	}
 
 	return Codecs;
@@ -69,7 +67,7 @@ TArray<FBaseRuntimeCodec*> FRuntimeCodecFactory::GetCodecs(const FRuntimeBulkDat
 
 	if (Codecs.Num() == 0)
 	{
-		UE_LOG(LogRuntimeAudioImporter, Error, TEXT("Failed to determine the audio codec based on the audio data of size %lld bytes"), static_cast<int64>(AudioData.GetView().Num()));
+		UE_LOG(AudioLog, Error, TEXT("Failed to determine the audio codec based on the audio data of size %lld bytes"), static_cast<int64>(AudioData.GetView().Num()));
 	}
 
 	return Codecs;

@@ -3,7 +3,16 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Logging/LogMacros.h"
 
+#include "AudioStructs.generated.h"
+
+#define WITH_DEBUG_SCOPE_LOCK false
+
+DECLARE_LOG_CATEGORY_EXTERN(AudioLog, Log, All);
+
+/** Possible audio formats (extensions) */
+UENUM(BlueprintType, Category = "Runtime Audio Importer")
 enum class ERuntimeAudioFormat : uint8
 {
 	Auto UMETA(DisplayName = "Determine format automatically"),
@@ -16,6 +25,29 @@ enum class ERuntimeAudioFormat : uint8
 	Invalid UMETA(DisplayName = "invalid", Hidden)
 };
 
+/** A line of subtitle text and the time at which it should be displayed. This is the same as FSubtitleCue but editable in Blueprints */
+USTRUCT(BlueprintType, Category = "Runtime Audio Importer")
+struct FEditableSubtitleCue
+{
+	GENERATED_BODY()
+
+	FEditableSubtitleCue()
+		: Time(0)
+	{
+	}
+
+	/** The text to appear in the subtitle */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Runtime Audio Importer")
+	FText Text;
+
+	/** The time at which the subtitle is to be displayed, in seconds relative to the beginning of the line */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Runtime Audio Importer")
+	float Time;
+};
+
+/**
+ * An alternative to FBulkDataBuffer with consistent data types
+ */
 template <typename DataType>
 class FRuntimeBulkDataBuffer
 {
@@ -36,20 +68,20 @@ public:
 		// Reserve function can only be called if there's no data allocated
 		if (View.GetData() != nullptr || NewCapacity <= 0)
 		{
-			UE_LOG(LogRuntimeAudioImporter, Error, TEXT("Reserve function can't be called if there's data allocated or NewCapacity is <= 0 (current capacity: %lld, new capacity: %lld)"), ReservedCapacity, NewCapacity);
+			UE_LOG(AudioLog, Error, TEXT("Reserve function can't be called if there's data allocated or NewCapacity is <= 0 (current capacity: %lld, new capacity: %lld)"), ReservedCapacity, NewCapacity);
 			return false;
 		}
 
 		DataType* NewBuffer = static_cast<DataType*>(FMemory::Malloc(NewCapacity * sizeof(DataType)));
 		if (!NewBuffer)
 		{
-			UE_LOG(LogRuntimeAudioImporter, Error, TEXT("Failed to allocate buffer to reserve memory (new capacity: %lld, %lld bytes)"), NewCapacity, NewCapacity * sizeof(DataType));
+			UE_LOG(AudioLog, Error, TEXT("Failed to allocate buffer to reserve memory (new capacity: %lld, %lld bytes)"), NewCapacity, NewCapacity * sizeof(DataType));
 			return false;
 		}
 
 		ReservedCapacity = NewCapacity;
 		View = ViewType(NewBuffer, 0);
-		UE_LOG(LogRuntimeAudioImporter, Log, TEXT("Reserving memory for buffer (new capacity: %lld, %lld bytes)"), NewCapacity, NewCapacity * sizeof(DataType));
+		UE_LOG(AudioLog, Log, TEXT("Reserving memory for buffer (new capacity: %lld, %lld bytes)"), NewCapacity, NewCapacity * sizeof(DataType));
 
 		return true;
 	}
@@ -86,7 +118,7 @@ public:
 			View = ViewType(View.GetData(), View.Num() + InNumberOfElements);
 			int64 NewReservedCapacity = ReservedCapacity - InNumberOfElements;
 			NewReservedCapacity = NewReservedCapacity < 0 ? 0 : NewReservedCapacity;
-			UE_LOG(LogRuntimeAudioImporter, Log, TEXT("Appending data to buffer (previous capacity: %lld, new capacity: %lld)"), ReservedCapacity, NewReservedCapacity);
+			UE_LOG(AudioLog, Log, TEXT("Appending data to buffer (previous capacity: %lld, new capacity: %lld)"), ReservedCapacity, NewReservedCapacity);
 			ReservedCapacity = NewReservedCapacity;
 		}
 		// Not enough reserved capacity or no reserved capacity, reallocate entire buffer
@@ -96,7 +128,7 @@ public:
 			DataType* NewBuffer = static_cast<DataType*>(FMemory::Malloc(NewCapacity * sizeof(DataType)));
 			if (!NewBuffer)
 			{
-				UE_LOG(LogRuntimeAudioImporter, Error, TEXT("Failed to allocate buffer to append data (new capacity: %lld, current capacity: %lld)"), NewCapacity, View.Num());
+				UE_LOG(AudioLog, Error, TEXT("Failed to allocate buffer to append data (new capacity: %lld, current capacity: %lld)"), NewCapacity, View.Num());
 				return;
 			}
 
@@ -108,7 +140,7 @@ public:
 
 			FreeBuffer();
 			View = ViewType(NewBuffer, NewCapacity);
-			UE_LOG(LogRuntimeAudioImporter, Log, TEXT("Reallocating buffer to append data (new capacity: %lld)"), NewCapacity);
+			UE_LOG(AudioLog, Log, TEXT("Reallocating buffer to append data (new capacity: %lld)"), NewCapacity);
 		}
 	}
 
@@ -215,6 +247,7 @@ protected:
 	int64 ReservedCapacity = 0;
 };
 
+/** Encoded audio information */
 struct FEncodedAudioStruct
 {
 	FEncodedAudioStruct()
@@ -254,6 +287,7 @@ struct FEncodedAudioStruct
 	ERuntimeAudioFormat AudioFormat;
 };
 
+/** Basic sound wave data */
 struct FSoundWaveBasicStruct
 {
 	FSoundWaveBasicStruct()
@@ -295,33 +329,7 @@ struct FSoundWaveBasicStruct
 	}
 };
 
-struct FDecodedAudioStruct
-{
-	/**
-	 * Whether the decoded audio data appear to be valid or not
-	 */
-	bool IsValid() const
-	{
-		return SoundWaveBasicInfo.IsValid() && PCMInfo.IsValid();
-	}
-
-	/**
-	 * Converts Decoded Audio Struct to a readable format
-	 *
-	 * @return String representation of the Decoded Audio Struct
-	 */
-	FString ToString() const
-	{
-		return FString::Printf(TEXT("SoundWave Basic Info:\n%s\n\nPCM Info:\n%s"), *SoundWaveBasicInfo.ToString(), *PCMInfo.ToString());
-	}
-
-	/** SoundWave basic info (e.g. duration, number of channels, etc) */
-	FSoundWaveBasicStruct SoundWaveBasicInfo;
-
-	/** PCM data buffer */
-	FPCMStruct PCMInfo;
-};
-
+/** PCM data buffer structure */
 struct FPCMStruct
 {
 	FPCMStruct()
@@ -355,8 +363,40 @@ struct FPCMStruct
 	uint32 PCMNumOfFrames;
 };
 
+/** Decoded audio information */
+struct FDecodedAudioStruct
+{
+	/**
+	 * Whether the decoded audio data appear to be valid or not
+	 */
+	bool IsValid() const
+	{
+		return SoundWaveBasicInfo.IsValid() && PCMInfo.IsValid();
+	}
+
+	/**
+	 * Converts Decoded Audio Struct to a readable format
+	 *
+	 * @return String representation of the Decoded Audio Struct
+	 */
+	FString ToString() const
+	{
+		return FString::Printf(TEXT("SoundWave Basic Info:\n%s\n\nPCM Info:\n%s"), *SoundWaveBasicInfo.ToString(), *PCMInfo.ToString());
+	}
+
+	/** SoundWave basic info (e.g. duration, number of channels, etc) */
+	FSoundWaveBasicStruct SoundWaveBasicInfo;
+
+	/** PCM data buffer */
+	FPCMStruct PCMInfo;
+};
+
+/** Audio header information */
+USTRUCT(BlueprintType, Category = "Runtime Audio Importer")
 struct FRuntimeAudioHeaderInfo
 {
+	GENERATED_BODY()
+
 	FRuntimeAudioHeaderInfo()
 		: Duration(0.f)
 		, NumOfChannels(0)
@@ -397,3 +437,23 @@ struct FRuntimeAudioHeaderInfo
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Runtime Audio Importer")
 	ERuntimeAudioFormat AudioFormat;
 };
+
+// This might be useful for scope lock debugging
+#if WITH_DEBUG_SCOPE_LOCK
+class FRAIScopeLock : public FScopeLock
+{
+public:
+	~FRAIScopeLock()
+	{
+		UE_LOG(LogRuntimeAudioImporter, Verbose, TEXT("Debug scope lock destroyed"));
+	}
+
+	FRAIScopeLock(FCriticalSection* InCriticalSection)
+		: FScopeLock(InCriticalSection)
+	{
+		UE_LOG(LogRuntimeAudioImporter, Verbose, TEXT("Debug scope lock created"));
+	}
+};
+#else
+using FRAIScopeLock = FScopeLock;
+#endif

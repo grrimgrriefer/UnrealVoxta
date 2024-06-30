@@ -2,7 +2,7 @@
 
 #pragma once
 
-//#include "RuntimeAudioImporterTypes.h"
+#include "AudioStructs.h"
 #include "Sound/SoundWaveProcedural.h"
 #include "Misc/Optional.h"
 #include "ImportedSoundWave.generated.h"
@@ -46,13 +46,16 @@ DECLARE_MULTICAST_DELEGATE(FOnPopulateAudioStateNative);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPopulateAudioState);
 
 /** Static delegate broadcast when a sound wave is duplicated */
-DECLARE_DELEGATE_TwoParams(FOnDuplicateSoundWaveNative, bool, bSucceeded, UImportedSoundWave*, DuplicatedSoundWave);
+DECLARE_DELEGATE_TwoParams(FOnDuplicateSoundWaveNative, bool, UImportedSoundWave*);
 
 /** Dynamic delegate broadcast when a sound wave is duplicated */
 DECLARE_DYNAMIC_DELEGATE_TwoParams(FOnDuplicateSoundWave, bool, bSucceeded, UImportedSoundWave*, DuplicatedSoundWave);
 
 /** Static delegate broadcast the result of stopping the sound wave playback */
-DECLARE_DELEGATE_OneParam(FOnStopPlaybackResultNative, bool, bSucceeded);
+DECLARE_DELEGATE_OneParam(FOnStopPlaybackResultNative, bool);
+
+/** Dynamic delegate broadcast the result of stopping the sound wave playback */
+DECLARE_DYNAMIC_DELEGATE_OneParam(FOnStopPlaybackResult, bool, bSucceeded);
 
 /**
  * Imported sound wave. Assumed to be dynamically populated once from the decoded audio data.
@@ -297,12 +300,7 @@ public:
 	/**
 	 * Get the length of the sound wave, in seconds
 	 */
-	virtual float GetDuration()
-#if UE_VERSION_OLDER_THAN(5, 0, 0)
-		override;
-#else
-		const override;
-#endif
+	virtual float GetDuration() const override;
 
 	/**
 	 * Thread-unsafe equivalent of GetDurationConst

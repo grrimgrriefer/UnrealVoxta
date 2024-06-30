@@ -2,8 +2,10 @@
 
 #include "AudioImporter.h"
 #include "RuntimeCodecFactory.h"
+#include "ImportedSoundWave.h"
+#include "RAW_RuntimeCodec.h"
 
-void AudioImporter::ImportAudioFromBuffer(TArray64<uint8> AudioData)
+void UAudioImporter::ImportAudioFromBuffer(TArray64<uint8> AudioData)
 {
 	if (IsInGameThread())
 	{
@@ -15,7 +17,7 @@ void AudioImporter::ImportAudioFromBuffer(TArray64<uint8> AudioData)
 			}
 			else
 			{
-				UE_LOG(LogCore, Error, TEXT("Failed to import audio from buffer because the RuntimeAudioImporterLibrary object has been destroyed"));
+				UE_LOG(AudioLog, Error, TEXT("Failed to import audio from buffer because the RuntimeAudioImporterLibrary object has been destroyed"));
 			}
 		});
 		return;
@@ -26,14 +28,14 @@ void AudioImporter::ImportAudioFromBuffer(TArray64<uint8> AudioData)
 	FDecodedAudioStruct DecodedAudioInfo;
 	if (!DecodeAudioData(MoveTemp(EncodedAudioInfo), DecodedAudioInfo))
 	{
-		UE_LOG(LogCore, Error, TEXT("Failed to decode audiodata: FailedToReadAudioDataArray"));
+		UE_LOG(AudioLog, Error, TEXT("Failed to decode audiodata: FailedToReadAudioDataArray"));
 		return;
 	}
 
 	ImportAudioFromDecodedInfo(MoveTemp(DecodedAudioInfo));
 }
 
-bool AudioImporter::DecodeAudioData(FEncodedAudioStruct&& EncodedAudioInfo, FDecodedAudioStruct& DecodedAudioInfo)
+bool UAudioImporter::DecodeAudioData(FEncodedAudioStruct&& EncodedAudioInfo, FDecodedAudioStruct& DecodedAudioInfo)
 {
 	FRuntimeCodecFactory CodecFactory;
 	TArray<FBaseRuntimeCodec*> RuntimeCodecs = [&EncodedAudioInfo, &CodecFactory] ()
@@ -50,17 +52,17 @@ bool AudioImporter::DecodeAudioData(FEncodedAudioStruct&& EncodedAudioInfo, FDec
 			EncodedAudioInfo.AudioFormat = RuntimeCodec->GetAudioFormat();
 			if (!RuntimeCodec->Decode(MoveTemp(EncodedAudioInfo), DecodedAudioInfo))
 			{
-				UE_LOG(LogCore, Error, TEXT("Something went wrong while decoding '%s' audio data"), *UEnum::GetValueAsString(EncodedAudioInfo.AudioFormat));
+				UE_LOG(AudioLog, Error, TEXT("Something went wrong while decoding '%s' audio data"), *UEnum::GetValueAsString(EncodedAudioInfo.AudioFormat));
 				continue;
 			}
 			return true;
 		}
 
-		UE_LOG(LogCore, Error, TEXT("Failed to decode the audio data because the codec for the format '%s' was not found"), *UEnum::GetValueAsString(EncodedAudioInfo.AudioFormat));
+		UE_LOG(AudioLog, Error, TEXT("Failed to decode the audio data because the codec for the format '%s' was not found"), *UEnum::GetValueAsString(EncodedAudioInfo.AudioFormat));
 		return false;
 }
 
-void AudioImporter::ImportAudioFromDecodedInfo(FDecodedAudioStruct&& DecodedAudioInfo)
+void UAudioImporter::ImportAudioFromDecodedInfo(FDecodedAudioStruct&& DecodedAudioInfo)
 {
 	// Making sure we are in the game thread
 	if (!IsInGameThread())
@@ -73,7 +75,7 @@ void AudioImporter::ImportAudioFromDecodedInfo(FDecodedAudioStruct&& DecodedAudi
 			}
 			else
 			{
-				UE_LOG(LogCore, Error, TEXT("Unable to import audio from decoded info '%s' because the RuntimeAudioImporterLibrary object has been destroyed"), *DecodedAudioInfo.ToString());
+				UE_LOG(AudioLog, Error, TEXT("Unable to import audio from decoded info '%s' because the RuntimeAudioImporterLibrary object has been destroyed"), *DecodedAudioInfo.ToString());
 			}
 		});
 		return;
@@ -82,7 +84,7 @@ void AudioImporter::ImportAudioFromDecodedInfo(FDecodedAudioStruct&& DecodedAudi
 	UImportedSoundWave* ImportedSoundWave = NewObject<UImportedSoundWave>();
 	if (!ImportedSoundWave)
 	{
-		UE_LOG(LogCore, Error, TEXT("Something went wrong while creating the imported sound wave"));
+		UE_LOG(AudioLog, Error, TEXT("Something went wrong while creating the imported sound wave"));
 		return;
 	}
 
@@ -90,7 +92,61 @@ void AudioImporter::ImportAudioFromDecodedInfo(FDecodedAudioStruct&& DecodedAudi
 
 	ImportedSoundWave->PopulateAudioDataFromDecodedInfo(MoveTemp(DecodedAudioInfo));
 
-	UE_LOG(LogCore, Log, TEXT("The audio data was successfully imported"));
+	UE_LOG(AudioLog, Log, TEXT("The audio data was successfully imported"));
 
 	ImportedSoundWave->RemoveFromRoot();
+}
+
+bool UAudioImporter::ResampleAndMixChannelsInDecodedInfo(FDecodedAudioStruct& DecodedAudioInfo, uint32 NewSampleRate, uint32 NewNumOfChannels)
+{
+	if (DecodedAudioInfo.SoundWaveBasicInfo.SampleRate <= 0 || NewSampleRate <= 0)
+	{
+		UE_LOG(AudioLog, Error, TEXT("Unable to resample audio data because the sample rate is invalid (Current: %d, New: %d)"), DecodedAudioInfo.SoundWaveBasicInfo.SampleRate, NewSampleRate);
+		return false;
+	}
+
+	if (DecodedAudioInfo.SoundWaveBasicInfo.NumOfChannels <= 0 || NewNumOfChannels <= 0)
+	{
+		UE_LOG(AudioLog, Error, TEXT("Unable to mix audio data because the number of channels is invalid (Current: %d, New: %d)"), DecodedAudioInfo.SoundWaveBasicInfo.NumOfChannels, NewNumOfChannels);
+		return false;
+	}
+
+	if (NewSampleRate == DecodedAudioInfo.SoundWaveBasicInfo.SampleRate && NewNumOfChannels == DecodedAudioInfo.SoundWaveBasicInfo.NumOfChannels)
+	{
+		UE_LOG(AudioLog, Log, TEXT("No need to resample or mix audio data"));
+		return true;
+	}
+
+	Audio::FAlignedFloatBuffer WaveData(DecodedAudioInfo.PCMInfo.PCMData.GetView().GetData(), DecodedAudioInfo.PCMInfo.PCMData.GetView().Num());
+
+	// Resampling if needed
+	if (NewSampleRate != DecodedAudioInfo.SoundWaveBasicInfo.SampleRate)
+	{
+		Audio::FAlignedFloatBuffer ResamplerOutputData;
+		if (!FRAW_RuntimeCodec::ResampleRAWData(WaveData, DecodedAudioInfo.SoundWaveBasicInfo.NumOfChannels, DecodedAudioInfo.SoundWaveBasicInfo.SampleRate, NewSampleRate, ResamplerOutputData))
+		{
+			UE_LOG(AudioLog, Error, TEXT("Unable to resample audio data to the sound wave's sample rate. Resampling failed"));
+			return false;
+		}
+		WaveData = MoveTemp(ResamplerOutputData);
+		DecodedAudioInfo.SoundWaveBasicInfo.SampleRate = NewSampleRate;
+		UE_LOG(AudioLog, Log, TEXT("Audio data has been resampled to the desired sample rate '%d'"), NewSampleRate);
+	}
+
+	// Mixing the channels if needed
+	if (NewNumOfChannels != DecodedAudioInfo.SoundWaveBasicInfo.NumOfChannels)
+	{
+		Audio::FAlignedFloatBuffer WaveDataTemp;
+		if (!FRAW_RuntimeCodec::MixChannelsRAWData(WaveData, NewSampleRate, DecodedAudioInfo.SoundWaveBasicInfo.NumOfChannels, NewNumOfChannels, WaveDataTemp))
+		{
+			UE_LOG(AudioLog, Error, TEXT("Unable to mix audio data to the sound wave's number of channels. Mixing failed"));
+			return false;
+		}
+		WaveData = MoveTemp(WaveDataTemp);
+		DecodedAudioInfo.SoundWaveBasicInfo.NumOfChannels = NewNumOfChannels;
+		UE_LOG(AudioLog, Log, TEXT("Audio data has been mixed to the desired number of channels '%d'"), NewNumOfChannels);
+	}
+
+	DecodedAudioInfo.PCMInfo.PCMData = FRuntimeBulkDataBuffer<float>(WaveData);
+	return true;
 }
