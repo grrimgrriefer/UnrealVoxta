@@ -5,7 +5,11 @@
 UVoxtaAudioPlayback::UVoxtaAudioPlayback()
 {
 	m_audioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("AudioComponent"));
-	PrimaryComponentTick.bCanEverTick = false;
+	//	m_audioComponent->SetupAttachment(GetOwner()->GetRootComponent());
+	PrimaryComponentTick.bCanEverTick = true;
+
+	ConstructorHelpers::FObjectFinder<USoundCue> propellerCue(TEXT("/Game/SavedFile_Cue"));
+	propellerAudioCue = propellerCue.Object;
 }
 
 void UVoxtaAudioPlayback::InitializeAudioPlayback(UVoxtaClient* voxtaClient, FStringView characterId)
@@ -20,34 +24,85 @@ void UVoxtaAudioPlayback::PlaybackMessage(const FCharDataBase& sender, const FCh
 {
 	if (sender.GetId() == m_characterId)
 	{
-		for (FStringView url : message.m_audioUrls)
-		{
-			DownloadFile(url);
-		}
+		m_orderedUrls.Empty();
+		m_audioData.Empty();
+		GenerateFullUrls(message);
+		DownloadDataAsync();
 	}
 }
 
-void UVoxtaAudioPlayback::DownloadFile(FStringView url)
+void UVoxtaAudioPlayback::GenerateFullUrls(const FChatMessage& message)
 {
-	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> HttpRequest = FHttpModule::Get().CreateRequest();
-	HttpRequest->SetVerb("GET");
-	FString fullUrl = FString::Format(*FString(TEXT("http://{0}:{1}{2}")), { m_hostAddress, m_hostPort, url });
+	for (int i = 0; i < message.m_audioUrls.Num(); i++)
+	{
+		FString fullUrl = FString::Format(*FString(TEXT("http://{0}:{1}{2}")), {
+			m_hostAddress,
+			m_hostPort,
+			message.m_audioUrls[i] });
+		m_orderedUrls.Add(fullUrl);
+	}
+}
 
-	HttpRequest->SetURL(fullUrl);
-	HttpRequest->OnProcessRequestComplete().BindUObject(this, &UVoxtaAudioPlayback::OnDownloadComplete);
-	HttpRequest->ProcessRequest();
+void UVoxtaAudioPlayback::DownloadDataAsync()
+{
+	for (const FString& url : m_orderedUrls)
+	{
+		TSharedRef<IHttpRequest, ESPMode::ThreadSafe> httpRequest = FHttpModule::Get().CreateRequest();
+		httpRequest->SetVerb("GET");
+		httpRequest->SetURL(url);
+		httpRequest->OnProcessRequestComplete().BindUObject(this, &UVoxtaAudioPlayback::OnDownloadComplete);
+		httpRequest->ProcessRequest();
+	}
 }
 
 void UVoxtaAudioPlayback::OnDownloadComplete(FHttpRequestPtr request, FHttpResponsePtr response, bool bWasSuccessful)
 {
-	if (bWasSuccessful)
+	if (bWasSuccessful && m_orderedUrls.Contains(request.Get()->GetURL()))
 	{
-		TArray<uint8> DownloadedData = response->GetContent();
-		// Now you can save this data to a .wav file
-		FFileHelper::SaveArrayToFile(DownloadedData, *FPaths::ProjectDir().Append(TEXT("/SavedFile.wav")));
+		USoundWaveProcedural soundWaveProcedural = ConvertRawAudioData(response->GetContent().GetData());
+		m_audioData.Emplace(request.Get()->GetURL(), soundWaveProcedural);
+
+		if (m_audioData.Num() == m_orderedUrls.Num())
+		{
+			TriggerPlayback();
+		}
 	}
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("File download failed."));
 	}
+}
+
+void UVoxtaAudioPlayback::TriggerPlayback()
+{
+	//m_audioComponent->SetSound(m_audioData[m_orderedUrls[0]]);
+	m_audioComponent->SetSound(propellerAudioCue);
+	m_audioComponent->Play();
+
+	UE_LOG(LogTemp, Warning, TEXT("Playing audio."));
+}
+
+USoundWaveProcedural UVoxtaAudioPlayback::ConvertRawAudioData(const TArray<uint8>& rawData)
+{
+	/*	RuntimeAudioImporter->OnProgressNative.AddWeakLambda(this, [] (int32 Percentage)
+		{
+			UE_LOG(LogTemp, Log, TEXT("Audio importing percentage: %d"), Percentage);
+		});
+
+		RuntimeAudioImporter->OnResultNative.AddWeakLambda(this, [this] (URuntimeAudioImporterLibrary* Importer, UImportedSoundWave* ImportedSoundWave, ERuntimeImportStatus Status)
+		{
+			if (Status == ERuntimeImportStatus::SuccessfulImport)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Successfully imported audio with sound wave %s"), *ImportedSoundWave->GetName());
+				// Here you can handle ImportedSoundWave playback, like "UGameplayStatics::PlaySound2D(GetWorld(), ImportedSoundWave);"
+			}
+			else
+			{
+				UE_LOG(LogTemp, Error, TEXT("Failed to import audio"));
+			}
+
+			RuntimeAudioImporter = nullptr;
+		});*/
+
+	audioImporter.ImportAudioFromBuffer(TArray64<uint8>(rawData));
 }

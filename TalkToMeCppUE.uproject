@@ -24,7 +24,8 @@
 				"Engine",
 				"CoreUObject",
 				"SignalR",
-				"VoxtaData"
+				"VoxtaData",
+				"AudioUtility"
 			]
 		},
 		{
@@ -36,7 +37,17 @@
 			"Name": "SignalR",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
-		}
+		},
+		
+		{
+			"Name": "AudioUtility",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine",
+				"CoreUObject"
+			]
+		},
 	],
 	"Plugins": [
 		{

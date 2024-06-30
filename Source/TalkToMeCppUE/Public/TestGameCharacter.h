@@ -36,6 +36,8 @@ private:
 	ATalkToMeCppUeHUD* m_hud;
 	UVoxtaAudioPlayback* m_audioPlaybackHandler;
 
+	UCameraComponent* deleteme;
+
 	/// <summary>
 	/// Connects the events between the UVoxtaClient and the ATalkToMeCppUeHUD.
 	/// </summary>

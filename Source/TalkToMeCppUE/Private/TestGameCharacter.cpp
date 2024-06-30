@@ -9,6 +9,7 @@ ATestGameCharacter::ATestGameCharacter()
 	PrimaryActorTick.bCanEverTick = false;
 	m_camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	m_voxtaClient = CreateDefaultSubobject<UVoxtaClient>(TEXT("VoxtaClient"));
+	m_audioPlaybackHandler = CreateDefaultSubobject<UVoxtaAudioPlayback>(TEXT("AudioPlayback"));
 	m_hud = nullptr;
 }
 
@@ -87,8 +88,8 @@ void ATestGameCharacter::VoxtaClientStateChanged(VoxtaClientState newState)
 	{
 		for (const FAiCharData* aiCharacter : m_voxtaClient->GetChatSession()->m_characters)
 		{
-			FString componentName = FString::Format(*FString(TEXT("AudioPlayback {0}")), { aiCharacter->GetName() });
-			m_audioPlaybackHandler = NewObject<UVoxtaAudioPlayback>(this, *componentName);
+			//FString componentName = FString::Format(*FString(TEXT("AudioPlayback {0}")), { aiCharacter->GetName() });
+			//m_audioPlaybackHandler = NewObject<UVoxtaAudioPlayback>(this, *componentName);
 			m_audioPlaybackHandler->InitializeAudioPlayback(m_voxtaClient, aiCharacter->GetId());
 		}
 	}

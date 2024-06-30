@@ -14,5 +14,6 @@ public class TalkToMeCppUETarget : TargetRules
 		ExtraModuleNames.Add("Voxta");
 		ExtraModuleNames.Add("VoxtaData");
 		ExtraModuleNames.Add("SignalR");
+		ExtraModuleNames.Add("AudioUtility");
 	}
 }
