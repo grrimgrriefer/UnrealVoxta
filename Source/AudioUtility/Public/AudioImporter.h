@@ -1,4 +1,4 @@
-// Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
+// Georgy Treshchev 2024.
 
 #pragma once
 
@@ -14,9 +14,16 @@ class AUDIOUTILITY_API UAudioImporter : public UObject
 	GENERATED_BODY()
 
 public:
-	void ImportAudioFromBuffer(TArray64<uint8> buffer);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAudioImportedEventCallback, FString, identifier, UImportedSoundWave*, soundWave);
+
+	FAudioImportedEventCallback AudioImportedEvent;
+
+	void ImportAudioFromBuffer(FString identifier, TArray64<uint8> buffer);
 	bool DecodeAudioData(FEncodedAudioStruct&& EncodedAudioInfo, FDecodedAudioStruct& DecodedAudioInfo);
-	void ImportAudioFromDecodedInfo(FDecodedAudioStruct&& DecodedAudioInfo);
+	void ImportAudioFromDecodedInfo(FString identifier, FDecodedAudioStruct&& DecodedAudioInfo);
 
 	static bool ResampleAndMixChannelsInDecodedInfo(FDecodedAudioStruct& DecodedAudioInfo, uint32 NewSampleRate, uint32 NewNumOfChannels);
+
+private:
+	void OnResult_Internal(FString identifier, UImportedSoundWave* ImportedSoundWave);
 };

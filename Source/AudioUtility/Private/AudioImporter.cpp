@@ -1,19 +1,19 @@
-// Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
+// Georgy Treshchev 2024.
 
 #include "AudioImporter.h"
 #include "RuntimeCodecFactory.h"
 #include "ImportedSoundWave.h"
 #include "RAW_RuntimeCodec.h"
 
-void UAudioImporter::ImportAudioFromBuffer(TArray64<uint8> AudioData)
+void UAudioImporter::ImportAudioFromBuffer(FString identifier, TArray64<uint8> AudioData)
 {
 	if (IsInGameThread())
 	{
-		AsyncTask(ENamedThreads::AnyBackgroundHiPriTask, [WeakThis = MakeWeakObjectPtr(this), AudioData = MoveTemp(AudioData)] () mutable
+		AsyncTask(ENamedThreads::AnyBackgroundHiPriTask, [WeakThis = MakeWeakObjectPtr(this), ID = identifier, AudioData = MoveTemp(AudioData)] () mutable
 		{
 			if (WeakThis.IsValid())
 			{
-				WeakThis->ImportAudioFromBuffer(MoveTemp(AudioData));
+				WeakThis->ImportAudioFromBuffer(ID, MoveTemp(AudioData));
 			}
 			else
 			{
@@ -32,7 +32,7 @@ void UAudioImporter::ImportAudioFromBuffer(TArray64<uint8> AudioData)
 		return;
 	}
 
-	ImportAudioFromDecodedInfo(MoveTemp(DecodedAudioInfo));
+	ImportAudioFromDecodedInfo(identifier, MoveTemp(DecodedAudioInfo));
 }
 
 bool UAudioImporter::DecodeAudioData(FEncodedAudioStruct&& EncodedAudioInfo, FDecodedAudioStruct& DecodedAudioInfo)
@@ -62,16 +62,16 @@ bool UAudioImporter::DecodeAudioData(FEncodedAudioStruct&& EncodedAudioInfo, FDe
 		return false;
 }
 
-void UAudioImporter::ImportAudioFromDecodedInfo(FDecodedAudioStruct&& DecodedAudioInfo)
+void UAudioImporter::ImportAudioFromDecodedInfo(FString identifier, FDecodedAudioStruct&& DecodedAudioInfo)
 {
 	// Making sure we are in the game thread
 	if (!IsInGameThread())
 	{
-		AsyncTask(ENamedThreads::GameThread, [WeakThis = MakeWeakObjectPtr(this), DecodedAudioInfo = MoveTemp(DecodedAudioInfo)] () mutable
+		AsyncTask(ENamedThreads::GameThread, [WeakThis = MakeWeakObjectPtr(this), ID = identifier, DecodedAudioInfo = MoveTemp(DecodedAudioInfo)] () mutable
 		{
 			if (WeakThis.IsValid())
 			{
-				WeakThis->ImportAudioFromDecodedInfo(MoveTemp(DecodedAudioInfo));
+				WeakThis->ImportAudioFromDecodedInfo(ID, MoveTemp(DecodedAudioInfo));
 			}
 			else
 			{
@@ -93,6 +93,7 @@ void UAudioImporter::ImportAudioFromDecodedInfo(FDecodedAudioStruct&& DecodedAud
 	ImportedSoundWave->PopulateAudioDataFromDecodedInfo(MoveTemp(DecodedAudioInfo));
 
 	UE_LOG(AudioLog, Log, TEXT("The audio data was successfully imported"));
+	OnResult_Internal(identifier, ImportedSoundWave);
 
 	ImportedSoundWave->RemoveFromRoot();
 }
@@ -149,4 +150,37 @@ bool UAudioImporter::ResampleAndMixChannelsInDecodedInfo(FDecodedAudioStruct& De
 
 	DecodedAudioInfo.PCMInfo.PCMData = FRuntimeBulkDataBuffer<float>(WaveData);
 	return true;
+}
+
+void UAudioImporter::OnResult_Internal(FString identifier, UImportedSoundWave* ImportedSoundWave)
+{
+	// Making sure we are in the game thread
+	if (!IsInGameThread())
+	{
+		AsyncTask(ENamedThreads::GameThread, [WeakThis = MakeWeakObjectPtr(this), ID = identifier, ImportedSoundWave] ()
+		{
+			if (WeakThis.IsValid())
+			{
+				WeakThis->OnResult_Internal(ID, ImportedSoundWave);
+			}
+			else
+			{
+				UE_LOG(AudioLog, Error, TEXT("Unable to broadcast the result of the import because the RuntimeAudioImporterLibrary object has been destroyed"));
+			}
+		});
+		return;
+	}
+
+	bool bBroadcasted{ false };
+
+	if (AudioImportedEvent.IsBound())
+	{
+		bBroadcasted = true;
+		AudioImportedEvent.Broadcast(identifier, ImportedSoundWave);
+	}
+
+	if (!bBroadcasted)
+	{
+		UE_LOG(AudioLog, Error, TEXT("You did not bind to the delegate to get the result of the import"));
+	}
 }

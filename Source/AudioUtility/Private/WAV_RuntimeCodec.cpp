@@ -4,6 +4,7 @@
 #include "AudioStructs.h"
 #include "HAL/UnrealMemory.h"
 
+#define DR_WAV_IMPLEMENTATION
 #define INCLUDE_WAV
 #include "CodecIncludes.h"
 #include "RAW_RuntimeCodec.h"

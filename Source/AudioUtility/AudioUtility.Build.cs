@@ -13,7 +13,6 @@ public class AudioUtility : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "MetasoundEngine",	"MetasoundFrontend" });
 		
-		bool bEnableMetaSoundSupport = true;
 		bool bEnableCaptureInputSupport = true;
 		
 		PrivateDependencyModuleNames.AddRange(
@@ -45,20 +44,6 @@ public class AudioUtility : ModuleRules
 				}
 			);
 		}
-
-		if (bEnableMetaSoundSupport)
-		{
-			PrivateDependencyModuleNames.AddRange(
-				new string[]
-				{
-					"MetasoundEngine",
-					"MetasoundFrontend",
-					"MetasoundGraphCore"
-				}
-			);
-		}
-
-		PublicDefinitions.Add(string.Format("WITH_RUNTIMEAUDIOIMPORTER_METASOUND_SUPPORT={0}", (bEnableMetaSoundSupport ? "1" : "0")));
 
 		if (bEnableCaptureInputSupport)
 		{

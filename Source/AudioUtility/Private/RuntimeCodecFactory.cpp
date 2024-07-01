@@ -2,15 +2,15 @@
 
 #include "RuntimeCodecFactory.h"
 #include "BaseRuntimeCodec.h"
-#include "Features/IModularFeatures.h"
+#include "WAV_RuntimeCodec.h"
 #include "Misc/Paths.h"
-
 #include "AudioStructs.h"
+
+DEFINE_LOG_CATEGORY(AudioLog);
 
 TArray<FBaseRuntimeCodec*> FRuntimeCodecFactory::GetCodecs()
 {
-	IModularFeatures::FScopedLockModularFeatureList ScopedLockModularFeatureList;
-	TArray<FBaseRuntimeCodec*> AvailableCodecs = IModularFeatures::Get().GetModularFeatureImplementations<FBaseRuntimeCodec>(GetModularFeatureName());
+	TArray<FBaseRuntimeCodec*> AvailableCodecs = { new FWAV_RuntimeCodec() };
 	return AvailableCodecs;
 }
 

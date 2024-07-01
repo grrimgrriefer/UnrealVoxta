@@ -8,6 +8,7 @@
 #include "AudioThread.h"
 #include "AudioDeviceHandle.h"
 #include "RAW_RuntimeCodec.h"
+#include "AudioImporter.h"
 
 UImportedSoundWave::UImportedSoundWave(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -250,7 +251,7 @@ void UImportedSoundWave::PopulateAudioDataFromDecodedInfo(FDecodedAudioStruct&& 
 	// If the sound wave has not yet been filled in with audio data and the initial desired sample rate and the number of channels are set, resample and mix the channels
 	if (InitialDesiredSampleRate.IsSet() || InitialDesiredNumOfChannels.IsSet())
 	{
-		URuntimeAudioImporterLibrary::ResampleAndMixChannelsInDecodedInfo(DecodedAudioInfo,
+		UAudioImporter::ResampleAndMixChannelsInDecodedInfo(DecodedAudioInfo,
 			InitialDesiredSampleRate.IsSet() ? InitialDesiredSampleRate.GetValue() : DecodedAudioInfo.SoundWaveBasicInfo.SampleRate,
 			InitialDesiredNumOfChannels.IsSet() ? InitialDesiredNumOfChannels.GetValue() : DecodedAudioInfo.SoundWaveBasicInfo.NumOfChannels);
 	}
@@ -322,52 +323,6 @@ void UImportedSoundWave::PopulateAudioDataFromDecodedInfo(FDecodedAudioStruct&& 
 	}
 
 	UE_LOG(AudioLog, Log, TEXT("The audio data has been populated successfully. Information about audio data:\n%s"), *DecodedAudioInfoString);
-}
-
-void UImportedSoundWave::PrepareSoundWaveForMetaSounds(const FOnPrepareSoundWaveForMetaSoundsResult& Result)
-{
-	PrepareSoundWaveForMetaSounds(FOnPrepareSoundWaveForMetaSoundsResultNative::CreateWeakLambda(this, [Result] (bool bSucceeded)
-		{
-			Result.ExecuteIfBound(bSucceeded);
-		}));
-}
-
-void UImportedSoundWave::PrepareSoundWaveForMetaSounds(const FOnPrepareSoundWaveForMetaSoundsResultNative& Result)
-{
-#if WITH_RUNTIMEAUDIOIMPORTER_METASOUND_SUPPORT
-	if (IsInGameThread())
-	{
-		AsyncTask(ENamedThreads::AnyBackgroundHiPriTask, [WeakThis = MakeWeakObjectPtr(this), Result] ()
-		{
-			WeakThis->PrepareSoundWaveForMetaSounds(Result);
-		});
-		return;
-	}
-
-	auto ExecuteResult = [Result] (bool bSucceeded)
-		{
-			AsyncTask(ENamedThreads::GameThread, [Result, bSucceeded] ()
-			{
-				Result.ExecuteIfBound(bSucceeded);
-			});
-		};
-
-	const bool bSucceeded = InitAudioResource(Audio::NAME_OGG);
-	if (bSucceeded)
-	{
-		UE_LOG(AudioLog, Log, TEXT("Successfully prepared the sound wave '%s' for MetaSounds"), *GetName());
-	}
-	else
-	{
-		UE_LOG(AudioLog, Error, TEXT("Failed to initialize audio resource to prepare the sound wave '%s' for MetaSounds"), *GetName());
-	}
-
-	ExecuteResult(bSucceeded);
-
-#else
-	UE_LOG(AudioLog, Error, TEXT("PrepareSoundWaveForMetaSounds works only for Unreal Engine version >= 5.3 and if explicitly enabled in RuntimeAudioImporter.Build.cs"));
-	Result.ExecuteIfBound(false);
-#endif
 }
 
 void UImportedSoundWave::ReleaseMemory()

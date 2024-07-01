@@ -29,20 +29,33 @@ private:
 	FString m_characterId;
 	UAudioComponent* m_audioComponent;
 	TArray<FString> m_orderedUrls;
-	TMap<FString, USoundWaveProcedural> m_audioData;
-	AudioImporter audioImporter;
-
-	USoundCue* propellerAudioCue;
+	TMap<FString, USoundWaveProcedural*> m_audioData;
+	UAudioImporter* audioImporter;
 
 	FString m_hostAddress;
 	FString m_hostPort;
 
+	bool isPlaying;
+	int currentAudioClip = 0;
+
 	UFUNCTION()
 	void PlaybackMessage(const FCharDataBase& sender, const FChatMessage& message);
 
-	USoundWaveProcedural ConvertRawAudioData(const TArray<uint8>& rawData);
+	void ConvertRawAudioData(const FString& identifier, const TArray<uint8>& rawData);
 	void DownloadDataAsync();
 	void GenerateFullUrls(const FChatMessage& message);
-	void TriggerPlayback();
+	void TryPlayNextAudio();
 	void OnDownloadComplete(FHttpRequestPtr request, FHttpResponsePtr response, bool bWasSuccessful);
+
+	UFUNCTION()
+	void OnAudioFinished();
+
+	UFUNCTION()
+	void AudioImportCompleted(FString identifier, UImportedSoundWave* soundWave);
+
+	///~ Begin UActorComponent overrides.
+protected:
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	///~ End UActorComponent overrides.
 };

@@ -13,7 +13,8 @@
 				"Voxta",
 				"SignalR",
 				"VoxtaData",
-				"UMG"
+				"UMG",
+				"AudioUtility"
 			]
 		},
 		{
@@ -37,8 +38,7 @@
 			"Name": "SignalR",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
-		},
-		
+		},		
 		{
 			"Name": "AudioUtility",
 			"Type": "Runtime",
@@ -47,7 +47,7 @@
 				"Engine",
 				"CoreUObject"
 			]
-		},
+		}
 	],
 	"Plugins": [
 		{
