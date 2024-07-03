@@ -15,6 +15,7 @@
 #include "VoxtaData/Public/ServerResponses/ServerResponseCharacterList.h"
 #include "VoxtaData/Public/ChatSession.h"
 #include "VoxtaData/Public/VoxtaClientState.h"
+#include "VoxtaAudioInput.h"
 #include "VoxtaClient.generated.h"
 
 /// <summary>
@@ -107,6 +108,7 @@ private:
 	VoxtaApiRequestHandler m_voxtaRequestApi;
 	VoxtaApiResponseHandler m_voxtaResponseApi;
 
+	VoxtaAudioInput m_audioInput;
 	VoxtaClientState m_currentState = VoxtaClientState::Disconnected;
 	TUniquePtr<FUserCharData> m_userData;
 	TArray<TUniquePtr<const FAiCharData>> m_characterList;
