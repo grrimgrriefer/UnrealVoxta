@@ -1,13 +1,13 @@
 // Georgy Treshchev 2024.
 
-#include "ImportedSoundWave.h"
+#include "RuntimeAudioImporter/ImportedSoundWave.h"
 #include "AudioDevice.h"
 #include "Async/Async.h"
 #include "Async/Future.h"
 #include "Engine/Engine.h"
 #include "AudioThread.h"
 #include "AudioDeviceHandle.h"
-#include "RAW_RuntimeCodec.h"
+#include "RuntimeAudioImporter/RAW_RuntimeCodec.h"
 #include "AudioImporter.h"
 
 UImportedSoundWave::UImportedSoundWave(const FObjectInitializer& ObjectInitializer)

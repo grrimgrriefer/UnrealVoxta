@@ -1,9 +1,9 @@
-// Georgy Treshchev 2024.
+// Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
 
 #include "AudioImporter.h"
-#include "RuntimeCodecFactory.h"
-#include "ImportedSoundWave.h"
-#include "RAW_RuntimeCodec.h"
+#include "RuntimeAudioImporter/RuntimeCodecFactory.h"
+#include "RuntimeAudioImporter/ImportedSoundWave.h"
+#include "RuntimeAudioImporter/RAW_RuntimeCodec.h"
 
 void UAudioImporter::ImportAudioFromBuffer(FString identifier, TArray64<uint8> AudioData)
 {

@@ -15,7 +15,6 @@
 #include "VoxtaData/Public/ServerResponses/ServerResponseCharacterList.h"
 #include "VoxtaData/Public/ChatSession.h"
 #include "VoxtaData/Public/VoxtaClientState.h"
-#include "VoxtaAudioInput.h"
 #include "VoxtaClient.generated.h"
 
 /// <summary>

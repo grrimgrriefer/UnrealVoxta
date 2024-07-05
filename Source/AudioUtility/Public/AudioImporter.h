@@ -1,10 +1,10 @@
-// Georgy Treshchev 2024.
+// Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
 
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AudioStructs.h"
-#include "ImportedSoundWave.h"
+#include "RuntimeAudioImporter/AudioStructs.h"
+#include "RuntimeAudioImporter/ImportedSoundWave.h"
 
 #include "AudioImporter.generated.h"
 

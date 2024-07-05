@@ -2,19 +2,24 @@
 
 #include "VoxtaAudioInput.h"
 
-VoxtaAudioInput::VoxtaAudioInput(FStringView serverIP, int serverPort) :
-	m_audioWebSocket(MakeShared<AudioWebSocket>(serverIP, serverPort))
+UVoxtaAudioInput::UVoxtaAudioInput()
 {
 }
 
-void VoxtaAudioInput::StartStreaming()
+void UVoxtaAudioInput::RegisterEndpoint(const FString& serverIP, int serverPort)
+{
+	m_audioWebSocket = MakeShared<AudioWebSocket>(serverIP, serverPort);
+	m_audioWebSocket->Connect();
+}
+
+void UVoxtaAudioInput::StartStreaming()
 {
 	if (m_isStartingUp || m_isStreaming)
 	{
 		return;
 	}
 
-	if (!m_audioCaptureDevice.IsInitialized())
+	if (false)// !m_audioCaptureDevice.IsInitialized())
 	{
 		m_isStartingUp = true;
 		/*		m_startupThread = std::jthread([this] ()
@@ -53,18 +58,18 @@ void VoxtaAudioInput::StartStreaming()
 	}
 	else
 	{
-		m_audioCaptureDevice.StartStream();
+		//		m_audioCaptureDevice.StartStream();
 		m_isStreaming = true;
 	}
 }
 
-void VoxtaAudioInput::StopStreaming()
+void UVoxtaAudioInput::StopStreaming()
 {
 	if (m_isStartingUp || !m_isStreaming)
 	{
 		return;
 	}
 
-	m_audioCaptureDevice.StopStream();
+	//	m_audioCaptureDevice.StopStream();
 	m_isStreaming = false;
 }

@@ -10,6 +10,8 @@ ATestGameCharacter::ATestGameCharacter()
 	m_camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	m_voxtaClient = CreateDefaultSubobject<UVoxtaClient>(TEXT("VoxtaClient"));
 	m_audioPlaybackHandler = CreateDefaultSubobject<UVoxtaAudioPlayback>(TEXT("AudioPlayback"));
+	m_audioInputHandler = CreateDefaultSubobject<UVoxtaAudioInput>(TEXT("AudioInput"));
+
 	m_hud = nullptr;
 }
 
@@ -86,10 +88,14 @@ void ATestGameCharacter::VoxtaClientStateChanged(VoxtaClientState newState)
 {
 	if (newState == VoxtaClientState::Chatting)
 	{
+		FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([&] (float DeltaTime)
+			{
+				m_audioInputHandler->RegisterEndpoint(m_voxtaClient->GetServerAddress().GetData(), FCString::Atoi(m_voxtaClient->GetServerPort().GetData()));
+				return false;
+			}));
+
 		for (const FAiCharData* aiCharacter : m_voxtaClient->GetChatSession()->m_characters)
 		{
-			//FString componentName = FString::Format(*FString(TEXT("AudioPlayback {0}")), { aiCharacter->GetName() });
-			//m_audioPlaybackHandler = NewObject<UVoxtaAudioPlayback>(this, *componentName);
 			m_audioPlaybackHandler->InitializeAudioPlayback(m_voxtaClient, aiCharacter->GetId());
 		}
 	}

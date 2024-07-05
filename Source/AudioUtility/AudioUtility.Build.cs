@@ -9,18 +9,15 @@ public class AudioUtility : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "ApplicationCore", "InputCore", "WebSockets" });
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "MetasoundEngine",	"MetasoundFrontend" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "MetasoundEngine",	"MetasoundFrontend", });
 		
 		bool bEnableCaptureInputSupport = true;
 		
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"CoreUObject",
-				"Engine",
-				"Core",
 				"AudioPlatformConfiguration"
 			}
 		);
@@ -55,7 +52,6 @@ public class AudioUtility : ModuleRules
 			else if (Target.Platform == UnrealTargetPlatform.IOS)
 			{
 				PrivateDependencyModuleNames.Add("AudioCaptureAudioUnit");
-				PrivateDependencyModuleNames.Add("Core");
 				PrivateDependencyModuleNames.Add("AudioCaptureCore");
 				PublicFrameworks.AddRange(new string[] { "CoreAudio", "AVFoundation", "AudioToolbox" });
 			}

@@ -8,6 +8,7 @@
 #include "Voxta/Public/VoxtaClient.h"
 #include "TalkToMeCppUeHUD.h"
 #include "VoxtaAudioPlayback.h"
+#include "VoxtaAudioInput.h"
 #include "TestGameCharacter.generated.h"
 
 /// <summary>
@@ -35,6 +36,7 @@ private:
 	UVoxtaClient* m_voxtaClient;
 	ATalkToMeCppUeHUD* m_hud;
 	UVoxtaAudioPlayback* m_audioPlaybackHandler;
+	UVoxtaAudioInput* m_audioInputHandler;
 
 	UCameraComponent* deleteme;
 
