@@ -19,10 +19,10 @@ public:
 	FAudioImportedEventCallback AudioImportedEvent;
 
 	void ImportAudioFromBuffer(FString identifier, TArray64<uint8> buffer);
-	bool DecodeAudioData(FEncodedAudioStruct&& EncodedAudioInfo, FDecodedAudioStruct& DecodedAudioInfo);
 	void ImportAudioFromDecodedInfo(FString identifier, FDecodedAudioStruct&& DecodedAudioInfo);
 
 	static bool ResampleAndMixChannelsInDecodedInfo(FDecodedAudioStruct& DecodedAudioInfo, uint32 NewSampleRate, uint32 NewNumOfChannels);
+	static bool DecodeAudioData(FEncodedAudioStruct&& EncodedAudioInfo, FDecodedAudioStruct& DecodedAudioInfo);
 
 private:
 	void OnResult_Internal(FString identifier, UImportedSoundWave* ImportedSoundWave);

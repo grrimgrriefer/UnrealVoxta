@@ -16,11 +16,11 @@ public:
 	void Send(const char* buffer, unsigned int nBufferFrames);
 	void Send(const FString& message);
 
-private:
 	IWebSocket::FWebSocketConnectedEvent OnConnectedEvent;
 	IWebSocket::FWebSocketConnectionErrorEvent OnConnectionErrorEvent;
 	IWebSocket::FWebSocketClosedEvent OnClosedEvent;
 
+private:
 	TSharedPtr<IWebSocket> Connection;
 
 	FString m_serverIP;

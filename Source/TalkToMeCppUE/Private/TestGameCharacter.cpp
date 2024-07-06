@@ -90,7 +90,7 @@ void ATestGameCharacter::VoxtaClientStateChanged(VoxtaClientState newState)
 	{
 		FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([&] (float DeltaTime)
 			{
-				m_audioInputHandler->RegisterEndpoint(m_voxtaClient->GetServerAddress().GetData(), FCString::Atoi(m_voxtaClient->GetServerPort().GetData()));
+				m_audioInputHandler->InitializeSocket(m_voxtaClient->GetServerAddress().GetData(), FCString::Atoi(m_voxtaClient->GetServerPort().GetData()));
 				return false;
 			}));
 

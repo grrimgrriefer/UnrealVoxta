@@ -5,8 +5,19 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "AudioUtility/Public/AudioWebSocket.h"
+#include "AudioUtility/Public/RuntimeAudioImporter/CapturableSoundWave.h"
 
 #include "VoxtaAudioInput.generated.h"
+
+UENUM(BlueprintType)
+enum class MicrophoneSocketState : uint8
+{
+	NotConnected			UMETA(DisplayName = "NotConnected"),
+	Initializing			UMETA(DisplayName = "Initializing"),
+	Ready					UMETA(DisplayName = "Ready"),
+	InUse					UMETA(DisplayName = "Ready"),
+	Closed					UMETA(DisplayName = "Closed")
+};
 
 UCLASS(HideCategories = (Mobility, Rendering, LOD), Blueprintable, ClassGroup = Camera, meta = (BlueprintSpawnableComponent))
 class VOXTA_API UVoxtaAudioInput : public UActorComponent
@@ -16,16 +27,18 @@ class VOXTA_API UVoxtaAudioInput : public UActorComponent
 public:
 	UVoxtaAudioInput();
 
-	void RegisterEndpoint(const FString& serverIP, int serverPort);
+	void InitializeSocket(const FString& serverIP, int serverPort);
+	void CloseSocket();
 
 	void StartStreaming();
 	void StopStreaming();
 
 private:
-	//AudioCaptureDevice m_audioCaptureDevice;
+	UCapturableSoundWave m_audioCaptureDevice;
 	TSharedPtr<AudioWebSocket> m_audioWebSocket;
+	MicrophoneSocketState m_connectionState;
 
-	//std::jthread m_startupThread;
-	bool m_isStreaming = false;
-	bool m_isStartingUp = false;
+	void OnSocketConnected();
+	void OnSocketConnectionError(const FString& error);
+	void OnSocketClosed(int StatusCode, const FString& Reason, bool bWasClean);
 };

@@ -6,70 +6,61 @@ UVoxtaAudioInput::UVoxtaAudioInput()
 {
 }
 
-void UVoxtaAudioInput::RegisterEndpoint(const FString& serverIP, int serverPort)
+void UVoxtaAudioInput::InitializeSocket(const FString& serverIP, int serverPort)
 {
+	if (m_connectionState != MicrophoneSocketState::NotConnected)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Audio socket was already initialized, skipping new initialize attempt."));
+		return;
+	}
+	m_connectionState = MicrophoneSocketState::Initializing;
+
 	m_audioWebSocket = MakeShared<AudioWebSocket>(serverIP, serverPort);
+	m_audioWebSocket->OnConnectedEvent.AddUObject(this, &UVoxtaAudioInput::OnSocketConnected);
+	m_audioWebSocket->OnConnectionErrorEvent.AddUObject(this, &UVoxtaAudioInput::OnSocketConnectionError);
+	m_audioWebSocket->OnClosedEvent.AddUObject(this, &UVoxtaAudioInput::OnSocketClosed);
 	m_audioWebSocket->Connect();
+}
+
+void UVoxtaAudioInput::OnSocketConnected()
+{
+	m_audioWebSocket->Send("{\"contentType\":\"audio/wav\",\"sampleRate\":16000,"
+							"\"channels\":1,\"bitsPerSample\": 16,\"bufferMilliseconds\":30}");
+}
+
+void UVoxtaAudioInput::OnSocketConnectionError(const FString& error)
+{
+	UE_LOG(LogTemp, Error, TEXT("Audio socket was closed due to error: %s"), *error);
+	m_connectionState = MicrophoneSocketState::Closed;
+}
+
+void UVoxtaAudioInput::OnSocketClosed(int StatusCode, const FString& Reason, bool bWasClean)
+{
+	if (!bWasClean)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Audio socket was improperly closed because of reason: %s"), *Reason);
+	}
+	m_connectionState = MicrophoneSocketState::Closed;
 }
 
 void UVoxtaAudioInput::StartStreaming()
 {
-	if (m_isStartingUp || m_isStreaming)
+	if (m_connectionState != MicrophoneSocketState::Ready)
 	{
 		return;
 	}
 
-	if (false)// !m_audioCaptureDevice.IsInitialized())
-	{
-		m_isStartingUp = true;
-		/*		m_startupThread = std::jthread([this] ()
-					{
-						if (m_initializedStatusOutput)
-						{
-							m_initializedStatusOutput("Initializing audio socket");
-						}
-						m_audioWebSocket->Connect();
-						std::this_thread::sleep_for(std::chrono::milliseconds(500));
-
-						m_audioWebSocket->Send("{\"contentType\":\"audio/wav\",\"sampleRate\":16000,"
-							"\"channels\":1,\"bitsPerSample\": 16,\"bufferMilliseconds\":30}");
-						std::this_thread::sleep_for(std::chrono::milliseconds(500));
-
-						m_audioCaptureDevice.RegisterSocket(m_audioWebSocket);
-						m_audioCaptureDevice.TryInitialize();
-						if (m_initializedStatusOutput)
-						{
-							m_initializedStatusOutput(std::format("Warming up input device {}",
-								m_audioCaptureDevice.GetDeviceName()));
-						}
-
-						std::this_thread::sleep_for(std::chrono::milliseconds(500));
-
-						m_audioCaptureDevice.StartStream();
-						if (m_initializedStatusOutput)
-						{
-							m_initializedStatusOutput("Microphone connected.");
-						}
-
-						m_isStreaming = true;
-						m_isStartingUp = false;
-					});
-					*/
-	}
-	else
-	{
-		//		m_audioCaptureDevice.StartStream();
-		m_isStreaming = true;
-	}
+	m_audioCaptureDevice.StartCapture(0);
+	m_connectionState = MicrophoneSocketState::InUse;
 }
 
 void UVoxtaAudioInput::StopStreaming()
 {
-	if (m_isStartingUp || !m_isStreaming)
-	{
-		return;
-	}
+	m_audioCaptureDevice.StopCapture();
+	m_connectionState = MicrophoneSocketState::Ready;
+}
 
-	//	m_audioCaptureDevice.StopStream();
-	m_isStreaming = false;
+void UVoxtaAudioInput::CloseSocket()
+{
+	m_audioWebSocket->Close();
 }

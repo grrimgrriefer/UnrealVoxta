@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AudioCaptureDeviceInterface.h"
 #include "Logging/LogMacros.h"
 
 #include "AudioStructs.generated.h"
@@ -23,6 +24,19 @@ enum class ERuntimeAudioFormat : uint8
 	Bink UMETA(DisplayName = "bink"),
 	Custom UMETA(DisplayName = "custom"),
 	Invalid UMETA(DisplayName = "invalid", Hidden)
+};
+
+/** Possible RAW (uncompressed, PCM) audio formats */
+UENUM(BlueprintType, Category = "Runtime Audio Importer")
+enum class ERuntimeRAWAudioFormat : uint8
+{
+	Int8 UMETA(DisplayName = "Signed 8-bit integer"),
+	UInt8 UMETA(DisplayName = "Unsigned 8-bit integer"),
+	Int16 UMETA(DisplayName = "Signed 16-bit integer"),
+	UInt16 UMETA(DisplayName = "Unsigned 16-bit integer"),
+	Int32 UMETA(DisplayName = "Signed 32-bit integer"),
+	UInt32 UMETA(DisplayName = "Unsigned 32-bit integer"),
+	Float32 UMETA(DisplayName = "Floating point 32-bit")
 };
 
 /** A line of subtitle text and the time at which it should be displayed. This is the same as FSubtitleCue but editable in Blueprints */
@@ -389,6 +403,50 @@ struct FDecodedAudioStruct
 
 	/** PCM data buffer */
 	FPCMStruct PCMInfo;
+};
+
+/** Platform audio input device info */
+USTRUCT(BlueprintType, Category = "Runtime Audio Importer")
+struct FRuntimeAudioInputDeviceInfo
+{
+	GENERATED_BODY()
+
+	FRuntimeAudioInputDeviceInfo()
+		: DeviceName("")
+		, DeviceId("")
+		, InputChannels(0)
+		, PreferredSampleRate(0)
+		, bSupportsHardwareAEC(true)
+	{
+	}
+
+	FRuntimeAudioInputDeviceInfo(const Audio::FCaptureDeviceInfo& DeviceInfo)
+		: DeviceName(DeviceInfo.DeviceName)
+		, InputChannels(DeviceInfo.InputChannels)
+		, PreferredSampleRate(DeviceInfo.PreferredSampleRate)
+		, bSupportsHardwareAEC(DeviceInfo.bSupportsHardwareAEC)
+	{
+	}
+
+	/** The name of the audio device */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Runtime Audio Importer")
+	FString DeviceName;
+
+	/** ID of the device */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Runtime Audio Importer")
+	FString DeviceId;
+
+	/** The number of channels supported by the audio device */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Runtime Audio Importer")
+	int32 InputChannels;
+
+	/** The preferred sample rate of the audio device */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Runtime Audio Importer")
+	int32 PreferredSampleRate;
+
+	/** Whether or not the device supports Acoustic Echo Canceling */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Runtime Audio Importer")
+	bool bSupportsHardwareAEC;
 };
 
 /** Audio header information */

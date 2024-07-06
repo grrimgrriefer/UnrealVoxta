@@ -107,7 +107,6 @@ private:
 	VoxtaApiRequestHandler m_voxtaRequestApi;
 	VoxtaApiResponseHandler m_voxtaResponseApi;
 
-	VoxtaAudioInput m_audioInput;
 	VoxtaClientState m_currentState = VoxtaClientState::Disconnected;
 	TUniquePtr<FUserCharData> m_userData;
 	TArray<TUniquePtr<const FAiCharData>> m_characterList;
