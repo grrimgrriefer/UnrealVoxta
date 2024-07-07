@@ -123,3 +123,9 @@ void UVoxtaAudioPlayback::OnAudioFinished()
 	isPlaying = false;
 	TryPlayNextAudio();
 }
+
+void UVoxtaAudioPlayback::ForceAudioPlayback(USoundBase* soundWave)
+{
+	m_audioComponent->SetSound(soundWave);
+	m_audioComponent->Play();
+}

@@ -20,6 +20,11 @@ void ATestGameCharacter::StartVoxtaClient()
 	m_voxtaClient->StartConnection();
 }
 
+void ATestGameCharacter::StopRecording()
+{
+	m_audioPlaybackHandler->ForceAudioPlayback(m_audioInputHandler->StopStreaming());
+}
+
 void ATestGameCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -47,6 +52,7 @@ void ATestGameCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	PlayerInputComponent->BindAction(TEXT("StartVoxta"), IE_Pressed, this, &ATestGameCharacter::StartVoxtaClient);
+	PlayerInputComponent->BindAction(TEXT("EndRecording"), IE_Pressed, this, &ATestGameCharacter::StopRecording);
 }
 
 bool ATestGameCharacter::TryConnectToHud()

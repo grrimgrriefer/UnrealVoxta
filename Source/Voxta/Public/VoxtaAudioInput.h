@@ -31,10 +31,10 @@ public:
 	void CloseSocket();
 
 	void StartStreaming();
-	void StopStreaming();
+	USoundBase* StopStreaming();
 
 private:
-	UCapturableSoundWave m_audioCaptureDevice;
+	UCapturableSoundWave* m_audioCaptureDevice;
 	TSharedPtr<AudioWebSocket> m_audioWebSocket;
 	MicrophoneSocketState m_connectionState;
 

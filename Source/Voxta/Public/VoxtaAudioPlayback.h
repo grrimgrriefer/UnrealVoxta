@@ -25,6 +25,8 @@ public:
 
 	void InitializeAudioPlayback(UVoxtaClient* voxtaClient, FStringView characterId);
 
+	void ForceAudioPlayback(USoundBase* soundWave);
+
 private:
 	FString m_characterId;
 	UAudioComponent* m_audioComponent;

@@ -7,6 +7,8 @@
 #include "ImportedSoundWave.h"
 #include "Delegates/Delegate.h"
 #include "Containers/Queue.h"
+#include "Tasks/Pipe.h"
+
 #include "StreamingSoundWave.generated.h"
 
 class URuntimeVoiceActivityDetector;

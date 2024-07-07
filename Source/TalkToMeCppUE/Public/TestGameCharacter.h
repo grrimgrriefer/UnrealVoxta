@@ -31,6 +31,8 @@ public:
 	/// </summary>
 	void StartVoxtaClient();
 
+	void StopRecording();
+
 private:
 	UCameraComponent* m_camera;
 	UVoxtaClient* m_voxtaClient;

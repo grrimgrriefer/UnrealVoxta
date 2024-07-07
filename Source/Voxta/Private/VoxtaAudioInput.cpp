@@ -4,6 +4,7 @@
 
 UVoxtaAudioInput::UVoxtaAudioInput()
 {
+	m_audioCaptureDevice = UCapturableSoundWave::CreateCapturableSoundWave();
 }
 
 void UVoxtaAudioInput::InitializeSocket(const FString& serverIP, int serverPort)
@@ -26,6 +27,9 @@ void UVoxtaAudioInput::OnSocketConnected()
 {
 	m_audioWebSocket->Send("{\"contentType\":\"audio/wav\",\"sampleRate\":16000,"
 							"\"channels\":1,\"bitsPerSample\": 16,\"bufferMilliseconds\":30}");
+	m_connectionState = MicrophoneSocketState::Ready;
+
+	StartStreaming();
 }
 
 void UVoxtaAudioInput::OnSocketConnectionError(const FString& error)
@@ -50,14 +54,16 @@ void UVoxtaAudioInput::StartStreaming()
 		return;
 	}
 
-	m_audioCaptureDevice.StartCapture(0);
+	UE_LOG(LogTemp, Warning, TEXT("Starting audio capture"));
+	m_audioCaptureDevice->StartCapture(0);
 	m_connectionState = MicrophoneSocketState::InUse;
 }
 
-void UVoxtaAudioInput::StopStreaming()
+USoundBase* UVoxtaAudioInput::StopStreaming()
 {
-	m_audioCaptureDevice.StopCapture();
+	m_audioCaptureDevice->StopCapture();
 	m_connectionState = MicrophoneSocketState::Ready;
+	return m_audioCaptureDevice;
 }
 
 void UVoxtaAudioInput::CloseSocket()
