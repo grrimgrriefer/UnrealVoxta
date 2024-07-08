@@ -22,7 +22,8 @@ void ATestGameCharacter::StartVoxtaClient()
 
 void ATestGameCharacter::StopRecording()
 {
-	m_audioPlaybackHandler->ForceAudioPlayback(m_audioInputHandler->StopStreaming());
+	auto data = m_audioInputHandler->StopStreaming();
+	m_audioPlaybackHandler->ForceAudioPlayback(data);
 }
 
 void ATestGameCharacter::BeginPlay()

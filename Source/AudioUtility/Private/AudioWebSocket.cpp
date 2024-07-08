@@ -64,7 +64,7 @@ void AudioWebSocket::Close(int32 Code, const FString& Reason)
 	}
 }
 
-void AudioWebSocket::Send(const char* buffer, unsigned int nBufferFrames)
+void AudioWebSocket::Send(const void* buffer, unsigned int nBufferFrames)
 {
 	if (Connection.IsValid())
 	{

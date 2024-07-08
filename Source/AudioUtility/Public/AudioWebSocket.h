@@ -13,7 +13,7 @@ public:
 
 	bool Connect();
 	void Close(int32 Code = 1000, const FString& Reason = FString());
-	void Send(const char* buffer, unsigned int nBufferFrames);
+	void Send(const void* buffer, unsigned int nBufferFrames);
 	void Send(const FString& message);
 
 	IWebSocket::FWebSocketConnectedEvent OnConnectedEvent;

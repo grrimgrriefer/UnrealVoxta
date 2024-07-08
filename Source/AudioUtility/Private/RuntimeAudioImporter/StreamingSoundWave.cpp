@@ -75,15 +75,23 @@ void UStreamingSoundWave::PopulateAudioDataFromDecodedInfo(FDecodedAudioStruct&&
 	}
 
 	{
+		FEncodedAudioStruct encodedAudioInfo;
+		encodedAudioInfo.AudioFormat = ERuntimeAudioFormat::Wav;
+		if (!UAudioImporter::EncodeAudioData(FDecodedAudioStruct(DecodedAudioInfo), encodedAudioInfo, 0))
+		{
+			UE_LOG(AudioLog, Error, TEXT("Failed to decode audio data to populate streaming sound wave audio data"));
+			return;
+		}
+
 		const bool IsBound = [this] ()
 			{
 				FRAIScopeLock Lock(&OnPopulateAudioData_DataGuard);
-				return OnPopulateAudioDataNative.IsBound() || OnPopulateAudioData.IsBound();
+				return OnPopulateAudioDataNative.IsBound() || OnPopulateAudioData.IsBound() || OnHeyo.IsBound();
 			}();
 			if (IsBound)
 			{
 				TArray<float> PCMData(DecodedAudioInfo.PCMInfo.PCMData.GetView().GetData(), DecodedAudioInfo.PCMInfo.PCMData.GetView().Num());
-				AsyncTask(ENamedThreads::GameThread, [WeakThis = MakeWeakObjectPtr(this), PCMData = MoveTemp(PCMData)] () mutable
+				AsyncTask(ENamedThreads::GameThread, [WeakThis = MakeWeakObjectPtr(this), PCMData = MoveTemp(PCMData), Heyo = encodedAudioInfo.AudioData] () mutable
 				{
 					if (WeakThis.IsValid())
 					{
@@ -96,12 +104,25 @@ void UStreamingSoundWave::PopulateAudioDataFromDecodedInfo(FDecodedAudioStruct&&
 						{
 							WeakThis->OnPopulateAudioData.Broadcast(PCMData);
 						}
+						if (WeakThis->OnHeyo.IsBound())
+						{
+							TArray<uint8> Array32;
+							Array32.Reserve(Heyo.GetView().Num());
+
+							for (auto& Element : Heyo.GetView())
+							{
+								Array32.Add(Element);
+							}
+
+							WeakThis->OnHeyo.Broadcast(Array32);
+						}
+						//hmm
 					}
 					else
 					{
 						UE_LOG(AudioLog, Warning, TEXT("Unable to broadcast OnPopulateAudioDataNative and OnPopulateAudioData delegates because the streaming sound wave has been destroyed"));
 					}
-				});
+					});
 			}
 	}
 

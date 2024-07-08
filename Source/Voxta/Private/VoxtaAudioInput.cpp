@@ -1,6 +1,7 @@
 // Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
 
 #include "VoxtaAudioInput.h"
+#include "RuntimeAudioImporter/ImportedSoundWave.h"
 
 UVoxtaAudioInput::UVoxtaAudioInput()
 {
@@ -25,8 +26,8 @@ void UVoxtaAudioInput::InitializeSocket(const FString& serverIP, int serverPort)
 
 void UVoxtaAudioInput::OnSocketConnected()
 {
-	m_audioWebSocket->Send("{\"contentType\":\"audio/wav\",\"sampleRate\":16000,"
-							"\"channels\":1,\"bitsPerSample\": 16,\"bufferMilliseconds\":30}");
+	m_audioWebSocket->Send("{\"contentType\":\"audio/wav\",\"sampleRate\":48000,"
+							"\"channels\":2,\"bitsPerSample\": 16,\"bufferMilliseconds\":30}");
 	m_connectionState = MicrophoneSocketState::Ready;
 
 	StartStreaming();
@@ -42,7 +43,7 @@ void UVoxtaAudioInput::OnSocketClosed(int StatusCode, const FString& Reason, boo
 {
 	if (!bWasClean)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Audio socket was improperly closed because of reason: %s"), *Reason);
+		UE_LOG(LogTemp, Warning, TEXT("Audio socket was improperly closed because of reason: %s %d"), *Reason, StatusCode);
 	}
 	m_connectionState = MicrophoneSocketState::Closed;
 }
@@ -54,14 +55,16 @@ void UVoxtaAudioInput::StartStreaming()
 		return;
 	}
 
+	m_audioCaptureDevice->OnHeyo.AddDynamic(this, &UVoxtaAudioInput::OnAudioDataAdded);
 	UE_LOG(LogTemp, Warning, TEXT("Starting audio capture"));
 	m_audioCaptureDevice->StartCapture(0);
 	m_connectionState = MicrophoneSocketState::InUse;
 }
 
-USoundBase* UVoxtaAudioInput::StopStreaming()
+UCapturableSoundWave* UVoxtaAudioInput::StopStreaming()
 {
 	m_audioCaptureDevice->StopCapture();
+	m_audioCaptureDevice->OnHeyo.RemoveDynamic(this, &UVoxtaAudioInput::OnAudioDataAdded);
 	m_connectionState = MicrophoneSocketState::Ready;
 	return m_audioCaptureDevice;
 }
@@ -69,4 +72,9 @@ USoundBase* UVoxtaAudioInput::StopStreaming()
 void UVoxtaAudioInput::CloseSocket()
 {
 	m_audioWebSocket->Close();
+}
+
+void UVoxtaAudioInput::OnAudioDataAdded(const TArray<uint8>& PopulatedAudioData)
+{
+	m_audioWebSocket->Send(PopulatedAudioData.GetData(), PopulatedAudioData.Num());
 }

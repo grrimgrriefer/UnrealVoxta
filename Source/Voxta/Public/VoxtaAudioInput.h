@@ -31,7 +31,7 @@ public:
 	void CloseSocket();
 
 	void StartStreaming();
-	USoundBase* StopStreaming();
+	UCapturableSoundWave* StopStreaming();
 
 private:
 	UCapturableSoundWave* m_audioCaptureDevice;
@@ -41,4 +41,7 @@ private:
 	void OnSocketConnected();
 	void OnSocketConnectionError(const FString& error);
 	void OnSocketClosed(int StatusCode, const FString& Reason, bool bWasClean);
+
+	UFUNCTION()
+	void OnAudioDataAdded(const TArray<uint8>& PopulatedAudioData);
 };
