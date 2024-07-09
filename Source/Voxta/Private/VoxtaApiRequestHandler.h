@@ -45,4 +45,6 @@ public:
 	/// <param name="userInputText">The text that the server should consider as what the user said.</param>
 	/// <returns>The SignalR formatted message containing the request.</returns>
 	FSignalRValue GetSendUserMessageData(const FString& sessionId, const FString& userInputText) const;
+
+	FSignalRValue GetNotifyAudioPlaybackCompleteData(const FString& sessionId, const FString& messageId) const;
 };

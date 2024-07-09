@@ -48,6 +48,10 @@ private:
 	/// <returns>True if connection was established.</returns>
 	bool TryConnectToHud();
 
+	bool TryConnectToAudio();
+
+	bool TryDisconnectToAudio();
+
 	/// <summary>
 	/// Cleans up the bindings between the UVoxtaClient and the ATalkToMeCppUeHUD.
 	/// </summary>

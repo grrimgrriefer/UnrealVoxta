@@ -21,7 +21,12 @@ class VOXTA_API UVoxtaAudioPlayback : public UActorComponent
 {
 	GENERATED_BODY()
 
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaMessageAudioPlaybackCompleted, const FString&, messageId);
+
 public:
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FVoxtaMessageAudioPlaybackCompleted VoxtaMessageAudioPlaybackEvent;
+
 	UVoxtaAudioPlayback();
 
 	void InitializeAudioPlayback(UVoxtaClient* voxtaClient, FStringView characterId);
@@ -33,6 +38,7 @@ public:
 
 private:
 	FString m_characterId;
+	FString m_messageId;
 	UAudioComponent* m_audioComponent;
 	TArray<FString> m_orderedUrls;
 	TMap<FString, USoundWaveProcedural*> m_audioData;

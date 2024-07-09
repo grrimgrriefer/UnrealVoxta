@@ -48,6 +48,7 @@ void UVoxtaAudioPlayback::PlaybackMessage(const FCharDataBase& sender, const FCh
 		isPlaying = false;
 		m_orderedUrls.Empty();
 		m_audioData.Empty();
+		m_messageId = message.GetMessageId();
 		GenerateFullUrls(message);
 		DownloadDataAsync();
 	}
@@ -94,6 +95,8 @@ void UVoxtaAudioPlayback::TryPlayNextAudio()
 	if (m_orderedUrls.Num() == currentAudioClip)
 	{
 		UE_LOG(LogTemp, Log, TEXT("Playback finished."));
+		VoxtaMessageAudioPlaybackEvent.Broadcast(m_messageId);
+		m_messageId.Empty();
 		return;
 	}
 

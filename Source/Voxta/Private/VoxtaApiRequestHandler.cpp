@@ -62,3 +62,12 @@ FSignalRValue VoxtaApiRequestHandler::GetSendUserMessageData(const FString& sess
 		{ API_STRING("doCharacterActionInference"), API_SIGNALR_STRING("false") }
 	});
 }
+
+FSignalRValue VoxtaApiRequestHandler::GetNotifyAudioPlaybackCompleteData(const FString& sessionId, const FString& messageId) const
+{
+	return FSignalRValue(TMap<FString, FSignalRValue> {
+		{ API_STRING("$type"), API_SIGNALR_STRING("speechPlaybackComplete") },
+		{ API_STRING("sessionId"), FSignalRValue(sessionId) },
+		{ API_STRING("messageId"), FSignalRValue(messageId) }
+	});
+}

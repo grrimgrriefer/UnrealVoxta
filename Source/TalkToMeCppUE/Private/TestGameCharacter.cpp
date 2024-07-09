@@ -22,8 +22,8 @@ void ATestGameCharacter::StartVoxtaClient()
 
 void ATestGameCharacter::StopRecording()
 {
-	auto data = m_audioInputHandler->StopStreaming();
-	m_audioPlaybackHandler->ForceAudioPlayback(data);
+	//	auto data = m_audioInputHandler->StopStreaming();
+	//m_audioPlaybackHandler->ForceAudioPlayback(data);
 }
 
 void ATestGameCharacter::BeginPlay()
@@ -34,6 +34,10 @@ void ATestGameCharacter::BeginPlay()
 	if (!TryConnectToHud())
 	{
 		UE_LOGFMT(LogCore, Error, "Failed to connect the ATestGameCharacter to the ATalkToMeCppUeHUD.");
+	}
+	if (!TryConnectToAudio())
+	{
+		UE_LOGFMT(LogCore, Error, "Failed to connect the ATestGameCharacter to the Audio handlers.");
 	}
 }
 
@@ -71,6 +75,28 @@ bool ATestGameCharacter::TryConnectToHud()
 		return true;
 	}
 	UE_LOGFMT(LogCore, Error, "Failed to connect the HUD and the VoxtaClient with each other.");
+	return false;
+}
+
+bool ATestGameCharacter::TryConnectToAudio()
+{
+	if (m_voxtaClient && m_audioPlaybackHandler)
+	{
+		m_audioPlaybackHandler->VoxtaMessageAudioPlaybackEvent.AddUniqueDynamic(m_voxtaClient, &UVoxtaClient::NotifyAudioPlaybackComplete);
+		return true;
+	}
+	UE_LOGFMT(LogCore, Error, "Failed to connect the audio handlers and the VoxtaClient with each other.");
+	return false;
+}
+
+bool ATestGameCharacter::TryDisconnectToAudio()
+{
+	if (m_voxtaClient && m_audioPlaybackHandler)
+	{
+		m_audioPlaybackHandler->VoxtaMessageAudioPlaybackEvent.RemoveDynamic(m_voxtaClient, &UVoxtaClient::NotifyAudioPlaybackComplete);
+		return true;
+	}
+	UE_LOGFMT(LogCore, Warning, "Failed to disconnect the audio handlers and the VoxtaClient with each other.");
 	return false;
 }
 

@@ -97,6 +97,9 @@ public:
 	UFUNCTION()
 	void SendUserInput(FString inputText);
 
+	UFUNCTION()
+	void NotifyAudioPlaybackComplete(const FString& messageId);
+
 	const ChatSession* GetChatSession() const;
 	FStringView GetServerAddress() const;
 	FStringView GetServerPort() const;

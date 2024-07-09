@@ -71,6 +71,11 @@ void UVoxtaClient::SendUserInput(FString inputText)
 	SendMessageToServer(m_voxtaRequestApi.GetSendUserMessageData(m_chatSession->m_sessionId, inputText));
 }
 
+void UVoxtaClient::NotifyAudioPlaybackComplete(const FString& messageId)
+{
+	SendMessageToServer(m_voxtaRequestApi.GetNotifyAudioPlaybackCompleteData(m_chatSession->m_sessionId, messageId));
+}
+
 const ChatSession* UVoxtaClient::GetChatSession() const
 {
 	return m_chatSession.Get();
