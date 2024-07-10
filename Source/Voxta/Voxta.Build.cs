@@ -8,7 +8,7 @@ public class Voxta : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "Voxta", "HTTP" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "Voxta", "HTTP", "Voice" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
 	}

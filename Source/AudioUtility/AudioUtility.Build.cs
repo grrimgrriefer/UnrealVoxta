@@ -11,7 +11,7 @@ public class AudioUtility : ModuleRules
 
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "ApplicationCore", "InputCore", "WebSockets" });
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "MetasoundEngine",	"MetasoundFrontend", });
+		PrivateDependencyModuleNames.AddRange(new string[] { "MetasoundEngine",	"MetasoundFrontend", "Voice" });
 		
 		bool bEnableCaptureInputSupport = true;
 		

@@ -5,7 +5,7 @@
 
 UVoxtaAudioInput::UVoxtaAudioInput()
 {
-	m_audioCaptureDevice = UCapturableSoundWave::CreateCapturableSoundWave();
+	//m_audioCaptureDevice = UCapturableSoundWave::CreateCapturableSoundWave();
 }
 
 void UVoxtaAudioInput::InitializeSocket(const FString& serverIP, int serverPort)
@@ -26,9 +26,12 @@ void UVoxtaAudioInput::InitializeSocket(const FString& serverIP, int serverPort)
 
 void UVoxtaAudioInput::OnSocketConnected()
 {
-	m_audioWebSocket->Send("{\"contentType\":\"audio/wav\",\"sampleRate\":48000,"
-							"\"channels\":2,\"bitsPerSample\": 16,\"bufferMilliseconds\":30}");
+	m_audioWebSocket->Send("{\"contentType\":\"audio/wav\",\"sampleRate\":16000,"
+							"\"channels\":1,\"bitsPerSample\": 16,\"bufferMilliseconds\":30}");
 	m_connectionState = MicrophoneSocketState::Ready;
+
+	m_audioCaptureDevice.RegisterSocket(m_audioWebSocket);
+	m_audioCaptureDevice.TryInitialize();
 
 	StartStreaming();
 }
@@ -55,18 +58,17 @@ void UVoxtaAudioInput::StartStreaming()
 		return;
 	}
 
-	m_audioCaptureDevice->OnHeyo.AddDynamic(this, &UVoxtaAudioInput::OnAudioDataAdded);
+	m_audioCaptureDevice.StartCapture();
+
+	//	m_audioCaptureDevice->OnHeyo.AddDynamic(this, &UVoxtaAudioInput::OnAudioDataAdded);
 	UE_LOG(LogTemp, Warning, TEXT("Starting audio capture"));
-	m_audioCaptureDevice->StartCapture(0);
+	//	m_audioCaptureDevice->StartCapture(0);
 	m_connectionState = MicrophoneSocketState::InUse;
 }
 
-UCapturableSoundWave* UVoxtaAudioInput::StopStreaming()
+void UVoxtaAudioInput::StopStreaming()
 {
-	m_audioCaptureDevice->StopCapture();
-	m_audioCaptureDevice->OnHeyo.RemoveDynamic(this, &UVoxtaAudioInput::OnAudioDataAdded);
-	m_connectionState = MicrophoneSocketState::Ready;
-	return m_audioCaptureDevice;
+	m_audioCaptureDevice.StopCapture();
 }
 
 void UVoxtaAudioInput::CloseSocket()
@@ -74,7 +76,15 @@ void UVoxtaAudioInput::CloseSocket()
 	m_audioWebSocket->Close();
 }
 
-void UVoxtaAudioInput::OnAudioDataAdded(const TArray<uint8>& PopulatedAudioData)
-{
-	m_audioWebSocket->Send(PopulatedAudioData.GetData(), PopulatedAudioData.Num());
-}
+//UCapturableSoundWave* UVoxtaAudioInput::StopStreaming()
+//{
+//	m_audioCaptureDevice->StopCapture();
+//	m_audioCaptureDevice->OnHeyo.RemoveDynamic(this, &UVoxtaAudioInput::OnAudioDataAdded);
+//	m_connectionState = MicrophoneSocketState::Ready;
+//	return m_audioCaptureDevice;
+//}
+//
+//void UVoxtaAudioInput::OnAudioDataAdded(const TArray<uint8>& PopulatedAudioData)
+//{
+//	m_audioWebSocket->Send(PopulatedAudioData.GetData(), PopulatedAudioData.Num());
+//}

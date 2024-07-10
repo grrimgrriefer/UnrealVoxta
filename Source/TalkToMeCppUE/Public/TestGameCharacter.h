@@ -11,6 +11,9 @@
 #include "VoxtaAudioInput.h"
 #include "TestGameCharacter.generated.h"
 
+class UVoxtaAudioInput;
+class UVoxtaAudioPlayback;
+
 /// <summary>
 /// Most basic pawn setup for debugging purposes.
 /// Has ownership of the VoxtaClient, managing it's lifecycle and it's bindings to the engine and hud.

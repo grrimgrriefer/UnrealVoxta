@@ -28,14 +28,17 @@ void UVoxtaAudioPlayback::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	{
 		m_audioComponent->OnAudioFinished.RemoveDynamic(this, &UVoxtaAudioPlayback::OnAudioFinished);
 	}
-
-	//voxtaClient->VoxtaClientCharMessageAddedEvent.RemoveDyncamic(this, &UVoxtaAudioPlayback::PlaybackMessage);
+	if (m_clientReference)
+	{
+		m_clientReference->VoxtaClientCharMessageAddedEvent.RemoveDynamic(this, &UVoxtaAudioPlayback::PlaybackMessage);
+	}
 }
 
 void UVoxtaAudioPlayback::InitializeAudioPlayback(UVoxtaClient* voxtaClient, FStringView characterId)
 {
 	m_characterId = characterId;
-	voxtaClient->VoxtaClientCharMessageAddedEvent.AddUniqueDynamic(this, &UVoxtaAudioPlayback::PlaybackMessage);
+	m_clientReference = voxtaClient;
+	m_clientReference->VoxtaClientCharMessageAddedEvent.AddUniqueDynamic(this, &UVoxtaAudioPlayback::PlaybackMessage);
 	m_hostAddress = voxtaClient->GetServerAddress();
 	m_hostPort = voxtaClient->GetServerPort();
 }
@@ -133,11 +136,11 @@ void UVoxtaAudioPlayback::OnAudioFinished()
 	TryPlayNextAudio();
 }
 
-void UVoxtaAudioPlayback::ForceAudioPlayback(UCapturableSoundWave* soundWave)
-{
-	m_audioComponent->SetSound(soundWave);
-	m_audioComponent->Play();
-}
+//void UVoxtaAudioPlayback::ForceAudioPlayback(UCapturableSoundWave* soundWave)
+//{
+//	m_audioComponent->SetSound(soundWave);
+//	m_audioComponent->Play();
+//}
 
 void UVoxtaAudioPlayback::ForceAudioPlayback(TArray64<uint8> soundBytes)
 {

@@ -5,7 +5,8 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "AudioUtility/Public/AudioWebSocket.h"
-#include "AudioUtility/Public/RuntimeAudioImporter/CapturableSoundWave.h"
+#include "AudioUtility/Public/AudioCaptureHandler.h"
+//#include "AudioUtility/Public/RuntimeAudioImporter/CapturableSoundWave.h"
 
 #include "VoxtaAudioInput.generated.h"
 
@@ -31,10 +32,11 @@ public:
 	void CloseSocket();
 
 	void StartStreaming();
-	UCapturableSoundWave* StopStreaming();
+	void StopStreaming();
 
 private:
-	UCapturableSoundWave* m_audioCaptureDevice;
+	//UCapturableSoundWave* m_audioCaptureDevice;
+	AudioCaptureHandler m_audioCaptureDevice;
 	TSharedPtr<AudioWebSocket> m_audioWebSocket;
 	MicrophoneSocketState m_connectionState;
 
@@ -42,6 +44,6 @@ private:
 	void OnSocketConnectionError(const FString& error);
 	void OnSocketClosed(int StatusCode, const FString& Reason, bool bWasClean);
 
-	UFUNCTION()
-	void OnAudioDataAdded(const TArray<uint8>& PopulatedAudioData);
+	//	UFUNCTION()
+	//	void OnAudioDataAdded(const TArray<uint8>& PopulatedAudioData);
 };
