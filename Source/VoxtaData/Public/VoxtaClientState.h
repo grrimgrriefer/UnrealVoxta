@@ -15,6 +15,8 @@ enum class VoxtaClientState : uint8
 	Authenticated		UMETA(DisplayName = "Authenticated"),
 	CharacterLobby		UMETA(DisplayName = "CharacterLobby"),
 	StartingChat		UMETA(DisplayName = "StartingChat"),
-	Chatting			UMETA(DisplayName = "Chatting"),
+	GeneratingReply		UMETA(DisplayName = "GeneratingReply"),
+	AudioPlayback		UMETA(DisplayName = "AudioPlayback"),
+	WaitingForUser		UMETA(DisplayName = "WaitingForUser"),
 	Terminated			UMETA(DisplayName = "Terminated")
 };

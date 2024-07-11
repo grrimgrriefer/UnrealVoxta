@@ -39,8 +39,6 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnPopulateAudioDataNative, const TArray<flo
 /** Dynamic delegate broadcast newly populated PCM data */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPopulateAudioData, const TArray<float>&, PopulatedAudioData);
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHeyo, const TArray<uint8>&, data);
-
 /** Static delegate broadcast when the PCM data is populated. Same as FOnPopulateAudioDataNative except it doesn't broadcast the audio data */
 DECLARE_MULTICAST_DELEGATE(FOnPopulateAudioStateNative);
 
@@ -373,9 +371,6 @@ public:
 	/** Bind to this delegate to obtain audio data every time it is populated */
 	UPROPERTY(BlueprintAssignable, Category = "Imported Sound Wave|Delegates")
 	FOnPopulateAudioData OnPopulateAudioData;
-
-	UPROPERTY()
-	FOnHeyo OnHeyo;
 
 protected:
 	/** Data guard (mutex) for thread safety */

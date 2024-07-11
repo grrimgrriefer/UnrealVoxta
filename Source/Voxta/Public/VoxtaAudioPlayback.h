@@ -12,7 +12,6 @@
 #include "Components/AudioComponent.h"
 #include "Sound/SoundCue.h"
 #include "AudioUtility/Public/AudioImporter.h"
-//#include "RuntimeAudioImporter/CapturableSoundWave.h"
 
 #include "VoxtaAudioPlayback.generated.h"
 
@@ -30,11 +29,6 @@ public:
 	UVoxtaAudioPlayback();
 
 	void InitializeAudioPlayback(UVoxtaClient* voxtaClient, FStringView characterId);
-
-	//	void ForceAudioPlayback(UCapturableSoundWave* soundWave);
-	void ForceAudioPlayback(TArray64<uint8> soundBytes);
-
-	FString potatoPotati = TEXT("potatoPotati");
 
 private:
 	UVoxtaClient* m_clientReference;

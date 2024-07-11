@@ -69,11 +69,13 @@ void UVoxtaClient::SendUserInput(FString inputText)
 {
 	// TODO: check if we are in chatting state before sending user input
 	SendMessageToServer(m_voxtaRequestApi.GetSendUserMessageData(m_chatSession->m_sessionId, inputText));
+	SetState(VoxtaClientState::GeneratingReply);
 }
 
 void UVoxtaClient::NotifyAudioPlaybackComplete(const FString& messageId)
 {
 	SendMessageToServer(m_voxtaRequestApi.GetNotifyAudioPlaybackCompleteData(m_chatSession->m_sessionId, messageId));
+	SetState(VoxtaClientState::WaitingForUser);
 }
 
 const ChatSession* UVoxtaClient::GetChatSession() const
@@ -148,6 +150,18 @@ void UVoxtaClient::OnMessageSent(const FSignalRInvokeResult& result)
 	}
 }
 
+template<typename T>
+bool UVoxtaClient::HandleResponseHelper(const IServerResponseBase* response, const char* message, bool (UVoxtaClient::* handler)(const T&))
+{
+	auto derivedResponse = StaticCast<const T*>(response);
+	if (derivedResponse)
+	{
+		UE_LOG(VoxtaLog, Log, TEXT("%s"), *FString(message));
+		return (this->*handler)(*derivedResponse);
+	}
+	return false;
+}
+
 bool UVoxtaClient::HandleResponse(const TMap<FString, FSignalRValue>& responseData)
 {
 	if (m_voxtaResponseApi.ignoredMessageTypes.Contains(responseData[API_STRING("$type")].AsString()))
@@ -165,81 +179,35 @@ bool UVoxtaClient::HandleResponse(const TMap<FString, FSignalRValue>& responseDa
 	{
 		using enum ServerResponseType;
 		case Welcome:
-		{
-			auto derivedResponse = StaticCast<const ServerResponseWelcome*>(response.Get());
-			if (derivedResponse)
-			{
-				UE_LOGFMT(VoxtaLog, Log, "Logged in sucessfully");
-				HandleWelcomeResponse(*derivedResponse);
-				return true;
-			}
-		}
+			return HandleResponseHelper<ServerResponseWelcome>(response.Get(), "Logged in successfully", &UVoxtaClient::HandleWelcomeResponse);
 		case CharacterList:
-		{
-			auto derivedResponse = StaticCast<const ServerResponseCharacterList*>(response.Get());
-			if (derivedResponse)
-			{
-				UE_LOGFMT(VoxtaLog, Log, "Fetched {count} characters sucessfully", derivedResponse->m_characters.Num());
-				HandleCharacterListResponse(*derivedResponse);
-				return true;
-			}
-		}
+			return HandleResponseHelper<ServerResponseCharacterList>(response.Get(), "Fetched characters successfully", &UVoxtaClient::HandleCharacterListResponse);
 		case CharacterLoaded:
-		{
-			auto derivedResponse = StaticCast<const ServerResponseCharacterLoaded*>(response.Get());
-			if (derivedResponse)
-			{
-				UE_LOGFMT(VoxtaLog, Log, "Loaded character {char} sucessfully", derivedResponse->m_characterId);
-				HandleCharacterLoadedResponse(*derivedResponse);
-				return true;
-			}
-		}
+			return HandleResponseHelper<ServerResponseCharacterLoaded>(response.Get(), "Loaded character successfully", &UVoxtaClient::HandleCharacterLoadedResponse);
 		case ChatStarted:
-		{
-			auto derivedResponse = StaticCast<const ServerResponseChatStarted*>(response.Get());
-			if (derivedResponse)
-			{
-				UE_LOGFMT(VoxtaLog, Log, "Chat started sucessfully");
-				HandleChatStartedResponse(*derivedResponse);
-				return true;
-			}
-		}
+			return HandleResponseHelper<ServerResponseChatStarted>(response.Get(), "Chat started successfully", &UVoxtaClient::HandleChatStartedResponse);
 		case ChatMessage:
-		{
-			auto derivedResponse = StaticCast<const IServerResponseChatMessageBase*>(response.Get());
-			if (derivedResponse)
-			{
-				UE_LOGFMT(VoxtaLog, Log, "Chat Message received sucessfully");
-				HandleChatMessageResponse(*derivedResponse);
-				return true;
-			}
-		}
+			return HandleResponseHelper<IServerResponseChatMessageBase>(response.Get(), "Chat Message received successfully", &UVoxtaClient::HandleChatMessageResponse);
 		case ChatUpdate:
-		{
-			auto derivedResponse = StaticCast<const ServerResponseChatUpdate*>(response.Get());
-			if (derivedResponse)
-			{
-				UE_LOGFMT(VoxtaLog, Log, "Chat Update received sucessfully");
-				HandleChatUpdateResponse(*derivedResponse);
-				return true;
-			}
-		}
+			return HandleResponseHelper<ServerResponseChatUpdate>(response.Get(), "Chat Update received successfully", &UVoxtaClient::HandleChatUpdateResponse);
 		case SpeechTranscription:
+			return HandleResponseHelper<ServerResponseSpeechTranscription>(response.Get(), "Speech transcription update received successfully", &UVoxtaClient::HandleSpeechTranscriptionResponse);
 		default:
 			return false;
 	}
 	return false;
 }
 
-void UVoxtaClient::HandleWelcomeResponse(const ServerResponseWelcome& response)
+bool UVoxtaClient::HandleWelcomeResponse(const ServerResponseWelcome& response)
 {
 	m_userData = MakeUnique<FUserCharData>(response.m_user);
 	UE_LOGFMT(VoxtaLog, Log, "Authenticated with Voxta Server. Welcome {user}.", m_userData->GetName());
 	SetState(VoxtaClientState::Authenticated);
 	SendMessageToServer(m_voxtaRequestApi.GetLoadCharactersListData());
+	return true;
 }
 
-void UVoxtaClient::HandleCharacterListResponse(const ServerResponseCharacterList& response)
+bool UVoxtaClient::HandleCharacterListResponse(const ServerResponseCharacterList& response)
 {
 	m_characterList.Empty();
 	for (auto& charElement : response.m_characters)
@@ -248,6 +216,7 @@ void UVoxtaClient::HandleCharacterListResponse(const ServerResponseCharacterList
 		VoxtaClientCharacterRegisteredEvent.Broadcast(charElement);
 	}
 	SetState(VoxtaClientState::CharacterLobby);
+	return true;
 }
 
 bool UVoxtaClient::HandleCharacterLoadedResponse(const ServerResponseCharacterLoaded& response)
@@ -298,11 +267,12 @@ bool UVoxtaClient::HandleChatStartedResponse(const ServerResponseChatStarted& re
 
 	m_chatSession = MakeUnique<ChatSession>(characters, response.m_chatId,
 		response.m_sessionId, response.m_services);
-	SetState(VoxtaClientState::Chatting);
+	VoxtaClientChatSessionStartedEvent.Broadcast(response.m_sessionId);
+	SetState(VoxtaClientState::GeneratingReply);
 	return true;
 }
 
-void UVoxtaClient::HandleChatMessageResponse(const IServerResponseChatMessageBase& response)
+bool UVoxtaClient::HandleChatMessageResponse(const IServerResponseChatMessageBase& response)
 {
 	auto& messages = m_chatSession->m_chatMessages;
 	using enum IServerResponseChatMessageBase::MessageType;
@@ -346,6 +316,7 @@ void UVoxtaClient::HandleChatMessageResponse(const IServerResponseChatMessageBas
 				if (character)
 				{
 					UE_LOGFMT(VoxtaLog, Log, "Char speaking message end: {0} -> {1}", character->Get()->GetName(), chatMessage->Get()->m_text);
+					SetState(VoxtaClientState::AudioPlayback);
 					VoxtaClientCharMessageAddedEvent.Broadcast(*character->Get(), *chatMessage->Get());
 				}
 			}
@@ -364,9 +335,10 @@ void UVoxtaClient::HandleChatMessageResponse(const IServerResponseChatMessageBas
 			messages.RemoveAt(index);
 		}
 	}
+	return true;
 }
 
-void UVoxtaClient::HandleChatUpdateResponse(const ServerResponseChatUpdate& response)
+bool UVoxtaClient::HandleChatUpdateResponse(const ServerResponseChatUpdate& response)
 {
 	if (response.m_sessionId == m_chatSession->m_sessionId)
 	{
@@ -396,6 +368,32 @@ void UVoxtaClient::HandleChatUpdateResponse(const ServerResponseChatUpdate& resp
 	{
 		UE_LOGFMT(VoxtaLog, Warning, "Recieved chat update for a different session?: {0} {1}", response.m_senderId, response.m_text);
 	}
+	return true;
+}
+
+bool UVoxtaClient::HandleSpeechTranscriptionResponse(const ServerResponseSpeechTranscription& response)
+{
+	using enum ServerResponseSpeechTranscription::TranscriptionState;
+	switch (response.m_transcriptionState)
+	{
+		case PARTIAL:
+			UE_LOGFMT(VoxtaLog, Log, "Received partial speech transcription update: {0} ", response.m_transcribedSpeech);
+			VoxtaClientSpeechTranscribedPartialEvent.Broadcast(response.m_transcribedSpeech);
+			break;
+		case END:
+			if (m_currentState == VoxtaClientState::WaitingForUser)
+			{
+				VoxtaClientSpeechTranscribedCompleteEvent.Broadcast(response.m_transcribedSpeech);
+				SendUserInput(response.m_transcribedSpeech);
+			}
+			break;
+		case CANCELLED:
+			// Just ignore cancelled statuses right now,
+			// for some reason server says it's cancelled but then it picks back up again, idk why.
+			// TODO
+			break;
+	}
+	return true;
 }
 
 void UVoxtaClient::SetState(VoxtaClientState newState)

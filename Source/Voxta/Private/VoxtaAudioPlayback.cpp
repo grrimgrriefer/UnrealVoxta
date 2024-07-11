@@ -117,12 +117,6 @@ void UVoxtaAudioPlayback::TryPlayNextAudio()
 
 void UVoxtaAudioPlayback::AudioImportCompleted(FString identifier, UImportedSoundWave* soundWave)
 {
-	if (identifier == potatoPotati)
-	{
-		m_audioComponent->SetSound(soundWave);
-		m_audioComponent->Play();
-	}
-
 	m_audioData.Emplace(identifier, soundWave);
 	if (!isPlaying)
 	{
@@ -134,15 +128,4 @@ void UVoxtaAudioPlayback::OnAudioFinished()
 {
 	isPlaying = false;
 	TryPlayNextAudio();
-}
-
-//void UVoxtaAudioPlayback::ForceAudioPlayback(UCapturableSoundWave* soundWave)
-//{
-//	m_audioComponent->SetSound(soundWave);
-//	m_audioComponent->Play();
-//}
-
-void UVoxtaAudioPlayback::ForceAudioPlayback(TArray64<uint8> soundBytes)
-{
-	audioImporter->ImportAudioFromBuffer(potatoPotati, soundBytes);
 }

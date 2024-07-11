@@ -111,8 +111,6 @@ void AudioCaptureHandler::CaptureVoice()
 		auto TempEncodeBuffer = TArray<uint8>();
 		auto CompressedSize = UVOIPStatics::GetMaxCompressedVoiceDataSize();
 		TempEncodeBuffer.SetNumUninitialized(CompressedSize);
-		//VoiceEncoder->Encode(VoiceCaptureBuffer.GetData(), VoiceCaptureReadBytes, TempEncodeBuffer.GetData(), CompressedSize);
-		//TempEncodeBuffer.SetNum(CompressedSize);
 		ReplicatedBuffer.Append(VoiceCaptureBuffer);
 	}
 }
@@ -120,6 +118,12 @@ void AudioCaptureHandler::CaptureVoice()
 void AudioCaptureHandler::Send(const TArray<uint8> InData)
 {
 	UE_LOG(LogTemp, Log, TEXT("Client: Sending %d"), InData[0]);
+	if (InData.Num() > (200 * 32))
+	{
+		// TODO: Fix this, maybe, idk
+		UE_LOG(LogTemp, Error, TEXT("Client: cannot send data, too big: %d"), InData.Num());
+		return;
+	}
 	m_socket->Send(InData.GetData(), InData.Num());
 }
 

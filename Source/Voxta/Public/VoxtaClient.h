@@ -31,6 +31,8 @@ public:
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientCharacterRegisteredEventCallback, const FAiCharData&, charData);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FVoxtaClientCharMessageAddedEventCallback, const FCharDataBase&, sender, const FChatMessage&, message);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientCharMessageRemovedEventCallback, const FChatMessage&, message);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientSpeechTranscribedEventCallback, const FString&, message);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientChatSessionStartedCallback, const FString&, sessionId);
 
 	/// <summary>
 	/// Custom constructor to ensure that gameticks are disabled.
@@ -68,6 +70,15 @@ public:
 	/// </summary>
 	UPROPERTY(BlueprintAssignable, Category = "Events")
 	FVoxtaClientCharMessageRemovedEventCallback VoxtaClientCharMessageRemovedEvent;
+
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FVoxtaClientSpeechTranscribedEventCallback VoxtaClientSpeechTranscribedPartialEvent;
+
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FVoxtaClientSpeechTranscribedEventCallback VoxtaClientSpeechTranscribedCompleteEvent;
+
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FVoxtaClientChatSessionStartedCallback VoxtaClientChatSessionStartedEvent;
 
 	/// <summary>
 	/// Main initializer for the VoxtaClient.
@@ -126,6 +137,9 @@ private:
 	/// </summary>
 	void StartListeningToServer();
 
+	template<typename T>
+	bool HandleResponseHelper(const IServerResponseBase* response, const char* message, bool (UVoxtaClient::* handler)(const T&));
+
 	///~ Begin event-listeners for the IHubConnection interface
 private:
 	void OnReceivedMessage(const TArray<FSignalRValue>& arguments);
@@ -151,12 +165,13 @@ private:
 
 	///~ Begin individual handlers for different VoxtaServer responses.
 	bool HandleResponse(const TMap<FString, FSignalRValue>& responseData);
-	void HandleWelcomeResponse(const ServerResponseWelcome& response);
-	void HandleCharacterListResponse(const ServerResponseCharacterList& response);
+	bool HandleWelcomeResponse(const ServerResponseWelcome& response);
+	bool HandleCharacterListResponse(const ServerResponseCharacterList& response);
 	bool HandleCharacterLoadedResponse(const ServerResponseCharacterLoaded& response);
 	bool HandleChatStartedResponse(const ServerResponseChatStarted& response);
-	void HandleChatMessageResponse(const IServerResponseChatMessageBase& response);
-	void HandleChatUpdateResponse(const ServerResponseChatUpdate& response);
+	bool HandleChatMessageResponse(const IServerResponseChatMessageBase& response);
+	bool HandleChatUpdateResponse(const ServerResponseChatUpdate& response);
+	bool HandleSpeechTranscriptionResponse(const ServerResponseSpeechTranscription& response);
 	//~ End individual handlers for different VoxtaServer responses.
 
 	/// <summary>

@@ -20,16 +20,10 @@ void ATestGameCharacter::StartVoxtaClient()
 	m_voxtaClient->StartConnection();
 }
 
-void ATestGameCharacter::StopRecording()
-{
-	//	auto data = m_audioInputHandler->StopStreaming();
-	//m_audioPlaybackHandler->ForceAudioPlayback(data);
-}
-
 void ATestGameCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	m_voxtaClient->VoxtaClientStateChangedEvent.AddDynamic(this, &ATestGameCharacter::VoxtaClientStateChanged);
+	m_voxtaClient->VoxtaClientChatSessionStartedEvent.AddDynamic(this, &ATestGameCharacter::VoxtaClientChatSessionStarted);
 	m_hud = UGameplayStatics::GetPlayerController(this, 0)->GetHUD<ATalkToMeCppUeHUD>();
 	if (!TryConnectToHud())
 	{
@@ -44,7 +38,7 @@ void ATestGameCharacter::BeginPlay()
 void ATestGameCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
-	m_voxtaClient->VoxtaClientStateChangedEvent.RemoveDynamic(this, &ATestGameCharacter::VoxtaClientStateChanged);
+	m_voxtaClient->VoxtaClientChatSessionStartedEvent.RemoveDynamic(this, &ATestGameCharacter::VoxtaClientChatSessionStarted);
 	if (!TryDisconnectToHud() && EndPlayReason != EEndPlayReason::Quit)
 	{
 		UE_LOGFMT(LogCore, Error, "Failed to clean up the bindings between the ATestGameCharacter and the ATalkToMeCppUeHUD.");
@@ -57,7 +51,6 @@ void ATestGameCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	PlayerInputComponent->BindAction(TEXT("StartVoxta"), IE_Pressed, this, &ATestGameCharacter::StartVoxtaClient);
-	PlayerInputComponent->BindAction(TEXT("EndRecording"), IE_Pressed, this, &ATestGameCharacter::StopRecording);
 }
 
 bool ATestGameCharacter::TryConnectToHud()
@@ -117,19 +110,16 @@ bool ATestGameCharacter::TryDisconnectToHud()
 	return false;
 }
 
-void ATestGameCharacter::VoxtaClientStateChanged(VoxtaClientState newState)
+void ATestGameCharacter::VoxtaClientChatSessionStarted(const FString& sessionId)
 {
-	if (newState == VoxtaClientState::Chatting)
-	{
-		FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([&] (float DeltaTime)
-			{
-				m_audioInputHandler->InitializeSocket(m_voxtaClient->GetServerAddress().GetData(), FCString::Atoi(m_voxtaClient->GetServerPort().GetData()));
-				return false;
-			}));
-
-		for (const FAiCharData* aiCharacter : m_voxtaClient->GetChatSession()->m_characters)
+	FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([&] (float DeltaTime)
 		{
-			m_audioPlaybackHandler->InitializeAudioPlayback(m_voxtaClient, aiCharacter->GetId());
-		}
+			m_audioInputHandler->InitializeSocket(m_voxtaClient->GetServerAddress().GetData(), FCString::Atoi(m_voxtaClient->GetServerPort().GetData()));
+			return false;
+		}));
+
+	for (const FAiCharData* aiCharacter : m_voxtaClient->GetChatSession()->m_characters)
+	{
+		m_audioPlaybackHandler->InitializeAudioPlayback(m_voxtaClient, aiCharacter->GetId());
 	}
 }

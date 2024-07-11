@@ -34,8 +34,6 @@ public:
 	/// </summary>
 	void StartVoxtaClient();
 
-	void StopRecording();
-
 private:
 	UCameraComponent* m_camera;
 	UVoxtaClient* m_voxtaClient;
@@ -62,7 +60,7 @@ private:
 	bool TryDisconnectToHud();
 
 	UFUNCTION()
-	void VoxtaClientStateChanged(VoxtaClientState newState);
+	void VoxtaClientChatSessionStarted(const FString& newState);
 
 	///~ Begin APawn overrides.
 protected:

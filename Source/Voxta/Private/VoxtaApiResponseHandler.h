@@ -15,6 +15,7 @@
 #include "VoxtaData/Public/ServerResponses/ServerResponseChatMessageEnd.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseChatMessageCancelled.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseChatUpdate.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseSpeechTranscription.h"
 #include "VoxtaData/Public/VoxtaServiceData.h"
 
 class VoxtaApiResponseHandler
@@ -72,6 +73,12 @@ private:
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
 
 	TUniquePtr<ServerResponseChatUpdate> GetChatUpdateResponse(
+		const TMap<FString, FSignalRValue>& serverResponseData) const;
+
+	TUniquePtr<ServerResponseSpeechTranscription> GetSpeechRecognitionPartial(
+		const TMap<FString, FSignalRValue>& serverResponseData) const;
+
+	TUniquePtr<ServerResponseSpeechTranscription> GetSpeechRecognitionEnd(
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
 	///~ End internal deserialize helpers.
 };

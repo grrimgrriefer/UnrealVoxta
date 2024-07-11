@@ -47,9 +47,10 @@ void UTalkToMeCppUeWidget::ConfigureWidgetForState(VoxtaClientState newState)
 			}
 		}
 	}
-	if (UserInputField && newState == VoxtaClientState::Chatting)
+	if (UserInputField)
 	{
-		UserInputField->SetIsEnabled(true);
+		UserInputField->SetIsEnabled(newState == VoxtaClientState::WaitingForUser ||
+			newState == VoxtaClientState::AudioPlayback);
 	}
 }
 

@@ -44,6 +44,14 @@ TUniquePtr<IServerResponseBase> VoxtaApiResponseHandler::GetResponseData(
 	{
 		return GetChatUpdateResponse(serverResponseData);
 	}
+	else if (type == "speechRecognitionPartial")
+	{
+		return GetSpeechRecognitionPartial(serverResponseData);
+	}
+	else if (type == "speechRecognitionEnd")
+	{
+		return GetSpeechRecognitionEnd(serverResponseData);
+	}
 	else
 	{
 		UE_LOGFMT(VoxtaLog, Error, "Failed to process VoxtaApiResponse of type: {type}.", type);
@@ -170,4 +178,21 @@ TUniquePtr<ServerResponseChatUpdate> VoxtaApiResponseHandler::GetChatUpdateRespo
 		serverResponseData[API_STRING("senderId")].AsString(),
 		serverResponseData[API_STRING("text")].AsString(),
 		serverResponseData[API_STRING("sessionId")].AsString());
+}
+
+TUniquePtr<ServerResponseSpeechTranscription> VoxtaApiResponseHandler::GetSpeechRecognitionPartial(
+	const TMap<FString, FSignalRValue>& serverResponseData) const
+{
+	return MakeUnique<ServerResponseSpeechTranscription>(
+		serverResponseData[API_STRING("text")].AsString(), ServerResponseSpeechTranscription::TranscriptionState::PARTIAL);
+}
+
+TUniquePtr<ServerResponseSpeechTranscription> VoxtaApiResponseHandler::GetSpeechRecognitionEnd(
+	const TMap<FString, FSignalRValue>& serverResponseData) const
+{
+	bool isValid = serverResponseData.Contains(API_STRING("text"));
+	return MakeUnique<ServerResponseSpeechTranscription>(
+		isValid ? serverResponseData[API_STRING("text")].AsString() : FString(),
+		isValid ? ServerResponseSpeechTranscription::TranscriptionState::END
+			: ServerResponseSpeechTranscription::TranscriptionState::CANCELLED);
 }
