@@ -62,6 +62,9 @@ private:
 	UFUNCTION()
 	void VoxtaClientChatSessionStarted(const FString& newState);
 
+	UFUNCTION()
+	void VoxtaClientStateChanged(VoxtaClientState newState);
+
 	///~ Begin APawn overrides.
 protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;

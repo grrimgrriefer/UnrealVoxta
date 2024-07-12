@@ -3,9 +3,13 @@
 #include "TalkToMeCppUeWidget.h"
 #include "ButtonWithParameter.h"
 #include "Logging/StructuredLog.h"
+#include "VoxtaAudioPlayback.h"
+#include "VoxtaAudioInput.h"
 
-void UTalkToMeCppUeWidget::InitializeWidget()
+void UTalkToMeCppUeWidget::InitializeWidget(UVoxtaAudioPlayback* playbackHandler, UVoxtaAudioInput* inputHandler)
 {
+	m_playbackHandler = playbackHandler;
+	m_inputHandler = inputHandler;
 	UserInputField->OnTextCommitted.AddUniqueDynamic(this, &UTalkToMeCppUeWidget::OnUserInputCommittedInternal);
 	UserInputField->SetIsEnabled(false);
 }
@@ -49,8 +53,13 @@ void UTalkToMeCppUeWidget::ConfigureWidgetForState(VoxtaClientState newState)
 	}
 	if (UserInputField)
 	{
-		UserInputField->SetIsEnabled(newState == VoxtaClientState::WaitingForUser ||
-			newState == VoxtaClientState::AudioPlayback);
+		bool enabled = newState == VoxtaClientState::WaitingForUser ||
+			newState == VoxtaClientState::AudioPlayback;
+		UserInputField->SetIsEnabled(enabled);
+		if (!enabled)
+		{
+			MicTempTranscription->SetText(FText::GetEmpty());
+		}
 	}
 }
 
@@ -101,6 +110,33 @@ void UTalkToMeCppUeWidget::RemoveTextMessage(const FString& messageId)
 		}
 		m_messages.Remove(messageId);
 	}
+}
+
+void UTalkToMeCppUeWidget::NativeTick(const FGeometry& MyGeometry, float DeltaTime)
+{
+	Super::NativeTick(MyGeometry, DeltaTime);
+	if (MicVolume && m_inputHandler)
+	{
+		MicVolume->SetPercent(m_inputHandler->GetNormalizedAmplitude() * 100.f);
+	}
+	if (MicIcon && m_inputHandler)
+	{
+		MicIcon->SetRenderOpacity(m_inputHandler->IsRecording() ? 1.f : 0.f);
+		MicDeviceLabel->SetRenderOpacity(m_inputHandler->IsRecording() ? 1.f : 0.f);
+	}
+	if (PlaybackIcon && m_playbackHandler)
+	{
+		PlaybackIcon->SetRenderOpacity(m_playbackHandler->IsPlaying() ? 1.f : 0.f);
+	}
+	if (MicDeviceLabel && m_inputHandler && MicDeviceLabel->GetText().IsEmptyOrWhitespace())
+	{
+		MicDeviceLabel->SetText(FText::FromString(m_inputHandler->GetInputDeviceName()));
+	}
+}
+
+void UTalkToMeCppUeWidget::PartialSpeechTranscription(const FString& message)
+{
+	MicTempTranscription->SetText(FText::FromString(message));
 }
 
 void UTalkToMeCppUeWidget::OnCharacterButtonClickedInternal(FString charId)

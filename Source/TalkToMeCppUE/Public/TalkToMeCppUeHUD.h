@@ -73,6 +73,11 @@ public:
 	UFUNCTION()
 	void RemoveTextMessage(const FChatMessage& message);
 
+	void InitializeHud(UVoxtaAudioPlayback* playbackHandler, UVoxtaAudioInput* inputHandler);
+
+	UFUNCTION()
+	void PartialSpeechTranscription(const FString& message);
+
 private:
 	class UClass* m_hudWidgetClass;
 	class UTalkToMeCppUeWidget* m_hudWidget;

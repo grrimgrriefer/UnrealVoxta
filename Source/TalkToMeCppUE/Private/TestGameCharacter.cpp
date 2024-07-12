@@ -24,6 +24,7 @@ void ATestGameCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	m_voxtaClient->VoxtaClientChatSessionStartedEvent.AddDynamic(this, &ATestGameCharacter::VoxtaClientChatSessionStarted);
+	m_voxtaClient->VoxtaClientStateChangedEvent.AddDynamic(this, &ATestGameCharacter::VoxtaClientStateChanged);
 	m_hud = UGameplayStatics::GetPlayerController(this, 0)->GetHUD<ATalkToMeCppUeHUD>();
 	if (!TryConnectToHud())
 	{
@@ -39,6 +40,7 @@ void ATestGameCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
 	m_voxtaClient->VoxtaClientChatSessionStartedEvent.RemoveDynamic(this, &ATestGameCharacter::VoxtaClientChatSessionStarted);
+	m_voxtaClient->VoxtaClientStateChangedEvent.RemoveDynamic(this, &ATestGameCharacter::VoxtaClientStateChanged);
 	if (!TryDisconnectToHud() && EndPlayReason != EEndPlayReason::Quit)
 	{
 		UE_LOGFMT(LogCore, Error, "Failed to clean up the bindings between the ATestGameCharacter and the ATalkToMeCppUeHUD.");
@@ -57,14 +59,15 @@ bool ATestGameCharacter::TryConnectToHud()
 {
 	if (m_voxtaClient && m_hud)
 	{
-		m_voxtaClient->VoxtaClientStateChangedEvent.AddDynamic(m_hud, &ATalkToMeCppUeHUD::VoxtaClientStateChanged);
 		m_voxtaClient->VoxtaClientCharacterRegisteredEvent.AddUniqueDynamic(m_hud, &ATalkToMeCppUeHUD::VoxtaClientCharacterRegistered);
 		m_voxtaClient->VoxtaClientCharMessageAddedEvent.AddUniqueDynamic(m_hud, &ATalkToMeCppUeHUD::AddTextMessage);
 		m_voxtaClient->VoxtaClientCharMessageRemovedEvent.AddUniqueDynamic(m_hud, &ATalkToMeCppUeHUD::RemoveTextMessage);
+		m_voxtaClient->VoxtaClientSpeechTranscribedPartialEvent.AddUniqueDynamic(m_hud, &ATalkToMeCppUeHUD::PartialSpeechTranscription);
 
 		m_hud->CharButtonClickedEvent.AddUniqueDynamic(m_voxtaClient, &UVoxtaClient::StartChatWithCharacter);
 		m_hud->UserInputCommittedEvent.AddUniqueDynamic(m_voxtaClient, &UVoxtaClient::SendUserInput);
 
+		m_hud->InitializeHud(m_audioPlaybackHandler, m_audioInputHandler);
 		return true;
 	}
 	UE_LOGFMT(LogCore, Error, "Failed to connect the HUD and the VoxtaClient with each other.");
@@ -97,10 +100,10 @@ bool ATestGameCharacter::TryDisconnectToHud()
 {
 	if (m_voxtaClient && m_hud)
 	{
-		m_voxtaClient->VoxtaClientStateChangedEvent.RemoveDynamic(m_hud, &ATalkToMeCppUeHUD::VoxtaClientStateChanged);
 		m_voxtaClient->VoxtaClientCharacterRegisteredEvent.RemoveDynamic(m_hud, &ATalkToMeCppUeHUD::VoxtaClientCharacterRegistered);
 		m_voxtaClient->VoxtaClientCharMessageAddedEvent.RemoveDynamic(m_hud, &ATalkToMeCppUeHUD::AddTextMessage);
 		m_voxtaClient->VoxtaClientCharMessageRemovedEvent.RemoveDynamic(m_hud, &ATalkToMeCppUeHUD::RemoveTextMessage);
+		m_voxtaClient->VoxtaClientSpeechTranscribedPartialEvent.RemoveDynamic(m_hud, &ATalkToMeCppUeHUD::PartialSpeechTranscription);
 
 		m_hud->CharButtonClickedEvent.RemoveDynamic(m_voxtaClient, &UVoxtaClient::StartChatWithCharacter);
 		m_hud->UserInputCommittedEvent.RemoveDynamic(m_voxtaClient, &UVoxtaClient::SendUserInput);
@@ -108,6 +111,19 @@ bool ATestGameCharacter::TryDisconnectToHud()
 	}
 	UE_LOGFMT(LogCore, Warning, "Failed to disconnect the HUD and the VoxtaClient with each other.");
 	return false;
+}
+
+void ATestGameCharacter::VoxtaClientStateChanged(VoxtaClientState newState)
+{
+	m_hud->VoxtaClientStateChanged(newState);
+	if (newState == VoxtaClientState::WaitingForUser)
+	{
+		m_audioInputHandler->StartStreaming();
+	}
+	else
+	{
+		m_audioInputHandler->StopStreaming();
+	}
 }
 
 void ATestGameCharacter::VoxtaClientChatSessionStarted(const FString& sessionId)

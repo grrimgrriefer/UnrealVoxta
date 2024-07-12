@@ -21,12 +21,12 @@ public:
 
 	void CaptureAndSendVoiceData_Implementation();
 
+	float GetNormalizedAmplitude() const;
+	FString GetDeviceName() const;
+
 protected:
 	UPROPERTY(BlueprintReadWrite, Category = "Voice")
 	TArray<uint8> VoiceCaptureBuffer;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Voice")
-	float VoiceCaptureVolume;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Voice")
 	TArray<uint8> ReplicatedBuffer;
@@ -39,6 +39,8 @@ private:
 	TSharedPtr<IVoiceEncoder> VoiceEncoder;
 	TSharedPtr<AudioWebSocket> m_socket;
 	TSharedPtr<class IVoiceCapture> VoiceCapture;
+
+	FString m_deviceName;
 
 	bool m_isCapturing = false;
 

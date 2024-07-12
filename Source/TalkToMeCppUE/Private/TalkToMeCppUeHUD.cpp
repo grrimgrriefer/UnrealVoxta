@@ -1,6 +1,8 @@
 // Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
 
 #include "TalkToMeCppUeHUD.h"
+#include "VoxtaAudioPlayback.h"
+#include "VoxtaAudioInput.h"
 
 ATalkToMeCppUeHUD::ATalkToMeCppUeHUD()
 {
@@ -24,7 +26,6 @@ void ATalkToMeCppUeHUD::BeginPlay()
 		m_hudWidget = CreateWidget<UTalkToMeCppUeWidget>(this->GetOwningPlayerController(), this->m_hudWidgetClass);
 		m_hudWidget->AddToViewport();
 
-		m_hudWidget->InitializeWidget();
 		m_hudWidget->CharButtonClickedEvent.AddUniqueDynamic(this, &ATalkToMeCppUeHUD::OnCharButtonClicked);
 		m_hudWidget->UserInputCommittedEvent.AddUniqueDynamic(this, &ATalkToMeCppUeHUD::OnUserInputFieldSubmitted);
 	}
@@ -52,6 +53,16 @@ void ATalkToMeCppUeHUD::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	{
 		UE_LOGFMT(LogCore, Error, "Failed to instantiate UTalkToMeCppUeWidget, as the class was null.");
 	}
+}
+
+void ATalkToMeCppUeHUD::InitializeHud(UVoxtaAudioPlayback* playbackHandler, UVoxtaAudioInput* inputHandler)
+{
+	m_hudWidget->InitializeWidget(playbackHandler, inputHandler);
+}
+
+void ATalkToMeCppUeHUD::PartialSpeechTranscription(const FString& message)
+{
+	m_hudWidget->PartialSpeechTranscription(message);
 }
 
 void ATalkToMeCppUeHUD::VoxtaClientStateChanged(VoxtaClientState newState)

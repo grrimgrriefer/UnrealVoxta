@@ -6,10 +6,15 @@
 #include "Blueprint/UserWidget.h"
 #include "Components/TextBlock.h"
 #include "Components/ScrollBox.h"
+#include "Components/ProgressBar.h"
+#include "Components/Image.h"
 #include "Components/EditableTextBox.h"
 #include "VoxtaClient.h"
 #include "Types/SlateEnums.h"
 #include "TalkToMeCppUeWidget.generated.h"
+
+class UVoxtaAudioPlayback;
+class UVoxtaAudioInput;
 
 /// Declared as global since the ATalkToMeCppUeHUD class forwards these events and thus also
 /// needs access to the delegate declarations.
@@ -43,7 +48,7 @@ public:
 	/// Sets up the bindings for the inputfield and ensures the proper elements
 	/// are enabled/disabled at the start.
 	/// </summary>
-	void InitializeWidget();
+	void InitializeWidget(UVoxtaAudioPlayback* playbackHandler, UVoxtaAudioInput* inputHandler);
 
 	/// <summary>
 	/// Ensures that the bindings for the inputfield and any generated buttons are
@@ -82,6 +87,8 @@ public:
 	/// that was provided to this widget when the message was sent.</param>
 	void RemoveTextMessage(const FString& messageId);
 
+	void PartialSpeechTranscription(const FString& message);
+
 	///~ Begin Blueprint bindings.
 protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
@@ -95,10 +102,29 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UEditableTextBox> UserInputField;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	TObjectPtr<UProgressBar> MicVolume;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	TObjectPtr<UImage> MicIcon;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	TObjectPtr<UImage> PlaybackIcon;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	TObjectPtr<UTextBlock> MicDeviceLabel;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	TObjectPtr<UTextBlock> MicTempTranscription;
 	///~ End Blueprint bindings.
+
+	virtual void NativeTick(const FGeometry& MyGeometry, float DeltaTime) override;
 
 private:
 	TMap<FString, UTextBlock*> m_messages;
+	UVoxtaAudioPlayback* m_playbackHandler;
+	UVoxtaAudioInput* m_inputHandler;
 
 	/// <summary>
 	/// Automatically invoked when one of the buttons tied to a character is clicked.

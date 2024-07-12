@@ -3,11 +3,13 @@
 _Made in collaboration with https://twitter.com/DZnnah[DZnnah]_
 
 This repo contains the Unreal-Engine (5.3) port of the https://github.com/grrimgrriefer/TalkToMeCPP[TalkToMeCPP (Windows c++)] +
-*Note:* Uses third-party SignalR client: link:Source/SignalR/License.txt[LICENSE]
+*Note:* Uses MIT licensed SignalR client: link:Source/SignalR/License.txt[LICENSE] +
+*Note:* Uses MIT licensed wav-decoding from the RuntimeAudioImporter: link:Source/AudioUtility/Public/RuntimeAudioImporter/LICENSE.txt[LICENSE]
 
 == Structure
 
-.The code is separated in 4 modules
+.The code is separated in 5 modules
+* AudioUtility: Contains all the logic in regards to audioplayback and audio input
 * SignalR: Contains the Unreal port of the SignalR c++ client.
 * TalkToMeCppUE: Contains demo-project related files.
 * Voxta: A stateful client for the encapsulation of the Voxta server API.
@@ -23,11 +25,15 @@ This repo contains the Unreal-Engine (5.3) port of the https://github.com/grrimg
 
 [ :heavy_check_mark: ]   Code cleanup & refactoring
 
-[ :fire: ]   Swap windows audio API for UE to ensure cross-platform compatibility
+[ :heavy_check_mark: ]   Swap windows audio API for UE to ensure cross-platform compatibility
 
-[ :black_square_button: ]   Expose main functionality to blueprints & swap UI c++ code with exclusive blueprint
+[ :fire: ]   Code cleanup & refactoring 2: the quest for better code
 
-[ :black_square_button: ]   Create a demo by hooking up playback to MetaHuman
+[ :black_square_button: ]   Hook up OVR lipsync to the audioplayback.
+
+[ :black_square_button: ]   Make a proof-of-concept demo using a default Metahuman (integrate it with OVR lipsync)
+
+[ :black_square_button: ]   Expose main functionality to blueprints & use them to replace the C++ bindings atm
 
 [ :black_square_button: ]   Wrap modules into a plugin
 
@@ -36,10 +42,11 @@ This repo contains the Unreal-Engine (5.3) port of the https://github.com/grrimg
 == Running the project
 
 .Steps to get this up and running
-. Clone the repository.
+. Clone the repository. *(Note: this repo uses Git LFS)*
 . Right-click on the .UProject and select the option to Generate VS files.
 . Configure the startup project to be TalkToMeCPPUE
 . Select DevelopmentEditor with Win64 and run the debugger.
 . Ensure you have your Voxta Server running and press play in the editor once it's started up.
+. In the VoxtaClient.cpp, make sure you swap the IP address of the server to the one you use.
 
 Blueprint is not yet supported, will be soonish though.

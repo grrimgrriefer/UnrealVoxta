@@ -29,6 +29,7 @@ public:
 	UVoxtaAudioPlayback();
 
 	void InitializeAudioPlayback(UVoxtaClient* voxtaClient, FStringView characterId);
+	bool IsPlaying() const;
 
 private:
 	UVoxtaClient* m_clientReference;

@@ -61,10 +61,30 @@ void UVoxtaAudioInput::StartStreaming()
 
 void UVoxtaAudioInput::StopStreaming()
 {
+	if (m_connectionState != MicrophoneSocketState::InUse)
+	{
+		return;
+	}
 	m_audioCaptureDevice.StopCapture();
+	m_connectionState = MicrophoneSocketState::Ready;
 }
 
 void UVoxtaAudioInput::CloseSocket()
 {
 	m_audioWebSocket->Close();
+}
+
+bool UVoxtaAudioInput::IsRecording() const
+{
+	return m_connectionState == MicrophoneSocketState::InUse;
+}
+
+float UVoxtaAudioInput::GetNormalizedAmplitude() const
+{
+	return m_audioCaptureDevice.GetNormalizedAmplitude();
+}
+
+FString UVoxtaAudioInput::GetInputDeviceName() const
+{
+	return m_audioCaptureDevice.GetDeviceName();
 }

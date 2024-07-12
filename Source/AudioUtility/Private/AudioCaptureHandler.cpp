@@ -27,7 +27,13 @@ bool AudioCaptureHandler::TryInitialize()
 		SilenceDetectionThresholdCVar->Set(0.001f);
 		micInputGain->Set(6.0f);
 
-		VoiceCapture = VoiceModule.CreateVoiceCapture("", 16000, 1);
+		Audio::FAudioCapture AudioCapture;
+		Audio::FCaptureDeviceInfo OutInfo;
+		AudioCapture.GetCaptureDeviceInfo(OutInfo, INDEX_NONE);
+		m_deviceName = OutInfo.DeviceName;
+		UE_LOG(AudioLog, Log, TEXT("Using microphone device %s"), *m_deviceName);
+
+		VoiceCapture = VoiceModule.CreateVoiceCapture(m_deviceName, 16000, 1);
 	}
 	if (VoiceCapture.IsValid())
 	{
@@ -70,6 +76,7 @@ void AudioCaptureHandler::StopCapture()
 		m_voiceRunnerThread->Stop();
 	}
 
+	ReplicatedBuffer.Reset();
 	m_isCapturing = false;
 	VoiceCapture->Stop();
 }
@@ -85,9 +92,7 @@ void AudioCaptureHandler::CaptureVoice()
 
 	if (CaptureState == EVoiceCaptureState::Ok && AvailableBytes > 0)
 	{
-		short VoiceCaptureSample = 0;
 		uint32 VoiceCaptureReadBytes = 0;
-		float VoiceCaptureTotalSquared = 0;
 
 		VoiceCaptureBuffer.SetNumUninitialized(AvailableBytes);
 		VoiceCapture->GetVoiceData(
@@ -96,21 +101,6 @@ void AudioCaptureHandler::CaptureVoice()
 			VoiceCaptureReadBytes
 		);
 
-		for (uint32 i = 0; i < (VoiceCaptureReadBytes / 2); i++)
-		{
-			VoiceCaptureSample = (VoiceCaptureBuffer[i * 2 + 1] << 8) | VoiceCaptureBuffer[i * 2];
-			VoiceCaptureTotalSquared += float(VoiceCaptureSample) * float(VoiceCaptureSample);
-		}
-
-		float VoiceCaptureMeanSquare = 2 * (VoiceCaptureTotalSquared / VoiceCaptureBuffer.Num());
-		float VoiceCaptureRms = FMath::Sqrt(VoiceCaptureMeanSquare);
-		float VoiceCaptureFinalVolume = VoiceCaptureRms / 32768.0 * 200.f;
-
-		VoiceCaptureVolume = VoiceCaptureFinalVolume;
-
-		auto TempEncodeBuffer = TArray<uint8>();
-		auto CompressedSize = UVOIPStatics::GetMaxCompressedVoiceDataSize();
-		TempEncodeBuffer.SetNumUninitialized(CompressedSize);
 		ReplicatedBuffer.Append(VoiceCaptureBuffer);
 	}
 }
@@ -141,4 +131,18 @@ void AudioCaptureHandler::CaptureAndSendVoiceData_Implementation()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("No data to send"));
 	}
+}
+
+float AudioCaptureHandler::GetNormalizedAmplitude() const
+{
+	if (VoiceCapture.IsValid())
+	{
+		return FMath::Clamp(VoiceCapture->GetCurrentAmplitude() / 20.f, 0.f, 1.f);
+	}
+	return 0.f;
+}
+
+FString AudioCaptureHandler::GetDeviceName() const
+{
+	return m_deviceName;
 }

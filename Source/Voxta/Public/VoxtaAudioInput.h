@@ -30,6 +30,10 @@ public:
 	void StartStreaming();
 	void StopStreaming();
 
+	bool IsRecording() const;
+	float GetNormalizedAmplitude() const;
+	FString GetInputDeviceName() const;
+
 private:
 	AudioCaptureHandler m_audioCaptureDevice;
 	TSharedPtr<AudioWebSocket> m_audioWebSocket;
