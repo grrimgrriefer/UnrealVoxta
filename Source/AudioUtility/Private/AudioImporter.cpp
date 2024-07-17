@@ -1,4 +1,4 @@
-// Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
+// Georgy Treshchev 2024.
 
 #include "AudioImporter.h"
 #include "RuntimeAudioImporter/RuntimeCodecFactory.h"
@@ -17,7 +17,7 @@ void UAudioImporter::ImportAudioFromBuffer(FString identifier, TArray64<uint8> A
 			}
 			else
 			{
-				UE_LOG(AudioLog, Error, TEXT("Failed to import audio from buffer because the RuntimeAudioImporterLibrary object has been destroyed"));
+				UE_LOG(AudioLog, Error, TEXT("Failed to import audio from buffer because the UAudioImporter object has been destroyed"));
 			}
 		});
 		return;
@@ -98,7 +98,7 @@ void UAudioImporter::ImportAudioFromDecodedInfo(FString identifier, FDecodedAudi
 			}
 			else
 			{
-				UE_LOG(AudioLog, Error, TEXT("Unable to import audio from decoded info '%s' because the RuntimeAudioImporterLibrary object has been destroyed"), *DecodedAudioInfo.ToString());
+				UE_LOG(AudioLog, Error, TEXT("Unable to import audio from decoded info '%s' because the UAudioImporter object has been destroyed"), *DecodedAudioInfo.ToString());
 			}
 		});
 		return;
@@ -188,7 +188,7 @@ void UAudioImporter::OnResult_Internal(FString identifier, UImportedSoundWave* I
 			}
 			else
 			{
-				UE_LOG(AudioLog, Error, TEXT("Unable to broadcast the result of the import because the RuntimeAudioImporterLibrary object has been destroyed"));
+				UE_LOG(AudioLog, Error, TEXT("Unable to broadcast the result of the import because the UAudioImporter object has been destroyed"));
 			}
 		});
 		return;

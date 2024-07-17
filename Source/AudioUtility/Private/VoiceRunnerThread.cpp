@@ -1,5 +1,8 @@
+// Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
+
 #include "VoiceRunnerThread.h"
 #include "HAL/RunnableThread.h"
+#include "AudioCaptureHandler.h"
 
 FVoiceRunnerThread::~FVoiceRunnerThread()
 {
@@ -15,9 +18,9 @@ uint32 FVoiceRunnerThread::Run()
 	uint32 Result = THREAD_RETURN_DEFAULT_VALUE;
 	while (!bStopped)
 	{
+		FPlatformProcess::Sleep(SleepTime);
 		if (VoiceComponent)
 		{
-			FPlatformProcess::Sleep(SleepTime);
 			VoiceComponent->CaptureAndSendVoiceData_Implementation();
 			Result = SEND_VOICE_DATA_SUCCESS;
 		}

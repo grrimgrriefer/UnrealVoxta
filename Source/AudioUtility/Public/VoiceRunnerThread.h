@@ -1,13 +1,16 @@
+// Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
+
 #pragma once
 
 #include "CoreMinimal.h"
 #include "HAL/Runnable.h"
-#include "AudioCaptureHandler.h"
 
 #define VOICE_COMPONENT_NULL 255
 #define THREAD_RETURN_DEFAULT_VALUE 254
 #define RECEIVE_VOICE_DATA_SUCCESS 0
 #define SEND_VOICE_DATA_SUCCESS 1
+
+class AudioCaptureHandler;
 
 class FVoiceRunnerThread : public FRunnable
 {

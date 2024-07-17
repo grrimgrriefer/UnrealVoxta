@@ -49,7 +49,7 @@ bool AudioCaptureHandler::TryInitialize()
 
 bool AudioCaptureHandler::StartCapture()
 {
-	m_voiceRunnerThread = MakeShared<FVoiceRunnerThread>(this, 0.15f);
+	m_voiceRunnerThread = MakeUnique<FVoiceRunnerThread>(this, 0.15f);
 	if (!m_voiceRunnerThread.IsValid())
 	{
 		UE_LOG(LogVoice, Error, TEXT("m_voiceRunnerThread is null! Func: %s; Line: %s"), *FString(__FUNCTION__), *FString::FromInt(__LINE__));
@@ -81,16 +81,30 @@ void AudioCaptureHandler::StopCapture()
 	VoiceCapture->Stop();
 }
 
+void AudioCaptureHandler::ShutDown()
+{
+	StopCapture();
+	m_voiceRunnerThread = nullptr;
+}
+
 void AudioCaptureHandler::CaptureVoice()
 {
-	if (!VoiceCapture.IsValid()) { return; }
+	if (!VoiceCapture.IsValid())
+	{
+		return;
+	}
 
 	uint32 AvailableBytes = 0;
 	auto CaptureState = VoiceCapture->GetCaptureState(AvailableBytes);
 
+	if (AvailableBytes < 1)
+	{
+		return;
+	}
+
 	VoiceCaptureBuffer.Reset();
 
-	if (CaptureState == EVoiceCaptureState::Ok && AvailableBytes > 0)
+	if (CaptureState == EVoiceCaptureState::Ok)
 	{
 		uint32 VoiceCaptureReadBytes = 0;
 

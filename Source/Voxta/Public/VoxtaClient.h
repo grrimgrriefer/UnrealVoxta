@@ -91,7 +91,7 @@ public:
 	/// Note: There is no restart functionality at the time being, so only disconnect when you intend to
 	/// fully stop using Voxta for the remainder of the play session.
 	/// </summary>
-	void Disconnect();
+	void Disconnect(bool silent = false);
 
 	/// <summary>
 	/// Tell the server to initiate a chat session with the character of the provided ID.

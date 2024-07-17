@@ -7,8 +7,7 @@
 #include "AudioCaptureCore.h"
 #include "Voice.h"
 #include "RuntimeAudioImporter/AudioStructs.h"
-
-class FVoiceRunnerThread;
+#include "VoiceRunnerThread.h"
 
 class AUDIOUTILITY_API AudioCaptureHandler
 {
@@ -18,6 +17,7 @@ public:
 
 	bool StartCapture();
 	void StopCapture();
+	void ShutDown();
 
 	void CaptureAndSendVoiceData_Implementation();
 
@@ -35,8 +35,7 @@ private:
 	void CaptureVoice();
 	void Send(const TArray<uint8> InData);
 
-	TSharedPtr<FVoiceRunnerThread> m_voiceRunnerThread;
-	TSharedPtr<IVoiceEncoder> VoiceEncoder;
+	TUniquePtr<FVoiceRunnerThread> m_voiceRunnerThread;
 	TSharedPtr<AudioWebSocket> m_socket;
 	TSharedPtr<class IVoiceCapture> VoiceCapture;
 

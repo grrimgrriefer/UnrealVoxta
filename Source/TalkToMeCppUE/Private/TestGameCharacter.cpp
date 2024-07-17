@@ -41,9 +41,12 @@ void ATestGameCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 	m_voxtaClient->VoxtaClientChatSessionStartedEvent.RemoveDynamic(this, &ATestGameCharacter::VoxtaClientChatSessionStarted);
 	m_voxtaClient->VoxtaClientStateChangedEvent.RemoveDynamic(this, &ATestGameCharacter::VoxtaClientStateChanged);
-	if (!TryDisconnectToHud() && EndPlayReason != EEndPlayReason::Quit)
+	if (EndPlayReason != EEndPlayReason::Quit)
 	{
-		UE_LOGFMT(LogCore, Error, "Failed to clean up the bindings between the ATestGameCharacter and the ATalkToMeCppUeHUD.");
+		if (!TryDisconnectToHud())
+		{
+			UE_LOGFMT(LogCore, Error, "Failed to clean up the bindings between the ATestGameCharacter and the ATalkToMeCppUeHUD.");
+		}
 	}
 	m_hud = nullptr;
 }

@@ -71,7 +71,9 @@ void UVoxtaAudioInput::StopStreaming()
 
 void UVoxtaAudioInput::CloseSocket()
 {
+	m_audioCaptureDevice.ShutDown();
 	m_audioWebSocket->Close();
+	m_connectionState = MicrophoneSocketState::Closed;
 }
 
 bool UVoxtaAudioInput::IsRecording() const
@@ -87,4 +89,10 @@ float UVoxtaAudioInput::GetNormalizedAmplitude() const
 FString UVoxtaAudioInput::GetInputDeviceName() const
 {
 	return m_audioCaptureDevice.GetDeviceName();
+}
+
+void UVoxtaAudioInput::BeginDestroy()
+{
+	Super::BeginDestroy();
+	CloseSocket();
 }

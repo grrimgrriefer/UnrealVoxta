@@ -55,6 +55,12 @@ void UVoxtaAudioPlayback::PlaybackMessage(const FCharDataBase& sender, const FCh
 		currentAudioClip = 0;
 		isPlaying = false;
 		m_orderedUrls.Empty();
+		TArray<FString> keys;
+		m_audioData.GetKeys(keys);
+		for (int i = 0; i < keys.Num(); i++)
+		{
+			m_audioData[keys[i]]->RemoveFromRoot();
+		}
 		m_audioData.Empty();
 		m_messageId = message.GetMessageId();
 		GenerateFullUrls(message);
@@ -122,6 +128,7 @@ void UVoxtaAudioPlayback::TryPlayNextAudio()
 
 void UVoxtaAudioPlayback::AudioImportCompleted(FString identifier, UImportedSoundWave* soundWave)
 {
+	soundWave->AddToRoot();
 	m_audioData.Emplace(identifier, soundWave);
 	if (!isPlaying)
 	{

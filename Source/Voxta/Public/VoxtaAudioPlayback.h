@@ -38,6 +38,8 @@ private:
 	UAudioComponent* m_audioComponent;
 	TArray<FString> m_orderedUrls;
 	TMap<FString, USoundWaveProcedural*> m_audioData;
+
+	UPROPERTY(Transient)
 	UAudioImporter* audioImporter;
 
 	FString m_hostAddress;

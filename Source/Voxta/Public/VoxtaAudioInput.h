@@ -42,4 +42,9 @@ private:
 	void OnSocketConnected();
 	void OnSocketConnectionError(const FString& error);
 	void OnSocketClosed(int StatusCode, const FString& Reason, bool bWasClean);
+
+	///~ Begin UActorComponent overrides.
+protected:
+	virtual void BeginDestroy() override;
+	///~ End UActorComponent overrides.
 };

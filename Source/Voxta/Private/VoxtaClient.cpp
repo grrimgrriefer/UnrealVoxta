@@ -20,7 +20,7 @@ void UVoxtaClient::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 	if (m_currentState != VoxtaClientState::Disconnected)
 	{
-		Disconnect();
+		Disconnect(true);
 	}
 }
 
@@ -47,14 +47,17 @@ void UVoxtaClient::StartConnection()
 	UE_LOGFMT(VoxtaLog, Log, "Starting Voxta client");
 }
 
-void UVoxtaClient::Disconnect()
+void UVoxtaClient::Disconnect(bool silent)
 {
 	if (m_currentState == VoxtaClientState::Disconnected)
 	{
 		UE_LOGFMT(VoxtaLog, Warning, "VoxtaClient is currently not connected, ignoring disconnect attempt");
 		return;
 	}
-	SetState(VoxtaClientState::Terminated);
+	if (!silent)
+	{
+		SetState(VoxtaClientState::Terminated);
+	}
 	m_hub->Stop();
 }
 
