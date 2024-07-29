@@ -1,9 +1,9 @@
 // Georgy Treshchev 2024.
 
 #include "RuntimeAudioImporter/RuntimeAudioImporterLibrary.h"
-#include "RuntimeCodecFactory.h"
-#include "ImportedSoundWave.h"
-#include "RAW_RuntimeCodec.h"
+#include "RuntimeAudioImporter/RuntimeCodecFactory.h"
+#include "RuntimeAudioImporter/ImportedSoundWave.h"
+#include "RuntimeAudioImporter/RAW_RuntimeCodec.h"
 
 void URuntimeAudioImporterLibrary::ImportAudioFromBuffer(FString identifier, TArray64<uint8> AudioData)
 {
@@ -47,19 +47,19 @@ bool URuntimeAudioImporterLibrary::DecodeAudioData(FEncodedAudioStruct&& Encoded
 			return CodecFactory.GetCodecs(EncodedAudioInfo.AudioFormat);
 		}();
 
-		for (FBaseRuntimeCodec* RuntimeCodec : RuntimeCodecs)
+	for (FBaseRuntimeCodec* RuntimeCodec : RuntimeCodecs)
+	{
+		EncodedAudioInfo.AudioFormat = RuntimeCodec->GetAudioFormat();
+		if (!RuntimeCodec->Decode(MoveTemp(EncodedAudioInfo), DecodedAudioInfo))
 		{
-			EncodedAudioInfo.AudioFormat = RuntimeCodec->GetAudioFormat();
-			if (!RuntimeCodec->Decode(MoveTemp(EncodedAudioInfo), DecodedAudioInfo))
-			{
-				UE_LOG(AudioLog, Error, TEXT("Something went wrong while decoding '%s' audio data"), *UEnum::GetValueAsString(EncodedAudioInfo.AudioFormat));
-				continue;
-			}
-			return true;
+			UE_LOG(AudioLog, Error, TEXT("Something went wrong while decoding '%s' audio data"), *UEnum::GetValueAsString(EncodedAudioInfo.AudioFormat));
+			continue;
 		}
+		return true;
+	}
 
-		UE_LOG(AudioLog, Error, TEXT("Failed to decode the audio data because the codec for the format '%s' was not found"), *UEnum::GetValueAsString(EncodedAudioInfo.AudioFormat));
-		return false;
+	UE_LOG(AudioLog, Error, TEXT("Failed to decode the audio data because the codec for the format '%s' was not found"), *UEnum::GetValueAsString(EncodedAudioInfo.AudioFormat));
+	return false;
 }
 
 bool URuntimeAudioImporterLibrary::EncodeAudioData(FDecodedAudioStruct&& DecodedAudioInfo, FEncodedAudioStruct& EncodedAudioInfo, uint8 Quality)

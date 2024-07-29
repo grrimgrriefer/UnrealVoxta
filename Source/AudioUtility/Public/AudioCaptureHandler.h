@@ -21,24 +21,34 @@ public:
 	/// </summary>
 	/// <param name="socket">A shared pointer to the websocket used for sending the microphone data.</param>
 	/// <param name="bufferMillisecondSize">The amount of milliseconds the buffer should account for.</param>
-	void RegisterSocket(TSharedPtr<AudioWebSocket> socket, int bufferMillisecondSize);
+	void RegisterSocket(TWeakPtr<AudioWebSocket> socket, int bufferMillisecondSize);
 
 	/// <summary>
 	/// Tries to create a voice capture instance (IVoiceCapture).
 	/// </summary>
-	/// <param name="samplerate">The samplerate that will be requested from the microphone,
+	/// <param name="sampleRate">The sample rate that will be requested from the microphone,
 	/// this must match the specification sent thought the websocket.</param>
-	/// <param name="numchannels">The amount of inputchannels that will be request from the microphone,
+	/// <param name="numChannels">The amount of input channels that will be request from the microphone,
 	/// this must match the specification sent thought the websocket.</param>
 	/// <returns>Returns true if VoiceCapture was created successfully.</returns>
-	bool TryInitialize(int32 samplerate = 16000, int32 numchannels = 1);
+	bool TryInitializeVoiceCapture(int sampleRate = 16000, int numChannels = 1);
+
+	/// <summary>
+	/// Configure values to help the microphone to pick up voice without background noise.
+	/// </summary>
+	/// <param name="micNoiseGateThreshold">The linear amplitude, anything below this will output silent audio data.</param>
+	/// <param name="silenceDetectionThreshold">The linear amplitude, anything below this will not generate any audio data.</param>
+	/// <param name="micInputGain">The linear amplitude muliplier applied to the input.</param>
+	void ConfigureSilenceTresholds(float micNoiseGateThreshold = 0.001f,
+		float silenceDetectionThreshold = 0.001f,
+		float micInputGain = 6.0f);
 
 	/// <summary>
 	/// Tries to start that IVoiceCapture and also start the background thread that will forward any
 	/// captured data every fixed timestep.
 	/// </summary>
 	/// <returns>True if the voice capture is started successfully.</returns>
-	bool TryStartCapture();
+	bool TryStartVoiceCapture();
 
 	/// <summary>
 	/// Stop the voice capture, reset the buffers and stops the background thread.
@@ -63,14 +73,16 @@ public:
 	/// <returns>Returns the name of the device used by the VoiceModule, if initialized.</returns>
 	FString GetDeviceName() const;
 
-	/// <summary>
-	/// Used to gather the most recent audio data and send it to the websocket.
-	/// </summary>
-	void CaptureAndSendVoiceData();
-
 private:
 	friend class FVoiceRunnerThread;
 
+	FString m_deviceName = TEXT("");
+	bool m_isCapturing = false;
+	int m_bufferMillisecondSize;
+
+	TUniquePtr<FVoiceRunnerThread> m_voiceRunnerThread;
+	TWeakPtr<AudioWebSocket> m_webSocket;
+	TSharedPtr<class IVoiceCapture> m_voiceCaptureDevice;
 	/// <summary>
 	/// Buffer that contains the binary audio data captured between the fixed intervals of the thread.
 	/// </summary>
@@ -78,24 +90,19 @@ private:
 	TArray<uint8> m_socketDataBuffer;
 
 	/// <summary>
-	/// The background thread that will invoke 'CaptureAndSendVoiceData' on fixed intervals.
+	/// Used to gather the most recent audio data and send it to the websocket.
 	/// </summary>
-	TUniquePtr<FVoiceRunnerThread> m_voiceRunnerThread;
+	void CaptureAndSendVoiceData();
 
 	/// <summary>
-	/// A pointer to the socket used to send the audioData through.
+	/// Populate the provided buffer with data captured from the VoiceCapture.
 	/// </summary>
-	TSharedPtr<AudioWebSocket> m_webSocket;
+	/// <param name="rawData">The array that will be filled with the raw audio data.</param>
+	void CaptureVoiceInternal(TArray<uint8>& voiceDataBuffer) const;
 
 	/// <summary>
-	/// A pointer to the voiceCapture that can be used to request the audio data from UE.
+	/// Send the provided raw audio data to the socket.
 	/// </summary>
-	TSharedPtr<class IVoiceCapture> m_voiceCaptureDevice;
-
-	FString m_deviceName = TEXT("");
-	bool m_isCapturing = false;
-	int m_bufferMillisecondSize;
-
-	void CaptureVoiceInternal();
-	void SendInternal(const TArray<uint8> InData);
+	/// <param name="rawData">The array of raw audio data.</param>
+	void SendInternal(const TArray<uint8> rawData) const;
 };

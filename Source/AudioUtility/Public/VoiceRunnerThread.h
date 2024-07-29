@@ -22,13 +22,10 @@ public:
 	/// <summary>
 	/// Register the pointer to the AudioCaptureHandler and set the sleepTime interval (in milliseconds)
 	/// </summary>
-	FVoiceRunnerThread(AudioCaptureHandler* InVoiceComponent, float InSleepTime)
-		: m_voiceComponent(InVoiceComponent), m_sleepTime(InSleepTime), m_thread(nullptr), m_isStopped(false)
-	{
-	}
+	FVoiceRunnerThread(AudioCaptureHandler* voiceComponent, float sleepTime);
 
 	/// <summary>
-	/// Create a thread that will be used to run this runnable
+	/// Start the thread that will have this runnable assigned to it.
 	/// </summary>
 	void Start();
 
@@ -40,16 +37,8 @@ public:
 	///~ End FRunnable overrides.
 
 private:
-	/// <summary>
-	/// The pointer to the AudioCaptureHandler, used to invoke the 'CaptureAndSendVoiceData'
-	/// in a loop with a fixed delay between intervals.
-	/// </summary>
 	UPROPERTY()
 	AudioCaptureHandler* m_voiceComponent;
-
-	/// <summary>
-	/// The pointer to the thread managing this runnable.
-	/// </summary>
 	FRunnableThread* m_thread;
 
 	float m_sleepTime;

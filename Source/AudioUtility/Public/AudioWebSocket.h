@@ -30,7 +30,7 @@ public:
 	/// </summary>
 	/// <param name="code">The lws_close_status code of the libwebsockets for the closure. 1000 is normal.</param>
 	/// <param name="reason">Optional reason for the socket closing.</param>
-	void Close(int32 code = 1000, const FString& reason = FString());
+	void Close(int code = 1000, const FString& reason = FString());
 
 	/// <summary>
 	/// Send binary data through the websocket.
@@ -64,7 +64,7 @@ private:
 	/// <summary>
 	/// A shared ref to the socket instance managed by UE.
 	/// </summary>
-	TSharedPtr<IWebSocket> Connection;
+	TSharedPtr<IWebSocket> m_socketConnection;
 
 	FString m_serverIP;
 	int m_serverPort;

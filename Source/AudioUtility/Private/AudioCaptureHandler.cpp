@@ -2,80 +2,86 @@
 
 #include "AudioCaptureHandler.h"
 #include "VoiceRunnerThread.h"
+#include "Logging/StructuredLog.h"
 
-void AudioCaptureHandler::RegisterSocket(TSharedPtr<AudioWebSocket> socket, int bufferMillisecondSize)
+void AudioCaptureHandler::RegisterSocket(TWeakPtr<AudioWebSocket> socket, int bufferMillisecondSize)
 {
 	m_webSocket = socket;
 	m_bufferMillisecondSize = bufferMillisecondSize;
 }
 
-bool AudioCaptureHandler::TryInitialize(int32 samplerate, int32 numchannels)
+bool AudioCaptureHandler::TryInitializeVoiceCapture(int sampleRate, int numChannels)
 {
 	if (m_voiceCaptureDevice)
 	{
-		UE_LOG(AudioLog, Error, TEXT("Unable to start capture as the stream is already open"));
+		UE_LOGFMT(AudioLog, Error, "Unable to start capture as the stream is already open");
 		return false;
 	}
 
 	FVoiceModule& VoiceModule = FVoiceModule::Get();
 	if (VoiceModule.IsVoiceEnabled())
 	{
-		static IConsoleVariable* SilenceDetectionReleaseCVar = IConsoleManager::Get().FindConsoleVariable(TEXT("voice.MicNoiseGateThreshold"));
-		static IConsoleVariable* SilenceDetectionThresholdCVar = IConsoleManager::Get().FindConsoleVariable(TEXT("voice.SilenceDetectionThreshold"));
-		static IConsoleVariable* micInputGain = IConsoleManager::Get().FindConsoleVariable(TEXT("voice.MicInputGain"));
-
-		SilenceDetectionReleaseCVar->Set(0.001f);
-		SilenceDetectionThresholdCVar->Set(0.001f);
-		micInputGain->Set(6.0f);
+		ConfigureSilenceTresholds();
 
 		Audio::FAudioCapture AudioCapture;
 		Audio::FCaptureDeviceInfo OutInfo;
 		if (!AudioCapture.GetCaptureDeviceInfo(OutInfo, INDEX_NONE))
 		{
-			UE_LOG(AudioLog, Error, TEXT("Failed to fetch microhpone device information %s"), *m_deviceName);
+			UE_LOGFMT(AudioLog, Error, "Failed to fetch microhpone device information {0}", m_deviceName);
 			return false;
 		}
 		m_deviceName = OutInfo.DeviceName;
-		UE_LOG(AudioLog, Log, TEXT("Using microphone device %s"), *m_deviceName);
+		UE_LOGFMT(AudioLog, Log, "Using microphone device {0}", m_deviceName);
 
-		m_voiceCaptureDevice = VoiceModule.CreateVoiceCapture(m_deviceName, samplerate, numchannels);
+		m_voiceCaptureDevice = VoiceModule.CreateVoiceCapture(m_deviceName, sampleRate, numChannels);
 	}
 	if (m_voiceCaptureDevice.IsValid())
 	{
-		UE_LOG(AudioLog, Log, TEXT("Created voice capture"));
+		UE_LOGFMT(AudioLog, Log, "Created voice capture");
 		return true;
 	}
 	else
 	{
-		UE_LOG(AudioLog, Error, TEXT("Unable to create the voice caputre"));
+		UE_LOGFMT(AudioLog, Error, "Unable to create the voice caputre");
 		return false;
 	}
 }
 
-bool AudioCaptureHandler::TryStartCapture()
+void AudioCaptureHandler::ConfigureSilenceTresholds(float micNoiseGateThreshold, float silenceDetectionThreshold, float micInputGain)
+{
+	static IConsoleVariable* SilenceDetectionReleaseCVar = IConsoleManager::Get().FindConsoleVariable(TEXT("voice.MicNoiseGateThreshold"));
+	static IConsoleVariable* SilenceDetectionThresholdCVar = IConsoleManager::Get().FindConsoleVariable(TEXT("voice.SilenceDetectionThreshold"));
+	static IConsoleVariable* MicInputGain = IConsoleManager::Get().FindConsoleVariable(TEXT("voice.MicInputGain"));
+
+	SilenceDetectionReleaseCVar->Set(micNoiseGateThreshold);
+	SilenceDetectionThresholdCVar->Set(silenceDetectionThreshold);
+	MicInputGain->Set(micInputGain);
+}
+
+bool AudioCaptureHandler::TryStartVoiceCapture()
 {
 	if (!m_voiceCaptureDevice.IsValid())
 	{
-		UE_LOG(AudioLog, Error, TEXT("Unable to start capturing for sound wave, VoiceCapture pointer is invalid."));
+		UE_LOGFMT(AudioLog, Error, "Unable to start capturing for sound wave, VoiceCapture pointer is invalid.");
 		return false;
 	}
 
 	m_voiceRunnerThread = MakeUnique<FVoiceRunnerThread>(this, 0.15f);
 	if (!m_voiceRunnerThread.IsValid())
 	{
-		UE_LOG(LogVoice, Error, TEXT("m_voiceRunnerThread is null! Func: %s; Line: %s"), *FString(__FUNCTION__), *FString::FromInt(__LINE__));
+		UE_LOGFMT(LogVoice, Error, "VoiceRunnerThread has been destroyed.");
 		return false;
 	}
 
 	if (!m_voiceCaptureDevice->Start())
 	{
-		UE_LOG(AudioLog, Error, TEXT("Unable to start capturing for sound wave"));
+		UE_LOGFMT(AudioLog, Error, "Unable to start capturing for sound wave");
 		return false;
 	}
 
 	m_voiceRunnerThread->Start();
 
-	UE_LOG(AudioLog, Log, TEXT("Successfully started voice capture & background thread"));
+	UE_LOGFMT(AudioLog, Log, "Successfully started voice capture & background thread");
 	m_isCapturing = true;
 	return true;
 }
@@ -98,11 +104,11 @@ void AudioCaptureHandler::ShutDown()
 	m_voiceRunnerThread = nullptr;
 }
 
-void AudioCaptureHandler::CaptureVoiceInternal()
+void AudioCaptureHandler::CaptureVoiceInternal(TArray<uint8>& voiceDataBuffer) const
 {
 	if (!m_voiceCaptureDevice.IsValid())
 	{
-		UE_LOG(AudioLog, Warning, TEXT("VoiceCapture device has been destroyed, can't capture any more data."));
+		UE_LOGFMT(AudioLog, Warning, "VoiceCapture device has been destroyed, can't capture any more data.");
 		return;
 	}
 
@@ -114,34 +120,34 @@ void AudioCaptureHandler::CaptureVoiceInternal()
 		return;
 	}
 
-	m_socketDataBuffer.Reset();
+	voiceDataBuffer.Reset();
 
 	if (CaptureState == EVoiceCaptureState::Ok)
 	{
 		uint32 VoiceCaptureReadBytes = 0;
 
-		m_socketDataBuffer.SetNumUninitialized(AvailableBytes);
+		voiceDataBuffer.SetNumUninitialized(AvailableBytes);
 		m_voiceCaptureDevice->GetVoiceData(
-			m_socketDataBuffer.GetData(),
+			voiceDataBuffer.GetData(),
 			AvailableBytes,
 			VoiceCaptureReadBytes
 		);
 	}
 }
 
-void AudioCaptureHandler::SendInternal(const TArray<uint8> InData)
+void AudioCaptureHandler::SendInternal(const TArray<uint8> rawData) const
 {
-	if (InData.Num() > (m_bufferMillisecondSize * 32))
+	if (rawData.Num() > (m_bufferMillisecondSize * 32))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Client: cannot send data, too big: %d"), InData.Num());
+		UE_LOGFMT(LogTemp, Warning, "Client: cannot send data, too big: {0}", rawData.Num());
 		return;
 	}
-	m_webSocket->Send(InData.GetData(), InData.Num());
+	m_webSocket.Pin()->Send(rawData.GetData(), rawData.Num());
 }
 
 void AudioCaptureHandler::CaptureAndSendVoiceData()
 {
-	CaptureVoiceInternal();
+	CaptureVoiceInternal(m_socketDataBuffer);
 
 	if (m_socketDataBuffer.Num() > 0)
 	{
@@ -151,7 +157,7 @@ void AudioCaptureHandler::CaptureAndSendVoiceData()
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("No data to send"));
+		UE_LOGFMT(LogTemp, Warning, "No data to send");
 	}
 }
 

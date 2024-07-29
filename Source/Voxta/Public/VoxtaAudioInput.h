@@ -24,7 +24,11 @@ class VOXTA_API UVoxtaAudioInput : public UActorComponent
 	GENERATED_BODY()
 
 public:
-	void InitializeSocket(const FString& serverIP, int serverPort);
+	void InitializeSocket(const FString& serverIP,
+		int serverPort,
+		int bufferMs = 200,
+		int sampleRate = 16000,
+		int inputChannels = 1);
 	void CloseSocket();
 
 	void StartStreaming();
@@ -35,6 +39,10 @@ public:
 	FString GetInputDeviceName() const;
 
 private:
+	int m_bufferMs;
+	int m_sampleRate;
+	int m_inputChannels;
+
 	AudioCaptureHandler m_audioCaptureDevice;
 	TSharedPtr<AudioWebSocket> m_audioWebSocket;
 	MicrophoneSocketState m_connectionState;

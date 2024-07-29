@@ -4,6 +4,14 @@
 #include "HAL/RunnableThread.h"
 #include "AudioCaptureHandler.h"
 
+FVoiceRunnerThread::FVoiceRunnerThread(AudioCaptureHandler* voiceComponent, float sleepTime) :
+	m_voiceComponent(voiceComponent),
+	m_thread(nullptr),
+	m_sleepTime(sleepTime),
+	m_isStopped(false)
+{
+}
+
 FVoiceRunnerThread::~FVoiceRunnerThread()
 {
 	if (m_thread != nullptr)

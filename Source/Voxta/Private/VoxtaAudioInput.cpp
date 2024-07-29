@@ -3,7 +3,11 @@
 #include "VoxtaAudioInput.h"
 #include "RuntimeAudioImporter/ImportedSoundWave.h"
 
-void UVoxtaAudioInput::InitializeSocket(const FString& serverIP, int serverPort)
+void UVoxtaAudioInput::InitializeSocket(const FString& serverIP,
+	int serverPort,
+	int bufferMs,
+	int sampleRate,
+	int inputChannels)
 {
 	if (m_connectionState != MicrophoneSocketState::NotConnected)
 	{
@@ -11,6 +15,10 @@ void UVoxtaAudioInput::InitializeSocket(const FString& serverIP, int serverPort)
 		return;
 	}
 	m_connectionState = MicrophoneSocketState::Initializing;
+
+	m_bufferMs = bufferMs;
+	m_sampleRate = sampleRate;
+	m_inputChannels = inputChannels;
 
 	m_audioWebSocket = MakeShared<AudioWebSocket>(serverIP, serverPort);
 	m_audioWebSocket->OnConnectedEvent.AddUObject(this, &UVoxtaAudioInput::OnSocketConnected);
@@ -21,12 +29,16 @@ void UVoxtaAudioInput::InitializeSocket(const FString& serverIP, int serverPort)
 
 void UVoxtaAudioInput::OnSocketConnected()
 {
-	m_audioWebSocket->Send("{\"contentType\":\"audio/wav\",\"sampleRate\":16000,"
-							"\"channels\":1,\"bitsPerSample\": 16,\"bufferMilliseconds\":200}");
+	const FString socketInitialHeader = FString::Format(*FString(TEXT("{\"contentType\":\"audio/wav\",\"sampleRate\":{0},"
+		"\"channels\":{1},\"bitsPerSample\": 16,\"bufferMilliseconds\":{2}}")), { m_sampleRate, m_inputChannels, m_bufferMs });
+
+	UE_LOG(LogTemp, Log, TEXT("Audio input socket config: %s"), *socketInitialHeader);
+
+	m_audioWebSocket->Send(socketInitialHeader);
 	m_connectionState = MicrophoneSocketState::Ready;
 
-	m_audioCaptureDevice.RegisterSocket(m_audioWebSocket);
-	m_audioCaptureDevice.TryInitialize();
+	m_audioCaptureDevice.RegisterSocket(m_audioWebSocket, m_bufferMs);
+	m_audioCaptureDevice.TryInitializeVoiceCapture(m_sampleRate, m_inputChannels);
 
 	StartStreaming();
 }
@@ -53,7 +65,7 @@ void UVoxtaAudioInput::StartStreaming()
 		return;
 	}
 
-	m_audioCaptureDevice.TryStartCapture();
+	m_audioCaptureDevice.TryStartVoiceCapture();
 
 	UE_LOG(LogTemp, Warning, TEXT("Starting audio capture"));
 	m_connectionState = MicrophoneSocketState::InUse;
@@ -83,7 +95,7 @@ bool UVoxtaAudioInput::IsRecording() const
 
 float UVoxtaAudioInput::GetNormalizedAmplitude() const
 {
-	return m_audioCaptureDevice.GetAmplitude();
+	return m_audioCaptureDevice.GetAmplitude() / 20.f; //TODO: swap amplitude for decibels
 }
 
 FString UVoxtaAudioInput::GetInputDeviceName() const
