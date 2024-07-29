@@ -8,7 +8,7 @@
 #include "AudioThread.h"
 #include "AudioDeviceHandle.h"
 #include "RuntimeAudioImporter/RAW_RuntimeCodec.h"
-#include "AudioImporter.h"
+#include "RuntimeAudioImporter/RuntimeAudioImporterLibrary.h"
 
 UImportedSoundWave::UImportedSoundWave(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -251,7 +251,7 @@ void UImportedSoundWave::PopulateAudioDataFromDecodedInfo(FDecodedAudioStruct&& 
 	// If the sound wave has not yet been filled in with audio data and the initial desired sample rate and the number of channels are set, resample and mix the channels
 	if (InitialDesiredSampleRate.IsSet() || InitialDesiredNumOfChannels.IsSet())
 	{
-		UAudioImporter::ResampleAndMixChannelsInDecodedInfo(DecodedAudioInfo,
+		URuntimeAudioImporterLibrary::ResampleAndMixChannelsInDecodedInfo(DecodedAudioInfo,
 			InitialDesiredSampleRate.IsSet() ? InitialDesiredSampleRate.GetValue() : DecodedAudioInfo.SoundWaveBasicInfo.SampleRate,
 			InitialDesiredNumOfChannels.IsSet() ? InitialDesiredNumOfChannels.GetValue() : DecodedAudioInfo.SoundWaveBasicInfo.NumOfChannels);
 	}

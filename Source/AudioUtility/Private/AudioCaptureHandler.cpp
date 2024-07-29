@@ -3,14 +3,15 @@
 #include "AudioCaptureHandler.h"
 #include "VoiceRunnerThread.h"
 
-void AudioCaptureHandler::RegisterSocket(TSharedPtr<AudioWebSocket> socket)
+void AudioCaptureHandler::RegisterSocket(TSharedPtr<AudioWebSocket> socket, int bufferMillisecondSize)
 {
-	m_socket = socket;
+	m_webSocket = socket;
+	m_bufferMillisecondSize = bufferMillisecondSize;
 }
 
-bool AudioCaptureHandler::TryInitialize()
+bool AudioCaptureHandler::TryInitialize(int32 samplerate, int32 numchannels)
 {
-	if (VoiceCapture)
+	if (m_voiceCaptureDevice)
 	{
 		UE_LOG(AudioLog, Error, TEXT("Unable to start capture as the stream is already open"));
 		return false;
@@ -29,15 +30,19 @@ bool AudioCaptureHandler::TryInitialize()
 
 		Audio::FAudioCapture AudioCapture;
 		Audio::FCaptureDeviceInfo OutInfo;
-		AudioCapture.GetCaptureDeviceInfo(OutInfo, INDEX_NONE);
+		if (!AudioCapture.GetCaptureDeviceInfo(OutInfo, INDEX_NONE))
+		{
+			UE_LOG(AudioLog, Error, TEXT("Failed to fetch microhpone device information %s"), *m_deviceName);
+			return false;
+		}
 		m_deviceName = OutInfo.DeviceName;
 		UE_LOG(AudioLog, Log, TEXT("Using microphone device %s"), *m_deviceName);
 
-		VoiceCapture = VoiceModule.CreateVoiceCapture(m_deviceName, 16000, 1);
+		m_voiceCaptureDevice = VoiceModule.CreateVoiceCapture(m_deviceName, samplerate, numchannels);
 	}
-	if (VoiceCapture.IsValid())
+	if (m_voiceCaptureDevice.IsValid())
 	{
-		UE_LOG(AudioLog, Log, TEXT("Created voice caputre"));
+		UE_LOG(AudioLog, Log, TEXT("Created voice capture"));
 		return true;
 	}
 	else
@@ -47,8 +52,14 @@ bool AudioCaptureHandler::TryInitialize()
 	}
 }
 
-bool AudioCaptureHandler::StartCapture()
+bool AudioCaptureHandler::TryStartCapture()
 {
+	if (!m_voiceCaptureDevice.IsValid())
+	{
+		UE_LOG(AudioLog, Error, TEXT("Unable to start capturing for sound wave, VoiceCapture pointer is invalid."));
+		return false;
+	}
+
 	m_voiceRunnerThread = MakeUnique<FVoiceRunnerThread>(this, 0.15f);
 	if (!m_voiceRunnerThread.IsValid())
 	{
@@ -56,7 +67,7 @@ bool AudioCaptureHandler::StartCapture()
 		return false;
 	}
 
-	if (!VoiceCapture->Start())
+	if (!m_voiceCaptureDevice->Start())
 	{
 		UE_LOG(AudioLog, Error, TEXT("Unable to start capturing for sound wave"));
 		return false;
@@ -64,7 +75,7 @@ bool AudioCaptureHandler::StartCapture()
 
 	m_voiceRunnerThread->Start();
 
-	UE_LOG(AudioLog, Log, TEXT("We streaming audio boys"));
+	UE_LOG(AudioLog, Log, TEXT("Successfully started voice capture & background thread"));
 	m_isCapturing = true;
 	return true;
 }
@@ -76,9 +87,9 @@ void AudioCaptureHandler::StopCapture()
 		m_voiceRunnerThread->Stop();
 	}
 
-	ReplicatedBuffer.Reset();
+	m_socketDataBuffer.Reset();
 	m_isCapturing = false;
-	VoiceCapture->Stop();
+	m_voiceCaptureDevice->Stop();
 }
 
 void AudioCaptureHandler::ShutDown()
@@ -87,59 +98,56 @@ void AudioCaptureHandler::ShutDown()
 	m_voiceRunnerThread = nullptr;
 }
 
-void AudioCaptureHandler::CaptureVoice()
+void AudioCaptureHandler::CaptureVoiceInternal()
 {
-	if (!VoiceCapture.IsValid())
+	if (!m_voiceCaptureDevice.IsValid())
 	{
+		UE_LOG(AudioLog, Warning, TEXT("VoiceCapture device has been destroyed, can't capture any more data."));
 		return;
 	}
 
 	uint32 AvailableBytes = 0;
-	auto CaptureState = VoiceCapture->GetCaptureState(AvailableBytes);
+	auto CaptureState = m_voiceCaptureDevice->GetCaptureState(AvailableBytes);
 
 	if (AvailableBytes < 1)
 	{
 		return;
 	}
 
-	VoiceCaptureBuffer.Reset();
+	m_socketDataBuffer.Reset();
 
 	if (CaptureState == EVoiceCaptureState::Ok)
 	{
 		uint32 VoiceCaptureReadBytes = 0;
 
-		VoiceCaptureBuffer.SetNumUninitialized(AvailableBytes);
-		VoiceCapture->GetVoiceData(
-			VoiceCaptureBuffer.GetData(),
+		m_socketDataBuffer.SetNumUninitialized(AvailableBytes);
+		m_voiceCaptureDevice->GetVoiceData(
+			m_socketDataBuffer.GetData(),
 			AvailableBytes,
 			VoiceCaptureReadBytes
 		);
-
-		ReplicatedBuffer.Append(VoiceCaptureBuffer);
 	}
 }
 
-void AudioCaptureHandler::Send(const TArray<uint8> InData)
+void AudioCaptureHandler::SendInternal(const TArray<uint8> InData)
 {
-	UE_LOG(LogTemp, Log, TEXT("Client: Sending %d"), InData[0]);
-	if (InData.Num() > (200 * 32))
+	if (InData.Num() > (m_bufferMillisecondSize * 32))
 	{
-		// TODO: Fix this, maybe, idk
-		UE_LOG(LogTemp, Error, TEXT("Client: cannot send data, too big: %d"), InData.Num());
+		UE_LOG(LogTemp, Warning, TEXT("Client: cannot send data, too big: %d"), InData.Num());
 		return;
 	}
-	m_socket->Send(InData.GetData(), InData.Num());
+	m_webSocket->Send(InData.GetData(), InData.Num());
 }
 
-void AudioCaptureHandler::CaptureAndSendVoiceData_Implementation()
+void AudioCaptureHandler::CaptureAndSendVoiceData()
 {
-	CaptureVoice();
+	CaptureVoiceInternal();
 
-	if (ReplicatedBuffer.Num() > 0)
+	if (m_socketDataBuffer.Num() > 0)
 	{
-		Send(ReplicatedBuffer);
+		SendInternal(m_socketDataBuffer);
 
-		ReplicatedBuffer.Reset();
+		m_socketDataBuffer.Reset();
 	}
 	else
 	{
@@ -147,13 +155,13 @@ void AudioCaptureHandler::CaptureAndSendVoiceData_Implementation()
 	}
 }
 
-float AudioCaptureHandler::GetNormalizedAmplitude() const
+float AudioCaptureHandler::GetAmplitude() const
 {
-	if (VoiceCapture.IsValid())
+	if (m_voiceCaptureDevice.IsValid())
 	{
-		return FMath::Clamp(VoiceCapture->GetCurrentAmplitude() / 20.f, 0.f, 1.f);
+		return m_voiceCaptureDevice->GetCurrentAmplitude();
 	}
-	return 0.f;
+	return -1.f;
 }
 
 FString AudioCaptureHandler::GetDeviceName() const

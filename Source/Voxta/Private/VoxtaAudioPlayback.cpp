@@ -7,7 +7,7 @@ UVoxtaAudioPlayback::UVoxtaAudioPlayback()
 	m_audioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("AudioComponent"));
 	PrimaryComponentTick.bCanEverTick = true;
 
-	audioImporter = CreateDefaultSubobject<UAudioImporter>(TEXT("AudioImporter"));
+	audioImporter = CreateDefaultSubobject<URuntimeAudioImporterLibrary>(TEXT("AudioImporter"));
 }
 
 void UVoxtaAudioPlayback::BeginPlay()

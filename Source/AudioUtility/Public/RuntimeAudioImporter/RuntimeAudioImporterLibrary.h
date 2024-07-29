@@ -3,13 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "RuntimeAudioImporter/AudioStructs.h"
-#include "RuntimeAudioImporter/ImportedSoundWave.h"
+#include "AudioStructs.h"
+#include "ImportedSoundWave.h"
 
-#include "AudioImporter.generated.h"
+#include "RuntimeAudioImporterLibrary.generated.h"
 
 UCLASS(BlueprintType, Category = "Imported Sound Wave")
-class AUDIOUTILITY_API UAudioImporter : public UObject
+class AUDIOUTILITY_API URuntimeAudioImporterLibrary : public UObject
 {
 	GENERATED_BODY()
 

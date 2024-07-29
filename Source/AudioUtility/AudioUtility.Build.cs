@@ -9,73 +9,33 @@ public class AudioUtility : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "ApplicationCore", "InputCore", "WebSockets" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "ApplicationCore", "InputCore", "WebSockets", "AudioMixer", "AudioCaptureCore" });
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "MetasoundEngine",	"MetasoundFrontend", "Voice" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "Voice", "AudioPlatformConfiguration", "SignalProcessing", "AudioExtensions" });
 		
-		bool bEnableCaptureInputSupport = true;
-		
-		PrivateDependencyModuleNames.AddRange(
-			new string[]
-			{
-				"AudioPlatformConfiguration"
-			}
-		);
-
-		if (Target.Version.MajorVersion >= 5 && Target.Version.MinorVersion >= 1)
+		if (Target.Platform.IsInGroup(UnrealPlatformGroup.Windows) ||
+			Target.Platform == UnrealTargetPlatform.Mac)
+		{
+			PrivateDependencyModuleNames.Add("AudioCaptureRtAudio");
+		}
+		else if (Target.Platform == UnrealTargetPlatform.IOS)
+		{
+			PrivateDependencyModuleNames.Add("AudioCaptureAudioUnit");
+			PrivateDependencyModuleNames.Add("AudioCaptureCore");
+			PublicFrameworks.AddRange(new string[] { "CoreAudio", "AVFoundation", "AudioToolbox" });
+		}
+		else if (Target.Platform == UnrealTargetPlatform.Android)
 		{
 			PrivateDependencyModuleNames.AddRange(
 				new string[]
 				{
-					"SignalProcessing"
+					"AudioCaptureAndroid",
+					"AndroidPermission"
 				}
 			);
-		}
 
-		if (Target.Version.MajorVersion >= 5 && Target.Version.MinorVersion >= 2)
-		{
-			PrivateDependencyModuleNames.AddRange(
-				new string[]
-				{
-					"AudioExtensions"
-				}
-			);
-		}
-
-		if (bEnableCaptureInputSupport)
-		{
-			if (Target.Platform.IsInGroup(UnrealPlatformGroup.Windows) ||
-			    Target.Platform == UnrealTargetPlatform.Mac)
-			{
-				PrivateDependencyModuleNames.Add("AudioCaptureRtAudio");
-			}
-			else if (Target.Platform == UnrealTargetPlatform.IOS)
-			{
-				PrivateDependencyModuleNames.Add("AudioCaptureAudioUnit");
-				PrivateDependencyModuleNames.Add("AudioCaptureCore");
-				PublicFrameworks.AddRange(new string[] { "CoreAudio", "AVFoundation", "AudioToolbox" });
-			}
-			else if (Target.Platform == UnrealTargetPlatform.Android)
-			{
-				PrivateDependencyModuleNames.AddRange(
-					new string[]
-					{
-						"AudioCaptureAndroid",
-						"AndroidPermission"
-					}
-				);
-
-				string BuildPath = Utils.MakePathRelativeTo(ModuleDirectory, Target.RelativeEnginePath);
-				AdditionalPropertiesForReceipt.Add("AndroidPlugin", Path.Combine(BuildPath, "RuntimeAudioImporter_AndroidAPL.xml"));
-			}
-
-			PublicDependencyModuleNames.AddRange(
-				new string[]
-				{
-					"AudioMixer",
-					"AudioCaptureCore"
-				}
-			);
-		}
+			string BuildPath = Utils.MakePathRelativeTo(ModuleDirectory, Target.RelativeEnginePath);
+			AdditionalPropertiesForReceipt.Add("AndroidPlugin", Path.Combine(BuildPath, "RuntimeAudioImporter_AndroidAPL.xml"));
+		}		
     }
 }

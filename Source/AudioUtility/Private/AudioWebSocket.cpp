@@ -52,7 +52,7 @@ bool AudioWebSocket::Connect()
 	}
 }
 
-void AudioWebSocket::Close(int32 Code, const FString& Reason)
+void AudioWebSocket::Close(int32 code, const FString& reason)
 {
 	if (Connection.IsValid())
 	{

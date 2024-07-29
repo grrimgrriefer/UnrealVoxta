@@ -6,22 +6,22 @@
 
 FVoiceRunnerThread::~FVoiceRunnerThread()
 {
-	if (Thread != nullptr)
+	if (m_thread != nullptr)
 	{
-		Thread->Kill();
-		delete Thread;
+		m_thread->Kill();
+		delete m_thread;
 	}
 }
 
 uint32 FVoiceRunnerThread::Run()
 {
 	uint32 Result = THREAD_RETURN_DEFAULT_VALUE;
-	while (!bStopped)
+	while (!m_isStopped)
 	{
-		FPlatformProcess::Sleep(SleepTime);
-		if (VoiceComponent)
+		FPlatformProcess::Sleep(m_sleepTime);
+		if (m_voiceComponent)
 		{
-			VoiceComponent->CaptureAndSendVoiceData_Implementation();
+			m_voiceComponent->CaptureAndSendVoiceData();
 			Result = SEND_VOICE_DATA_SUCCESS;
 		}
 		else
@@ -35,10 +35,10 @@ uint32 FVoiceRunnerThread::Run()
 
 void FVoiceRunnerThread::Start()
 {
-	Thread = FRunnableThread::Create(this, TEXT("RemoteVoiceHandlerThread"));
+	m_thread = FRunnableThread::Create(this, TEXT("VoiceRunnerThread"));
 }
 
 void FVoiceRunnerThread::Stop()
 {
-	bStopped = true;
+	m_isStopped = true;
 }

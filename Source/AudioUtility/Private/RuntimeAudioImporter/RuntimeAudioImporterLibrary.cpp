@@ -1,11 +1,11 @@
 // Georgy Treshchev 2024.
 
-#include "AudioImporter.h"
-#include "RuntimeAudioImporter/RuntimeCodecFactory.h"
-#include "RuntimeAudioImporter/ImportedSoundWave.h"
-#include "RuntimeAudioImporter/RAW_RuntimeCodec.h"
+#include "RuntimeAudioImporter/RuntimeAudioImporterLibrary.h"
+#include "RuntimeCodecFactory.h"
+#include "ImportedSoundWave.h"
+#include "RAW_RuntimeCodec.h"
 
-void UAudioImporter::ImportAudioFromBuffer(FString identifier, TArray64<uint8> AudioData)
+void URuntimeAudioImporterLibrary::ImportAudioFromBuffer(FString identifier, TArray64<uint8> AudioData)
 {
 	if (IsInGameThread())
 	{
@@ -17,7 +17,7 @@ void UAudioImporter::ImportAudioFromBuffer(FString identifier, TArray64<uint8> A
 			}
 			else
 			{
-				UE_LOG(AudioLog, Error, TEXT("Failed to import audio from buffer because the UAudioImporter object has been destroyed"));
+				UE_LOG(AudioLog, Error, TEXT("Failed to import audio from buffer because the URuntimeAudioImporterLibrary object has been destroyed"));
 			}
 		});
 		return;
@@ -35,7 +35,7 @@ void UAudioImporter::ImportAudioFromBuffer(FString identifier, TArray64<uint8> A
 	ImportAudioFromDecodedInfo(identifier, MoveTemp(DecodedAudioInfo));
 }
 
-bool UAudioImporter::DecodeAudioData(FEncodedAudioStruct&& EncodedAudioInfo, FDecodedAudioStruct& DecodedAudioInfo)
+bool URuntimeAudioImporterLibrary::DecodeAudioData(FEncodedAudioStruct&& EncodedAudioInfo, FDecodedAudioStruct& DecodedAudioInfo)
 {
 	FRuntimeCodecFactory CodecFactory;
 	TArray<FBaseRuntimeCodec*> RuntimeCodecs = [&EncodedAudioInfo, &CodecFactory] ()
@@ -62,7 +62,7 @@ bool UAudioImporter::DecodeAudioData(FEncodedAudioStruct&& EncodedAudioInfo, FDe
 		return false;
 }
 
-bool UAudioImporter::EncodeAudioData(FDecodedAudioStruct&& DecodedAudioInfo, FEncodedAudioStruct& EncodedAudioInfo, uint8 Quality)
+bool URuntimeAudioImporterLibrary::EncodeAudioData(FDecodedAudioStruct&& DecodedAudioInfo, FEncodedAudioStruct& EncodedAudioInfo, uint8 Quality)
 {
 	if (EncodedAudioInfo.AudioFormat == ERuntimeAudioFormat::Auto || EncodedAudioInfo.AudioFormat == ERuntimeAudioFormat::Invalid)
 	{
@@ -85,7 +85,7 @@ bool UAudioImporter::EncodeAudioData(FDecodedAudioStruct&& DecodedAudioInfo, FEn
 	return false;
 }
 
-void UAudioImporter::ImportAudioFromDecodedInfo(FString identifier, FDecodedAudioStruct&& DecodedAudioInfo)
+void URuntimeAudioImporterLibrary::ImportAudioFromDecodedInfo(FString identifier, FDecodedAudioStruct&& DecodedAudioInfo)
 {
 	// Making sure we are in the game thread
 	if (!IsInGameThread())
@@ -98,7 +98,7 @@ void UAudioImporter::ImportAudioFromDecodedInfo(FString identifier, FDecodedAudi
 			}
 			else
 			{
-				UE_LOG(AudioLog, Error, TEXT("Unable to import audio from decoded info '%s' because the UAudioImporter object has been destroyed"), *DecodedAudioInfo.ToString());
+				UE_LOG(AudioLog, Error, TEXT("Unable to import audio from decoded info '%s' because the URuntimeAudioImporterLibrary object has been destroyed"), *DecodedAudioInfo.ToString());
 			}
 		});
 		return;
@@ -121,7 +121,7 @@ void UAudioImporter::ImportAudioFromDecodedInfo(FString identifier, FDecodedAudi
 	ImportedSoundWave->RemoveFromRoot();
 }
 
-bool UAudioImporter::ResampleAndMixChannelsInDecodedInfo(FDecodedAudioStruct& DecodedAudioInfo, uint32 NewSampleRate, uint32 NewNumOfChannels)
+bool URuntimeAudioImporterLibrary::ResampleAndMixChannelsInDecodedInfo(FDecodedAudioStruct& DecodedAudioInfo, uint32 NewSampleRate, uint32 NewNumOfChannels)
 {
 	if (DecodedAudioInfo.SoundWaveBasicInfo.SampleRate <= 0 || NewSampleRate <= 0)
 	{
@@ -175,7 +175,7 @@ bool UAudioImporter::ResampleAndMixChannelsInDecodedInfo(FDecodedAudioStruct& De
 	return true;
 }
 
-void UAudioImporter::OnResult_Internal(FString identifier, UImportedSoundWave* ImportedSoundWave)
+void URuntimeAudioImporterLibrary::OnResult_Internal(FString identifier, UImportedSoundWave* ImportedSoundWave)
 {
 	// Making sure we are in the game thread
 	if (!IsInGameThread())
@@ -188,7 +188,7 @@ void UAudioImporter::OnResult_Internal(FString identifier, UImportedSoundWave* I
 			}
 			else
 			{
-				UE_LOG(AudioLog, Error, TEXT("Unable to broadcast the result of the import because the UAudioImporter object has been destroyed"));
+				UE_LOG(AudioLog, Error, TEXT("Unable to broadcast the result of the import because the URuntimeAudioImporterLibrary object has been destroyed"));
 			}
 		});
 		return;

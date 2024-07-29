@@ -140,14 +140,6 @@ private:
 	template<typename T>
 	bool HandleResponseHelper(const IServerResponseBase* response, const char* message, bool (UVoxtaClient::* handler)(const T&));
 
-	///~ Begin event-listeners for the IHubConnection interface
-private:
-	void OnReceivedMessage(const TArray<FSignalRValue>& arguments);
-	void OnConnected();
-	void OnConnectionError(const FString& error);
-	void OnClosed();
-	//~ End event-listeners for the IHubConnection interface
-
 	/// <summary>
 	/// Send a SignalR formatted message to the VoxtaServer.
 	/// This also registers the OnMessageSent to be called when receiving the server response.
@@ -178,4 +170,12 @@ private:
 	/// Mark the internal VoxtaClient to have finished the transition to a different VoxtaClientState
 	/// </summary>
 	void SetState(VoxtaClientState newState);
+
+	///~ Begin event-listeners for the IHubConnection interface
+private:
+	void OnReceivedMessage(const TArray<FSignalRValue>& arguments);
+	void OnConnected();
+	void OnConnectionError(const FString& error);
+	void OnClosed();
+	//~ End event-listeners for the IHubConnection interface
 };

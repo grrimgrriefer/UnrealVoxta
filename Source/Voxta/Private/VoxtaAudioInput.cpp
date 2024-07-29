@@ -53,7 +53,7 @@ void UVoxtaAudioInput::StartStreaming()
 		return;
 	}
 
-	m_audioCaptureDevice.StartCapture();
+	m_audioCaptureDevice.TryStartCapture();
 
 	UE_LOG(LogTemp, Warning, TEXT("Starting audio capture"));
 	m_connectionState = MicrophoneSocketState::InUse;
@@ -83,7 +83,7 @@ bool UVoxtaAudioInput::IsRecording() const
 
 float UVoxtaAudioInput::GetNormalizedAmplitude() const
 {
-	return m_audioCaptureDevice.GetNormalizedAmplitude();
+	return m_audioCaptureDevice.GetAmplitude();
 }
 
 FString UVoxtaAudioInput::GetInputDeviceName() const
