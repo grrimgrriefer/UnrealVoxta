@@ -20,8 +20,6 @@ class TALKTOMECPPUE_API ATalkToMeCppUeHUD : public AHUD
 	GENERATED_BODY()
 
 public:
-	ATalkToMeCppUeHUD();
-
 	/// <summary>
 	/// Event fired when the user has clicked on a button linked to a specific character, with
 	/// the intention of loading that character into a chat conversation.
@@ -34,6 +32,18 @@ public:
 	/// </summary>
 	UPROPERTY()
 	FInputCommittedEventCallback UserInputCommittedEvent;
+
+	/// <summary>
+	/// Constructor, should not be manually called but is invoked by UE
+	/// </summary>
+	ATalkToMeCppUeHUD();
+
+	/// <summary>
+	/// Forwards the Audio dependencies to the Widget which it uses to visualize the audio input & output.
+	/// </summary>
+	/// <param name="playbackHandler">The pointer to the AudioPlayback handler.</param>
+	/// <param name="inputHandler">The pointer to the AudioInput handler.</param>
+	void InitializeHud(UVoxtaAudioPlayback* playbackHandler, UVoxtaAudioInput* inputHandler);
 
 	/// <summary>
 	/// Notify the UTalkToMeCppUeWidget instance of the newly active state, causing it to configure itself
@@ -73,8 +83,11 @@ public:
 	UFUNCTION()
 	void RemoveTextMessage(const FChatMessage& message);
 
-	void InitializeHud(UVoxtaAudioPlayback* playbackHandler, UVoxtaAudioInput* inputHandler);
-
+	/// <summary>
+	/// Notify the UTalkToMeCppUeWidget of that speech transcription is underway, with the message representing
+	/// the current version of the transcribed speech.
+	/// </summary>
+	/// <param name="message">The current version of the transcribed message. (might change in the final version)</param>
 	UFUNCTION()
 	void PartialSpeechTranscription(const FString& message);
 

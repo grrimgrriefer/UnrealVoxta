@@ -71,12 +71,22 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Events")
 	FVoxtaClientCharMessageRemovedEventCallback VoxtaClientCharMessageRemovedEvent;
 
+	/// <summary>
+	/// Event fired when the server is in progress of transcribing speech, it contains the current version of the transcription.
+	/// </summary>
 	UPROPERTY(BlueprintAssignable, Category = "Events")
 	FVoxtaClientSpeechTranscribedEventCallback VoxtaClientSpeechTranscribedPartialEvent;
 
+	/// <summary>
+	/// Event fired when the server has finished transcribing speech, it contains the final version of whatever the user said.
+	/// </summary>
 	UPROPERTY(BlueprintAssignable, Category = "Events")
 	FVoxtaClientSpeechTranscribedEventCallback VoxtaClientSpeechTranscribedCompleteEvent;
 
+	/// <summary>
+	/// Event fired when the chat session has begun. (i.e. the m_chatSession)
+	/// Note: Can be used if something needs the chat configuration, before the first initial AI message is received.
+	/// </summary>
 	UPROPERTY(BlueprintAssignable, Category = "Events")
 	FVoxtaClientChatSessionStartedCallback VoxtaClientChatSessionStartedEvent;
 
@@ -108,6 +118,11 @@ public:
 	UFUNCTION()
 	void SendUserInput(FString inputText);
 
+	/// <summary>
+	/// Inform the server that the audioplayback is complete.
+	/// Is requird to enable speech recognition on the serverside, to whatever is sent via the audio socket.
+	/// </summary>
+	/// <param name="messageId">The ID of the message that has completed the playback on the client.</param>
 	UFUNCTION()
 	void NotifyAudioPlaybackComplete(const FString& messageId);
 
@@ -137,6 +152,14 @@ private:
 	/// </summary>
 	void StartListeningToServer();
 
+	/// <summary>
+	/// Template helper function to call the appropriate response handler, also takes care of casting to the derived type.
+	/// </summary>
+	/// <typeparam name="T">Derived type, inherits from IServerResponseBase.</typeparam>
+	/// <param name="response">The raw reponse object</param>
+	/// <param name="message">The message that will be logged.</param>
+	/// <param name="handler">The function responsible for handling the derived object.</param>
+	/// <returns></returns>
 	template<typename T>
 	bool HandleResponseHelper(const IServerResponseBase* response, const char* message, bool (UVoxtaClient::* handler)(const T&));
 
@@ -155,6 +178,11 @@ private:
 	/// </summary>
 	void OnMessageSent(const FSignalRInvokeResult& result);
 
+	/// <summary>
+	/// Mark the internal VoxtaClient to have finished the transition to a different VoxtaClientState
+	/// </summary>
+	void SetState(VoxtaClientState newState);
+
 	///~ Begin individual handlers for different VoxtaServer responses.
 	bool HandleResponse(const TMap<FString, FSignalRValue>& responseData);
 	bool HandleWelcomeResponse(const ServerResponseWelcome& response);
@@ -165,11 +193,6 @@ private:
 	bool HandleChatUpdateResponse(const ServerResponseChatUpdate& response);
 	bool HandleSpeechTranscriptionResponse(const ServerResponseSpeechTranscription& response);
 	//~ End individual handlers for different VoxtaServer responses.
-
-	/// <summary>
-	/// Mark the internal VoxtaClient to have finished the transition to a different VoxtaClientState
-	/// </summary>
-	void SetState(VoxtaClientState newState);
 
 	///~ Begin event-listeners for the IHubConnection interface
 private:

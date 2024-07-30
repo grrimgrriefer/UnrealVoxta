@@ -9,12 +9,12 @@ void UVoxtaAudioInput::InitializeSocket(const FString& serverIP,
 	int sampleRate,
 	int inputChannels)
 {
-	if (m_connectionState != MicrophoneSocketState::NotConnected)
+	if (m_connectionState != VoxtaMicrophoneState::NotConnected)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Audio socket was already initialized, skipping new initialize attempt."));
 		return;
 	}
-	m_connectionState = MicrophoneSocketState::Initializing;
+	m_connectionState = VoxtaMicrophoneState::Initializing;
 
 	m_bufferMs = bufferMs;
 	m_sampleRate = sampleRate;
@@ -35,62 +35,65 @@ void UVoxtaAudioInput::OnSocketConnected()
 	UE_LOG(LogTemp, Log, TEXT("Audio input socket config: %s"), *socketInitialHeader);
 
 	m_audioWebSocket->Send(socketInitialHeader);
-	m_connectionState = MicrophoneSocketState::Ready;
+	m_connectionState = VoxtaMicrophoneState::Ready;
 
 	m_audioCaptureDevice.RegisterSocket(m_audioWebSocket, m_bufferMs);
 	m_audioCaptureDevice.TryInitializeVoiceCapture(m_sampleRate, m_inputChannels);
-
-	StartStreaming();
 }
 
 void UVoxtaAudioInput::OnSocketConnectionError(const FString& error)
 {
 	UE_LOG(LogTemp, Error, TEXT("Audio socket was closed due to error: %s"), *error);
-	m_connectionState = MicrophoneSocketState::Closed;
+	m_connectionState = VoxtaMicrophoneState::Closed;
 }
 
-void UVoxtaAudioInput::OnSocketClosed(int StatusCode, const FString& Reason, bool bWasClean)
+void UVoxtaAudioInput::OnSocketClosed(int statusCode, const FString& reason, bool bWasClean)
 {
 	if (!bWasClean)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Audio socket was improperly closed because of reason: %s %d"), *Reason, StatusCode);
+		UE_LOG(LogTemp, Warning, TEXT("Audio socket was improperly closed because of reason: %s %d"), *reason, statusCode);
 	}
-	m_connectionState = MicrophoneSocketState::Closed;
+	m_connectionState = VoxtaMicrophoneState::Closed;
 }
 
 void UVoxtaAudioInput::StartStreaming()
 {
-	if (m_connectionState != MicrophoneSocketState::Ready)
+	if (m_connectionState != VoxtaMicrophoneState::Ready)
 	{
 		return;
 	}
 
-	m_audioCaptureDevice.TryStartVoiceCapture();
-
-	UE_LOG(LogTemp, Warning, TEXT("Starting audio capture"));
-	m_connectionState = MicrophoneSocketState::InUse;
+	if (m_audioCaptureDevice.TryStartVoiceCapture())
+	{
+		UE_LOG(LogTemp, Log, TEXT("Starting audio capture"));
+		m_connectionState = VoxtaMicrophoneState::InUse;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to start the audio capture"));
+	}
 }
 
 void UVoxtaAudioInput::StopStreaming()
 {
-	if (m_connectionState != MicrophoneSocketState::InUse)
+	if (m_connectionState != VoxtaMicrophoneState::InUse)
 	{
 		return;
 	}
 	m_audioCaptureDevice.StopCapture();
-	m_connectionState = MicrophoneSocketState::Ready;
+	m_connectionState = VoxtaMicrophoneState::Ready;
 }
 
 void UVoxtaAudioInput::CloseSocket()
 {
 	m_audioCaptureDevice.ShutDown();
 	m_audioWebSocket->Close();
-	m_connectionState = MicrophoneSocketState::Closed;
+	m_connectionState = VoxtaMicrophoneState::Closed;
 }
 
 bool UVoxtaAudioInput::IsRecording() const
 {
-	return m_connectionState == MicrophoneSocketState::InUse;
+	return m_connectionState == VoxtaMicrophoneState::InUse;
 }
 
 float UVoxtaAudioInput::GetNormalizedAmplitude() const

@@ -48,6 +48,8 @@ public:
 	/// Sets up the bindings for the inputfield and ensures the proper elements
 	/// are enabled/disabled at the start.
 	/// </summary>
+	/// <param name="playbackHandler">The pointer to the AudioPlayback handler.</param>
+	/// <param name="inputHandler">The pointer to the AudioInput handler.</param>
 	void InitializeWidget(UVoxtaAudioPlayback* playbackHandler, UVoxtaAudioInput* inputHandler);
 
 	/// <summary>
@@ -87,6 +89,11 @@ public:
 	/// that was provided to this widget when the message was sent.</param>
 	void RemoveTextMessage(const FString& messageId);
 
+	/// <summary>
+	/// Notify the UTalkToMeCppUeWidget of that speech transcription is underway, with the message representing
+	/// the current version of the transcribed speech.
+	/// </summary>
+	/// <param name="message">The current version of the transcribed message. (might change in the final version)</param>
 	void PartialSpeechTranscription(const FString& message);
 
 	///~ Begin Blueprint bindings.
@@ -119,7 +126,10 @@ protected:
 	TObjectPtr<UTextBlock> MicTempTranscription;
 	///~ End Blueprint bindings.
 
+	///~ Start UUserWidget overrides
+protected:
 	virtual void NativeTick(const FGeometry& MyGeometry, float DeltaTime) override;
+	///~ Start UUserWidget bindings.
 
 private:
 	TMap<FString, UTextBlock*> m_messages;

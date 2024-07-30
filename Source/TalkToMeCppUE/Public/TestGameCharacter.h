@@ -41,16 +41,20 @@ private:
 	UVoxtaAudioPlayback* m_audioPlaybackHandler;
 	UVoxtaAudioInput* m_audioInputHandler;
 
-	UCameraComponent* deleteme;
-
 	/// <summary>
 	/// Connects the events between the UVoxtaClient and the ATalkToMeCppUeHUD.
 	/// </summary>
 	/// <returns>True if connection was established.</returns>
 	bool TryConnectToHud();
 
+	/// <summary>
+	/// Connects the events between the Audio handlers (input & output) with the ATalkToMeCppUeHUD.
+	/// </summary>
 	bool TryConnectToAudio();
 
+	/// <summary>
+	/// Cleans up the events between the Audio handlers (input & output) with the ATalkToMeCppUeHUD.
+	/// </summary>
 	bool TryDisconnectToAudio();
 
 	/// <summary>
@@ -59,9 +63,19 @@ private:
 	/// <returns>True if connection was established.</returns>
 	bool TryDisconnectToHud();
 
+	/// <summary>
+	/// Set up the audio input & output based on the current chat session.
+	/// Note: support for multiple characts is untested, maybe it works, maybe it doesnt.
+	/// </summary>
+	/// <param name="newState"></param>
 	UFUNCTION()
 	void VoxtaClientChatSessionStarted(const FString& newState);
 
+	/// <summary>
+	/// Ensures the audio input socket is opened & closed based on if the user should be talking or not.
+	/// This is so the user does not interrupt the AI playback. (cuz I don't like that)
+	/// </summary>
+	/// <param name="newState"></param>
 	UFUNCTION()
 	void VoxtaClientStateChanged(VoxtaClientState newState);
 

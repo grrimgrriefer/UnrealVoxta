@@ -7,7 +7,7 @@
 #include "VoxtaData/Public/VoxtaServiceData.h"
 
 /// <summary>
-/// Read-only data struct containing the relevant data of the 'chatStarted' response
+/// Read-only data struct containing the relevant data of the 'SpeechTranscription' response
 /// from the VoxtaServer.
 /// </summary>
 struct ServerResponseSpeechTranscription : public IServerResponseBase
@@ -30,6 +30,7 @@ public:
 	{
 	}
 
+	///<inheritdoc />
 	ServerResponseType GetType() const final
 	{
 		return ServerResponseType::SpeechTranscription;

@@ -46,5 +46,12 @@ public:
 	/// <returns>The SignalR formatted message containing the request.</returns>
 	FSignalRValue GetSendUserMessageData(const FString& sessionId, const FString& userInputText) const;
 
+	/// <summary>
+	/// Retrieve a SignalR formatted message to inform the VoxtaServer that the playback is completed on the client.
+	/// Meaning it can being listening to the audioSocket for speech.
+	/// </summary>
+	/// <param name="sessionId">The ChatSession::m_chatId of the currently active chat.</param>
+	/// <param name="messageId">The FChatMessage.GetMessageId of the message that is done with the playback.</param>
+	/// <returns></returns>
 	FSignalRValue GetNotifyAudioPlaybackCompleteData(const FString& sessionId, const FString& messageId) const;
 };

@@ -100,7 +100,7 @@ void UVoxtaAudioPlayback::OnDownloadComplete(FHttpRequestPtr request, FHttpRespo
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("File download failed."));
+		UE_LOG(LogTemp, Error, TEXT("File download failed."));
 	}
 }
 
@@ -122,7 +122,7 @@ void UVoxtaAudioPlayback::TryPlayNextAudio()
 
 		currentAudioClip += 1;
 
-		UE_LOG(LogTemp, Warning, TEXT("Playing audio."));
+		UE_LOG(LogTemp, Log, TEXT("Starting playback of audiochunk."));
 	}
 }
 
