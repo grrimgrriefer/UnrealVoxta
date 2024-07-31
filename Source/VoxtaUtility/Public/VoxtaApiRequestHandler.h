@@ -3,11 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "SignalRValue.h"
+#include "SignalR/Public/SignalRValue.h"
 #include "VoxtaData/Public/AiCharData.h"
 #include "Misc/Guid.h"
 
-class VoxtaApiRequestHandler
+class VOXTAUTILITY_API VoxtaApiRequestHandler
 {
 public:
 	/// <summary>

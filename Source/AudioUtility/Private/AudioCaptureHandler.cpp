@@ -66,7 +66,8 @@ bool AudioCaptureHandler::TryStartVoiceCapture()
 		return false;
 	}
 
-	m_voiceRunnerThread = MakeUnique<FVoiceRunnerThread>(this, 0.15f);
+	// we only use 75% of the buffer, the extra 25% is space in case the thread encounters minor lag / delay.
+	m_voiceRunnerThread = MakeUnique<FVoiceRunnerThread>(this, (m_bufferMillisecondSize / 1000.f * 0.75f));
 	if (!m_voiceRunnerThread.IsValid())
 	{
 		UE_LOGFMT(LogVoice, Error, "VoiceRunnerThread has been destroyed.");

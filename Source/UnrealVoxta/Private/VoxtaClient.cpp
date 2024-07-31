@@ -1,8 +1,10 @@
 // Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
 
 #include "VoxtaClient.h"
-#include "SignalRSubsystem.h"
+#include "SignalR/Public/SignalRSubsystem.h"
 #include "VoxtaDefines.h"
+
+DEFINE_LOG_CATEGORY(VoxtaLog);
 
 UVoxtaClient::UVoxtaClient()
 {
@@ -225,9 +227,9 @@ bool UVoxtaClient::HandleCharacterListResponse(const ServerResponseCharacterList
 bool UVoxtaClient::HandleCharacterLoadedResponse(const ServerResponseCharacterLoaded& response)
 {
 	auto character = m_characterList.FindByPredicate([response] (const TUniquePtr<const FAiCharData>& InItem)
-	{
-		return InItem->GetId() == response.m_characterId;
-	});
+		{
+			return InItem->GetId() == response.m_characterId;
+		});
 
 	if (character)
 	{
@@ -292,9 +294,9 @@ bool UVoxtaClient::HandleChatMessageResponse(const IServerResponseChatMessageBas
 		{
 			auto derivedResponse = StaticCast<const ServerResponseChatMessageChunk*>(&response);
 			auto chatMessage = messages.FindByPredicate([derivedResponse] (const TUniquePtr<FChatMessage>& InItem)
-			{
-				return InItem->GetMessageId() == derivedResponse->m_messageId;
-			});
+				{
+					return InItem->GetMessageId() == derivedResponse->m_messageId;
+				});
 			if (chatMessage)
 			{
 				(*chatMessage)->m_text.Append((*chatMessage)->m_text.IsEmpty() ? derivedResponse->m_messageText
@@ -307,15 +309,15 @@ bool UVoxtaClient::HandleChatMessageResponse(const IServerResponseChatMessageBas
 		{
 			auto derivedResponse = StaticCast<const ServerResponseChatMessageEnd*>(&response);
 			auto chatMessage = messages.FindByPredicate([derivedResponse] (const TUniquePtr<FChatMessage>& InItem)
-			{
-				return InItem->GetMessageId() == derivedResponse->m_messageId;
-			});
+				{
+					return InItem->GetMessageId() == derivedResponse->m_messageId;
+				});
 			if (chatMessage)
 			{
 				auto character = m_characterList.FindByPredicate([derivedResponse] (const TUniquePtr<const FAiCharData>& InItem)
-				{
-					return InItem->GetId() == derivedResponse->m_senderId;
-				});
+					{
+						return InItem->GetId() == derivedResponse->m_senderId;
+					});
 				if (character)
 				{
 					UE_LOGFMT(VoxtaLog, Log, "Char speaking message end: {0} -> {1}", character->Get()->GetName(), chatMessage->Get()->m_text);
@@ -329,9 +331,9 @@ bool UVoxtaClient::HandleChatMessageResponse(const IServerResponseChatMessageBas
 		{
 			auto derivedResponse = StaticCast<const ServerResponseChatMessageCancelled*>(&response);
 			int index = messages.IndexOfByPredicate([derivedResponse] (const TUniquePtr<FChatMessage>& InItem)
-			{
-				return InItem->GetMessageId() == derivedResponse->m_messageId;
-			});
+				{
+					return InItem->GetMessageId() == derivedResponse->m_messageId;
+				});
 			VoxtaClientCharMessageRemovedEvent.Broadcast(*messages[index].Get());
 
 			messages[index].Reset();
@@ -360,9 +362,9 @@ bool UVoxtaClient::HandleChatUpdateResponse(const ServerResponseChatUpdate& resp
 				UE_LOGFMT(VoxtaLog, Error, "Recieved chat update for a non-user character, needs implementation. {0} {1}", response.m_senderId, response.m_text);
 			}
 			auto chatMessage = m_chatSession->m_chatMessages.FindByPredicate([response] (const TUniquePtr<FChatMessage>& InItem)
-			{
-				return InItem->GetMessageId() == response.m_messageId;
-			});
+				{
+					return InItem->GetMessageId() == response.m_messageId;
+				});
 			UE_LOGFMT(VoxtaLog, Log, "Char speaking message end: {0} -> {1}", m_userData.Get()->GetName(), chatMessage->Get()->m_text);
 			VoxtaClientCharMessageAddedEvent.Broadcast(*m_userData.Get(), *chatMessage->Get());
 		}

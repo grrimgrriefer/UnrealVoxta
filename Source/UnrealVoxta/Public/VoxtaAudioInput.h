@@ -14,7 +14,7 @@
 /// Takes care of both the microphone input, as well as sending it over a websocket to the VoxtaServer.
 /// </summary>
 UCLASS(HideCategories = (Mobility, Rendering, LOD), Blueprintable, ClassGroup = Camera, meta = (BlueprintSpawnableComponent))
-class VOXTA_API UVoxtaAudioInput : public UActorComponent
+class UNREALVOXTA_API UVoxtaAudioInput : public UActorComponent
 {
 	GENERATED_BODY()
 

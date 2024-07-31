@@ -4,10 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Voxta/Private/VoxtaLogUtility.h"
+#include "VoxtaUtility/Public/VoxtaLogger.h"
 #include "SignalR/Private/HubConnection.h"
-#include "Voxta/Private/VoxtaApiRequestHandler.h"
-#include "Voxta/Private/VoxtaApiResponseHandler.h"
+#include "VoxtaUtility/Public/VoxtaApiRequestHandler.h"
+#include "VoxtaUtility/Public/VoxtaApiResponseHandler.h"
 #include "VoxtaData/Public/AiCharData.h"
 #include "VoxtaData/Public/ChatMessage.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseBase.h"
@@ -22,7 +22,7 @@
 /// Provides a simple API wrapper for any external UI / Blueprints / other modules.
 /// </summary>
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
-class VOXTA_API UVoxtaClient : public UActorComponent
+class UNREALVOXTA_API UVoxtaClient : public UActorComponent
 {
 	GENERATED_BODY()
 
@@ -131,7 +131,7 @@ public:
 	FStringView GetServerPort() const;
 
 private:
-	VoxtaLogUtility m_logUtility;
+	VoxtaLogger m_logUtility;
 	TSharedPtr<IHubConnection> m_hub;
 	VoxtaApiRequestHandler m_voxtaRequestApi;
 	VoxtaApiResponseHandler m_voxtaResponseApi;

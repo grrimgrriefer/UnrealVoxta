@@ -26,105 +26,105 @@
 
 #include "CallbackManager.h"
 #include "CoreMinimal.h"
-#include "IHubConnection.h"
+#include "SignalR/Public/IHubConnection.h"
 #include "IHubProtocol.h"
 #include "Tickable.h"
 
 class FConnection;
 
-class SIGNALR_API FHubConnection : public IHubConnection, FTickableGameObject
+class FHubConnection : public IHubConnection, FTickableGameObject
 {
 public:
-    static const constexpr float PingTimer = 10.0f;
+	static const constexpr float PingTimer = 10.0f;
 
-    FHubConnection(const FString& InUrl, const TMap<FString, FString>& InHeaders);
-    virtual ~FHubConnection();
+	FHubConnection(const FString& InUrl, const TMap<FString, FString>& InHeaders);
+	virtual ~FHubConnection();
 
-    //~ Begin IHubConnection Interface
-    virtual void Start() override;
-    virtual void Stop() override;
+	//~ Begin IHubConnection Interface
+	virtual void Start() override;
+	virtual void Stop() override;
 
-    FORCEINLINE virtual FOnHubConnectedEvent& OnConnected() override
-    {
-        return OnHubConnectedEvent;
-    }
+	FORCEINLINE virtual FOnHubConnectedEvent& OnConnected() override
+	{
+		return OnHubConnectedEvent;
+	}
 
-    FORCEINLINE virtual FOnHubConnectionErrorEvent& OnConnectionError() override
-    {
-        return OnHubConnectionErrorEvent;
-    }
+	FORCEINLINE virtual FOnHubConnectionErrorEvent& OnConnectionError() override
+	{
+		return OnHubConnectionErrorEvent;
+	}
 
-    FORCEINLINE virtual FHubConnectionClosedEvent& OnClosed() override
-    {
-        return OnHubConnectionClosedEvent;
-    }
+	FORCEINLINE virtual FHubConnectionClosedEvent& OnClosed() override
+	{
+		return OnHubConnectionClosedEvent;
+	}
 
-    virtual FOnMethodInvocation& On(const FString& EventName) override;
-    virtual FOnMethodCompletion& Invoke(const FString& EventName, const TArray<FSignalRValue>& InArguments = TArray<FSignalRValue>()) override;
-    virtual void Send(const FString& InEventName, const TArray<FSignalRValue>& InArguments = TArray<FSignalRValue>()) override;
-    //~ End IHubConnection Interface
+	virtual FOnMethodInvocation& On(const FString& EventName) override;
+	virtual FOnMethodCompletion& Invoke(const FString& EventName, const TArray<FSignalRValue>& InArguments = TArray<FSignalRValue>()) override;
+	virtual void Send(const FString& InEventName, const TArray<FSignalRValue>& InArguments = TArray<FSignalRValue>()) override;
+	//~ End IHubConnection Interface
 
-    //~ Begin FTickableGameObject Interface
-    virtual void Tick(float DeltaTime) override;
-    TStatId GetStatId() const override;
-    virtual ETickableTickType GetTickableTickType() const override
-    {
-        return ETickableTickType::Always;
-    }
-    virtual bool IsTickable() const override
-    {
-        return true;
-    }
-    virtual bool IsTickableInEditor() const override
-    {
-        return true;
-    }
-    virtual bool IsTickableWhenPaused() const override
-    {
-        return true;
-    }
-    //~ Begin FTickableGameObject Interface
+	//~ Begin FTickableGameObject Interface
+	virtual void Tick(float DeltaTime) override;
+	TStatId GetStatId() const override;
+	virtual ETickableTickType GetTickableTickType() const override
+	{
+		return ETickableTickType::Always;
+	}
+	virtual bool IsTickable() const override
+	{
+		return true;
+	}
+	virtual bool IsTickableInEditor() const override
+	{
+		return true;
+	}
+	virtual bool IsTickableWhenPaused() const override
+	{
+		return true;
+	}
+	//~ Begin FTickableGameObject Interface
 
 protected:
-    void ProcessMessage(const FString& InMessageStr);
+	void ProcessMessage(const FString& InMessageStr);
 
 private:
-    enum class EConnectionState
-    {
-        Connecting,
-        Connected,
-        Disconnecting,
-        Disconnected,
-    };
-    EConnectionState ConnectionState;
+	enum class EConnectionState
+	{
+		Connecting,
+		Connected,
+		Disconnecting,
+		Disconnected,
+	};
+	EConnectionState ConnectionState;
 
-    void OnConnectionStarted();
-    void OnConnectionFailed();
-    void OnConnectionError(const FString& /* Error */);
-    void OnConnectionClosed(int32 StatusCode, const FString& Reason, bool bWasClean);
+	void OnConnectionStarted();
+	void OnConnectionFailed();
+	void OnConnectionError(const FString& /* Error */);
+	void OnConnectionClosed(int32 StatusCode, const FString& Reason, bool bWasClean);
 
-    void Ping();
-    void InvokeHubMethod(const FString& MethodName, const TArray<FSignalRValue>& InArguments, FName CallbackId);
+	void Ping();
+	void InvokeHubMethod(const FString& MethodName, const TArray<FSignalRValue>& InArguments, FName CallbackId);
 
-    FString Host;
+	FString Host;
 
-    TSharedPtr<IHubProtocol> HubProtocol;
-    TSharedPtr<FConnection> Connection;
-    TMap<FString, FOnMethodInvocation> InvocationHandlers;
-    FCallbackManager CallbackManager;
+	TSharedPtr<IHubProtocol> HubProtocol;
+	TSharedPtr<FConnection> Connection;
+	TMap<FString, FOnMethodInvocation> InvocationHandlers;
+	FCallbackManager CallbackManager;
 
-    bool bHandshakeReceived = false;
+	bool bHandshakeReceived = false;
 
-    float TickTimeCounter = 0;
+	float TickTimeCounter = 0;
 
-    TArray<FString> WaitingCalls;
+	TArray<FString> WaitingCalls;
 
-    FOnHubConnectedEvent OnHubConnectedEvent;
-    FOnHubConnectionErrorEvent OnHubConnectionErrorEvent;
-    FHubConnectionClosedEvent OnHubConnectionClosedEvent;
+	FOnHubConnectedEvent OnHubConnectedEvent;
+	FOnHubConnectionErrorEvent OnHubConnectionErrorEvent;
+	FHubConnectionClosedEvent OnHubConnectionClosedEvent;
 
-    void SendCloseMessage();
+	void SendCloseMessage();
 
-    bool bReceivedCloseMessage = false;
-    bool bShouldReconnect = false;
+	bool bReceivedCloseMessage = false;
+	bool bShouldReconnect = false;
 };

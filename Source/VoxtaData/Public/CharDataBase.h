@@ -11,7 +11,7 @@
 /// NOTE: This is not abstract due to USTRUCT, but should be considered as such.
 /// </summary>
 USTRUCT()
-struct FCharDataBase
+struct VOXTADATA_API FCharDataBase
 {
 	GENERATED_BODY()
 
@@ -22,8 +22,7 @@ public:
 	explicit FCharDataBase(FStringView id, FStringView name) :
 		m_id(id),
 		m_name(name)
-	{
-	}
+	{}
 
 	explicit FCharDataBase() {};
 

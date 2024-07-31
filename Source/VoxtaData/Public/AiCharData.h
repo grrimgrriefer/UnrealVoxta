@@ -10,7 +10,7 @@
 /// Data struct that contains all the relevant information for an AI character.
 /// </summary>
 USTRUCT()
-struct FAiCharData : public FCharDataBase
+struct VOXTADATA_API FAiCharData : public FCharDataBase
 {
 	GENERATED_BODY()
 
@@ -20,16 +20,15 @@ public:
 	bool GetIsFavorite() const { return m_isFavorite; };
 
 	explicit FAiCharData(FStringView id,
-			FStringView name,
-			FStringView creatorNotes,
-			bool isExplicitContent,
-			bool isFavorite) :
+		FStringView name,
+		FStringView creatorNotes,
+		bool isExplicitContent,
+		bool isFavorite) :
 		FCharDataBase(id, name),
 		m_creatorNotes(creatorNotes),
 		m_allowedExplicitContent(isExplicitContent),
 		m_isFavorite(isFavorite)
-	{
-	}
+	{}
 
 	explicit FAiCharData() : FCharDataBase() {}
 

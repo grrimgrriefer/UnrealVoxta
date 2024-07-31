@@ -27,15 +27,15 @@ This repo contains the Unreal-Engine (5.3) port of the https://github.com/grrimg
 
 [ :heavy_check_mark: ]   Swap windows audio API for UE to ensure cross-platform compatibility
 
-[ :fire: ]   Code cleanup & refactoring 2: the quest for better code
+[ :heavy_check_mark: ]   Code cleanup & refactoring 2: the quest for better code
+
+[ :fire: ]   Wrap modules into a plugin
 
 [ :black_square_button: ]   Hook up OVR lipsync to the audioplayback.
 
 [ :black_square_button: ]   Make a proof-of-concept demo using a default Metahuman (integrate it with OVR lipsync)
 
 [ :black_square_button: ]   Expose main functionality to blueprints & use them to replace the C++ bindings atm
-
-[ :black_square_button: ]   Wrap modules into a plugin
 
 [ :black_square_button: ]   Unit testing? (not sure if applicable for UE)
 

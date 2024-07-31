@@ -17,7 +17,7 @@
 /// Receives the URLs used to download & import & play the audio.
 /// </summary>
 UCLASS(HideCategories = (Mobility, Rendering, LOD), Blueprintable, ClassGroup = Camera, meta = (BlueprintSpawnableComponent))
-class VOXTA_API UVoxtaAudioPlayback : public UActorComponent
+class UNREALVOXTA_API UVoxtaAudioPlayback : public UActorComponent
 {
 	GENERATED_BODY()
 public:

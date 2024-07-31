@@ -27,7 +27,7 @@
 #include "CoreMinimal.h"
 #include "SignalR/Public/IHubConnection.h"
 
-class SIGNALR_API FCallbackManager
+class FCallbackManager
 {
 public:
 	FCallbackManager();

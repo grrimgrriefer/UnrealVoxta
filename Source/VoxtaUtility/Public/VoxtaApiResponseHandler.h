@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "VoxtaDefines.h"
-#include "SignalRValue.h"
+#include "SignalR/Public/SignalRValue.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseBase.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseWelcome.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseCharacterList.h"
@@ -18,7 +18,7 @@
 #include "VoxtaData/Public/ServerResponses/ServerResponseSpeechTranscription.h"
 #include "VoxtaData/Public/VoxtaServiceData.h"
 
-class VoxtaApiResponseHandler
+class VOXTAUTILITY_API VoxtaApiResponseHandler
 {
 public:
 	// Message types that the internal VoxtaClient will consider to be 'safe to ignore'

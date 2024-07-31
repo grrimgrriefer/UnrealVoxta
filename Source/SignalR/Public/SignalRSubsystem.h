@@ -33,14 +33,14 @@ class IHubConnection;
 UCLASS(NotBlueprintType)
 class SIGNALR_API USignalRSubsystem : public UEngineSubsystem
 {
-    GENERATED_BODY()
+	GENERATED_BODY()
 public:
 
-    /**
-     * Create a new hub connection.
-     *
-     * @param url
-     * @return An IHubConnection instance
-     */
-    TSharedPtr<IHubConnection> CreateHubConnection(const FString& InUrl, const TMap<FString, FString>& InHeaders = TMap<FString, FString>());
+	/**
+	 * Create a new hub connection.
+	 *
+	 * @param url
+	 * @return An IHubConnection instance
+	 */
+	TSharedPtr<IHubConnection> CreateHubConnection(const FString& InUrl, const TMap<FString, FString>& InHeaders = TMap<FString, FString>());
 };

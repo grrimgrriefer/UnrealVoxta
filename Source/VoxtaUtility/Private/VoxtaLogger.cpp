@@ -1,10 +1,10 @@
 // Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
 
-#include "VoxtaLogUtility.h"
+#include "VoxtaLogger.h"
 
 DEFINE_LOG_CATEGORY(VoxtaLog);
 
-VoxtaLogUtility::~VoxtaLogUtility()
+VoxtaLogger::~VoxtaLogger()
 {
 	if (GLog != nullptr)
 	{
@@ -12,13 +12,13 @@ VoxtaLogUtility::~VoxtaLogUtility()
 	}
 }
 
-void VoxtaLogUtility::RegisterVoxtaLogger()
+void VoxtaLogger::RegisterVoxtaLogger()
 {
 	check(GLog);
 	GLog->AddOutputDevice(this);
 }
 
-void VoxtaLogUtility::Serialize(const TCHAR* Message, ELogVerbosity::Type Verbosity, const class FName& Category)
+void VoxtaLogger::Serialize(const TCHAR* Message, ELogVerbosity::Type Verbosity, const class FName& Category)
 {
 	if (Category == m_voxtaLogCategory || Category == m_signalRLogCategory || Category == m_httpLogCategory)
 	{

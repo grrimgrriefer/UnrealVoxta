@@ -8,13 +8,13 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(VoxtaLog, Log, All);
 
-class VoxtaLogUtility : public FOutputDevice
+class VOXTAUTILITY_API VoxtaLogger : public FOutputDevice
 {
 public:
-	~VoxtaLogUtility();
+	~VoxtaLogger();
 
 	/// <summary>
-	/// Add the VoxtaLogUtility to the GlobalLogSingleton.
+	/// Add the VoxtaLog to the GlobalLogSingleton.
 	/// </summary>
 	void RegisterVoxtaLogger();
 

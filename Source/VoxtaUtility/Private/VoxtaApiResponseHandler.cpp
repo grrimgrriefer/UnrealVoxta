@@ -1,7 +1,7 @@
 // Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
 
 #include "VoxtaApiResponseHandler.h"
-#include "VoxtaLogUtility.h"
+#include "VoxtaLogger.h"
 
 TUniquePtr<IServerResponseBase> VoxtaApiResponseHandler::GetResponseData(
 	const TMap<FString, FSignalRValue>& serverResponseData) const
@@ -194,5 +194,5 @@ TUniquePtr<ServerResponseSpeechTranscription> VoxtaApiResponseHandler::GetSpeech
 	return MakeUnique<ServerResponseSpeechTranscription>(
 		isValid ? serverResponseData[API_STRING("text")].AsString() : FString(),
 		isValid ? ServerResponseSpeechTranscription::TranscriptionState::END
-			: ServerResponseSpeechTranscription::TranscriptionState::CANCELLED);
+		: ServerResponseSpeechTranscription::TranscriptionState::CANCELLED);
 }
