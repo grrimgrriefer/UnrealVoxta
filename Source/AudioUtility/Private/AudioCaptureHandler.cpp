@@ -96,7 +96,10 @@ void AudioCaptureHandler::StopCapture()
 
 	m_socketDataBuffer.Reset();
 	m_isCapturing = false;
-	m_voiceCaptureDevice->Stop();
+	if (m_voiceCaptureDevice != nullptr)
+	{
+		m_voiceCaptureDevice->Stop();
+	}
 }
 
 void AudioCaptureHandler::ShutDown()

@@ -39,12 +39,16 @@ This repo contains the Unreal-Engine (5.3) port of the https://github.com/grrimg
 
 [ :black_square_button: ]   Unit testing? (not sure if applicable for UE)
 
-== Running the project
+== Example implementation project
 
-.Steps to get this up and running
+.Available here: https://dev.azure.com/grrimgrriefer/_git/UnrealVoxtaTestProject 
 . Clone the repository. *(Note: this repo uses Git LFS)*
-. Right-click on the .UProject and select the option to Generate VS files.
-. Configure the startup project to be TalkToMeCPPUE
+. Open the VoxtaTestProject.uproject
+. Press play
+
+.Debugging:
+. Right-click on the .uproject and select the option to Generate VS files.
+. Configure the startup project to be VoxtaTestProject
 . Select DevelopmentEditor with Win64 and run the debugger.
 . Ensure you have your Voxta Server running and press play in the editor once it's started up.
 . In the VoxtaClient.cpp, make sure you swap the IP address of the server to the one you use.
