@@ -1,4 +1,4 @@
-= TalkToMeCPPUE - An Unreal Engine C++ client implementation for Voxta
+= UnrealVoxta - An Unreal Engine client implementation for Voxta
 
 _Made in collaboration with https://twitter.com/DZnnah[DZnnah]_
 
@@ -6,14 +6,21 @@ This repo contains the Unreal-Engine (5.3) port of the https://github.com/grrimg
 *Note:* Uses MIT licensed SignalR client: link:Source/SignalR/License.txt[LICENSE] +
 *Note:* Uses MIT licensed wav-decoding from the RuntimeAudioImporter: link:Source/AudioUtility/Public/RuntimeAudioImporter/LICENSE.txt[LICENSE]
 
+== Example implementation project
+
+.Available here: https://dev.azure.com/grrimgrriefer/_git/UnrealVoxtaTestProject 
+. Clone the repository. *(Note: this repo uses Git LFS)*
+. Open the VoxtaTestProject.uproject
+. Press play
+
 == Structure
 
 .The code is separated in 5 modules
 * AudioUtility: Contains all the logic in regards to audioplayback and audio input
 * SignalR: Contains the Unreal port of the SignalR c++ client.
-* TalkToMeCppUE: Contains demo-project related files.
-* Voxta: A stateful client for the encapsulation of the Voxta server API.
+* UnrealVoxta: A stateful client for the encapsulation of the Voxta server API.
 * VoxtaData: The models which encapsulate the Voxta data in easy-to-use data objects. (i.e. data structs)
+* VoxtaUtility: Wrappers for communicating with the Voxta Server API, also includes Logging and utility-specific defines.
 
 == Dev Progress
 
@@ -39,12 +46,7 @@ This repo contains the Unreal-Engine (5.3) port of the https://github.com/grrimg
 
 [ :black_square_button: ]   Unit testing? (not sure if applicable for UE)
 
-== Example implementation project
-
-.Available here: https://dev.azure.com/grrimgrriefer/_git/UnrealVoxtaTestProject 
-. Clone the repository. *(Note: this repo uses Git LFS)*
-. Open the VoxtaTestProject.uproject
-. Press play
+== Debugging
 
 .Debugging:
 . Right-click on the .uproject and select the option to Generate VS files.
