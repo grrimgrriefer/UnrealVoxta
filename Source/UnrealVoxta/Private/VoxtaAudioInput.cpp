@@ -87,7 +87,10 @@ void UVoxtaAudioInput::StopStreaming()
 void UVoxtaAudioInput::CloseSocket()
 {
 	m_audioCaptureDevice.ShutDown();
-	m_audioWebSocket->Close();
+	if (m_audioWebSocket != nullptr)
+	{
+		m_audioWebSocket->Close();
+	}
 	m_connectionState = VoxtaMicrophoneState::Closed;
 }
 
