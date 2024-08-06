@@ -5,11 +5,9 @@
 #include "Components/ActorComponent.h"
 #include "Components/AudioComponent.h"
 #include "VoxtaClient.h"
-#include "Runtime/Online/HTTP/Public/Http.h"
-#include "Sound/SoundWaveProcedural.h"
 #include "Components/AudioComponent.h"
-#include "Sound/SoundCue.h"
 #include "AudioUtility/Public/RuntimeAudioImporter/RuntimeAudioImporterLibrary.h"
+#include "MessageChunkAudioContainer.h"
 #include "VoxtaAudioPlayback.generated.h"
 
 /// <summary>
@@ -58,11 +56,7 @@ private:
 	FString m_characterId;
 	FString m_messageId;
 	UAudioComponent* m_audioComponent;
-	TArray<FString> m_orderedUrls;
-	TMap<FString, USoundWaveProcedural*> m_audioData;
-
-	UPROPERTY(Transient)
-	URuntimeAudioImporterLibrary* audioImporter;
+	TArray<MessageChunkAudioContainer> m_orderedAudio;
 
 	FString m_hostAddress;
 	FString m_hostPort;
@@ -79,30 +73,10 @@ private:
 	void PlaybackMessage(const FCharDataBase& sender, const FChatMessage& message);
 
 	/// <summary>
-	/// Triggers async GET http requests for every url in the m_orderedUrls array.
-	/// </summary>
-	void DownloadDataAsync();
-
-	/// <summary>
-	/// Adds the host address and port to the partial uri that's baked into the ChatMessage.
-	/// </summary>
-	/// <param name="message">The chatMessage for which the urls will be constructed.</param>
-	void GenerateFullUrls(const FChatMessage& message);
-
-	/// <summary>
 	/// If the next audioclip is available, begins playing it.
 	/// Note: Audio is downloaded & imported in parallel, but obviously we want to playback in correct order.
 	/// </summary>
 	void TryPlayNextAudio();
-
-	/// <summary>
-	/// Triggered by the IHttpRequest when it's finished downloading the audio data.
-	/// Will use the audioImporter to convert the wav file into a Soundwave that UE can play.
-	/// </summary>
-	/// <param name="request">Pointer to the original request</param>
-	/// <param name="response">Pointer to the response</param>
-	/// <param name="bWasSuccessful">True if the request was successful</param>
-	void OnDownloadComplete(FHttpRequestPtr request, FHttpResponsePtr response, bool bWasSuccessful);
 
 	/// <summary>
 	/// Triggered by the UAudioComponent.
@@ -110,14 +84,4 @@ private:
 	/// </summary>
 	UFUNCTION()
 	void OnAudioFinished();
-
-	/// <summary>
-	/// Triggered by the AudioImporterLibrary.
-	/// Adds the soundwave to the root to prevent cleanup, also triggers playback of the next clip
-	/// if available. (as this one may or may not be the next audio we're waiting on)
-	/// </summary>
-	/// <param name="identifier">The identifier used to ensure audio is played in the correct order.</param>
-	/// <param name="soundWave">The soundwave that is playable by the UAudioComponent</param>
-	UFUNCTION()
-	void AudioImportCompleted(FString identifier, UImportedSoundWave* soundWave);
 };

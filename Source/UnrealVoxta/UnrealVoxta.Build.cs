@@ -26,7 +26,7 @@ public class UnrealVoxta : ModuleRules
 			new string[]
 			{
 				"Core",
-				"AudioUtility", "VoxtaData", "VoxtaUtility", "SignalR", "HTTP", "Voice"
+				"AudioUtility", "VoxtaData", "VoxtaUtility", "SignalR", "HTTP", "Voice", "OVRLipSync"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);

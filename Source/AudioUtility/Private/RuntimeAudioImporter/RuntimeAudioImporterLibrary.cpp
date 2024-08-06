@@ -5,20 +5,13 @@
 #include "RuntimeAudioImporter/ImportedSoundWave.h"
 #include "RuntimeAudioImporter/RAW_RuntimeCodec.h"
 
-void URuntimeAudioImporterLibrary::ImportAudioFromBuffer(FString identifier, TArray64<uint8> AudioData)
+void URuntimeAudioImporterLibrary::ImportAudioFromBuffer(TArray64<uint8> AudioData, TFunction<void(UImportedSoundWave*)> callback)
 {
 	if (IsInGameThread())
 	{
-		AsyncTask(ENamedThreads::AnyBackgroundHiPriTask, [WeakThis = MakeWeakObjectPtr(this), ID = identifier, AudioData = MoveTemp(AudioData)] () mutable
+		AsyncTask(ENamedThreads::AnyBackgroundHiPriTask, [AudioData = MoveTemp(AudioData), Callback = callback] () mutable
 		{
-			if (WeakThis.IsValid())
-			{
-				WeakThis->ImportAudioFromBuffer(ID, MoveTemp(AudioData));
-			}
-			else
-			{
-				UE_LOG(AudioLog, Error, TEXT("Failed to import audio from buffer because the URuntimeAudioImporterLibrary object has been destroyed"));
-			}
+			ImportAudioFromBuffer(MoveTemp(AudioData), Callback);
 		});
 		return;
 	}
@@ -32,7 +25,7 @@ void URuntimeAudioImporterLibrary::ImportAudioFromBuffer(FString identifier, TAr
 		return;
 	}
 
-	ImportAudioFromDecodedInfo(identifier, MoveTemp(DecodedAudioInfo));
+	ImportAudioFromDecodedInfo(MoveTemp(DecodedAudioInfo), callback);
 }
 
 bool URuntimeAudioImporterLibrary::DecodeAudioData(FEncodedAudioStruct&& EncodedAudioInfo, FDecodedAudioStruct& DecodedAudioInfo)
@@ -85,21 +78,14 @@ bool URuntimeAudioImporterLibrary::EncodeAudioData(FDecodedAudioStruct&& Decoded
 	return false;
 }
 
-void URuntimeAudioImporterLibrary::ImportAudioFromDecodedInfo(FString identifier, FDecodedAudioStruct&& DecodedAudioInfo)
+void URuntimeAudioImporterLibrary::ImportAudioFromDecodedInfo(FDecodedAudioStruct&& DecodedAudioInfo, TFunction<void(UImportedSoundWave*)> callback)
 {
 	// Making sure we are in the game thread
 	if (!IsInGameThread())
 	{
-		AsyncTask(ENamedThreads::GameThread, [WeakThis = MakeWeakObjectPtr(this), ID = identifier, DecodedAudioInfo = MoveTemp(DecodedAudioInfo)] () mutable
+		AsyncTask(ENamedThreads::GameThread, [DecodedAudioInfo = MoveTemp(DecodedAudioInfo), Callback = callback] () mutable
 		{
-			if (WeakThis.IsValid())
-			{
-				WeakThis->ImportAudioFromDecodedInfo(ID, MoveTemp(DecodedAudioInfo));
-			}
-			else
-			{
-				UE_LOG(AudioLog, Error, TEXT("Unable to import audio from decoded info '%s' because the URuntimeAudioImporterLibrary object has been destroyed"), *DecodedAudioInfo.ToString());
-			}
+			ImportAudioFromDecodedInfo(MoveTemp(DecodedAudioInfo), Callback);
 		});
 		return;
 	}
@@ -112,13 +98,10 @@ void URuntimeAudioImporterLibrary::ImportAudioFromDecodedInfo(FString identifier
 	}
 
 	ImportedSoundWave->AddToRoot();
-
 	ImportedSoundWave->PopulateAudioDataFromDecodedInfo(MoveTemp(DecodedAudioInfo));
 
 	UE_LOG(AudioLog, Log, TEXT("The audio data was successfully imported"));
-	OnResult_Internal(identifier, ImportedSoundWave);
-
-	ImportedSoundWave->RemoveFromRoot();
+	callback(ImportedSoundWave);
 }
 
 bool URuntimeAudioImporterLibrary::ResampleAndMixChannelsInDecodedInfo(FDecodedAudioStruct& DecodedAudioInfo, uint32 NewSampleRate, uint32 NewNumOfChannels)
@@ -173,37 +156,4 @@ bool URuntimeAudioImporterLibrary::ResampleAndMixChannelsInDecodedInfo(FDecodedA
 
 	DecodedAudioInfo.PCMInfo.PCMData = FRuntimeBulkDataBuffer<float>(WaveData);
 	return true;
-}
-
-void URuntimeAudioImporterLibrary::OnResult_Internal(FString identifier, UImportedSoundWave* ImportedSoundWave)
-{
-	// Making sure we are in the game thread
-	if (!IsInGameThread())
-	{
-		AsyncTask(ENamedThreads::GameThread, [WeakThis = MakeWeakObjectPtr(this), ID = identifier, ImportedSoundWave] ()
-		{
-			if (WeakThis.IsValid())
-			{
-				WeakThis->OnResult_Internal(ID, ImportedSoundWave);
-			}
-			else
-			{
-				UE_LOG(AudioLog, Error, TEXT("Unable to broadcast the result of the import because the URuntimeAudioImporterLibrary object has been destroyed"));
-			}
-		});
-		return;
-	}
-
-	bool bBroadcasted{ false };
-
-	if (AudioImportedEvent.IsBound())
-	{
-		bBroadcasted = true;
-		AudioImportedEvent.Broadcast(identifier, ImportedSoundWave);
-	}
-
-	if (!bBroadcasted)
-	{
-		UE_LOG(AudioLog, Error, TEXT("You did not bind to the delegate to get the result of the import"));
-	}
 }
