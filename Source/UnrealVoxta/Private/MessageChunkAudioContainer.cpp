@@ -3,8 +3,10 @@
 #include "MessageChunkAudioContainer.h"
 #include "OVRLipSyncContextWrapper.h"
 
-MessageChunkAudioContainer::MessageChunkAudioContainer(const FString& fullUrl) :
-	m_downloadUrl(fullUrl)
+MessageChunkAudioContainer::MessageChunkAudioContainer(const FString& fullUrl,
+	TFunction<void(const MessageChunkAudioContainer* finishedChunk)> callback)
+	: m_downloadUrl(fullUrl),
+	onFinished(callback)
 {
 }
 
@@ -20,6 +22,7 @@ void MessageChunkAudioContainer::DownloadAsync()
 void MessageChunkAudioContainer::Cleanup()
 {
 	m_soundWave->RemoveFromRoot();
+	m_frameSequence->RemoveFromRoot();
 }
 
 void MessageChunkAudioContainer::OnRequestComplete(FHttpRequestPtr request, FHttpResponsePtr response, bool bWasSuccessful)
@@ -48,21 +51,23 @@ void MessageChunkAudioContainer::GenerateOvrLipSync(const TArray<uint8>& rawSamp
 
 	if (waveInfo.ReadWaveInfo(waveData, rawSamples.Num()))
 	{
-		int32 NumChannels = *waveInfo.pChannels;
-		int32 SampleRate = *waveInfo.pSamplesPerSec;
-		auto PCMDataSize = waveInfo.SampleDataSize / sizeof(int16_t);
-		int16_t* PCMData = reinterpret_cast<int16_t*>(waveData + 44);
-		int32 ChunkSizeSamples = static_cast<int32>(SampleRate * (1.f / 100.f));
-		int32 ChunkSize = NumChannels * ChunkSizeSamples;
-		int BufferSize = 4096;
+		int32 numChannels = *waveInfo.pChannels;
+		int32 sampleRate = *waveInfo.pSamplesPerSec;
+		auto pcmDataSize = waveInfo.SampleDataSize / sizeof(int16_t);
+		int16_t* pcmData = reinterpret_cast<int16_t*>(waveData + 44);
+		int32 chunkSizeSamples = static_cast<int32>(sampleRate * (1.f / 100.f));
+		int32 chunkSize = numChannels * chunkSizeSamples;
+		int bufferSize = 4096;
 
 		FString modelPath = FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("OVRLipSync"),
 			TEXT("OfflineModel"), TEXT("ovrlipsync_offline_model.pb"));
 
-		Async(EAsyncExecution::Thread, [&] ()
+		Async(EAsyncExecution::Thread, [&, SampleRate = sampleRate, BufferSize = bufferSize, ModelPath = modelPath,
+			ChunkSize = chunkSize, PCMDataSize = pcmDataSize, PCMData = pcmData, ChunkSizeSamples = chunkSizeSamples,
+			NumChannels = numChannels] ()
 		{
 			UOVRLipSyncFrameSequence* Sequence = NewObject<UOVRLipSyncFrameSequence>();
-			UOVRLipSyncContextWrapper context(ovrLipSyncContextProvider_Enhanced, SampleRate, BufferSize, modelPath);
+			UOVRLipSyncContextWrapper context(ovrLipSyncContextProvider_Enhanced, SampleRate, BufferSize, ModelPath);
 			float LaughterScore = 0.0f;
 			int32_t FrameDelayInMs = 0;
 			TArray<float> Visemes;
@@ -75,6 +80,7 @@ void MessageChunkAudioContainer::GenerateOvrLipSync(const TArray<uint8>& rawSamp
 			{
 				m_frameSequence = Sequence;
 				m_frameSequence->AddToRoot();
+				onFinished(this);
 			});
 		});
 	}

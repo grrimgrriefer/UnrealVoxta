@@ -8,6 +8,7 @@
 #include "Components/AudioComponent.h"
 #include "AudioUtility/Public/RuntimeAudioImporter/RuntimeAudioImporterLibrary.h"
 #include "MessageChunkAudioContainer.h"
+#include "OVRLipSyncPlaybackActorComponent.h"
 #include "VoxtaAudioPlayback.generated.h"
 
 /// <summary>
@@ -58,6 +59,8 @@ private:
 	UAudioComponent* m_audioComponent;
 	TArray<MessageChunkAudioContainer> m_orderedAudio;
 
+	UOVRLipSyncPlaybackActorComponent* m_ovrLipSync;
+
 	FString m_hostAddress;
 	FString m_hostPort;
 
@@ -84,4 +87,6 @@ private:
 	/// </summary>
 	UFUNCTION()
 	void OnAudioFinished();
+
+	void OnNewChunkReady(const MessageChunkAudioContainer* finishedChunk);
 };

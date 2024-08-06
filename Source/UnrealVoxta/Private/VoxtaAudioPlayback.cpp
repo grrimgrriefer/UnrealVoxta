@@ -12,6 +12,7 @@ void UVoxtaAudioPlayback::BeginPlay()
 {
 	Super::BeginPlay();
 	m_audioComponent->OnAudioFinished.AddUniqueDynamic(this, &UVoxtaAudioPlayback::OnAudioFinished);
+	m_ovrLipSync = GetOwner()->FindComponentByClass<UOVRLipSyncPlaybackActorComponent>();;
 }
 
 void UVoxtaAudioPlayback::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -59,7 +60,8 @@ void UVoxtaAudioPlayback::PlaybackMessage(const FCharDataBase& sender, const FCh
 			m_orderedAudio.Add(MessageChunkAudioContainer(FString::Format(*FString(TEXT("http://{0}:{1}{2}")), {
 				m_hostAddress,
 				m_hostPort,
-				message.m_audioUrls[i] })));
+				message.m_audioUrls[i] }),
+				[&] (const MessageChunkAudioContainer* finishedChunk) { OnNewChunkReady(finishedChunk); }));
 		}
 
 		m_orderedAudio[0].DownloadAsync();
@@ -74,4 +76,16 @@ void UVoxtaAudioPlayback::OnAudioFinished()
 {
 	isPlaying = false;
 	TryPlayNextAudio();
+}
+
+void UVoxtaAudioPlayback::OnNewChunkReady(const MessageChunkAudioContainer* finishedChunk)
+{
+	m_audioComponent->SetSound(finishedChunk->m_soundWave);
+	m_ovrLipSync->Start(m_audioComponent, finishedChunk->m_frameSequence);
+
+	isPlaying = true;
+
+	currentAudioClip += 1;
+
+	UE_LOG(LogTemp, Log, TEXT("Starting playback of audiochunk."));
 }

@@ -11,16 +11,17 @@
 class MessageChunkAudioContainer
 {
 public:
-	MessageChunkAudioContainer(const FString& fullUrl);
+	MessageChunkAudioContainer(const FString& fullUrl, TFunction<void(const MessageChunkAudioContainer* newState)> callback);
 
 	void DownloadAsync();
 	void Cleanup();
 
-private:
-	const FString m_downloadUrl;
-
 	USoundWaveProcedural* m_soundWave;
 	UOVRLipSyncFrameSequence* m_frameSequence;
+
+private:
+	const FString m_downloadUrl;
+	const TFunction<void(const MessageChunkAudioContainer* finishedChunk)> onFinished;
 
 	void OnRequestComplete(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
 	void OnImportComplete(TArray<uint8> buffer, UImportedSoundWave* soundWave);
