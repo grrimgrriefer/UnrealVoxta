@@ -79,7 +79,7 @@ private:
 	/// If the next audioclip is available, begins playing it.
 	/// Note: Audio is downloaded & imported in parallel, but obviously we want to playback in correct order.
 	/// </summary>
-	void TryPlayNextAudio();
+	void TryPlayCurrentAudioChunk();
 
 	/// <summary>
 	/// Triggered by the UAudioComponent.
@@ -88,5 +88,7 @@ private:
 	UFUNCTION()
 	void OnAudioFinished();
 
-	void OnNewChunkReady(const MessageChunkAudioContainer* finishedChunk);
+	void OnChunkStateChange(const MessageChunkAudioContainer* finishedChunk);
+
+	void Cleanup();
 };

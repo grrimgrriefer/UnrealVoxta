@@ -2,16 +2,50 @@
 
 #include "MessageChunkAudioContainer.h"
 #include "OVRLipSyncContextWrapper.h"
+#include "RuntimeAudioImporter/RuntimeAudioImporterLibrary.h"
 
 MessageChunkAudioContainer::MessageChunkAudioContainer(const FString& fullUrl,
-	TFunction<void(const MessageChunkAudioContainer* finishedChunk)> callback)
+	TFunction<void(const MessageChunkAudioContainer* newState)> callback,
+	int id)
 	: m_downloadUrl(fullUrl),
-	onFinished(callback)
+	onStateChanged(callback),
+	m_id(id)
 {
 }
 
-void MessageChunkAudioContainer::DownloadAsync()
+void MessageChunkAudioContainer::CleanupData()
 {
+	m_soundWave->RemoveFromRoot();
+	m_frameSequence->RemoveFromRoot();
+}
+
+void MessageChunkAudioContainer::Continue()
+{
+	switch (m_state)
+	{
+		case MessageChunkState::Idle:
+			DownloadData();
+			break;
+		case MessageChunkState::Idle_Downloaded:
+			ImportData();
+			break;
+		case MessageChunkState::Idle_Imported:
+			GenerateOvrLipSync();
+			break;
+		case MessageChunkState::Busy:
+		case MessageChunkState::ReadyForPlayback:
+		default:
+			break;
+	}
+}
+
+void MessageChunkAudioContainer::DownloadData()
+{
+	if (m_state != MessageChunkState::Idle)
+	{
+		return;
+	}
+	UpdateState(MessageChunkState::Busy);
 	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> httpRequest = FHttpModule::Get().CreateRequest();
 	httpRequest->SetVerb("GET");
 	httpRequest->SetURL(m_downloadUrl);
@@ -19,37 +53,23 @@ void MessageChunkAudioContainer::DownloadAsync()
 	httpRequest->ProcessRequest();
 }
 
-void MessageChunkAudioContainer::Cleanup()
+void MessageChunkAudioContainer::ImportData()
 {
-	m_soundWave->RemoveFromRoot();
-	m_frameSequence->RemoveFromRoot();
+	URuntimeAudioImporterLibrary::ImportAudioFromBuffer(TArray64<uint8>(m_rawData),
+		[this] (UImportedSoundWave* soundWave) { OnImportComplete(soundWave); });
 }
 
-void MessageChunkAudioContainer::OnRequestComplete(FHttpRequestPtr request, FHttpResponsePtr response, bool bWasSuccessful)
+void MessageChunkAudioContainer::GenerateOvrLipSync()
 {
-	URuntimeAudioImporterLibrary::ImportAudioFromBuffer(TArray64<uint8>(response->GetContent()),
-		[this, Response = response] (UImportedSoundWave* soundWave) { OnImportComplete(Response->GetContent(), soundWave); });
-}
-
-void MessageChunkAudioContainer::OnImportComplete(TArray<uint8> buffer, UImportedSoundWave* soundWave)
-{
-	m_soundWave = soundWave;
-	m_soundWave->AddToRoot();
-
-	GenerateOvrLipSync(buffer);
-}
-
-void MessageChunkAudioContainer::GenerateOvrLipSync(const TArray<uint8>& rawSamples)
-{
-	if (rawSamples.Num() <= 44)
+	if (m_rawData.Num() <= 44)
 	{
 		return;
 	}
 
 	FWaveModInfo waveInfo;
-	uint8* waveData = const_cast<uint8*>(rawSamples.GetData());
+	uint8* waveData = const_cast<uint8*>(m_rawData.GetData());
 
-	if (waveInfo.ReadWaveInfo(waveData, rawSamples.Num()))
+	if (waveInfo.ReadWaveInfo(waveData, m_rawData.Num()))
 	{
 		int32 numChannels = *waveInfo.pChannels;
 		int32 sampleRate = *waveInfo.pSamplesPerSec;
@@ -66,7 +86,8 @@ void MessageChunkAudioContainer::GenerateOvrLipSync(const TArray<uint8>& rawSamp
 			ChunkSize = chunkSize, PCMDataSize = pcmDataSize, PCMData = pcmData, ChunkSizeSamples = chunkSizeSamples,
 			NumChannels = numChannels] ()
 		{
-			UOVRLipSyncFrameSequence* Sequence = NewObject<UOVRLipSyncFrameSequence>();
+			UOVRLipSyncFrameSequence* sequence = NewObject<UOVRLipSyncFrameSequence>();
+			sequence->AddToRoot();
 			UOVRLipSyncContextWrapper context(ovrLipSyncContextProvider_Enhanced, SampleRate, BufferSize, ModelPath);
 			float LaughterScore = 0.0f;
 			int32_t FrameDelayInMs = 0;
@@ -74,14 +95,35 @@ void MessageChunkAudioContainer::GenerateOvrLipSync(const TArray<uint8>& rawSamp
 			for (int offs = 0; offs + ChunkSize < PCMDataSize; offs += ChunkSize)
 			{
 				context.ProcessFrame(PCMData + offs, ChunkSizeSamples, Visemes, LaughterScore, FrameDelayInMs, NumChannels > 1);
-				Sequence->Add(Visemes, LaughterScore);
+				sequence->Add(Visemes, LaughterScore);
 			}
-			AsyncTask(ENamedThreads::GameThread, [&] ()
+			AsyncTask(ENamedThreads::GameThread, [&, Sequence = sequence] ()
 			{
 				m_frameSequence = Sequence;
-				m_frameSequence->AddToRoot();
-				onFinished(this);
+				UpdateState(MessageChunkState::ReadyForPlayback);
 			});
 		});
+	}
+}
+
+void MessageChunkAudioContainer::OnRequestComplete(FHttpRequestPtr request, FHttpResponsePtr response, bool bWasSuccessful)
+{
+	m_rawData = response->GetContent();
+	UpdateState(MessageChunkState::Idle_Downloaded);
+}
+
+void MessageChunkAudioContainer::OnImportComplete(UImportedSoundWave* soundWave)
+{
+	m_soundWave = soundWave;
+	m_soundWave->AddToRoot();
+	UpdateState(MessageChunkState::Idle_Imported);
+}
+
+void MessageChunkAudioContainer::UpdateState(MessageChunkState newState)
+{
+	m_state = newState;
+	if (m_state != MessageChunkState::Busy)
+	{
+		onStateChanged(this);
 	}
 }
