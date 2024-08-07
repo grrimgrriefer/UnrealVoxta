@@ -8,8 +8,8 @@ MessageChunkAudioContainer::MessageChunkAudioContainer(const FString& fullUrl,
 	TFunction<void(const MessageChunkAudioContainer* newState)> callback,
 	int id)
 	: m_downloadUrl(fullUrl),
-	onStateChanged(callback),
-	m_id(id)
+	m_id(id),
+	onStateChanged(callback)
 {
 }
 

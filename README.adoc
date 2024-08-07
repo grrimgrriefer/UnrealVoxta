@@ -1,16 +1,21 @@
 = UnrealVoxta - An Unreal Engine client implementation for Voxta
 
-_Made in collaboration with https://twitter.com/DZnnah[DZnnah]_
+_Made in collaboration with https://twitter.com/DZnnah[DZnnah]_ +
 
 This repo contains the Unreal-Engine (5.3) port of the https://github.com/grrimgrriefer/TalkToMeCPP[TalkToMeCPP (Windows c++)] +
 *Note:* Uses MIT licensed SignalR client: link:Source/SignalR/License.txt[LICENSE] +
-*Note:* Uses MIT licensed wav-decoding from the RuntimeAudioImporter: link:Source/AudioUtility/Public/RuntimeAudioImporter/LICENSE.txt[LICENSE]
+*Note:* Uses MIT licensed wav-decoding from the RuntimeAudioImporter: link:Source/AudioUtility/Public/RuntimeAudioImporter/LICENSE.txt[LICENSE] +
+
+If you like C++ you can already use this, for blueprint API: please come back in late September. 
 
 == Example implementation project
 
 .Available here: https://dev.azure.com/grrimgrriefer/_git/UnrealVoxtaTestProject 
-. Clone the repository. *(Note: this repo uses Git LFS)*
+. Clone the repository. *(Note: both this and the project repo use Git LFS)*
+. In the VoxtaClient.cpp, make sure you swap the IP address to the address that you use to host VoxtaServer.
+. Recompile the project (or use livecoding in-engine)
 . Open the VoxtaTestProject.uproject
+. Ensure you have Voxta open & properly configured.
 . Press play
 
 == Structure
@@ -21,6 +26,9 @@ This repo contains the Unreal-Engine (5.3) port of the https://github.com/grrimg
 * UnrealVoxta: A stateful client for the encapsulation of the Voxta server API.
 * VoxtaData: The models which encapsulate the Voxta data in easy-to-use data objects. (i.e. data structs)
 * VoxtaUtility: Wrappers for communicating with the Voxta Server API, also includes Logging and utility-specific defines.
+
+*Note:* There is currently a hard requirement for the OVRLipSync, this will be converted into an optional dependency later on. +
+The plugin itself is not compatible with UE 5.3, just use the fixed one from the Example implementation project linked above.
 
 == Dev Progress
 
@@ -36,23 +44,12 @@ This repo contains the Unreal-Engine (5.3) port of the https://github.com/grrimg
 
 [ :heavy_check_mark: ]   Code cleanup & refactoring 2: the quest for better code
 
-[ :fire: ]   Wrap modules into a plugin
+[ :heavy_check_mark: ]   Wrap modules into a plugin
 
-[ :black_square_button: ]   Hook up OVR lipsync to the audioplayback.
+[ :heavy_check_mark: ]   Hook up OVR lipsync to the audioplayback & to a default MetaHuman.
 
-[ :black_square_button: ]   Make a proof-of-concept demo using a default Metahuman (integrate it with OVR lipsync)
+[ :fire: ]   Code cleanup & refactoring 3: Revenge of the syntax
 
 [ :black_square_button: ]   Expose main functionality to blueprints & use them to replace the C++ bindings atm
 
-[ :black_square_button: ]   Unit testing? (not sure if applicable for UE)
-
-== Debugging
-
-.Debugging:
-. Right-click on the .uproject and select the option to Generate VS files.
-. Configure the startup project to be VoxtaTestProject
-. Select DevelopmentEditor with Win64 and run the debugger.
-. Ensure you have your Voxta Server running and press play in the editor once it's started up.
-. In the VoxtaClient.cpp, make sure you swap the IP address of the server to the one you use.
-
-Blueprint is not yet supported, will be soonish though.
+[ :black_square_button: ]   Make a full demo application to show the capabilities of the plugin

@@ -94,7 +94,7 @@ void UVoxtaAudioPlayback::OnChunkStateChange(const MessageChunkAudioContainer* c
 		TryPlayCurrentAudioChunk();
 	}
 	m_orderedAudio[chunk->m_id].Continue();
-	if (chunk->m_id + 1 < m_orderedAudio.Num() - 1)
+	if (chunk->m_id + 1 < m_orderedAudio.Num())
 	{
 		m_orderedAudio[chunk->m_id + 1].Continue();
 	}
