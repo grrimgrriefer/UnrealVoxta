@@ -27,8 +27,8 @@ If you like C++ you can already use this, for blueprint API: please come back in
 * VoxtaData: The models which encapsulate the Voxta data in easy-to-use data objects. (i.e. data structs)
 * VoxtaUtility: Wrappers for communicating with the Voxta Server API, also includes Logging and utility-specific defines.
 
-*Note:* There is currently a hard requirement for the OVRLipSync, this will be converted into an optional dependency later on. +
-The plugin itself is not compatible with UE 5.3, just use the fixed one from the Example implementation project linked above.
+*Note:* There is currently a hard requirement for the OVRLipSync, this will be converted into an optional dependency later on. 
+(OVRLipSync is not compatible with UE 5.3 out of the box, just use the fixed one from the Example implementation project linked above.)
 
 == Dev Progress
 
