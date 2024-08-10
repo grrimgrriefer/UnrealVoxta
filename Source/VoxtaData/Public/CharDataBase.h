@@ -30,6 +30,7 @@ public:
 protected:
 	UPROPERTY(BlueprintReadOnly)
 	FString m_id;
+
 	UPROPERTY(BlueprintReadOnly)
 	FString m_name;
 };

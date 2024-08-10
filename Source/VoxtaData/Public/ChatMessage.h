@@ -10,13 +10,14 @@
 ///
 /// NOTE: The text and audioUrls are appended with new info as more chunks are received.
 /// </summary>
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FChatMessage
 {
 	GENERATED_BODY()
 
 public:
 	// TODO: Add flag to indicate the message is complete and no further chunks are expected.
+	UPROPERTY(BlueprintReadOnly)
 	FString m_text;
 	TArray<FString> m_audioUrls;
 
@@ -40,7 +41,10 @@ public:
 
 	explicit FChatMessage() {};
 
-private:
+protected:
+	UPROPERTY(BlueprintReadOnly)
 	FString m_messageId;
+
+	UPROPERTY(BlueprintReadOnly)
 	FString m_charId;
 };

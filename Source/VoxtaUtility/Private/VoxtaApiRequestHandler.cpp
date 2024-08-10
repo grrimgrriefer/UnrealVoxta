@@ -7,8 +7,8 @@ FSignalRValue VoxtaApiRequestHandler::GetAuthenticateRequestData() const
 {
 	return FSignalRValue(TMap<FString, FSignalRValue> {
 		{ API_STRING("$type"), API_SIGNALR_STRING("authenticate") },
-		{ API_STRING("client"), API_SIGNALR_STRING("TalkToMeCppUE") },
-		{ API_STRING("clientVersion"), API_SIGNALR_STRING("0.0.1a") },
+		{ API_STRING("client"), API_SIGNALR_STRING("UnrealVoxta") },
+		{ API_STRING("clientVersion"), API_SIGNALR_STRING("0.0.1-preAlpha") },
 		{ API_STRING("scope"), FSignalRValue(TArray<FSignalRValue> { API_SIGNALR_STRING("role:app"), API_SIGNALR_STRING("broadcast:write") }) },
 		{ API_STRING("capabilities"), FSignalRValue(TMap<FString, FSignalRValue> {
 			{ API_STRING("audioInput"),  API_SIGNALR_STRING("WebSocketStream") },

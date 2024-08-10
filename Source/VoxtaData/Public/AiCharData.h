@@ -9,7 +9,7 @@
 /// <summary>
 /// Data struct that contains all the relevant information for an AI character.
 /// </summary>
-USTRUCT()
+USTRUCT(BlueprintType)
 struct VOXTADATA_API FAiCharData : public FCharDataBase
 {
 	GENERATED_BODY()
@@ -28,7 +28,8 @@ public:
 		m_creatorNotes(creatorNotes),
 		m_allowedExplicitContent(isExplicitContent),
 		m_isFavorite(isFavorite)
-	{}
+	{
+	}
 
 	explicit FAiCharData() : FCharDataBase() {}
 

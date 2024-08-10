@@ -10,7 +10,7 @@
 /// Read-only data struct containing all the relevant information for the
 /// character representing the User (player).
 /// </summary>
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FUserCharData : public FCharDataBase
 {
 	GENERATED_BODY()

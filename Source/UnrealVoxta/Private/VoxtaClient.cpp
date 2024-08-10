@@ -108,38 +108,54 @@ void UVoxtaClient::StartListeningToServer()
 
 void UVoxtaClient::OnReceivedMessage(const TArray<FSignalRValue>& arguments)
 {
-	if (m_currentState == VoxtaClientState::Disconnected || m_currentState == VoxtaClientState::Terminated)
-	{
-		UE_LOGFMT(VoxtaLog, Warning, "Tried to process a message with the connection already severed, skipping processing of remaining response data.");
-		return;
-	}
-	if (arguments.IsEmpty() || arguments[0].GetType() != FSignalRValue::EValueType::Object)
-	{
-		UE_LOGFMT(VoxtaLog, Error, "Received invalid message from server.");
-	}
-	else if (!HandleResponse(arguments[0].AsObject()))
-	{
-		UE_LOGFMT(VoxtaLog, Warning, "Received server response that is not (yet) supported: {type}",
-			arguments[0].AsObject()[API_STRING("$type")].AsString());
-	}
+	FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([&, Arguments = arguments] (float DeltaTime)
+		{
+			if (m_currentState == VoxtaClientState::Disconnected || m_currentState == VoxtaClientState::Terminated)
+			{
+				UE_LOGFMT(VoxtaLog, Warning, "Tried to process a message with the connection already severed, skipping processing of remaining response data.");
+				return false;
+			}
+			if (Arguments.IsEmpty() || Arguments[0].GetType() != FSignalRValue::EValueType::Object)
+			{
+				UE_LOGFMT(VoxtaLog, Error, "Received invalid message from server.");
+			}
+			else if (!HandleResponse(Arguments[0].AsObject()))
+			{
+				UE_LOGFMT(VoxtaLog, Warning, "Received server response that is not (yet) supported: {type}",
+					Arguments[0].AsObject()[API_STRING("$type")].AsString());
+			}
+			return false;
+		}));
 }
 
 void UVoxtaClient::OnConnected()
 {
-	UE_LOGFMT(VoxtaLog, Log, "VoxtaClient connected successfully");
-	SendMessageToServer(m_voxtaRequestApi.GetAuthenticateRequestData());
+	FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([&] (float DeltaTime)
+		{
+			UE_LOGFMT(VoxtaLog, Log, "VoxtaClient connected successfully");
+			SendMessageToServer(m_voxtaRequestApi.GetAuthenticateRequestData());
+			return false;
+		}));
 }
 
 void UVoxtaClient::OnConnectionError(const FString& error)
 {
-	UE_LOGFMT(VoxtaLog, Error, "VoxtaClient connection has encountered error: {error}.", error);
-	Disconnect();
+	FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([&, Error = error] (float DeltaTime)
+		{
+			UE_LOGFMT(VoxtaLog, Error, "VoxtaClient connection has encountered error: {error}.", Error);
+			Disconnect();
+			return false;
+		}));
 }
 
 void UVoxtaClient::OnClosed()
 {
-	UE_LOGFMT(VoxtaLog, Warning, "VoxtaClient connection has been closed.");
-	Disconnect();
+	FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([&] (float DeltaTime)
+		{
+			UE_LOGFMT(VoxtaLog, Warning, "VoxtaClient connection has been closed.");
+			Disconnect();
+			return false;
+		}));
 }
 
 void UVoxtaClient::SendMessageToServer(const FSignalRValue& message)
