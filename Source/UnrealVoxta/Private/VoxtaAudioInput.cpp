@@ -20,11 +20,15 @@ void UVoxtaAudioInput::InitializeSocket(const FString& serverIP,
 	m_sampleRate = sampleRate;
 	m_inputChannels = inputChannels;
 
-	m_audioWebSocket = MakeShared<AudioWebSocket>(serverIP, serverPort);
-	m_audioWebSocket->OnConnectedEvent.AddUObject(this, &UVoxtaAudioInput::OnSocketConnected);
-	m_audioWebSocket->OnConnectionErrorEvent.AddUObject(this, &UVoxtaAudioInput::OnSocketConnectionError);
-	m_audioWebSocket->OnClosedEvent.AddUObject(this, &UVoxtaAudioInput::OnSocketClosed);
-	m_audioWebSocket->Connect();
+	FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([&] (float DeltaTime)
+		{
+			m_audioWebSocket = MakeShared<AudioWebSocket>(serverIP, serverPort);
+			m_audioWebSocket->OnConnectedEvent.AddUObject(this, &UVoxtaAudioInput::OnSocketConnected);
+			m_audioWebSocket->OnConnectionErrorEvent.AddUObject(this, &UVoxtaAudioInput::OnSocketConnectionError);
+			m_audioWebSocket->OnClosedEvent.AddUObject(this, &UVoxtaAudioInput::OnSocketClosed);
+			m_audioWebSocket->Connect();
+			return false;
+		}));
 }
 
 void UVoxtaAudioInput::OnSocketConnected()

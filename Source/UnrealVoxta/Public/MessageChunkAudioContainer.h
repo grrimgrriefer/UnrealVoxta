@@ -38,6 +38,6 @@ private:
 	void ImportData();
 	void GenerateOvrLipSync();
 	void OnRequestComplete(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
-	void OnImportComplete(UImportedSoundWave* soundWave);
+	void OnImportComplete(USoundWaveProcedural* soundWave);
 	void UpdateState(MessageChunkState newState);
 };

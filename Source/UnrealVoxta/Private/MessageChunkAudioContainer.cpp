@@ -7,8 +7,8 @@
 MessageChunkAudioContainer::MessageChunkAudioContainer(const FString& fullUrl,
 	TFunction<void(const MessageChunkAudioContainer* newState)> callback,
 	int id)
-	: m_downloadUrl(fullUrl),
-	m_id(id),
+	: m_id(id),
+	m_downloadUrl(fullUrl),
 	onStateChanged(callback)
 {
 }
@@ -112,7 +112,7 @@ void MessageChunkAudioContainer::OnRequestComplete(FHttpRequestPtr request, FHtt
 	UpdateState(MessageChunkState::Idle_Downloaded);
 }
 
-void MessageChunkAudioContainer::OnImportComplete(UImportedSoundWave* soundWave)
+void MessageChunkAudioContainer::OnImportComplete(USoundWaveProcedural* soundWave)
 {
 	m_soundWave = soundWave;
 	m_soundWave->AddToRoot();

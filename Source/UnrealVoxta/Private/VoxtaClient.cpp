@@ -35,7 +35,7 @@ void UVoxtaClient::StartConnection()
 	}
 
 	m_hostAddress = TEXT("192.168.178.8");
-	m_hostPort = TEXT("5384");
+	m_hostPort = 5384;
 
 	SetState(VoxtaClientState::Connecting);
 	m_hub = GEngine->GetEngineSubsystem<USignalRSubsystem>()->CreateHubConnection(FString::Format(*API_STRING("http://{0}:{1}/hub"), {
@@ -88,12 +88,12 @@ const ChatSession* UVoxtaClient::GetChatSession() const
 	return m_chatSession.Get();
 }
 
-FStringView UVoxtaClient::GetServerAddress() const
+FString UVoxtaClient::GetServerAddress() const
 {
 	return m_hostAddress;
 }
 
-FStringView UVoxtaClient::GetServerPort() const
+int UVoxtaClient::GetServerPort() const
 {
 	return m_hostPort;
 }

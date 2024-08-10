@@ -15,8 +15,8 @@
 /// Public-facing class used to playback audio for a specific AI character.
 /// Receives the URLs used to download & import & play the audio.
 /// </summary>
-UCLASS(HideCategories = (Mobility, Rendering, LOD), Blueprintable, ClassGroup = Camera, meta = (BlueprintSpawnableComponent))
-class UNREALVOXTA_API UVoxtaAudioPlayback : public UActorComponent
+UCLASS(HideCategories = (Mobility, Rendering, LOD), ClassGroup = Voxta, meta = (BlueprintSpawnableComponent))
+class UNREALVOXTA_API UVoxtaAudioPlayback : public UAudioComponent
 {
 	GENERATED_BODY()
 public:
@@ -56,13 +56,12 @@ private:
 	UVoxtaClient* m_clientReference;
 	FString m_characterId;
 	FString m_messageId;
-	UAudioComponent* m_audioComponent;
 	TArray<MessageChunkAudioContainer> m_orderedAudio;
 
 	UOVRLipSyncPlaybackActorComponent* m_ovrLipSync;
 
 	FString m_hostAddress;
-	FString m_hostPort;
+	int m_hostPort;
 
 	bool isPlaying;
 	int currentAudioClip = 0;
@@ -86,7 +85,7 @@ private:
 	/// Will try to play the next audio component if available.
 	/// </summary>
 	UFUNCTION()
-	void OnAudioFinished();
+	void OnAudioPlaybackFinished();
 
 	void OnChunkStateChange(const MessageChunkAudioContainer* finishedChunk);
 

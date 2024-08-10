@@ -4,7 +4,6 @@
 
 UVoxtaAudioPlayback::UVoxtaAudioPlayback()
 {
-	m_audioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("AudioComponent"));
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
@@ -20,17 +19,14 @@ void UVoxtaAudioPlayback::InitializeAudioPlayback(UVoxtaClient* voxtaClient, FSt
 void UVoxtaAudioPlayback::BeginPlay()
 {
 	Super::BeginPlay();
-	m_audioComponent->OnAudioFinished.AddUniqueDynamic(this, &UVoxtaAudioPlayback::OnAudioFinished);
+	OnAudioFinished.AddUniqueDynamic(this, &UVoxtaAudioPlayback::OnAudioPlaybackFinished);
 	m_ovrLipSync = GetOwner()->FindComponentByClass<UOVRLipSyncPlaybackActorComponent>();;
 }
 
 void UVoxtaAudioPlayback::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
-	if (m_audioComponent)
-	{
-		m_audioComponent->OnAudioFinished.RemoveDynamic(this, &UVoxtaAudioPlayback::OnAudioFinished);
-	}
+	OnAudioFinished.RemoveDynamic(this, &UVoxtaAudioPlayback::OnAudioPlaybackFinished);
 	if (m_clientReference)
 	{
 		m_clientReference->VoxtaClientCharMessageAddedEvent.RemoveDynamic(this, &UVoxtaAudioPlayback::PlaybackMessage);
@@ -65,13 +61,13 @@ void UVoxtaAudioPlayback::TryPlayCurrentAudioChunk()
 	if (m_orderedAudio[currentAudioClip].m_state == MessageChunkState::ReadyForPlayback)
 	{
 		m_orderedAudio[currentAudioClip];
-		m_audioComponent->SetSound(m_orderedAudio[currentAudioClip].m_soundWave);
-		m_ovrLipSync->Start(m_audioComponent, m_orderedAudio[currentAudioClip].m_frameSequence);
+		SetSound(m_orderedAudio[currentAudioClip].m_soundWave);
+		m_ovrLipSync->Start(this, m_orderedAudio[currentAudioClip].m_frameSequence);
 		isPlaying = true;
 	}
 }
 
-void UVoxtaAudioPlayback::OnAudioFinished()
+void UVoxtaAudioPlayback::OnAudioPlaybackFinished()
 {
 	isPlaying = false;
 	currentAudioClip += 1;

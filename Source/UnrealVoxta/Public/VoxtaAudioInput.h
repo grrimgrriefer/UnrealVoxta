@@ -13,7 +13,7 @@
 /// Main public-facing class responsible for containing all AudioInput related logic.
 /// Takes care of both the microphone input, as well as sending it over a websocket to the VoxtaServer.
 /// </summary>
-UCLASS(HideCategories = (Mobility, Rendering, LOD), Blueprintable, ClassGroup = Camera, meta = (BlueprintSpawnableComponent))
+UCLASS(HideCategories = (Mobility, Rendering, LOD), ClassGroup = Voxta, meta = (BlueprintSpawnableComponent))
 class UNREALVOXTA_API UVoxtaAudioInput : public UActorComponent
 {
 	GENERATED_BODY()
@@ -28,6 +28,7 @@ public:
 	/// <param name="bufferMs">Microphone buffersize in Milliseconds. Bigger values is less taxing but introduces more delay.</param>
 	/// <param name="sampleRate">The samplerate used for microphone, 16000 is ideal due to serverside conversion.</param>
 	/// <param name="inputChannels">The input channels for the microphone, 1 is ideal.</param>
+	UFUNCTION(BlueprintCallable)
 	void InitializeSocket(const FString& serverIP,
 		int serverPort,
 		int bufferMs = 200,
@@ -42,18 +43,22 @@ public:
 	/// <summary>
 	/// Starts the voice capture, sending captured audiodata to the server in fixed timesteps (bufferMs).
 	/// </summary>
+	UFUNCTION(BlueprintCallable)
+
 	void StartStreaming();
 
 	/// <summary>
 	/// Stops the voice capture.
 	/// Note: This will cancel the last batch of audio data. (i.e. 0-200ms data lost)
 	/// </summary>
+	UFUNCTION(BlueprintCallable)
 	void StopStreaming();
 
 	/// <summary>
 	/// Returns true if the AudioCapture device is actively streaming data to the VoxtaServer.
 	/// </summary>
 	/// <returns>Returns true if the AudioCapture device is actively streaming data.</returns>
+	UFUNCTION(BlueprintCallable)
 	bool IsRecording() const;
 
 	// TODO: spaw this with decibels, amplitude is kinda useless.

@@ -21,7 +21,7 @@
 /// Main public-facing class, containing the stateful client for all Voxta utility.
 /// Provides a simple API wrapper for any external UI / Blueprints / other modules.
 /// </summary>
-UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
+UCLASS(HideCategories = (Mobility, Rendering, LOD), ClassGroup = Voxta, meta = (BlueprintSpawnableComponent))
 class UNREALVOXTA_API UVoxtaClient : public UActorComponent
 {
 	GENERATED_BODY()
@@ -94,6 +94,7 @@ public:
 	/// Main initializer for the VoxtaClient.
 	/// This will start the SignalR connection to the hub and begin listening to server responses.
 	/// </summary>
+	UFUNCTION(BlueprintCallable)
 	void StartConnection();
 
 	/// <summary>
@@ -101,6 +102,7 @@ public:
 	/// Note: There is no restart functionality at the time being, so only disconnect when you intend to
 	/// fully stop using Voxta for the remainder of the play session.
 	/// </summary>
+	UFUNCTION(BlueprintCallable)
 	void Disconnect(bool silent = false);
 
 	/// <summary>
@@ -108,14 +110,14 @@ public:
 	/// Note: This will only work if the id matches the id of a registered character in the client.
 	/// </summary>
 	/// <param name="charId">The FCharDataBase::m_id of the character that you want to load.</param>
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void StartChatWithCharacter(FString charId);
 
 	/// <summary>
 	/// Inform the server that the user has said something.
 	/// Note: Autoreply is enabled by default so this will always trigger a reponse from the AI character.
 	/// </summary>
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void SendUserInput(FString inputText);
 
 	/// <summary>
@@ -127,8 +129,12 @@ public:
 	void NotifyAudioPlaybackComplete(const FString& messageId);
 
 	const ChatSession* GetChatSession() const;
-	FStringView GetServerAddress() const;
-	FStringView GetServerPort() const;
+
+	UFUNCTION(BlueprintCallable)
+	FString GetServerAddress() const;
+
+	UFUNCTION(BlueprintCallable)
+	int GetServerPort() const;
 
 private:
 	VoxtaLogger m_logUtility;
@@ -142,7 +148,7 @@ private:
 	TUniquePtr<ChatSession> m_chatSession;
 
 	FString m_hostAddress;
-	FString m_hostPort;
+	int m_hostPort;
 
 	const FString m_sendMessageEventName = TEXT("SendMessage");
 	const FString m_receiveMessageEventName = TEXT("ReceiveMessage");
