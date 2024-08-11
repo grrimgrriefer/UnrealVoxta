@@ -10,6 +10,25 @@ public class VoxtaUtility : ModuleRules
 
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "AudioUtility", "VoxtaData", "SignalR", "HTTP", "Voice" });
 
-		PrivateDependencyModuleNames.AddRange(new string[] { });
+		// There has to be a cleaner way to do this lmao
+		bool projectHasOvrLipSync = false;
+		try
+		{
+			projectHasOvrLipSync = !string.IsNullOrWhiteSpace(GetModuleDirectory("OVRLipSync"));
+		}
+		catch (BuildException)
+		{
+			projectHasOvrLipSync = false;
+		}
+
+		if (projectHasOvrLipSync)
+		{
+			PublicDependencyModuleNames.Add("OVRLipSync");
+			PublicDefinitions.Add("WITH_OVRLIPSYNC=1");
+		}
+		else
+		{
+			PublicDefinitions.Add("WITH_OVRLIPSYNC=0");
+		}
 	}
 }

@@ -8,7 +8,9 @@
 #include "Components/AudioComponent.h"
 #include "AudioUtility/Public/RuntimeAudioImporter/RuntimeAudioImporterLibrary.h"
 #include "MessageChunkAudioContainer.h"
+#if WITH_OVRLIPSYNC
 #include "OVRLipSyncPlaybackActorComponent.h"
+#endif
 #include "VoxtaAudioPlayback.generated.h"
 
 /// <summary>
@@ -52,13 +54,18 @@ protected:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	///~ End UActorComponent overrides.
 
+	UPROPERTY(EditAnywhere)
+	LipSyncType m_lipSyncType;
+
 private:
 	UVoxtaClient* m_clientReference;
 	FString m_characterId;
 	FString m_messageId;
 	TArray<MessageChunkAudioContainer> m_orderedAudio;
 
+#if WITH_OVRLIPSYNC
 	UOVRLipSyncPlaybackActorComponent* m_ovrLipSync;
+#endif
 
 	FString m_hostAddress;
 	int m_hostPort;

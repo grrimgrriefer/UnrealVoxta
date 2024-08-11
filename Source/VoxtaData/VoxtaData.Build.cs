@@ -1,4 +1,5 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details. Copyright Epic Games, Inc. All
+// Rights Reserved.
 
 using UnrealBuildTool;
 
@@ -10,6 +11,25 @@ public class VoxtaData : ModuleRules
 
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "VoxtaData" });
 
-		PrivateDependencyModuleNames.AddRange(new string[] { });
+		// There has to be a cleaner way to do this lmao
+		bool projectHasOvrLipSync = false;
+		try
+		{
+			projectHasOvrLipSync = !string.IsNullOrWhiteSpace(GetModuleDirectory("OVRLipSync"));
+		}
+		catch (BuildException)
+		{
+			projectHasOvrLipSync = false;
+		}
+
+		if (projectHasOvrLipSync)
+		{
+			PublicDependencyModuleNames.Add("OVRLipSync");
+			PublicDefinitions.Add("WITH_OVRLIPSYNC=1");
+		}
+		else
+		{
+			PublicDefinitions.Add("WITH_OVRLIPSYNC=0");
+		}
 	}
 }

@@ -24,7 +24,8 @@
   "Plugins": [
     {
       "Name": "OVRLipSync",
-      "Enabled": true
+      "Enabled": true,
+	  "Optional": true
     }
   ]
 }

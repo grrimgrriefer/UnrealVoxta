@@ -20,7 +20,9 @@ void UVoxtaAudioPlayback::BeginPlay()
 {
 	Super::BeginPlay();
 	OnAudioFinished.AddUniqueDynamic(this, &UVoxtaAudioPlayback::OnAudioPlaybackFinished);
-	m_ovrLipSync = GetOwner()->FindComponentByClass<UOVRLipSyncPlaybackActorComponent>();;
+#if WITH_OVRLIPSYNC
+	m_ovrLipSync = GetOwner()->FindComponentByClass<UOVRLipSyncPlaybackActorComponent>();
+#endif
 }
 
 void UVoxtaAudioPlayback::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -49,6 +51,7 @@ void UVoxtaAudioPlayback::PlaybackMessage(const FCharDataBase& sender, const FCh
 		{
 			m_orderedAudio.Add(MessageChunkAudioContainer(
 				FString::Format(*FString(TEXT("http://{0}:{1}{2}")), { m_hostAddress, m_hostPort, message.m_audioUrls[i] }),
+				m_lipSyncType,
 				[&] (const MessageChunkAudioContainer* chunk) { OnChunkStateChange(chunk); },
 				i));
 		}
@@ -60,9 +63,29 @@ void UVoxtaAudioPlayback::TryPlayCurrentAudioChunk()
 {
 	if (m_orderedAudio[currentAudioClip].m_state == MessageChunkState::ReadyForPlayback)
 	{
-		m_orderedAudio[currentAudioClip];
 		SetSound(m_orderedAudio[currentAudioClip].m_soundWave);
-		m_ovrLipSync->Start(this, m_orderedAudio[currentAudioClip].m_frameSequence);
+
+		// TODO: move this to somewhere else if things get too complicated
+		switch (m_orderedAudio[currentAudioClip].m_lipSyncType)
+		{
+			case LipSyncType::None:
+				Play();
+				break;
+			case LipSyncType::Custom:
+				UE_LOG(LogTemp, Error, TEXT("TODO: add blueprint support for this"));
+				break;
+			case LipSyncType::OVRLipSync:
+#if WITH_OVRLIPSYNC
+				m_ovrLipSync->Start(this, m_orderedAudio[currentAudioClip].m_lipSyncData.GetOvrLipSyncData());
+#else
+				UE_LOG(LogTemp, Error, TEXT("OvrLipSync was selected, but the module is not present in the project."));
+#endif
+				break;
+			default:
+				UE_LOG(LogTemp, Error, TEXT("Unsupported selection for LipSync, this should never happen."));
+				break;
+		}
+
 		isPlaying = true;
 	}
 }

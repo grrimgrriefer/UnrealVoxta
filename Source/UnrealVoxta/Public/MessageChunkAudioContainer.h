@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Sound/SoundWaveProcedural.h"
-#include "OVRLipSyncFrame.h"
+#include "LipSyncData.h"
 #include "Runtime/Online/HTTP/Public/Http.h"
 
 enum class MessageChunkState : uint8
@@ -19,14 +19,18 @@ enum class MessageChunkState : uint8
 class MessageChunkAudioContainer
 {
 public:
-	MessageChunkAudioContainer(const FString& fullUrl, TFunction<void(const MessageChunkAudioContainer* newState)> callback, int id);
+	MessageChunkAudioContainer(const FString& fullUrl,
+		LipSyncType lipSyncType,
+		TFunction<void(const MessageChunkAudioContainer* newState)> callback,
+		int id);
 
 	void Continue();
 	void CleanupData();
 
 	const int m_id;
+	const LipSyncType m_lipSyncType;
 	USoundWaveProcedural* m_soundWave;
-	UOVRLipSyncFrameSequence* m_frameSequence;
+	FLipSyncData m_lipSyncData;
 	MessageChunkState m_state = MessageChunkState::Idle;
 
 private:
@@ -36,8 +40,9 @@ private:
 
 	void DownloadData();
 	void ImportData();
-	void GenerateOvrLipSync();
+	void GenerateLipSync();
 	void OnRequestComplete(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
 	void OnImportComplete(USoundWaveProcedural* soundWave);
+	void OnLipSyncGenComplete(FLipSyncData lipSyncData);
 	void UpdateState(MessageChunkState newState);
 };
