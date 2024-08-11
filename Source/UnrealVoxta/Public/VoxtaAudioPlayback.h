@@ -43,12 +43,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void InitializeAudioPlayback(UVoxtaClient* voxtaClient, const FString& characterId);
 
-	/// <summary>
-	/// Returns true if this component is busy playing audio.
-	/// </summary>
-	/// <returns>Returns true if this component is busy playing audio.</returns>
-	bool IsPlaying() const;
-
 	///~ Begin UActorComponent overrides.
 protected:
 	virtual void BeginPlay() override;

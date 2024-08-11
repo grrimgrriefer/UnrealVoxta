@@ -62,6 +62,7 @@ public:
 	bool IsRecording() const;
 
 	// TODO: spaw this with decibels, amplitude is kinda useless.
+	UFUNCTION(BlueprintCallable)
 	float GetNormalizedAmplitude() const;
 
 	/// <summary>
@@ -69,6 +70,7 @@ public:
 	/// The formatting has no fixed standards.
 	/// </summary>
 	/// <returns></returns>
+	UFUNCTION(BlueprintCallable)
 	FString GetInputDeviceName() const;
 
 	///~ Begin UActorComponent overrides.

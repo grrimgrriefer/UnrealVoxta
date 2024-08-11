@@ -35,11 +35,6 @@ void UVoxtaAudioPlayback::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 }
 
-bool UVoxtaAudioPlayback::IsPlaying() const
-{
-	return isPlaying;
-}
-
 void UVoxtaAudioPlayback::PlaybackMessage(const FCharDataBase& sender, const FChatMessage& message)
 {
 	if (sender.GetId() == m_characterId)
