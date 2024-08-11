@@ -19,6 +19,7 @@ public:
 	// TODO: Add flag to indicate the message is complete and no further chunks are expected.
 	UPROPERTY(BlueprintReadOnly)
 	FString m_text;
+
 	TArray<FString> m_audioUrls;
 
 	FStringView GetMessageId() const { return m_messageId; };

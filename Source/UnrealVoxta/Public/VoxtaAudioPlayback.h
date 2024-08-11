@@ -28,7 +28,7 @@ public:
 	/// Event fired when the UAudioComponent reports that the audio has finished playing.
 	/// </summary>
 	UPROPERTY(BlueprintAssignable, Category = "Events")
-	FVoxtaMessageAudioPlaybackCompleted VoxtaMessageAudioPlaybackEvent;
+	FVoxtaMessageAudioPlaybackCompleted VoxtaMessageAudioPlaybackFinishedEvent;
 
 	/// <summary>
 	/// Adds the Audiocomponent as sub-object, enables ticks and also initializes the importerLibraryUtility.
@@ -40,7 +40,8 @@ public:
 	/// </summary>
 	/// <param name="voxtaClient">A pointer to the client, used to subscribe & unsubscribe to the messageEvents.</param>
 	/// <param name="characterId">The ID of the character for which this component will be playing the audio.</param>
-	void InitializeAudioPlayback(UVoxtaClient* voxtaClient, FStringView characterId);
+	UFUNCTION(BlueprintCallable)
+	void InitializeAudioPlayback(UVoxtaClient* voxtaClient, const FString& characterId);
 
 	/// <summary>
 	/// Returns true if this component is busy playing audio.

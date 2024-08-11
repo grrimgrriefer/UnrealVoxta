@@ -32,7 +32,7 @@ public:
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FVoxtaClientCharMessageAddedEventCallback, const FCharDataBase&, sender, const FChatMessage&, message);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientCharMessageRemovedEventCallback, const FChatMessage&, message);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientSpeechTranscribedEventCallback, const FString&, message);
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientChatSessionStartedCallback, const FString&, sessionId);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientChatSessionStartedCallback, const FChatSession&, chatSession);
 
 	/// <summary>
 	/// Custom constructor to ensure that gameticks are disabled.
@@ -125,10 +125,10 @@ public:
 	/// Is requird to enable speech recognition on the serverside, to whatever is sent via the audio socket.
 	/// </summary>
 	/// <param name="messageId">The ID of the message that has completed the playback on the client.</param>
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void NotifyAudioPlaybackComplete(const FString& messageId);
 
-	const ChatSession* GetChatSession() const;
+	const FChatSession* GetChatSession() const;
 
 	UFUNCTION(BlueprintCallable)
 	FString GetServerAddress() const;
@@ -145,7 +145,7 @@ private:
 	VoxtaClientState m_currentState = VoxtaClientState::Disconnected;
 	TUniquePtr<FUserCharData> m_userData;
 	TArray<TUniquePtr<const FAiCharData>> m_characterList;
-	TUniquePtr<ChatSession> m_chatSession;
+	TUniquePtr<FChatSession> m_chatSession;
 
 	FString m_hostAddress;
 	int m_hostPort;

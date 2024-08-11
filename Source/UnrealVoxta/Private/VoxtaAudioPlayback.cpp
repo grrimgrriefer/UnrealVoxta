@@ -7,7 +7,7 @@ UVoxtaAudioPlayback::UVoxtaAudioPlayback()
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
-void UVoxtaAudioPlayback::InitializeAudioPlayback(UVoxtaClient* voxtaClient, FStringView characterId)
+void UVoxtaAudioPlayback::InitializeAudioPlayback(UVoxtaClient* voxtaClient, const FString& characterId)
 {
 	m_characterId = characterId;
 	m_clientReference = voxtaClient;
@@ -101,7 +101,7 @@ void UVoxtaAudioPlayback::OnAudioPlaybackFinished()
 	else
 	{
 		UE_LOG(LogTemp, Log, TEXT("Playback finished."));
-		VoxtaMessageAudioPlaybackEvent.Broadcast(m_messageId);
+		VoxtaMessageAudioPlaybackFinishedEvent.Broadcast(m_messageId);
 		Cleanup();
 	}
 }

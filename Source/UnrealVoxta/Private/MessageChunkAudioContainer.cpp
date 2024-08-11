@@ -18,7 +18,10 @@ MessageChunkAudioContainer::MessageChunkAudioContainer(const FString& fullUrl,
 void MessageChunkAudioContainer::CleanupData()
 {
 	m_soundWave->RemoveFromRoot();
-	m_lipSyncData.CleanupData();
+	if (m_lipSyncType != LipSyncType::None)
+	{
+		m_lipSyncData.CleanupData();
+	}
 }
 
 void MessageChunkAudioContainer::Continue()
@@ -32,7 +35,14 @@ void MessageChunkAudioContainer::Continue()
 			ImportData();
 			break;
 		case MessageChunkState::Idle_Imported:
-			GenerateLipSync();
+			if (m_lipSyncType == LipSyncType::None)
+			{
+				UpdateState(MessageChunkState::ReadyForPlayback);
+			}
+			else
+			{
+				GenerateLipSync();
+			}
 			break;
 		case MessageChunkState::Busy:
 		case MessageChunkState::ReadyForPlayback:

@@ -73,17 +73,17 @@ void UVoxtaClient::StartChatWithCharacter(FString charId)
 void UVoxtaClient::SendUserInput(FString inputText)
 {
 	// TODO: check if we are in chatting state before sending user input
-	SendMessageToServer(m_voxtaRequestApi.GetSendUserMessageData(m_chatSession->m_sessionId, inputText));
+	SendMessageToServer(m_voxtaRequestApi.GetSendUserMessageData(m_chatSession->GetSessionId(), inputText));
 	SetState(VoxtaClientState::GeneratingReply);
 }
 
 void UVoxtaClient::NotifyAudioPlaybackComplete(const FString& messageId)
 {
-	SendMessageToServer(m_voxtaRequestApi.GetNotifyAudioPlaybackCompleteData(m_chatSession->m_sessionId, messageId));
+	SendMessageToServer(m_voxtaRequestApi.GetNotifyAudioPlaybackCompleteData(m_chatSession->GetSessionId(), messageId));
 	SetState(VoxtaClientState::WaitingForUser);
 }
 
-const ChatSession* UVoxtaClient::GetChatSession() const
+const FChatSession* UVoxtaClient::GetChatSession() const
 {
 	return m_chatSession.Get();
 }
@@ -286,9 +286,9 @@ bool UVoxtaClient::HandleChatStartedResponse(const ServerResponseChatStarted& re
 		return false;
 	}
 
-	m_chatSession = MakeUnique<ChatSession>(characters, response.m_chatId,
+	m_chatSession = MakeUnique<FChatSession>(characters, response.m_chatId,
 		response.m_sessionId, response.m_services);
-	VoxtaClientChatSessionStartedEvent.Broadcast(response.m_sessionId);
+	VoxtaClientChatSessionStartedEvent.Broadcast(*m_chatSession.Get());
 	SetState(VoxtaClientState::GeneratingReply);
 	return true;
 }
@@ -302,31 +302,31 @@ bool UVoxtaClient::HandleChatMessageResponse(const IServerResponseChatMessageBas
 		case MessageStart:
 		{
 			auto derivedResponse = StaticCast<const ServerResponseChatMessageStart*>(&response);
-			messages.Emplace(MakeUnique<FChatMessage>(
+			messages.Emplace(FChatMessage(
 				derivedResponse->m_messageId, derivedResponse->m_senderId));
 			break;
 		}
 		case MessageChunk:
 		{
 			auto derivedResponse = StaticCast<const ServerResponseChatMessageChunk*>(&response);
-			auto chatMessage = messages.FindByPredicate([derivedResponse] (const TUniquePtr<FChatMessage>& InItem)
+			auto chatMessage = messages.FindByPredicate([derivedResponse] (const FChatMessage& InItem)
 				{
-					return InItem->GetMessageId() == derivedResponse->m_messageId;
+					return InItem.GetMessageId() == derivedResponse->m_messageId;
 				});
 			if (chatMessage)
 			{
-				(*chatMessage)->m_text.Append((*chatMessage)->m_text.IsEmpty() ? derivedResponse->m_messageText
+				(*chatMessage).m_text.Append((*chatMessage).m_text.IsEmpty() ? derivedResponse->m_messageText
 					: FString::Format(*API_STRING(" {0}"), { derivedResponse->m_messageText }));
-				(*chatMessage)->m_audioUrls.Emplace(derivedResponse->m_audioUrlPath);
+				(*chatMessage).m_audioUrls.Emplace(derivedResponse->m_audioUrlPath);
 			}
 			break;
 		}
 		case MessageEnd:
 		{
 			auto derivedResponse = StaticCast<const ServerResponseChatMessageEnd*>(&response);
-			auto chatMessage = messages.FindByPredicate([derivedResponse] (const TUniquePtr<FChatMessage>& InItem)
+			auto chatMessage = messages.FindByPredicate([derivedResponse] (const FChatMessage& InItem)
 				{
-					return InItem->GetMessageId() == derivedResponse->m_messageId;
+					return InItem.GetMessageId() == derivedResponse->m_messageId;
 				});
 			if (chatMessage)
 			{
@@ -336,9 +336,9 @@ bool UVoxtaClient::HandleChatMessageResponse(const IServerResponseChatMessageBas
 					});
 				if (character)
 				{
-					UE_LOGFMT(VoxtaLog, Log, "Char speaking message end: {0} -> {1}", character->Get()->GetName(), chatMessage->Get()->m_text);
+					UE_LOGFMT(VoxtaLog, Log, "Char speaking message end: {0} -> {1}", character->Get()->GetName(), chatMessage->m_text);
 					SetState(VoxtaClientState::AudioPlayback);
-					VoxtaClientCharMessageAddedEvent.Broadcast(*character->Get(), *chatMessage->Get());
+					VoxtaClientCharMessageAddedEvent.Broadcast(*character->Get(), *chatMessage);
 				}
 			}
 			break;
@@ -346,13 +346,12 @@ bool UVoxtaClient::HandleChatMessageResponse(const IServerResponseChatMessageBas
 		case MessageCancelled:
 		{
 			auto derivedResponse = StaticCast<const ServerResponseChatMessageCancelled*>(&response);
-			int index = messages.IndexOfByPredicate([derivedResponse] (const TUniquePtr<FChatMessage>& InItem)
+			int index = messages.IndexOfByPredicate([derivedResponse] (const FChatMessage& InItem)
 				{
-					return InItem->GetMessageId() == derivedResponse->m_messageId;
+					return InItem.GetMessageId() == derivedResponse->m_messageId;
 				});
-			VoxtaClientCharMessageRemovedEvent.Broadcast(*messages[index].Get());
+			VoxtaClientCharMessageRemovedEvent.Broadcast(messages[index]);
 
-			messages[index].Reset();
 			messages.RemoveAt(index);
 		}
 	}
@@ -361,28 +360,28 @@ bool UVoxtaClient::HandleChatMessageResponse(const IServerResponseChatMessageBas
 
 bool UVoxtaClient::HandleChatUpdateResponse(const ServerResponseChatUpdate& response)
 {
-	if (response.m_sessionId == m_chatSession->m_sessionId)
+	if (response.m_sessionId == m_chatSession->GetSessionId())
 	{
-		if (m_chatSession->m_chatMessages.ContainsByPredicate([response] (const TUniquePtr<FChatMessage>& InItem)
+		if (m_chatSession->m_chatMessages.ContainsByPredicate([response] (const FChatMessage& InItem)
 			{
-				return InItem->GetMessageId() == response.m_messageId;
+				return InItem.GetMessageId() == response.m_messageId;
 			}))
 		{
 			UE_LOGFMT(VoxtaLog, Error, "Recieved chat update for a message that already exists, needs implementation. {0} {1}", response.m_senderId, response.m_text);
 		}
 		else
 		{
-			m_chatSession->m_chatMessages.Emplace(MakeUnique<FChatMessage>(response.m_messageId, response.m_senderId, response.m_text));
+			m_chatSession->m_chatMessages.Emplace(FChatMessage(response.m_messageId, response.m_senderId, response.m_text));
 			if (m_userData.Get()->GetId() != response.m_senderId)
 			{
 				UE_LOGFMT(VoxtaLog, Error, "Recieved chat update for a non-user character, needs implementation. {0} {1}", response.m_senderId, response.m_text);
 			}
-			auto chatMessage = m_chatSession->m_chatMessages.FindByPredicate([response] (const TUniquePtr<FChatMessage>& InItem)
+			auto chatMessage = m_chatSession->m_chatMessages.FindByPredicate([response] (const FChatMessage& InItem)
 				{
-					return InItem->GetMessageId() == response.m_messageId;
+					return InItem.GetMessageId() == response.m_messageId;
 				});
-			UE_LOGFMT(VoxtaLog, Log, "Char speaking message end: {0} -> {1}", m_userData.Get()->GetName(), chatMessage->Get()->m_text);
-			VoxtaClientCharMessageAddedEvent.Broadcast(*m_userData.Get(), *chatMessage->Get());
+			UE_LOGFMT(VoxtaLog, Log, "Char speaking message end: {0} -> {1}", m_userData.Get()->GetName(), chatMessage->m_text);
+			VoxtaClientCharMessageAddedEvent.Broadcast(*m_userData.Get(), *chatMessage);
 		}
 	}
 	else
