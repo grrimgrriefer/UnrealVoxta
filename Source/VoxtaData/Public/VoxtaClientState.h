@@ -10,13 +10,13 @@
 UENUM(BlueprintType)
 enum class VoxtaClientState : uint8
 {
-	Disconnected		UMETA(DisplayName = "Disconnected"),
-	Connecting			UMETA(DisplayName = "Connecting"),
-	Authenticated		UMETA(DisplayName = "Authenticated"),
-	CharacterLobby		UMETA(DisplayName = "CharacterLobby"),
-	StartingChat		UMETA(DisplayName = "StartingChat"),
-	GeneratingReply		UMETA(DisplayName = "GeneratingReply"),
-	AudioPlayback		UMETA(DisplayName = "AudioPlayback"),
-	WaitingForUser		UMETA(DisplayName = "WaitingForUser"),
-	Terminated			UMETA(DisplayName = "Terminated")
+	Disconnected			UMETA(DisplayName = "Disconnected"),
+	AttemptingToConnect		UMETA(DisplayName = "AttemptingToConnect"),
+	Authenticated			UMETA(DisplayName = "Authenticated"),
+	Idle					UMETA(DisplayName = "Idle"),
+	StartingChat			UMETA(DisplayName = "StartingChat"),
+	GeneratingReply			UMETA(DisplayName = "GeneratingReply"),
+	AudioPlayback			UMETA(DisplayName = "AudioPlayback"),
+	WaitingForUserReponse	UMETA(DisplayName = "WaitingForUserReponse"),
+	Terminated				UMETA(DisplayName = "Terminated")
 };

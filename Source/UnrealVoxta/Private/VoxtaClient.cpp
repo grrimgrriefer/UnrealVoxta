@@ -26,7 +26,7 @@ void UVoxtaClient::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 }
 
-void UVoxtaClient::StartConnection()
+void UVoxtaClient::StartConnection(const FString& ipv4Address, int port)
 {
 	if (m_currentState != VoxtaClientState::Disconnected)
 	{
@@ -34,10 +34,9 @@ void UVoxtaClient::StartConnection()
 		return;
 	}
 
-	m_hostAddress = TEXT("192.168.178.8");
-	m_hostPort = 5384;
+	m_hostAddress = ipv4Address;
+	m_hostPort = port;
 
-	SetState(VoxtaClientState::Connecting);
 	m_hub = GEngine->GetEngineSubsystem<USignalRSubsystem>()->CreateHubConnection(FString::Format(*API_STRING("http://{0}:{1}/hub"), {
 		m_hostAddress,
 		m_hostPort
@@ -45,6 +44,7 @@ void UVoxtaClient::StartConnection()
 
 	StartListeningToServer();
 	m_hub->Start();
+	SetState(VoxtaClientState::AttemptingToConnect);
 
 	UE_LOGFMT(VoxtaLog, Log, "Starting Voxta client");
 }
@@ -80,7 +80,7 @@ void UVoxtaClient::SendUserInput(FString inputText)
 void UVoxtaClient::NotifyAudioPlaybackComplete(const FString& messageId)
 {
 	SendMessageToServer(m_voxtaRequestApi.GetNotifyAudioPlaybackCompleteData(m_chatSession->GetSessionId(), messageId));
-	SetState(VoxtaClientState::WaitingForUser);
+	SetState(VoxtaClientState::WaitingForUserReponse);
 }
 
 const FChatSession* UVoxtaClient::GetChatSession() const
@@ -236,7 +236,7 @@ bool UVoxtaClient::HandleCharacterListResponse(const ServerResponseCharacterList
 		m_characterList.Emplace(MakeUnique<FAiCharData>(charElement));
 		VoxtaClientCharacterRegisteredEvent.Broadcast(charElement);
 	}
-	SetState(VoxtaClientState::CharacterLobby);
+	SetState(VoxtaClientState::Idle);
 	return true;
 }
 
@@ -401,7 +401,7 @@ bool UVoxtaClient::HandleSpeechTranscriptionResponse(const ServerResponseSpeechT
 			VoxtaClientSpeechTranscribedPartialEvent.Broadcast(response.m_transcribedSpeech);
 			break;
 		case END:
-			if (m_currentState == VoxtaClientState::WaitingForUser)
+			if (m_currentState == VoxtaClientState::WaitingForUserReponse)
 			{
 				VoxtaClientSpeechTranscribedCompleteEvent.Broadcast(response.m_transcribedSpeech);
 				SendUserInput(response.m_transcribedSpeech);

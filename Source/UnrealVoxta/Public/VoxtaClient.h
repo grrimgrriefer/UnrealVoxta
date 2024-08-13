@@ -39,13 +39,6 @@ public:
 	/// </summary>
 	UVoxtaClient();
 
-	///~ Begin UActorComponent overrides.
-protected:
-	virtual void BeginPlay() override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-	///~ End UActorComponent overrides.
-
-public:
 	/// <summary>
 	/// Event fired when the internal VoxtaClient has finished transitioning to a different state.
 	/// </summary>
@@ -95,7 +88,7 @@ public:
 	/// This will start the SignalR connection to the hub and begin listening to server responses.
 	/// </summary>
 	UFUNCTION(BlueprintCallable)
-	void StartConnection();
+	void StartConnection(const FString& ipv4Address, int port);
 
 	/// <summary>
 	/// Stops the SignalR connection and terminates the SignalR connection.
@@ -148,7 +141,7 @@ private:
 	TUniquePtr<FChatSession> m_chatSession;
 
 	FString m_hostAddress;
-	int m_hostPort;
+	uint16 m_hostPort;
 
 	const FString m_sendMessageEventName = TEXT("SendMessage");
 	const FString m_receiveMessageEventName = TEXT("ReceiveMessage");
@@ -199,6 +192,12 @@ private:
 	bool HandleChatUpdateResponse(const ServerResponseChatUpdate& response);
 	bool HandleSpeechTranscriptionResponse(const ServerResponseSpeechTranscription& response);
 	//~ End individual handlers for different VoxtaServer responses.
+
+	///~ Begin UActorComponent overrides.
+protected:
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	///~ End UActorComponent overrides.
 
 	///~ Begin event-listeners for the IHubConnection interface
 private:

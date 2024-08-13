@@ -17,7 +17,7 @@ public:
 	/// </summary>
 	/// <param name="serverIP">The host IP address. (ipv4)</param>
 	/// <param name="serverPort">The host port.</param>
-	AudioWebSocket(const FString& serverIP, int serverPort);
+	AudioWebSocket(const FString& serverIP, uint16 serverPort);
 
 	/// <summary>
 	/// Create the websocket through FWebSocketsModule and start up the connection.
@@ -67,5 +67,5 @@ private:
 	TSharedPtr<IWebSocket> m_socketConnection;
 
 	FString m_serverIP;
-	int m_serverPort;
+	uint16 m_serverPort;
 };

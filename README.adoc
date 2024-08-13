@@ -3,53 +3,44 @@
 _Made in collaboration with https://twitter.com/DZnnah[DZnnah]_ +
 
 This repo contains the Unreal-Engine (5.3) port of the https://github.com/grrimgrriefer/TalkToMeCPP[TalkToMeCPP (Windows c++)] +
-*Note:* Uses MIT licensed SignalR client: link:Source/SignalR/License.txt[LICENSE] +
-*Note:* Uses MIT licensed wav-decoding from the RuntimeAudioImporter: link:Source/AudioUtility/Public/RuntimeAudioImporter/LICENSE.txt[LICENSE] +
 
-If you like C++ you can already use this, for blueprint API: please come back in late September. 
+== Third party code Licenses
 
-== Example implementation project
-
-.Available here: https://dev.azure.com/grrimgrriefer/_git/UnrealVoxtaTestProject 
-. Clone the repository. *(Note: both this and the project repo use Git LFS)*
-. In the VoxtaClient.cpp, make sure you swap the IP address to the address that you use to host VoxtaServer.
-. Recompile the project (or use livecoding in-engine)
-. Open the VoxtaTestProject.uproject
-. Ensure you have Voxta open & properly configured.
-. Press play
-
-== Structure
-
-.The code is separated in 5 modules
-* AudioUtility: Contains all the logic in regards to audioplayback and audio input
-* SignalR: Contains the Unreal port of the SignalR c++ client.
-* UnrealVoxta: A stateful client for the encapsulation of the Voxta server API.
-* VoxtaData: The models which encapsulate the Voxta data in easy-to-use data objects. (i.e. data structs)
-* VoxtaUtility: Wrappers for communicating with the Voxta Server API, also includes Logging and utility-specific defines.
-
-*Note:* There is currently a hard requirement for the OVRLipSync, this will be converted into an optional dependency later on. 
-(OVRLipSync is not compatible with UE 5.3 out of the box, just use the fixed one from the Example implementation project linked above.)
+. SignalR client (MIT license): link:Source/SignalR/License.txt[LICENSE] +
+. RuntimeAudioImporter (MIT licensed): link:Source/AudioUtility/Public/RuntimeAudioImporter/LICENSE.txt[LICENSE] +
 
 == Dev Progress
 
-[ :heavy_check_mark: ]   Project set-up (SignalR, Logging, C++ module separation, etc)
+Trello board: +
+https://trello.com/b/Biv7Si4l/unrealvoxta
 
-[ :heavy_check_mark: ]   Port text-chat code from TalkToMeCPP to Unreal
+== How to use
 
-[ :heavy_check_mark: ]   Add temporary UI for debugging
+=== Example project
 
-[ :heavy_check_mark: ]   Code cleanup & refactoring
+Full project including all relevant dependencies. (MIT license) + 
+https://dev.azure.com/grrimgrriefer/_git/UnrealVoxtaTestProject 
 
-[ :heavy_check_mark: ]   Swap windows audio API for UE to ensure cross-platform compatibility
+=== Example blueprints
 
-[ :heavy_check_mark: ]   Code cleanup & refactoring 2: the quest for better code
+The plugin contains several 'minimal' plugins to help demonstrate the usage. These are not required to be used but can help as 
+a guidance on how to implement certain features. +
+link:Content/ExampleSetup[Example setup] +
+Tutorial video: TODO
 
-[ :heavy_check_mark: ]   Wrap modules into a plugin
+=== Blueprint usage
 
-[ :heavy_check_mark: ]   Hook up OVR lipsync to the audioplayback & to a default MetaHuman.
+==== VoxtaClient
+ActorComponent that 'owns' the main connection and manages the state of the client in order to communicate with the VoxtaServer. + 
 
-[ :fire: ]   Code cleanup & refactoring 3: Revenge of the syntax
+TODO: images that show the main utilities
 
-[ :black_square_button: ]   Expose main functionality to blueprints & use them to replace the C++ bindings atm
+==== VoxtaAudioInput
+ActorComponent that 'owns' the connection between the microphone and the VoxtaServer. + 
 
-[ :black_square_button: ]   Make a full demo application to show the capabilities of the plugin
+TODO: images that show the main utilities
+
+==== VoxtaAudioPlayback
+ActorComponent that can be used to play the audio for one (1) character. Multiple components an be used for multiple character scenarios. + 
+
+TODO: images that show the main utilities

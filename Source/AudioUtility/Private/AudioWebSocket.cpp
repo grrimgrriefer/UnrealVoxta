@@ -4,7 +4,7 @@
 #include "RuntimeAudioImporter/AudioStructs.h"
 #include "Logging/StructuredLog.h"
 
-AudioWebSocket::AudioWebSocket(const FString& serverIP, int serverPort) :
+AudioWebSocket::AudioWebSocket(const FString& serverIP, uint16 serverPort) :
 	m_serverIP(serverIP),
 	m_serverPort(serverPort)
 {
