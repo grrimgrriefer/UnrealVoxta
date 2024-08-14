@@ -13,7 +13,8 @@ enum class MessageChunkState : uint8
 	Idle_Downloaded,
 	Idle_Imported,
 	Busy,
-	ReadyForPlayback
+	ReadyForPlayback,
+	CleanedUp
 };
 
 class MessageChunkAudioContainer
@@ -26,6 +27,7 @@ public:
 
 	void Continue();
 	void CleanupData();
+	TArray<uint8> GetRawData();
 
 	const int m_id;
 	const LipSyncType m_lipSyncType;

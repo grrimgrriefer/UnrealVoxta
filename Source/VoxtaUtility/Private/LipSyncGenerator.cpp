@@ -6,11 +6,28 @@
 #include "OVRLipSyncFrame.h"
 #endif
 
-void LipSyncGenerator::GenerateLipSync(const TArray<uint8>& rawAudioData, TFunction<void(FLipSyncData)> callback)
+void LipSyncGenerator::GenerateLipSync(const LipSyncType lipSyncType, const TArray<uint8>& rawAudioData, TFunction<void(FLipSyncData)> callback)
 {
+	switch (lipSyncType)
+	{
+		case LipSyncType::Custom:
+			FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([Callback = callback] (float DeltaTime)
+				{
+					Callback(FLipSyncData()); // Leave one tick before triggering callback to keep blueprints simple
+					return false;
+				}));
+			break;
+		case LipSyncType::OVRLipSync:
 #if WITH_OVRLIPSYNC
-	GenerateOVRLipSyncData(rawAudioData, callback);
+			GenerateOVRLipSyncData(rawAudioData, callback);
+#else
+			checkNoEntry();
 #endif
+			break;
+		default:
+			checkNoEntry();
+			break;
+	}
 }
 
 #if WITH_OVRLIPSYNC
@@ -18,7 +35,8 @@ void LipSyncGenerator::GenerateOVRLipSyncData(const TArray<uint8>& rawAudioData,
 {
 	if (rawAudioData.Num() <= 44)
 	{
-		return; // invalid data
+		UE_LOG(LogTemp, Error, TEXT("Invalid rawAudioData, cannot generate OVR lipsync."));
+		checkNoEntry();
 	}
 
 	FWaveModInfo waveInfo;
@@ -54,8 +72,7 @@ void LipSyncGenerator::GenerateOVRLipSyncData(const TArray<uint8>& rawAudioData,
 			}
 			AsyncTask(ENamedThreads::GameThread, [&, Sequence = sequence] ()
 			{
-				FLipSyncData data{};
-				data.SetLipsyncData(sequence);
+				FLipSyncData data(sequence);
 				callback(data);
 			});
 		});

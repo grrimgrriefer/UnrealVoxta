@@ -16,26 +16,49 @@ enum class LipSyncType : uint8
 	OVRLipSync			UMETA(DisplayName = "OVRLipSync")
 };
 
-USTRUCT(BlueprintType)
+USTRUCT()
 struct FLipSyncData
 {
 	GENERATED_BODY()
 
 public:
-	void CleanupData()
+	FLipSyncData()
 	{
-#if WITH_OVRLIPSYNC
-		m_ovrLipSyncFrameSequence->RemoveFromRoot();
-#endif
-	}
+		m_id = FGuid::NewGuid();
+		m_lipsyncType = LipSyncType::Custom;
+	};
 
 #if WITH_OVRLIPSYNC
 public:
-	void SetLipsyncData(UOVRLipSyncFrameSequence* ovrLipSyncFrameSequence)
+	FLipSyncData(UOVRLipSyncFrameSequence* ovrLipSyncFrameSequence)
 	{
 		m_ovrLipSyncFrameSequence = ovrLipSyncFrameSequence;
+		m_id = FGuid::NewGuid();
+		m_lipsyncType = LipSyncType::OVRLipSync;
+	}
+#endif
+
+	void CleanupData()
+	{
+#if WITH_OVRLIPSYNC
+		if (m_lipsyncType == LipSyncType::OVRLipSync)
+		{
+			m_ovrLipSyncFrameSequence->RemoveFromRoot();
+		}
+#endif
 	}
 
+	FGuid GetGuid() const
+	{
+		return m_id;
+	}
+
+private:
+	FGuid m_id;
+	LipSyncType m_lipsyncType;
+
+#if WITH_OVRLIPSYNC
+public:
 	UOVRLipSyncFrameSequence* GetOvrLipSyncData() const { return m_ovrLipSyncFrameSequence; }
 
 protected:

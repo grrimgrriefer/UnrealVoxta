@@ -25,10 +25,10 @@ public:
 			FStringView chatId,
 			FStringView sessionId,
 			const TMap<const VoxtaServiceData::ServiceType, const VoxtaServiceData>& services) :
-		m_characters(characters),
 		m_chatId(chatId),
 		m_sessionId(sessionId),
-		m_services(services)
+		m_services(services),
+		m_characters(characters)
 	{
 		m_characterIds.Reserve(characters.Num());
 		for (const FAiCharData* character : characters)

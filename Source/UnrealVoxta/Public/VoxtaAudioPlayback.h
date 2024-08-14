@@ -23,12 +23,23 @@ class UNREALVOXTA_API UVoxtaAudioPlayback : public UAudioComponent
 	GENERATED_BODY()
 public:
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaMessageAudioPlaybackCompleted, const FString&, messageId);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FVoxtaMessageAudioChunkReadyForCustomPlayback, const TArray<uint8>&, rawBytes, const USoundWaveProcedural*, processedSoundWave, const FGuid&, audioChunkGuid);
 
 	/// <summary>
 	/// Event fired when the UAudioComponent reports that the audio has finished playing.
 	/// </summary>
 	UPROPERTY(BlueprintAssignable, Category = "Events")
 	FVoxtaMessageAudioPlaybackCompleted VoxtaMessageAudioPlaybackFinishedEvent;
+
+	/// <summary>
+	/// Event fired when a chunk of audio data is ready and is marked for 'custom' lipsync.
+	/// We have only generated the audio file. Lipsync and audioplayback must be handled by 'custom' external logic.
+	///
+	/// NOTE: After the playback is complete, please call MarkCustomPlaybackComplete with the guid provided.
+	/// WARNING: The entire message can be multiple sequential audio chunks. Make sure to handle this properly.
+	/// </summary>
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FVoxtaMessageAudioChunkReadyForCustomPlayback VoxtaMessageAudioChunkReadyForCustomPlaybackEvent;
 
 	/// <summary>
 	/// Adds the Audiocomponent as sub-object, enables ticks and also initializes the importerLibraryUtility.
@@ -43,6 +54,14 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void InitializeAudioPlayback(UVoxtaClient* voxtaClient, const FString& characterId);
 
+	/// <summary>
+	/// Notify that the Audio is done with playback. Due to the unpredictable nature of the blueprint, we rely on
+	/// a manual call for this, to avoid any confusion or false positives.
+	/// </summary>
+	/// <param name="guid">The guid that was passed in the VoxtaMessageAudioChunkReadyForCustomPlaybackEvent</param>
+	UFUNCTION(BlueprintCallable)
+	void MarkCustomPlaybackComplete(const FGuid& guid);
+
 	///~ Begin UActorComponent overrides.
 protected:
 	virtual void BeginPlay() override;
@@ -53,6 +72,13 @@ protected:
 	LipSyncType m_lipSyncType;
 
 private:
+	enum class InternalState : uint8
+	{
+		Idle,
+		Playing,
+		Done
+	};
+
 	UVoxtaClient* m_clientReference;
 	FString m_characterId;
 	FString m_messageId;
@@ -65,7 +91,7 @@ private:
 	FString m_hostAddress;
 	int m_hostPort;
 
-	bool isPlaying;
+	InternalState m_internalState;
 	int currentAudioClip = 0;
 
 	/// <summary>
@@ -88,6 +114,8 @@ private:
 	/// </summary>
 	UFUNCTION()
 	void OnAudioPlaybackFinished();
+
+	void MarkAudioChunkPlaybackCompleteInternal();
 
 	void OnChunkStateChange(const MessageChunkAudioContainer* finishedChunk);
 

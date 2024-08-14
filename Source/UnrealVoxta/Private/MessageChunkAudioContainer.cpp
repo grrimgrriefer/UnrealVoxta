@@ -22,6 +22,13 @@ void MessageChunkAudioContainer::CleanupData()
 	{
 		m_lipSyncData.CleanupData();
 	}
+	m_state = MessageChunkState::CleanedUp;
+	UE_LOG(LogTemp, Log, TEXT("Cleaned up MessageChunkAudioContainer."));
+}
+
+TArray<uint8> MessageChunkAudioContainer::GetRawData()
+{
+	return m_rawData;
 }
 
 void MessageChunkAudioContainer::Continue()
@@ -73,7 +80,7 @@ void MessageChunkAudioContainer::ImportData()
 
 void MessageChunkAudioContainer::GenerateLipSync()
 {
-	LipSyncGenerator::GenerateLipSync(m_rawData,
+	LipSyncGenerator::GenerateLipSync(m_lipSyncType, m_rawData,
 		[this] (FLipSyncData lipsyncData) { OnLipSyncGenComplete(lipsyncData); });
 }
 
@@ -99,6 +106,12 @@ void MessageChunkAudioContainer::OnLipSyncGenComplete(FLipSyncData lipSyncData)
 
 void MessageChunkAudioContainer::UpdateState(MessageChunkState newState)
 {
+	if (m_state == MessageChunkState::CleanedUp)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Some process was still running on the MessageChunkAudioContainer after it was cleaned up."));
+		return;
+	}
+
 	m_state = newState;
 	if (m_state != MessageChunkState::Busy)
 	{
