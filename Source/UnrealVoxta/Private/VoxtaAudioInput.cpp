@@ -35,10 +35,13 @@ void UVoxtaAudioInput::OnSocketConnected()
 	UE_LOG(LogTemp, Log, TEXT("Audio input socket config: %s"), *socketInitialHeader);
 
 	m_audioWebSocket->Send(socketInitialHeader);
-	m_connectionState = VoxtaMicrophoneState::Ready;
 
 	m_audioCaptureDevice.RegisterSocket(m_audioWebSocket, m_bufferMs);
-	m_audioCaptureDevice.TryInitializeVoiceCapture(m_sampleRate, m_inputChannels);
+	if (m_audioCaptureDevice.TryInitializeVoiceCapture(m_sampleRate, m_inputChannels))
+	{
+		m_connectionState = VoxtaMicrophoneState::Ready;
+		VoxtaAudioInputInitializedEvent.Broadcast();
+	}
 }
 
 void UVoxtaAudioInput::OnSocketConnectionError(const FString& error)

@@ -19,6 +19,14 @@ class UNREALVOXTA_API UVoxtaAudioInput : public UActorComponent
 	GENERATED_BODY()
 
 public:
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FVoxtaAudioInputInitializedEventCallback);
+
+	/// <summary>
+	/// Event fired when both the audiosocket and the capturedevice are initialized
+	/// </summary>
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FVoxtaAudioInputInitializedEventCallback VoxtaAudioInputInitializedEvent;
+
 	/// <summary>
 	/// Creates the AudioWebSocket with the provided IP and port.
 	/// Note: It will automatically connect the socket to the server initiate the JSON config handshake, so the server is ready to receive audio.
