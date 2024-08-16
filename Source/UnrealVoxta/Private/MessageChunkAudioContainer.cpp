@@ -22,6 +22,7 @@ void MessageChunkAudioContainer::CleanupData()
 	{
 		m_lipSyncData.CleanupData();
 	}
+	m_rawData.Empty();
 	m_state = MessageChunkState::CleanedUp;
 	UE_LOG(LogTemp, Log, TEXT("Cleaned up MessageChunkAudioContainer."));
 }
@@ -92,7 +93,6 @@ void MessageChunkAudioContainer::OnRequestComplete(FHttpRequestPtr request, FHtt
 
 void MessageChunkAudioContainer::OnImportComplete(USoundWaveProcedural* soundWave)
 {
-	m_rawData.Empty();
 	m_soundWave = soundWave;
 	m_soundWave->AddToRoot();
 	UpdateState(MessageChunkState::Idle_Imported);
@@ -110,6 +110,11 @@ void MessageChunkAudioContainer::UpdateState(MessageChunkState newState)
 	{
 		UE_LOG(LogTemp, Error, TEXT("Some process was still running on the MessageChunkAudioContainer after it was cleaned up."));
 		return;
+	}
+
+	if (newState == MessageChunkState::ReadyForPlayback)
+	{
+		m_rawData.Empty(); // save some memory
 	}
 
 	m_state = newState;

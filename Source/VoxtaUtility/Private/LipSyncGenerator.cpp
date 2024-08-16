@@ -57,7 +57,7 @@ void LipSyncGenerator::GenerateOVRLipSyncData(const TArray<uint8>& rawAudioData,
 
 		Async(EAsyncExecution::Thread, [&, SampleRate = sampleRate, BufferSize = bufferSize, ModelPath = modelPath,
 			ChunkSize = chunkSize, PCMDataSize = pcmDataSize, PCMData = pcmData, ChunkSizeSamples = chunkSizeSamples,
-			NumChannels = numChannels] ()
+			NumChannels = numChannels, Callback = callback] ()
 		{
 			UOVRLipSyncFrameSequence* sequence = NewObject<UOVRLipSyncFrameSequence>();
 			sequence->AddToRoot();
@@ -73,7 +73,7 @@ void LipSyncGenerator::GenerateOVRLipSyncData(const TArray<uint8>& rawAudioData,
 			AsyncTask(ENamedThreads::GameThread, [&, Sequence = sequence] ()
 			{
 				FLipSyncData data(sequence);
-				callback(data);
+				Callback(data);
 			});
 		});
 	}
