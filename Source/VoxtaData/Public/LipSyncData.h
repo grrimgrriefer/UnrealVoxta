@@ -57,11 +57,12 @@ private:
 	FGuid m_id;
 	LipSyncType m_lipsyncType;
 
-#if WITH_OVRLIPSYNC
+	//#if WITH_OVRLIPSYNC - TODO: move this to a module that's only included when OVR is present
 public:
 	UOVRLipSyncFrameSequence* GetOvrLipSyncData() const { return m_ovrLipSyncFrameSequence; }
 
 protected:
+	UPROPERTY()
 	UOVRLipSyncFrameSequence* m_ovrLipSyncFrameSequence;
-#endif
+	//#endif
 };

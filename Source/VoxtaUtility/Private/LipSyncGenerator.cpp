@@ -6,7 +6,7 @@
 #include "OVRLipSyncFrame.h"
 #endif
 
-void LipSyncGenerator::GenerateLipSync(const LipSyncType lipSyncType, const TArray<uint8>& rawAudioData, TFunction<void(FLipSyncData)> callback)
+void LipSyncGenerator::GenerateLipSync(const LipSyncType lipSyncType, const TArray<uint8>& rawAudioData, TFunction<void(const FLipSyncData&)> callback)
 {
 	switch (lipSyncType)
 	{
@@ -31,7 +31,7 @@ void LipSyncGenerator::GenerateLipSync(const LipSyncType lipSyncType, const TArr
 }
 
 #if WITH_OVRLIPSYNC
-void LipSyncGenerator::GenerateOVRLipSyncData(const TArray<uint8>& rawAudioData, TFunction<void(FLipSyncData)> callback)
+void LipSyncGenerator::GenerateOVRLipSyncData(const TArray<uint8>& rawAudioData, TFunction<void(const FLipSyncData&)> callback)
 {
 	if (rawAudioData.Num() <= 44)
 	{
@@ -55,25 +55,29 @@ void LipSyncGenerator::GenerateOVRLipSyncData(const TArray<uint8>& rawAudioData,
 		FString modelPath = FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("OVRLipSync"),
 			TEXT("OfflineModel"), TEXT("ovrlipsync_offline_model.pb"));
 
-		Async(EAsyncExecution::Thread, [&, SampleRate = sampleRate, BufferSize = bufferSize, ModelPath = modelPath,
+		Async(EAsyncExecution::Thread, [SampleRate = sampleRate, BufferSize = bufferSize, ModelPath = modelPath,
 			ChunkSize = chunkSize, PCMDataSize = pcmDataSize, PCMData = pcmData, ChunkSizeSamples = chunkSizeSamples,
-			NumChannels = numChannels, Callback = callback] ()
+			NumChannels = numChannels, Callback1 = callback] ()
 		{
-			UOVRLipSyncFrameSequence* sequence = NewObject<UOVRLipSyncFrameSequence>();
-			sequence->AddToRoot();
 			UOVRLipSyncContextWrapper context(ovrLipSyncContextProvider_Enhanced, SampleRate, BufferSize, ModelPath);
-			float LaughterScore = 0.0f;
+			float laughterScore = 0.0f;
 			int32_t FrameDelayInMs = 0;
-			TArray<float> Visemes;
+			TArray<float> viseme;
+			TArray<TTuple<TArray<float>, float>> frames;
 			for (int offs = 0; offs + ChunkSize < PCMDataSize; offs += ChunkSize)
 			{
-				context.ProcessFrame(PCMData + offs, ChunkSizeSamples, Visemes, LaughterScore, FrameDelayInMs, NumChannels > 1);
-				sequence->Add(Visemes, LaughterScore);
+				context.ProcessFrame(PCMData + offs, ChunkSizeSamples, viseme, laughterScore, FrameDelayInMs, NumChannels > 1);
+				frames.Emplace(viseme, laughterScore);
 			}
-			AsyncTask(ENamedThreads::GameThread, [&, Sequence = sequence] ()
+			AsyncTask(ENamedThreads::GameThread, [Frames = frames, Callback2 = Callback1] ()
 			{
-				FLipSyncData data(sequence);
-				Callback(data);
+				UOVRLipSyncFrameSequence* sequence = NewObject<UOVRLipSyncFrameSequence>();
+				sequence->AddToRoot();
+				for (int i = 0; i < Frames.Num(); i++)
+				{
+					sequence->Add(Frames[i].Key, Frames[i].Value);
+				}
+				Callback2(FLipSyncData(sequence));
 			});
 		});
 	}

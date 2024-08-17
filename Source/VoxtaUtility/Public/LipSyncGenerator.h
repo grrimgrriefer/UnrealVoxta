@@ -8,11 +8,11 @@
 class VOXTAUTILITY_API LipSyncGenerator
 {
 public:
-	static void GenerateLipSync(const LipSyncType lipSyncType, const TArray<uint8>& rawAudioData, TFunction<void(FLipSyncData)> callback);
+	static void GenerateLipSync(const LipSyncType lipSyncType, const TArray<uint8>& rawAudioData, TFunction<void(const FLipSyncData&)> callback);
 
 private:
 
 #if WITH_OVRLIPSYNC
-	static void GenerateOVRLipSyncData(const TArray<uint8>& rawAudioData, TFunction<void(FLipSyncData)> callback);
+	static void GenerateOVRLipSyncData(const TArray<uint8>& rawAudioData, TFunction<void(const FLipSyncData&)> callback);
 #endif
 };
