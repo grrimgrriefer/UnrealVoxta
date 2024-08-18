@@ -1,6 +1,9 @@
 // Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
 
 #include "VoxtaAudioPlayback.h"
+#if WITH_OVRLIPSYNC
+#include "LipSyncDataOVR.h"
+#endif
 
 UVoxtaAudioPlayback::UVoxtaAudioPlayback()
 {
@@ -18,7 +21,7 @@ void UVoxtaAudioPlayback::InitializeAudioPlayback(UVoxtaClient* voxtaClient, con
 
 void UVoxtaAudioPlayback::MarkCustomPlaybackComplete(const FGuid& guid)
 {
-	if (m_orderedAudio[currentAudioClip].m_lipSyncData.GetGuid() != guid)
+	if (m_orderedAudio[currentAudioClip].m_lipSyncData->GetGuid() != guid)
 	{
 		UE_LOG(LogTemp, Error, TEXT("Custom LipSync does not support playing audiochunks out of order."));
 		return;
@@ -88,12 +91,12 @@ void UVoxtaAudioPlayback::TryPlayCurrentAudioChunk()
 				VoxtaMessageAudioChunkReadyForCustomPlaybackEvent.Broadcast(
 					m_orderedAudio[currentAudioClip].GetRawData(),
 					m_orderedAudio[currentAudioClip].m_soundWave,
-					m_orderedAudio[currentAudioClip].m_lipSyncData.GetGuid());
+					m_orderedAudio[currentAudioClip].m_lipSyncData->GetGuid());
 				break;
 			case LipSyncType::OVRLipSync:
 #if WITH_OVRLIPSYNC
 				SetSound(m_orderedAudio[currentAudioClip].m_soundWave);
-				m_ovrLipSync->Start(this, m_orderedAudio[currentAudioClip].m_lipSyncData.GetOvrLipSyncData());
+				m_ovrLipSync->Start(this, StaticCast<const ULipSyncDataOVR*>(m_orderedAudio[currentAudioClip].m_lipSyncData.GetObject())->GetOvrLipSyncData());
 #else
 				UE_LOG(LogTemp, Error, TEXT("OvrLipSync was selected, but the module is not present in the project."));
 #endif

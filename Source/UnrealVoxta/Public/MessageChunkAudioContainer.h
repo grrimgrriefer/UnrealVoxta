@@ -4,7 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "Sound/SoundWaveProcedural.h"
-#include "LipSyncData.h"
+#include "LipSyncType.h"
+#include "LipSyncDataBase.h"
+#if WITH_OVRLIPSYNC
+#include "LipSyncDataOVR.h"
+#endif
 #include "Runtime/Online/HTTP/Public/Http.h"
 
 enum class MessageChunkState : uint8
@@ -32,7 +36,7 @@ public:
 	const int m_id;
 	const LipSyncType m_lipSyncType;
 	USoundWaveProcedural* m_soundWave;
-	FLipSyncData m_lipSyncData;
+	TScriptInterface<ILipSyncDataBase> m_lipSyncData;
 	MessageChunkState m_state = MessageChunkState::Idle;
 
 private:
@@ -40,11 +44,14 @@ private:
 	const TFunction<void(const MessageChunkAudioContainer* chunk)> onStateChanged;
 	TArray<uint8> m_rawData;
 
+#if WITH_OVRLIPSYNC
+	ULipSyncDataOVR* m_lipSyncDataOVR;
+#endif
+
 	void DownloadData();
 	void ImportData();
 	void GenerateLipSync();
 	void OnRequestComplete(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
 	void OnImportComplete(USoundWaveProcedural* soundWave);
-	void OnLipSyncGenComplete(FLipSyncData lipSyncData);
 	void UpdateState(MessageChunkState newState);
 };

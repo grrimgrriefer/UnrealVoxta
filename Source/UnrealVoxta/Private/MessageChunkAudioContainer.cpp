@@ -20,7 +20,7 @@ void MessageChunkAudioContainer::CleanupData()
 	m_soundWave->RemoveFromRoot();
 	if (m_lipSyncType != LipSyncType::None)
 	{
-		m_lipSyncData.CleanupData();
+		m_lipSyncData->CleanupData();
 	}
 	m_rawData.Empty();
 	m_state = MessageChunkState::CleanedUp;
@@ -81,8 +81,15 @@ void MessageChunkAudioContainer::ImportData()
 
 void MessageChunkAudioContainer::GenerateLipSync()
 {
-	LipSyncGenerator::GenerateLipSync(m_lipSyncType, m_rawData,
-		[this] (FLipSyncData lipsyncData) { OnLipSyncGenComplete(lipsyncData); });
+#if WITH_OVRLIPSYNC
+	LipSyncGenerator::GenerateOVRLipSyncData(m_rawData,
+		[this] (ULipSyncDataOVR* lipsyncData)
+		{
+			m_lipSyncDataOVR = MoveTemp(lipsyncData);
+			m_lipSyncData = TScriptInterface<ILipSyncDataBase>(m_lipSyncDataOVR);
+			UpdateState(MessageChunkState::ReadyForPlayback);
+		});
+#endif
 }
 
 void MessageChunkAudioContainer::OnRequestComplete(FHttpRequestPtr request, FHttpResponsePtr response, bool bWasSuccessful)
@@ -96,12 +103,6 @@ void MessageChunkAudioContainer::OnImportComplete(USoundWaveProcedural* soundWav
 	m_soundWave = soundWave;
 	m_soundWave->AddToRoot();
 	UpdateState(MessageChunkState::Idle_Imported);
-}
-
-void MessageChunkAudioContainer::OnLipSyncGenComplete(FLipSyncData lipSyncData)
-{
-	m_lipSyncData = lipSyncData;
-	UpdateState(MessageChunkState::ReadyForPlayback);
 }
 
 void MessageChunkAudioContainer::UpdateState(MessageChunkState newState)
