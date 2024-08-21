@@ -96,7 +96,7 @@ void UVoxtaAudioPlayback::TryPlayCurrentAudioChunk()
 			case LipSyncType::OVRLipSync:
 #if WITH_OVRLIPSYNC
 				SetSound(m_orderedAudio[currentAudioClip].m_soundWave);
-				m_ovrLipSync->Start(this, StaticCast<const ULipSyncDataOVR*>(m_orderedAudio[currentAudioClip].m_lipSyncData.GetObject())->GetOvrLipSyncData());
+				m_ovrLipSync->Start(this, m_orderedAudio[currentAudioClip].GetLipSyncDataPtr()->GetOvrLipSyncData());
 #else
 				UE_LOG(LogTemp, Error, TEXT("OvrLipSync was selected, but the module is not present in the project."));
 #endif
@@ -142,14 +142,14 @@ void UVoxtaAudioPlayback::OnChunkStateChange(const MessageChunkAudioContainer* c
 		return;
 	}
 
-	if (m_orderedAudio[chunk->m_id].m_state == MessageChunkState::ReadyForPlayback && m_internalState == InternalState::Idle)
+	if (m_orderedAudio[chunk->m_index].m_state == MessageChunkState::ReadyForPlayback && m_internalState == InternalState::Idle)
 	{
 		TryPlayCurrentAudioChunk();
 	}
-	m_orderedAudio[chunk->m_id].Continue();
-	if (chunk->m_id + 1 < m_orderedAudio.Num())
+	m_orderedAudio[chunk->m_index].Continue();
+	if (chunk->m_index + 1 < m_orderedAudio.Num())
 	{
-		m_orderedAudio[chunk->m_id + 1].Continue();
+		m_orderedAudio[chunk->m_index + 1].Continue();
 	}
 }
 

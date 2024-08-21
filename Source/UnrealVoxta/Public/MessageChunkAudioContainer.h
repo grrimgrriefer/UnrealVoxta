@@ -32,8 +32,11 @@ public:
 	void Continue();
 	void CleanupData();
 	TArray<uint8> GetRawData();
+#if WITH_OVRLIPSYNC
+	const ULipSyncDataOVR* GetLipSyncDataPtr() const;
+#endif
 
-	const int m_id;
+	const int m_index;
 	const LipSyncType m_lipSyncType;
 	USoundWaveProcedural* m_soundWave;
 	TScriptInterface<ILipSyncDataBase> m_lipSyncData;
@@ -45,7 +48,7 @@ private:
 	TArray<uint8> m_rawData;
 
 #if WITH_OVRLIPSYNC
-	ULipSyncDataOVR* m_lipSyncDataOVR;
+	ULipSyncDataOVR* m_lipSyncDataPtr;
 #endif
 
 	void DownloadData();

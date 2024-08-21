@@ -8,7 +8,7 @@ MessageChunkAudioContainer::MessageChunkAudioContainer(const FString& fullUrl,
 	LipSyncType lipSyncType,
 	TFunction<void(const MessageChunkAudioContainer* newState)> callback,
 	int id) :
-	m_id(id),
+	m_index(id),
 	m_lipSyncType(lipSyncType),
 	m_downloadUrl(fullUrl),
 	onStateChanged(callback)
@@ -59,6 +59,13 @@ void MessageChunkAudioContainer::Continue()
 	}
 }
 
+#if WITH_OVRLIPSYNC
+const ULipSyncDataOVR* MessageChunkAudioContainer::GetLipSyncDataPtr() const
+{
+	return m_lipSyncDataPtr;
+}
+#endif
+
 void MessageChunkAudioContainer::DownloadData()
 {
 	if (m_state != MessageChunkState::Idle)
@@ -85,8 +92,8 @@ void MessageChunkAudioContainer::GenerateLipSync()
 	LipSyncGenerator::GenerateOVRLipSyncData(m_rawData,
 		[this] (ULipSyncDataOVR* lipsyncData)
 		{
-			m_lipSyncDataOVR = MoveTemp(lipsyncData);
-			m_lipSyncData = TScriptInterface<ILipSyncDataBase>(m_lipSyncDataOVR);
+			m_lipSyncDataPtr = MoveTemp(lipsyncData);
+			m_lipSyncData = TScriptInterface<ILipSyncDataBase>(m_lipSyncDataPtr);
 			UpdateState(MessageChunkState::ReadyForPlayback);
 		});
 #endif
