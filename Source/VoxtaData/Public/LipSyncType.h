@@ -9,5 +9,6 @@ enum class LipSyncType : uint8
 {
 	None				UMETA(DisplayName = "None"),
 	Custom				UMETA(DisplayName = "Custom"),
-	OVRLipSync			UMETA(DisplayName = "OVRLipSync")
+	OVRLipSync			UMETA(DisplayName = "OVRLipSync"),
+	Audio2Face			UMETA(DisplayName = "Audio2Face")
 };

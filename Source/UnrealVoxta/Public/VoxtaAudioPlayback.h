@@ -68,7 +68,7 @@ protected:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	///~ End UActorComponent overrides.
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	LipSyncType m_lipSyncType;
 
 private:
