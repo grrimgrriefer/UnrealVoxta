@@ -15,20 +15,26 @@ class VOXTADATAOVR_API ULipSyncDataOVR : public UObject, public ILipSyncDataBase
 public:
 	ULipSyncDataOVR() : ILipSyncDataBase(LipSyncType::OVRLipSync)
 	{
-		m_ovrLipSyncFrameSequence = nullptr;
 	}
 
-	ULipSyncDataOVR(UOVRLipSyncFrameSequence* ovrLipSyncFrameSequence) : ILipSyncDataBase(LipSyncType::OVRLipSync)
+	void SetFrameSequence(UOVRLipSyncFrameSequence* ovrLipSyncFrameSequence)
 	{
-		m_ovrLipSyncFrameSequence = ovrLipSyncFrameSequence;
+		m_ovrLipSyncFrameSequence = MoveTemp(ovrLipSyncFrameSequence);
 	}
 
+	UOVRLipSyncFrameSequence* GetOvrLipSyncData() const
+	{
+		return m_ovrLipSyncFrameSequence;
+	}
+
+	//~ Start ILipSyncDataBase overrides
+public:
 	virtual void CleanupData() override
 	{
-		m_ovrLipSyncFrameSequence->RemoveFromRoot();
+		m_ovrLipSyncFrameSequence = nullptr;
+		this->RemoveFromRoot();
 	}
-
-	UOVRLipSyncFrameSequence* GetOvrLipSyncData() const { return m_ovrLipSyncFrameSequence; }
+	//~ End ILipSyncDataBase overrides
 
 protected:
 	UPROPERTY()

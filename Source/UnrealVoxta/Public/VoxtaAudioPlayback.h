@@ -62,6 +62,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void MarkCustomPlaybackComplete(const FGuid& guid);
 
+	UFUNCTION(BlueprintCallable)
+	void RegisterOVRLipSyncComponent();
+
 	///~ Begin UActorComponent overrides.
 protected:
 	virtual void BeginPlay() override;
@@ -70,6 +73,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	LipSyncType m_lipSyncType;
+
+	UPROPERTY()
+	UActorComponent* m_ovrLipSync;
 
 private:
 	enum class InternalState : uint8
@@ -83,10 +89,6 @@ private:
 	FString m_characterId;
 	FString m_messageId;
 	TArray<MessageChunkAudioContainer> m_orderedAudio;
-
-#if WITH_OVRLIPSYNC
-	UOVRLipSyncPlaybackActorComponent* m_ovrLipSync;
-#endif
 
 	FString m_hostAddress;
 	int m_hostPort;

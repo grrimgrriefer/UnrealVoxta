@@ -34,9 +34,6 @@ void UVoxtaAudioPlayback::BeginPlay()
 {
 	Super::BeginPlay();
 	OnAudioFinished.AddUniqueDynamic(this, &UVoxtaAudioPlayback::OnAudioPlaybackFinished);
-#if WITH_OVRLIPSYNC
-	m_ovrLipSync = GetOwner()->FindComponentByClass<UOVRLipSyncPlaybackActorComponent>();
-#endif
 }
 
 void UVoxtaAudioPlayback::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -47,6 +44,13 @@ void UVoxtaAudioPlayback::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	{
 		m_clientReference->VoxtaClientCharMessageAddedEvent.RemoveDynamic(this, &UVoxtaAudioPlayback::PlaybackMessage);
 	}
+}
+
+void UVoxtaAudioPlayback::RegisterOVRLipSyncComponent()
+{
+#if WITH_OVRLIPSYNC
+	m_ovrLipSync = GetOwner()->FindComponentByClass<UOVRLipSyncPlaybackActorComponent>();
+#endif
 }
 
 void UVoxtaAudioPlayback::PlaybackMessage(const FCharDataBase& sender, const FChatMessage& message)
@@ -96,7 +100,7 @@ void UVoxtaAudioPlayback::TryPlayCurrentAudioChunk()
 			case LipSyncType::OVRLipSync:
 #if WITH_OVRLIPSYNC
 				SetSound(m_orderedAudio[currentAudioClip].m_soundWave);
-				m_ovrLipSync->Start(this, m_orderedAudio[currentAudioClip].GetLipSyncDataPtr()->GetOvrLipSyncData());
+				Cast<UOVRLipSyncPlaybackActorComponent>(m_ovrLipSync)->Start(this, m_orderedAudio[currentAudioClip].GetLipSyncDataPtr()->GetOvrLipSyncData());
 #else
 				UE_LOG(LogTemp, Error, TEXT("OvrLipSync was selected, but the module is not present in the project."));
 #endif

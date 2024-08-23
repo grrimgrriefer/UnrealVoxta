@@ -16,7 +16,10 @@ public:
 	{
 	};
 
+	//~ Start ILipSyncDataBase overrides
+public:
 	virtual void CleanupData() override
 	{
 	}
+	//~ End ILipSyncDataBase overrides
 };

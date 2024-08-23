@@ -60,9 +60,9 @@ void MessageChunkAudioContainer::Continue()
 }
 
 #if WITH_OVRLIPSYNC
-const ULipSyncDataOVR* MessageChunkAudioContainer::GetLipSyncDataPtr() const
+ULipSyncDataOVR* MessageChunkAudioContainer::GetLipSyncDataPtr() const
 {
-	return m_lipSyncDataPtr;
+	return StaticCast<ULipSyncDataOVR*>(m_lipSyncData);
 }
 #endif
 
@@ -92,8 +92,7 @@ void MessageChunkAudioContainer::GenerateLipSync()
 	LipSyncGenerator::GenerateOVRLipSyncData(m_rawData,
 		[this] (ULipSyncDataOVR* lipsyncData)
 		{
-			m_lipSyncDataPtr = MoveTemp(lipsyncData);
-			m_lipSyncData = TScriptInterface<ILipSyncDataBase>(m_lipSyncDataPtr);
+			m_lipSyncData = Cast<ILipSyncDataBase>(MoveTemp(lipsyncData));
 			UpdateState(MessageChunkState::ReadyForPlayback);
 		});
 #endif

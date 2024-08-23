@@ -33,23 +33,20 @@ public:
 	void CleanupData();
 	TArray<uint8> GetRawData();
 #if WITH_OVRLIPSYNC
-	const ULipSyncDataOVR* GetLipSyncDataPtr() const;
+	ULipSyncDataOVR* GetLipSyncDataPtr() const;
 #endif
 
 	const int m_index;
 	const LipSyncType m_lipSyncType;
 	USoundWaveProcedural* m_soundWave;
-	TScriptInterface<ILipSyncDataBase> m_lipSyncData;
 	MessageChunkState m_state = MessageChunkState::Idle;
+
+	ILipSyncDataBase* m_lipSyncData;
 
 private:
 	const FString m_downloadUrl;
 	const TFunction<void(const MessageChunkAudioContainer* chunk)> onStateChanged;
 	TArray<uint8> m_rawData;
-
-#if WITH_OVRLIPSYNC
-	ULipSyncDataOVR* m_lipSyncDataPtr;
-#endif
 
 	void DownloadData();
 	void ImportData();

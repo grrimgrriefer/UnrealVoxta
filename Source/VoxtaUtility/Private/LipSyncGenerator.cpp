@@ -47,14 +47,15 @@ void LipSyncGenerator::GenerateOVRLipSyncData(const TArray<uint8>& rawAudioData,
 			}
 			AsyncTask(ENamedThreads::GameThread, [Frames = frames, Callback2 = Callback1] ()
 			{
-				UOVRLipSyncFrameSequence* sequence = NewObject<UOVRLipSyncFrameSequence>();
-				sequence->AddToRoot();
+				ULipSyncDataOVR* data = NewObject<ULipSyncDataOVR>();
+				UOVRLipSyncFrameSequence* sequence = NewObject<UOVRLipSyncFrameSequence>(data);
 				for (int i = 0; i < Frames.Num(); i++)
 				{
 					sequence->Add(Frames[i].Key, Frames[i].Value);
 				}
-				ULipSyncDataOVR data = ULipSyncDataOVR(sequence);
-				Callback2(&data);
+				data->SetFrameSequence(sequence);
+				data->AddToRoot();
+				Callback2(data);
 			});
 		});
 	}
