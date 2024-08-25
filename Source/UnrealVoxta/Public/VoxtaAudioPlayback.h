@@ -11,6 +11,7 @@
 #if WITH_OVRLIPSYNC
 #include "OVRLipSyncPlaybackActorComponent.h"
 #endif
+#include "LipSyncDataA2F.h"
 #include "VoxtaAudioPlayback.generated.h"
 
 /// <summary>
@@ -65,6 +66,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void RegisterOVRLipSyncComponent();
 
+	void GetA2FCurveWeights(TArray<float>& targetArrayRef);
+
 	///~ Begin UActorComponent overrides.
 protected:
 	virtual void BeginPlay() override;
@@ -76,6 +79,8 @@ protected:
 
 	UPROPERTY()
 	UActorComponent* m_ovrLipSync;
+
+	ULipSyncDataA2F* m_currentA2FClipData;
 
 private:
 	enum class InternalState : uint8

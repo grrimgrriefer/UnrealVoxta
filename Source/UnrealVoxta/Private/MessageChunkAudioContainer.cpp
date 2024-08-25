@@ -59,12 +59,11 @@ void MessageChunkAudioContainer::Continue()
 	}
 }
 
-#if WITH_OVRLIPSYNC
-ULipSyncDataOVR* MessageChunkAudioContainer::GetLipSyncDataPtr() const
+template<class T>
+T* MessageChunkAudioContainer::GetLipSyncDataPtr() const
 {
-	return StaticCast<ULipSyncDataOVR*>(m_lipSyncData);
+	return StaticCast<T*>(m_lipSyncData);
 }
-#endif
 
 void MessageChunkAudioContainer::DownloadData()
 {
@@ -88,14 +87,30 @@ void MessageChunkAudioContainer::ImportData()
 
 void MessageChunkAudioContainer::GenerateLipSync()
 {
+	switch (m_lipSyncType)
+	{
+		case LipSyncType::OVRLipSync:
 #if WITH_OVRLIPSYNC
-	LipSyncGenerator::GenerateOVRLipSyncData(m_rawData,
-		[this] (ULipSyncDataOVR* lipsyncData)
-		{
-			m_lipSyncData = Cast<ILipSyncDataBase>(MoveTemp(lipsyncData));
-			UpdateState(MessageChunkState::ReadyForPlayback);
-		});
+			LipSyncGenerator::GenerateOVRLipSyncData(m_rawData,
+				[this] (ULipSyncDataOVR* lipsyncData)
+				{
+					m_lipSyncData = Cast<ILipSyncDataBase>(MoveTemp(lipsyncData));
+					UpdateState(MessageChunkState::ReadyForPlayback);
+				});
 #endif
+			break;
+		case LipSyncType::Audio2Face:
+			LipSyncGenerator::GenerateA2FLipSyncData(m_rawData,
+				[this] (ULipSyncDataA2F* lipsyncData)
+				{
+					m_lipSyncData = Cast<ILipSyncDataBase>(MoveTemp(lipsyncData));
+					UpdateState(MessageChunkState::ReadyForPlayback);
+				});
+			break;
+		default:
+			UE_LOG(LogTemp, Error, TEXT("No built-in support yet for lipsync that isn't OVR or A2F."));
+			break;
+	}
 }
 
 void MessageChunkAudioContainer::OnRequestComplete(FHttpRequestPtr request, FHttpResponsePtr response, bool bWasSuccessful)

@@ -53,6 +53,14 @@ void UVoxtaAudioPlayback::RegisterOVRLipSyncComponent()
 #endif
 }
 
+void UVoxtaAudioPlayback::GetA2FCurveWeights(TArray<float>& targetArrayRef)
+{
+	if (m_currentA2FClipData != nullptr)
+	{
+		m_currentA2FClipData->GetA2FCurveWeights(targetArrayRef);
+	}
+}
+
 void UVoxtaAudioPlayback::PlaybackMessage(const FCharDataBase& sender, const FChatMessage& message)
 {
 	if (sender.GetId() == m_characterId)
@@ -100,10 +108,14 @@ void UVoxtaAudioPlayback::TryPlayCurrentAudioChunk()
 			case LipSyncType::OVRLipSync:
 #if WITH_OVRLIPSYNC
 				SetSound(m_orderedAudio[currentAudioClip].m_soundWave);
-				Cast<UOVRLipSyncPlaybackActorComponent>(m_ovrLipSync)->Start(this, m_orderedAudio[currentAudioClip].GetLipSyncDataPtr()->GetOvrLipSyncData());
+				Cast<UOVRLipSyncPlaybackActorComponent>(m_ovrLipSync)->Start(this, m_orderedAudio[currentAudioClip].GetLipSyncDataPtr<ULipSyncDataOVR>()->GetOvrLipSyncData());
 #else
 				UE_LOG(LogTemp, Error, TEXT("OvrLipSync was selected, but the module is not present in the project."));
 #endif
+				break;
+			case LipSyncType::Audio2Face:
+				SetSound(m_orderedAudio[currentAudioClip].m_soundWave);
+				m_currentA2FClipData = m_orderedAudio[currentAudioClip].GetLipSyncDataPtr<ULipSyncDataA2F>();
 				break;
 			default:
 				UE_LOG(LogTemp, Error, TEXT("Unsupported selection for LipSync, this should never happen."));
@@ -125,6 +137,7 @@ void UVoxtaAudioPlayback::OnAudioPlaybackFinished()
 
 void UVoxtaAudioPlayback::MarkAudioChunkPlaybackCompleteInternal()
 {
+	m_orderedAudio[currentAudioClip].CleanupData();
 	currentAudioClip += 1;
 	if (currentAudioClip < m_orderedAudio.Num())
 	{
@@ -164,7 +177,7 @@ void UVoxtaAudioPlayback::Cleanup()
 	m_internalState = InternalState::Done;
 	for (MessageChunkAudioContainer& audioChunk : m_orderedAudio)
 	{
-		audioChunk.CleanupData();
+		audioChunk.CleanupData(); // Should not be necessary, but can't hurt
 	}
 	m_orderedAudio.Empty();
 }

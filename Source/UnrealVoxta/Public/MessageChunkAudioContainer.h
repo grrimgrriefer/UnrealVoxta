@@ -32,9 +32,8 @@ public:
 	void Continue();
 	void CleanupData();
 	TArray<uint8> GetRawData();
-#if WITH_OVRLIPSYNC
-	ULipSyncDataOVR* GetLipSyncDataPtr() const;
-#endif
+	template<class T>
+	T* GetLipSyncDataPtr() const;
 
 	const int m_index;
 	const LipSyncType m_lipSyncType;
