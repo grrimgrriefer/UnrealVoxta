@@ -7,7 +7,7 @@
 #include "VoxtaData/Public/AiCharData.h"
 #include "Misc/Guid.h"
 
-class VOXTAUTILITY_API VoxtaApiRequestHandler
+class VoxtaApiRequestHandler
 {
 public:
 	/// <summary>

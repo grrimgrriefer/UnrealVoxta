@@ -12,7 +12,7 @@ public class UnrealVoxta : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"Core", "AudioUtility", "VoxtaData", "VoxtaUtility", "SignalR", "HTTP", "Voice"
+				"Core", "AudioUtility", "VoxtaData", "SignalR", "HTTP", "Voice"
 			}
 			);
 
@@ -36,6 +36,7 @@ public class UnrealVoxta : ModuleRules
 
 		if (projectHasOvrLipSync)
 		{
+			PrivateDependencyModuleNames.Add("VoxtaDataOVR");
 			PublicDependencyModuleNames.Add("OVRLipSync");
 			PublicDefinitions.Add("WITH_OVRLIPSYNC=1");
 		}

@@ -18,7 +18,7 @@
 #include "VoxtaData/Public/ServerResponses/ServerResponseSpeechTranscription.h"
 #include "VoxtaData/Public/VoxtaServiceData.h"
 
-class VOXTAUTILITY_API VoxtaApiResponseHandler
+class VoxtaApiResponseHandler
 {
 public:
 	// Message types that the internal VoxtaClient will consider to be 'safe to ignore'

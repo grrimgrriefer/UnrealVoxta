@@ -41,16 +41,14 @@ void FAnimNode_ApplyCustomCurves::Evaluate_AnyThread(FPoseContext& Output)
 		size_t CurveIdx = 0;
 		for (float Weight : CachedWeights)
 		{
-			FName CurveName = UACEAudioCurveSourceComponent::CurveNames[CurveIdx++];
+			FName CurveName = Audio2FacePlaybackHandler::CurveNames[CurveIdx++];
 			Output.Curve.Set(CurveName, Weight);
-			TRACE_ANIM_NODE_VALUE(Output, *CurveName.ToString(), Weight);
 		}
 	}
 }
 
 void FAnimNode_ApplyCustomCurves::GatherDebugData(FNodeDebugData& DebugData)
 {
-	DECLARE_SCOPE_HIERARCHICAL_COUNTER_ANIMNODE(GatherDebugData)
 	FAnimNode_Base::GatherDebugData(DebugData);
 	Source.GatherDebugData(DebugData);
 }

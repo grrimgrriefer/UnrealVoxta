@@ -8,7 +8,7 @@
 #endif
 #include "LipSyncDataA2F.h"
 
-class VOXTAUTILITY_API LipSyncGenerator
+class LipSyncGenerator
 {
 public:
 #if WITH_OVRLIPSYNC

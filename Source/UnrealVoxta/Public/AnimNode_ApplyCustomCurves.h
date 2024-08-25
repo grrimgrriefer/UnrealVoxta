@@ -27,5 +27,6 @@ public:
 private:
 	UPROPERTY()
 	UVoxtaAudioPlayback* CurveSource;
+
 	TArray<float> CachedWeights;
 };

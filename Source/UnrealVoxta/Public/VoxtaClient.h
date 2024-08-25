@@ -4,10 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "VoxtaUtility/Public/VoxtaLogger.h"
+#include "Internals/VoxtaLogger.h"
 #include "SignalR/Private/HubConnection.h"
-#include "VoxtaUtility/Public/VoxtaApiRequestHandler.h"
-#include "VoxtaUtility/Public/VoxtaApiResponseHandler.h"
+#include "Internals/VoxtaApiRequestHandler.h"
+#include "Internals/VoxtaApiResponseHandler.h"
 #include "VoxtaData/Public/AiCharData.h"
 #include "VoxtaData/Public/ChatMessage.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseBase.h"

@@ -8,7 +8,7 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(VoxtaLog, Log, All);
 
-class VOXTAUTILITY_API VoxtaLogger : public FOutputDevice
+class VoxtaLogger : public FOutputDevice
 {
 public:
 	~VoxtaLogger();

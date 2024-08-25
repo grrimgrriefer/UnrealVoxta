@@ -55,9 +55,9 @@ void UVoxtaAudioPlayback::RegisterOVRLipSyncComponent()
 
 void UVoxtaAudioPlayback::GetA2FCurveWeights(TArray<float>& targetArrayRef)
 {
-	if (m_currentA2FClipData != nullptr)
+	if (m_audio2FacePlaybackHandler != nullptr)
 	{
-		m_currentA2FClipData->GetA2FCurveWeights(targetArrayRef);
+		m_audio2FacePlaybackHandler->GetA2FCurveWeights(targetArrayRef);
 	}
 }
 
@@ -115,7 +115,7 @@ void UVoxtaAudioPlayback::TryPlayCurrentAudioChunk()
 				break;
 			case LipSyncType::Audio2Face:
 				SetSound(m_orderedAudio[currentAudioClip].m_soundWave);
-				m_currentA2FClipData = m_orderedAudio[currentAudioClip].GetLipSyncDataPtr<ULipSyncDataA2F>();
+				m_audio2FacePlaybackHandler->Play(this, m_orderedAudio[currentAudioClip].GetLipSyncDataPtr<ULipSyncDataA2F>());
 				break;
 			default:
 				UE_LOG(LogTemp, Error, TEXT("Unsupported selection for LipSync, this should never happen."));

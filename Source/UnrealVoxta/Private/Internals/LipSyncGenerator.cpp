@@ -64,16 +64,25 @@ void LipSyncGenerator::GenerateOVRLipSyncData(const TArray<uint8>& rawAudioData,
 
 void LipSyncGenerator::GenerateA2FLipSyncData(const TArray<uint8>& rawAudioData, TFunction<void(ULipSyncDataA2F*)> callback)
 {
+	UE_LOG(LogTemp, Error, TEXT("TODO"));
+
+	ULipSyncDataA2F* data = NewObject<ULipSyncDataA2F>();
+	TArray<TimedWeightSample> samples;
+	data->SetA2FCurveWeights(samples);
+	data->AddToRoot();
+	callback(data);
 
 	/*
-	
+
+	Required HTTP calls, verified with Swagger API
+
 ----------------------------------------------------------------------
 1. get status
 
 curl -X 'GET' \
   'http://localhost:8011/status' \
   -H 'accept: application/json'
-  
+
 "OK"
 
 ----------------------------------------------------------------------
@@ -87,7 +96,6 @@ curl -X 'POST' \
   "file_name": "D:\\Documents\\Unreal Projects\\VoxtaTestProject\\Plugins\\UnrealVoxta\\Content\\test.usd"
 }'
 
-
 {
   "status": "OK",
   "message": "Succeeded"
@@ -99,13 +107,13 @@ curl -X 'POST' \
 curl -X 'GET' \
   'http://localhost:8011/A2F/GetInstances' \
   -H 'accept: application/json'
-  
+
 {
   "status": "OK",
   "result": {
-    "fullface_instances": [
-      "/World/audio2face/CoreFullface"
-    ]
+	"fullface_instances": [
+	  "/World/audio2face/CoreFullface"
+	]
   },
   "message": "Succeeded"
 }
@@ -131,14 +139,14 @@ curl -X 'POST' \
   -d '{
   "a2f_instance": "/World/audio2face/CoreFullface",
   "settings": [
-    "a2e_streaming_live_mode"
+	"a2e_streaming_live_mode"
   ]
 }'
 
 {
   "status": "OK",
   "result": {
-    "a2e_streaming_live_mode": false
+	"a2e_streaming_live_mode": false
 }
 
 ----------------------------------------------------------------------
@@ -147,14 +155,14 @@ curl -X 'POST' \
 curl -X 'GET' \
   'http://localhost:8011/A2F/Player/GetInstances' \
   -H 'accept: application/json'
-  
+
 {
   "status": "OK",
   "result": {
-    "regular": [
-      "/World/audio2face/Player"
-    ],
-    "streaming": []
+	"regular": [
+	  "/World/audio2face/Player"
+	],
+	"streaming": []
   },
   "message": "Suceeded to retrieve Player instances"
 }
@@ -190,7 +198,7 @@ curl -X 'POST' \
 {
   "status": "OK",
   "result": [
-    "speak.wav"
+	"speak.wav"
   ],
   "message": "Suceeded"
 }
@@ -206,8 +214,8 @@ curl -X 'POST' \
   "a2f_player": "/World/audio2face/Player",
   "file_name": "speak.wav",
   "time_range": [
-    0,
-    -1
+	0,
+	-1
   ]
 }'
 
@@ -222,11 +230,11 @@ curl -X 'POST' \
 curl -X 'GET' \
   'http://localhost:8011/A2F/Exporter/GetBlendShapeSolvers' \
   -H 'accept: application/json'
-  
+
 {
   "status": "OK",
   "result": [
-    "/World/audio2face/BlendshapeSolve"
+	"/World/audio2face/BlendshapeSolve"
   ]
 }
 
@@ -249,7 +257,6 @@ curl -X 'POST' \
 {
   "status": "OK"
 }
-	
-	
+
 	*/
 }

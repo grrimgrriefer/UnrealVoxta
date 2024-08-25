@@ -2,6 +2,7 @@
 
 #pragma once
 
+#define API_NAME(x) FName(TEXT(x))
 #define API_STRING(x) FString(TEXT(x))
 #define API_SIGNALR_STRING(x) FSignalRValue(FString(TEXT(x)))
 #define API_SIGNALR_STRINGVIEW(x) FSignalRValue(FString(x))

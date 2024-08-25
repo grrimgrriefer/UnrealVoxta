@@ -2,9 +2,7 @@
 
 #include "VoxtaClient.h"
 #include "SignalR/Public/SignalRSubsystem.h"
-#include "VoxtaDefines.h"
-
-DEFINE_LOG_CATEGORY(VoxtaLog);
+#include "Internals/VoxtaDefines.h"
 
 UVoxtaClient::UVoxtaClient()
 {

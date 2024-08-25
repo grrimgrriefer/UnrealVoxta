@@ -7,11 +7,12 @@
 #include "VoxtaClient.h"
 #include "Components/AudioComponent.h"
 #include "AudioUtility/Public/RuntimeAudioImporter/RuntimeAudioImporterLibrary.h"
-#include "MessageChunkAudioContainer.h"
+#include "Internals/MessageChunkAudioContainer.h"
 #if WITH_OVRLIPSYNC
 #include "OVRLipSyncPlaybackActorComponent.h"
 #endif
 #include "LipSyncDataA2F.h"
+#include "Internals/Audio2FacePlaybackHandler.h"
 #include "VoxtaAudioPlayback.generated.h"
 
 /// <summary>
@@ -80,7 +81,7 @@ protected:
 	UPROPERTY()
 	UActorComponent* m_ovrLipSync;
 
-	ULipSyncDataA2F* m_currentA2FClipData;
+	TUniquePtr<Audio2FacePlaybackHandler> m_audio2FacePlaybackHandler;
 
 private:
 	enum class InternalState : uint8

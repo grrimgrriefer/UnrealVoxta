@@ -1,9 +1,10 @@
-// Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
+﻿// Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "LipSyncDataBase.h"
+#include "TimedWeightSample.h"
 #include "LipSyncDataA2F.generated.h"
 
 UCLASS()
@@ -16,6 +17,16 @@ public:
 	{
 	}
 
+	void SetA2FCurveWeights(const TArray<TimedWeightSample>& sourceCurves)
+	{
+		m_completeSampleCount = sourceCurves;
+	}
+
+	const TArray<TimedWeightSample>& GetA2FCurveWeights()
+	{
+		return m_completeSampleCount;
+	}
+
 	//~ Start ILipSyncDataBase overrides
 public:
 	virtual void CleanupData() override
@@ -24,4 +35,6 @@ public:
 	//~ End ILipSyncDataBase overrides
 
 protected:
+
+	TArray<TimedWeightSample> m_completeSampleCount;
 };
