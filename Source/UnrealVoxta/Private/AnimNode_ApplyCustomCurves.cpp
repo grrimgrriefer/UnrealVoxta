@@ -41,7 +41,7 @@ void FAnimNode_ApplyCustomCurves::Evaluate_AnyThread(FPoseContext& Output)
 		size_t CurveIdx = 0;
 		for (float Weight : CachedWeights)
 		{
-			FName CurveName = Audio2FacePlaybackHandler::CurveNames[CurveIdx++];
+			FName CurveName = UAudio2FacePlaybackHandler::CurveNames[CurveIdx++];
 			Output.Curve.Set(CurveName, Weight);
 		}
 	}

@@ -44,6 +44,10 @@ void UVoxtaAudioPlayback::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	{
 		m_clientReference->VoxtaClientCharMessageAddedEvent.RemoveDynamic(this, &UVoxtaAudioPlayback::PlaybackMessage);
 	}
+	m_audio2FacePlaybackHandler->Stop();
+#if WITH_OVRLIPSYNC
+	Cast<UOVRLipSyncPlaybackActorComponent>(m_ovrLipSync)->Stop();
+#endif
 }
 
 void UVoxtaAudioPlayback::RegisterOVRLipSyncComponent()

@@ -17,12 +17,18 @@ public:
 	{
 	}
 
-	void SetA2FCurveWeights(const TArray<TimedWeightSample>& sourceCurves)
+	void SetA2FCurveWeights(const TArray<TimedWeightSample>& sourceCurves, int framesPerSecond)
 	{
 		m_completeSampleCount = sourceCurves;
+		m_framesPerSecond = framesPerSecond;
 	}
 
-	const TArray<TimedWeightSample>& GetA2FCurveWeights()
+	int GetFramePerSecond() const
+	{
+		return m_framesPerSecond;
+	}
+
+	const TArray<TimedWeightSample>& GetA2FCurveWeights() const
 	{
 		return m_completeSampleCount;
 	}
@@ -35,6 +41,6 @@ public:
 	//~ End ILipSyncDataBase overrides
 
 protected:
-
+	int m_framesPerSecond;
 	TArray<TimedWeightSample> m_completeSampleCount;
 };

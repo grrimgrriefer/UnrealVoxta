@@ -81,7 +81,7 @@ protected:
 	UPROPERTY()
 	UActorComponent* m_ovrLipSync;
 
-	TUniquePtr<Audio2FacePlaybackHandler> m_audio2FacePlaybackHandler;
+	TUniquePtr<UAudio2FacePlaybackHandler> m_audio2FacePlaybackHandler;
 
 private:
 	enum class InternalState : uint8

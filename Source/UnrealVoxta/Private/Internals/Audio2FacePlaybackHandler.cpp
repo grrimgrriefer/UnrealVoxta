@@ -4,7 +4,7 @@
 #include "VoxtaDefines.h"
 
 // ArkitNames https://developer.apple.com/documentation/arkit/arfaceanchor/blendshapelocation
-const FName Audio2FacePlaybackHandler::CurveNames[55] =
+const FName UAudio2FacePlaybackHandler::CurveNames[52] =
 {
 	API_NAME("EyeBlinkLeft"),
 	API_NAME("EyeLookDownLeft"),
@@ -60,18 +60,92 @@ const FName Audio2FacePlaybackHandler::CurveNames[55] =
 	API_NAME("TongueOut")
 };
 
-Audio2FacePlaybackHandler::Audio2FacePlaybackHandler()
+UAudio2FacePlaybackHandler::UAudio2FacePlaybackHandler()
 {
 }
 
-void Audio2FacePlaybackHandler::GetA2FCurveWeights(TArray<float>& targetArrayRef)
+void UAudio2FacePlaybackHandler::GetA2FCurveWeights(TArray<float>& targetArrayRef) const
 {
-	TArray<TimedWeightSample> m_curveSamples = m_lipsyncData->GetA2FCurveWeights();
-	m_curveSamples();
+	if (m_forcedNeutral)
+	{
+		targetArrayRef.Empty(52);
+	}
+	else
+	{
+		targetArrayRef = m_currentCurves;
+	}
 }
 
-void Audio2FacePlaybackHandler::Play(UAudioComponent* audioComponent, ULipSyncDataA2F* lipsyncData)
+void UAudio2FacePlaybackHandler::Play(UAudioComponent* audioComponent, ULipSyncDataA2F* lipsyncData)
 {
 	m_audioComponent = audioComponent;
 	m_lipsyncData = lipsyncData;
+
+	m_forcedNeutral = false;
+
+	PlaybackPercentHandle = m_audioComponent->OnAudioPlaybackPercentNative.AddUObject(
+		this, &UAudio2FacePlaybackHandler::OnAudioPlaybackPercent);
+	PlaybackFinishedHandle = m_audioComponent->OnAudioFinishedNative.AddUObject(
+		this, &UAudio2FacePlaybackHandler::OnAudioPlaybackFinished);
+	m_audioComponent->Play();
+}
+
+void UAudio2FacePlaybackHandler::Stop()
+{
+	if (!m_audioComponent)
+	{
+		return;
+	}
+	m_audioComponent->OnAudioPlaybackPercentNative.Remove(PlaybackPercentHandle);
+	m_audioComponent->OnAudioFinishedNative.Remove(PlaybackFinishedHandle);
+	m_audioComponent = nullptr;
+	InitNeutralPose();
+}
+
+void UAudio2FacePlaybackHandler::OnAudioPlaybackPercent(const UAudioComponent*, const USoundWave* SoundWave, float Percent)
+{
+	if (m_lipsyncData == nullptr)
+	{
+		InitNeutralPose();
+		return;
+	}
+	float currentFrame = SoundWave->Duration * m_lipsyncData->GetFramePerSecond() / 100.f * Percent;
+	float totalFrameCount = m_lipsyncData->GetA2FCurveWeights().Num();
+	int closestFrame = FMath::RoundToInt(currentFrame);
+	int floorFrame = FMath::Floor(currentFrame);
+	if (closestFrame >= totalFrameCount)
+	{
+		InitNeutralPose();
+		return;
+	}
+	if (FMath::IsNearlyEqual(currentFrame, closestFrame))
+	{
+		m_currentCurves = m_lipsyncData->GetA2FCurveWeights()[closestFrame].Weights;
+		return;
+	}
+	else if (floorFrame + 1 < totalFrameCount)
+	{
+		float normalizedBlend = currentFrame - floorFrame;
+		const TArray<float>& floor = m_lipsyncData->GetA2FCurveWeights()[floorFrame].Weights;
+		const TArray<float>& ceiling = m_lipsyncData->GetA2FCurveWeights()[floorFrame + 1].Weights;
+		for (int i = 0; i < floor.Num(); i++)
+		{
+			m_currentCurves[i] = (floor[i] * normalizedBlend) + (ceiling[i] * (1.f - normalizedBlend));
+		}
+	}
+	else
+	{
+		// Error too few lipsync frames, just pick last values
+		m_currentCurves = m_lipsyncData->GetA2FCurveWeights()[totalFrameCount - 1].Weights;
+	}
+}
+
+void UAudio2FacePlaybackHandler::OnAudioPlaybackFinished(UAudioComponent*)
+{
+	InitNeutralPose();
+}
+
+void UAudio2FacePlaybackHandler::InitNeutralPose()
+{
+	m_forcedNeutral = true;
 }

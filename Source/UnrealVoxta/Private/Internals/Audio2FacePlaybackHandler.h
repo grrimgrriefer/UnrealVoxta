@@ -6,18 +6,35 @@
 #include "Components/AudioComponent.h"
 #include "LipSyncDataA2F.h"
 #include "TimedWeightSample.h"
+#include "Audio2FacePlaybackHandler.generated.h"
 
-class Audio2FacePlaybackHandler
+class UAudio2FacePlaybackHandler : UObject
 {
+	GENERATED_BODY()
+
 public:
-	Audio2FacePlaybackHandler();
+	static const FName CurveNames[52];
 
-	void GetA2FCurveWeights(TArray<float>& sourceCurves);
+	UAudio2FacePlaybackHandler();
+
+	void GetA2FCurveWeights(TArray<float>& sourceCurves) const;
 	void Play(UAudioComponent* InAudioComponent, ULipSyncDataA2F* InSequence);
+	void Stop();
 
-	static const FName CurveNames[55];
+protected:
+	void OnAudioPlaybackPercent(const UAudioComponent*, const USoundWave*, float Percent);
+	void OnAudioPlaybackFinished(UAudioComponent*);
 
 private:
 	ULipSyncDataA2F* m_lipsyncData;
 	UAudioComponent* m_audioComponent;
+
+	FDelegateHandle PlaybackPercentHandle;
+	FDelegateHandle PlaybackFinishedHandle;
+
+	TArray<float> m_currentCurves;
+
+	bool m_forcedNeutral = true;
+
+	void InitNeutralPose();
 };
