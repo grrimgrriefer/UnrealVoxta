@@ -6,13 +6,14 @@
 #include "Components/AudioComponent.h"
 #include "VoxtaClient.h"
 #include "Components/AudioComponent.h"
+#include "VoxtaAudioPlaybackBase.h"
 #include "AudioUtility/Public/RuntimeAudioImporter/RuntimeAudioImporterLibrary.h"
 #include "Internals/MessageChunkAudioContainer.h"
 #if WITH_OVRLIPSYNC
 #include "OVRLipSyncPlaybackActorComponent.h"
 #endif
 #include "LipSyncDataA2F.h"
-#include "Internals/Audio2FacePlaybackHandler.h"
+#include "Audio2FacePlaybackHandler.h"
 #include "VoxtaAudioPlayback.generated.h"
 
 /// <summary>
@@ -20,7 +21,7 @@
 /// Receives the URLs used to download & import & play the audio.
 /// </summary>
 UCLASS(HideCategories = (Mobility, Rendering, LOD), ClassGroup = Voxta, meta = (BlueprintSpawnableComponent))
-class UNREALVOXTA_API UVoxtaAudioPlayback : public UAudioComponent
+class UNREALVOXTA_API UVoxtaAudioPlayback : public UAudioComponent, public IVoxtaAudioPlaybackBase
 {
 	GENERATED_BODY()
 public:
@@ -67,7 +68,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void RegisterOVRLipSyncComponent();
 
-	void GetA2FCurveWeights(TArray<float>& targetArrayRef);
+	///~ Begin IVoxtaAudioPlaybackBase overrides.
+public:
+	virtual void GetA2FCurveWeights(TArray<float>& targetArrayRef) override;
+	///~ End IVoxtaAudioPlaybackBase overrides.
 
 	///~ Begin UActorComponent overrides.
 protected:
@@ -81,7 +85,8 @@ protected:
 	UPROPERTY()
 	UActorComponent* m_ovrLipSync;
 
-	TUniquePtr<UAudio2FacePlaybackHandler> m_audio2FacePlaybackHandler;
+	UPROPERTY()
+	UAudio2FacePlaybackHandler* m_audio2FacePlaybackHandler;
 
 private:
 	enum class InternalState : uint8

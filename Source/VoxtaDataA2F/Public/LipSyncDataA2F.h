@@ -4,11 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "LipSyncDataBase.h"
-#include "TimedWeightSample.h"
 #include "LipSyncDataA2F.generated.h"
 
 UCLASS()
-class VOXTADATA_API ULipSyncDataA2F : public UObject, public ILipSyncDataBase
+class VOXTADATAA2F_API ULipSyncDataA2F : public UObject, public ILipSyncDataBase
 {
 	GENERATED_BODY()
 
@@ -17,7 +16,7 @@ public:
 	{
 	}
 
-	void SetA2FCurveWeights(const TArray<TimedWeightSample>& sourceCurves, int framesPerSecond)
+	void SetA2FCurveWeights(const TArray<TArray<float>>& sourceCurves, int framesPerSecond)
 	{
 		m_completeSampleCount = sourceCurves;
 		m_framesPerSecond = framesPerSecond;
@@ -28,7 +27,7 @@ public:
 		return m_framesPerSecond;
 	}
 
-	const TArray<TimedWeightSample>& GetA2FCurveWeights() const
+	const TArray<TArray<float>>& GetA2FCurveWeights() const
 	{
 		return m_completeSampleCount;
 	}
@@ -42,5 +41,5 @@ public:
 
 protected:
 	int m_framesPerSecond;
-	TArray<TimedWeightSample> m_completeSampleCount;
+	TArray<TArray<float>> m_completeSampleCount;
 };

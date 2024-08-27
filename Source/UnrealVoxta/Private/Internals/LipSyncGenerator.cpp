@@ -5,6 +5,7 @@
 #include "OVRLipSyncContextWrapper.h"
 #include "OVRLipSyncFrame.h"
 #endif
+#include "Serialization/JsonReader.h"
 
 #if WITH_OVRLIPSYNC
 void LipSyncGenerator::GenerateOVRLipSyncData(const TArray<uint8>& rawAudioData, TFunction<void(ULipSyncDataOVR*)> callback)
@@ -66,9 +67,46 @@ void LipSyncGenerator::GenerateA2FLipSyncData(const TArray<uint8>& rawAudioData,
 {
 	UE_LOG(LogTemp, Error, TEXT("TODO"));
 
+	FString filePath = FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("UnrealVoxta"),
+			TEXT("Content"), TEXT("blendshapes1_bsweight.json"));
+	FString FileContents;
+	FFileHelper::LoadFileToString(FileContents, *filePath);
+
+	TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject());
+	const TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(FileContents);
+
+	if (!(JsonObject.IsValid() && FJsonSerializer::Deserialize(JsonReader, JsonObject)))
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to parse JSON A2F LipSyncData"));
+		return;
+	}
+
+	int32 fps;
+	JsonObject->TryGetNumberField(TEXT("exportFps"), fps);
+	//	int32 numPoses;
+	//	JsonObject->TryGetNumberField(TEXT("numPoses"), numPoses);
+	int32 numFrames;
+	JsonObject->TryGetNumberField(TEXT("numFrames"), numFrames);
+	//	TArray<FString> curveNames;
+	//	JsonObject->TryGetStringArrayField(TEXT("facsNames"), curveNames);
+
+	const TArray<TSharedPtr<FJsonValue>>* WeightMat;
+	JsonObject->TryGetArrayField(TEXT("weightMat"), WeightMat);
+
+	TArray<TArray<float>> curveValues;
+	for (const TSharedPtr<FJsonValue>& Row : *WeightMat)
+	{
+		TArray<float> FloatRow;
+		const TArray<TSharedPtr<FJsonValue>>& values = Row->AsArray();
+		for (const TSharedPtr<FJsonValue>& Value : values)
+		{
+			FloatRow.Add(Value->AsNumber());
+		}
+		curveValues.Add(FloatRow);
+	}
+
 	ULipSyncDataA2F* data = NewObject<ULipSyncDataA2F>();
-	TArray<TimedWeightSample> samples;
-	data->SetA2FCurveWeights(samples);
+	data->SetA2FCurveWeights(curveValues, fps);
 	data->AddToRoot();
 	callback(data);
 

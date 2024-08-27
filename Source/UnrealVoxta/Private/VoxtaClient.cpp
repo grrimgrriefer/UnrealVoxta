@@ -2,7 +2,7 @@
 
 #include "VoxtaClient.h"
 #include "SignalR/Public/SignalRSubsystem.h"
-#include "Internals/VoxtaDefines.h"
+#include "VoxtaDefines.h"
 
 UVoxtaClient::UVoxtaClient()
 {

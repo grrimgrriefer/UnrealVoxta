@@ -4,11 +4,11 @@
 
 #include "Animation/AnimNodeBase.h"
 #include "CoreMinimal.h"
-#include "VoxtaAudioPlayback.h"
+#include "VoxtaAudioPlaybackBase.h"
 #include "AnimNode_ApplyCustomCurves.generated.h"
 
 USTRUCT(BlueprintInternalUseOnly)
-struct UNREALVOXTA_API FAnimNode_ApplyCustomCurves : public FAnimNode_Base
+struct VOXTADATAA2F_API FAnimNode_ApplyCustomCurves : public FAnimNode_Base
 {
 	GENERATED_BODY()
 
@@ -25,8 +25,7 @@ public:
 	//~ end FAnimNode_Base overrides
 
 private:
-	UPROPERTY()
-	UVoxtaAudioPlayback* CurveSource;
+	IVoxtaAudioPlaybackBase* CurveSource;
 
 	TArray<float> CachedWeights;
 };

@@ -19,7 +19,12 @@
       "Name": "UnrealVoxta",
       "Type": "Runtime",
       "LoadingPhase": "Default"
-    }
+    },	
+	{
+		"Name": "UnrealVoxtaEditor",
+		"Type": "Editor",
+		"LoadingPhase": "PreDefault"
+	}
   ],
   "Plugins": [
     {

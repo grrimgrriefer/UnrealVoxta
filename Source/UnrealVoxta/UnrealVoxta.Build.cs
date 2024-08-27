@@ -12,14 +12,14 @@ public class UnrealVoxta : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"Core", "AudioUtility", "VoxtaData", "SignalR", "HTTP", "Voice"
+				"Core", "AudioUtility", "VoxtaData", "SignalR", "HTTP", "Voice", "VoxtaDataA2F"
 			}
 			);
 
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"CoreUObject", "Engine", "Slate", "SlateCore",
+				"CoreUObject", "Engine", "Slate", "SlateCore", "Json", "JsonUtilities",
 			}
 			);
 

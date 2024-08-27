@@ -5,10 +5,10 @@
 #include "CoreMinimal.h"
 #include "Components/AudioComponent.h"
 #include "LipSyncDataA2F.h"
-#include "TimedWeightSample.h"
 #include "Audio2FacePlaybackHandler.generated.h"
 
-class UAudio2FacePlaybackHandler : UObject
+UCLASS()
+class VOXTADATAA2F_API UAudio2FacePlaybackHandler : public UObject
 {
 	GENERATED_BODY()
 

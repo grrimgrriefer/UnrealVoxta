@@ -34,6 +34,11 @@ void UVoxtaAudioPlayback::BeginPlay()
 {
 	Super::BeginPlay();
 	OnAudioFinished.AddUniqueDynamic(this, &UVoxtaAudioPlayback::OnAudioPlaybackFinished);
+
+	if (m_lipSyncType == LipSyncType::Audio2Face)
+	{
+		m_audio2FacePlaybackHandler = NewObject<UAudio2FacePlaybackHandler>();
+	}
 }
 
 void UVoxtaAudioPlayback::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -44,7 +49,10 @@ void UVoxtaAudioPlayback::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	{
 		m_clientReference->VoxtaClientCharMessageAddedEvent.RemoveDynamic(this, &UVoxtaAudioPlayback::PlaybackMessage);
 	}
-	m_audio2FacePlaybackHandler->Stop();
+	if (m_audio2FacePlaybackHandler != nullptr)
+	{
+		m_audio2FacePlaybackHandler->Stop();
+	}
 #if WITH_OVRLIPSYNC
 	Cast<UOVRLipSyncPlaybackActorComponent>(m_ovrLipSync)->Stop();
 #endif

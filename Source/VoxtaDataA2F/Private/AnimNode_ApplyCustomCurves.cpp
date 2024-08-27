@@ -3,6 +3,7 @@
 #include "AnimNode_ApplyCustomCurves.h"
 #include "Animation/AnimInstanceProxy.h"
 #include "Animation/AnimNodeBase.h"
+#include "Audio2FacePlaybackHandler.h"
 
 void FAnimNode_ApplyCustomCurves::Update_AnyThread(const FAnimationUpdateContext& Context)
 {
@@ -17,10 +18,10 @@ void FAnimNode_ApplyCustomCurves::PreUpdate(const UAnimInstance* InAnimInstance)
 		AActor* Actor = InAnimInstance->GetOwningActor();
 		if (Actor != nullptr)
 		{
-			UVoxtaAudioPlayback* voxtaComponent = Actor->FindComponentByClass<UVoxtaAudioPlayback>();
-			if (voxtaComponent != nullptr)
+			UAudioComponent* FoundComponent = Actor->GetComponentByClass<UAudioComponent>();
+			if (FoundComponent)
 			{
-				CurveSource = voxtaComponent;
+				CurveSource = Cast<IVoxtaAudioPlaybackBase>(FoundComponent);
 			}
 		}
 	}

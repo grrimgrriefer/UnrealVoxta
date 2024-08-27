@@ -120,14 +120,14 @@ void UAudio2FacePlaybackHandler::OnAudioPlaybackPercent(const UAudioComponent*, 
 	}
 	if (FMath::IsNearlyEqual(currentFrame, closestFrame))
 	{
-		m_currentCurves = m_lipsyncData->GetA2FCurveWeights()[closestFrame].Weights;
+		m_currentCurves = m_lipsyncData->GetA2FCurveWeights()[closestFrame];
 		return;
 	}
 	else if (floorFrame + 1 < totalFrameCount)
 	{
 		float normalizedBlend = currentFrame - floorFrame;
-		const TArray<float>& floor = m_lipsyncData->GetA2FCurveWeights()[floorFrame].Weights;
-		const TArray<float>& ceiling = m_lipsyncData->GetA2FCurveWeights()[floorFrame + 1].Weights;
+		const TArray<float>& floor = m_lipsyncData->GetA2FCurveWeights()[floorFrame];
+		const TArray<float>& ceiling = m_lipsyncData->GetA2FCurveWeights()[floorFrame + 1];
 		for (int i = 0; i < floor.Num(); i++)
 		{
 			m_currentCurves[i] = (floor[i] * normalizedBlend) + (ceiling[i] * (1.f - normalizedBlend));
@@ -136,7 +136,7 @@ void UAudio2FacePlaybackHandler::OnAudioPlaybackPercent(const UAudioComponent*, 
 	else
 	{
 		// Error too few lipsync frames, just pick last values
-		m_currentCurves = m_lipsyncData->GetA2FCurveWeights()[totalFrameCount - 1].Weights;
+		m_currentCurves = m_lipsyncData->GetA2FCurveWeights()[totalFrameCount - 1];
 	}
 }
 
