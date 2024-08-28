@@ -72,11 +72,22 @@ void MessageChunkAudioContainer::DownloadData()
 		return;
 	}
 	UpdateState(MessageChunkState::Busy);
-	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> httpRequest = FHttpModule::Get().CreateRequest();
-	httpRequest->SetVerb("GET");
-	httpRequest->SetURL(m_downloadUrl);
-	httpRequest->OnProcessRequestComplete().BindRaw(this, &MessageChunkAudioContainer::OnRequestComplete);
-	httpRequest->ProcessRequest();
+
+	FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([&] (float DeltaTime)
+		{
+			FString filePath = FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("UnrealVoxta"),
+				TEXT("Content"), TEXT("speak.wav"));
+			FString FileContents;
+			FFileHelper::LoadFileToArray(m_rawData, *filePath);
+			UpdateState(MessageChunkState::Idle_Downloaded);
+			return false;
+		}));
+
+	//	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> httpRequest = FHttpModule::Get().CreateRequest();
+	//	httpRequest->SetVerb("GET");
+	//	httpRequest->SetURL(m_downloadUrl);
+	//	httpRequest->OnProcessRequestComplete().BindRaw(this, &MessageChunkAudioContainer::OnRequestComplete);
+	//	httpRequest->ProcessRequest();
 }
 
 void MessageChunkAudioContainer::ImportData()

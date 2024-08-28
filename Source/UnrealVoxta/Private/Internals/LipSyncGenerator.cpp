@@ -6,6 +6,7 @@
 #include "OVRLipSyncFrame.h"
 #endif
 #include "Serialization/JsonReader.h"
+#include "Audio2FaceRESTHandler.h"
 
 #if WITH_OVRLIPSYNC
 void LipSyncGenerator::GenerateOVRLipSyncData(const TArray<uint8>& rawAudioData, TFunction<void(ULipSyncDataOVR*)> callback)
@@ -65,7 +66,10 @@ void LipSyncGenerator::GenerateOVRLipSyncData(const TArray<uint8>& rawAudioData,
 
 void LipSyncGenerator::GenerateA2FLipSyncData(const TArray<uint8>& rawAudioData, TFunction<void(ULipSyncDataA2F*)> callback)
 {
-	UE_LOG(LogTemp, Error, TEXT("TODO"));
+	// TODO Write wav file
+
+	// Audio2FaceRESTHandler::Initialize(); if needed
+	// Audio2FaceRESTHandler::GetBlendshapes()
 
 	FString filePath = FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("UnrealVoxta"),
 			TEXT("Content"), TEXT("blendshapes1_bsweight.json"));
@@ -83,12 +87,8 @@ void LipSyncGenerator::GenerateA2FLipSyncData(const TArray<uint8>& rawAudioData,
 
 	int32 fps;
 	JsonObject->TryGetNumberField(TEXT("exportFps"), fps);
-	//	int32 numPoses;
-	//	JsonObject->TryGetNumberField(TEXT("numPoses"), numPoses);
 	int32 numFrames;
 	JsonObject->TryGetNumberField(TEXT("numFrames"), numFrames);
-	//	TArray<FString> curveNames;
-	//	JsonObject->TryGetStringArrayField(TEXT("facsNames"), curveNames);
 
 	const TArray<TSharedPtr<FJsonValue>>* WeightMat;
 	JsonObject->TryGetArrayField(TEXT("weightMat"), WeightMat);
@@ -109,192 +109,4 @@ void LipSyncGenerator::GenerateA2FLipSyncData(const TArray<uint8>& rawAudioData,
 	data->SetA2FCurveWeights(curveValues, fps);
 	data->AddToRoot();
 	callback(data);
-
-	/*
-
-	Required HTTP calls, verified with Swagger API
-
-----------------------------------------------------------------------
-1. get status
-
-curl -X 'GET' \
-  'http://localhost:8011/status' \
-  -H 'accept: application/json'
-
-"OK"
-
-----------------------------------------------------------------------
-2. load usd into stage
-
-curl -X 'POST' \
-  'http://localhost:8011/A2F/USD/Load' \
-  -H 'accept: application/json' \
-  -H 'Content-Type: application/json' \
-  -d '{
-  "file_name": "D:\\Documents\\Unreal Projects\\VoxtaTestProject\\Plugins\\UnrealVoxta\\Content\\test.usd"
-}'
-
-{
-  "status": "OK",
-  "message": "Succeeded"
-}
-
-----------------------------------------------------------------------
-3. get name of instance so we can reference it later
-
-curl -X 'GET' \
-  'http://localhost:8011/A2F/GetInstances' \
-  -H 'accept: application/json'
-
-{
-  "status": "OK",
-  "result": {
-	"fullface_instances": [
-	  "/World/audio2face/CoreFullface"
-	]
-  },
-  "message": "Succeeded"
-}
-
-----------------------------------------------------------------------
-4. get possible settings
-
-curl -X 'POST' \
-  'http://localhost:8011/A2F/GetSettingNames' \
-  -H 'accept: application/json' \
-  -H 'Content-Type: application/json' \
-  -d '{
-  "a2f_instance": "/World/audio2face/CoreFullface"
-}'
-
-----------------------------------------------------------------------
-5. confirm livelink is disabled
-
-curl -X 'POST' \
-  'http://localhost:8011/A2F/GetSettings' \
-  -H 'accept: application/json' \
-  -H 'Content-Type: application/json' \
-  -d '{
-  "a2f_instance": "/World/audio2face/CoreFullface",
-  "settings": [
-	"a2e_streaming_live_mode"
-  ]
-}'
-
-{
-  "status": "OK",
-  "result": {
-	"a2e_streaming_live_mode": false
-}
-
-----------------------------------------------------------------------
-6. get player
-
-curl -X 'GET' \
-  'http://localhost:8011/A2F/Player/GetInstances' \
-  -H 'accept: application/json'
-
-{
-  "status": "OK",
-  "result": {
-	"regular": [
-	  "/World/audio2face/Player"
-	],
-	"streaming": []
-  },
-  "message": "Suceeded to retrieve Player instances"
-}
-
-----------------------------------------------------------------------
-7. set root path
-
-curl -X 'POST' \
-  'http://localhost:8011/A2F/Player/SetRootPath' \
-  -H 'accept: application/json' \
-  -H 'Content-Type: application/json' \
-  -d '{
-  "a2f_player": "/World/audio2face/Player",
-  "dir_path": "D:\\Documents\\Unreal Projects\\VoxtaTestProject\\Plugins\\UnrealVoxta\\Content"
-}'
-
-{
-  "status": "OK",
-  "message": "Set the audio file root to D:\\Documents\\Unreal Projects\\VoxtaTestProject\\Plugins\\UnrealVoxta\\Content"
-}
-
-----------------------------------------------------------------------
-8. get playable tracks
-
-curl -X 'POST' \
-  'http://localhost:8011/A2F/Player/GetTracks' \
-  -H 'accept: application/json' \
-  -H 'Content-Type: application/json' \
-  -d '{
-  "a2f_player": "/World/audio2face/Player"
-}'
-
-{
-  "status": "OK",
-  "result": [
-	"speak.wav"
-  ],
-  "message": "Suceeded"
-}
-
-----------------------------------------------------------------------
-9. set tracks
-
-curl -X 'POST' \
-  'http://localhost:8011/A2F/Player/SetTrack' \
-  -H 'accept: application/json' \
-  -H 'Content-Type: application/json' \
-  -d '{
-  "a2f_player": "/World/audio2face/Player",
-  "file_name": "speak.wav",
-  "time_range": [
-	0,
-	-1
-  ]
-}'
-
-{
-  "status": "OK",
-  "message": "Set track to speak.wav"
-}
-
-----------------------------------------------------------------------
-10. get blendshape solver
-
-curl -X 'GET' \
-  'http://localhost:8011/A2F/Exporter/GetBlendShapeSolvers' \
-  -H 'accept: application/json'
-
-{
-  "status": "OK",
-  "result": [
-	"/World/audio2face/BlendshapeSolve"
-  ]
-}
-
-----------------------------------------------------------------------
-11. generate blendshapes
-
-curl -X 'POST' \
-  'http://localhost:8011/A2F/Exporter/ExportBlendshapes' \
-  -H 'accept: application/json' \
-  -H 'Content-Type: application/json' \
-  -d '{
-  "solver_node": "/World/audio2face/BlendshapeSolve",
-  "export_directory": "D:\\Documents\\Unreal Projects\\VoxtaTestProject\\Plugins\\UnrealVoxta\\Content",
-  "file_name": "blendshapes1",
-  "format": "json",
-  "batch": false,
-  "fps": 30
-}'
-
-{
-  "status": "OK"
-}
-
-	*/
 }

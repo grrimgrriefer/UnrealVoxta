@@ -22,7 +22,7 @@
     },	
 	{
 		"Name": "UnrealVoxtaEditor",
-		"Type": "Editor",
+		"Type": "UncookedOnly",
 		"LoadingPhase": "PreDefault"
 	}
   ],

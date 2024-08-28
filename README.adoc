@@ -1,27 +1,35 @@
-= UnrealVoxta - An Unreal Engine client implementation for Voxta
+= An unofficial Unreal Engine client for Voxta
 
 _Made in collaboration with https://twitter.com/DZnnah[DZnnah]_ +
+_This client is not affiliated, associated, endorsed by, or in any way officially connected to Voxta.ai_ +
 
-This repo contains the Unreal-Engine (5.3) port of the https://github.com/grrimgrriefer/TalkToMeCPP[TalkToMeCPP (Windows c++)] +
+For a raw C++ implementation, please refer to https://github.com/grrimgrriefer/TalkToMeCPP[TalkToMeCPP (Windows c++)] +
 
 == Third party code Licenses
 
 . SignalR client (MIT license): link:Source/SignalR/License.txt[LICENSE] +
 . RuntimeAudioImporter (MIT licensed): link:Source/AudioUtility/Public/RuntimeAudioImporter/LICENSE.txt[LICENSE] +
 
+== Optional dependencies
+
+. OVR lipsync: link:todo-add-url-here[OVR lipsync fork] +
+
 == Dev Progress
 
 Trello board: +
 https://trello.com/b/Biv7Si4l/unrealvoxta
 
-== How to use
-
-=== Example project
+== Example project
 
 Full project including all relevant dependencies. (MIT license) + 
 https://dev.azure.com/grrimgrriefer/_git/UnrealVoxtaTestProject 
 
-=== Example blueprints
+== Video tutorial
+
+Video on how to install & use the alpha release 0.0.1a +
+todo-add-url-here
+
+=== Quick-start blueprints
 
 The plugin contains several 'minimal' plugins to help demonstrate the usage. These are not required to be used but can help as 
 a guidance on how to implement certain features. +

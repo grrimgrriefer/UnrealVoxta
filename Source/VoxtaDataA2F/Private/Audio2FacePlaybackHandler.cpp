@@ -2,6 +2,7 @@
 
 #include "Audio2FacePlaybackHandler.h"
 #include "VoxtaDefines.h"
+#include <Logging/StructuredLog.h>
 
 // ArkitNames https://developer.apple.com/documentation/arkit/arfaceanchor/blendshapelocation
 const FName UAudio2FacePlaybackHandler::CurveNames[52] =
@@ -72,6 +73,7 @@ void UAudio2FacePlaybackHandler::GetA2FCurveWeights(TArray<float>& targetArrayRe
 	}
 	else
 	{
+		UE_LOG(LogTemp, Log, TEXT("Fetching current curves"));
 		targetArrayRef = m_currentCurves;
 	}
 }
@@ -109,7 +111,8 @@ void UAudio2FacePlaybackHandler::OnAudioPlaybackPercent(const UAudioComponent*, 
 		InitNeutralPose();
 		return;
 	}
-	float currentFrame = SoundWave->Duration * m_lipsyncData->GetFramePerSecond() / 100.f * Percent;
+	UE_LOGFMT(LogTemp, Log, "percentage: {0}", Percent);
+	float currentFrame = SoundWave->Duration * m_lipsyncData->GetFramePerSecond() * Percent;
 	float totalFrameCount = m_lipsyncData->GetA2FCurveWeights().Num();
 	int closestFrame = FMath::RoundToInt(currentFrame);
 	int floorFrame = FMath::Floor(currentFrame);
@@ -128,6 +131,7 @@ void UAudio2FacePlaybackHandler::OnAudioPlaybackPercent(const UAudioComponent*, 
 		float normalizedBlend = currentFrame - floorFrame;
 		const TArray<float>& floor = m_lipsyncData->GetA2FCurveWeights()[floorFrame];
 		const TArray<float>& ceiling = m_lipsyncData->GetA2FCurveWeights()[floorFrame + 1];
+
 		for (int i = 0; i < floor.Num(); i++)
 		{
 			m_currentCurves[i] = (floor[i] * normalizedBlend) + (ceiling[i] * (1.f - normalizedBlend));

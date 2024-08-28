@@ -54,7 +54,10 @@ void UVoxtaAudioPlayback::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		m_audio2FacePlaybackHandler->Stop();
 	}
 #if WITH_OVRLIPSYNC
-	Cast<UOVRLipSyncPlaybackActorComponent>(m_ovrLipSync)->Stop();
+	if (m_lipSyncType == LipSyncType::OVRLipSync)
+	{
+		Cast<UOVRLipSyncPlaybackActorComponent>(m_ovrLipSync)->Stop();
+	}
 #endif
 }
 
