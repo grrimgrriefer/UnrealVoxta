@@ -5,86 +5,265 @@
 
 void Audio2FaceRESTHandler::Initialize()
 {
-	/*
-	GetStatus
-"OK"
+	AsyncTask(ENamedThreads::AnyThread, [&] ()
+	{
+		bool waiting = true;
+		bool totalSuccess = true;
 
-	LoadUsdFile
-{
-  "status": "OK",
-  "message": "Succeeded"
+		GetStatus([&waiting, &totalSuccess] (FHttpRequestPtr req, FHttpResponsePtr resp, bool success)
+		{
+			totalSuccess = totalSuccess && success;
+			totalSuccess = totalSuccess && resp->GetContentAsString() == TEXT("OK");
+			waiting = false;
+		});
+		while (waiting) {};
+		if (!totalSuccess)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("GetStatus failed, aborting Initializing"));
+			return;
+		}
+
+		LoadUsdFile([&waiting, &totalSuccess] (FHttpRequestPtr req, FHttpResponsePtr resp, bool success)
+		{
+			totalSuccess = totalSuccess && success;
+			if (success)
+			{
+				TSharedPtr<FJsonObject> JsonObject;
+				TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(resp->GetContentAsString());
+				if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
+				{
+					totalSuccess == totalSuccess && JsonObject->GetStringField(TEXT("status")) == TEXT("OK");
+					totalSuccess == totalSuccess && JsonObject->GetStringField(TEXT("message")) == TEXT("Succeeded");
+				}
+				else
+				{
+					totalSuccess = false;
+				}
+			}
+			waiting = false;
+		});
+		while (waiting) {};
+		if (!totalSuccess)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("LoadUsdFile failed, aborting Initializing"));
+			return;
+		}
+
+		GetInstance([&waiting, &totalSuccess] (FHttpRequestPtr req, FHttpResponsePtr resp, bool success)
+		{
+			totalSuccess = totalSuccess && success;
+			if (success)
+			{
+				TSharedPtr<FJsonObject> JsonObject;
+				TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(resp->GetContentAsString());
+				if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
+				{
+					totalSuccess == totalSuccess && JsonObject->GetStringField(TEXT("status")) == TEXT("OK");
+					totalSuccess == totalSuccess && JsonObject->GetStringField(TEXT("message")) == TEXT("Succeeded");
+					if (totalSuccess)
+					{
+						TArray<FString> stringArray;
+						totalSuccess == totalSuccess && JsonObject->GetObjectField(TEXT("result"))->TryGetStringArrayField(TEXT("fullface_instances"), stringArray);
+						totalSuccess == totalSuccess && stringArray.Num() == 1 && stringArray[0] == TEXT("/World/audio2face/CoreFullface");
+					}
+				}
+				else
+				{
+					totalSuccess = false;
+				}
+			}
+			waiting = false;
+		});
+		while (waiting) {};
+		if (!totalSuccess)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("GetInstance failed, aborting Initializing"));
+			return;
+		}
+
+		GetSettings([&waiting, &totalSuccess] (FHttpRequestPtr req, FHttpResponsePtr resp, bool success)
+		{
+			totalSuccess = totalSuccess && success;
+			if (success)
+			{
+				TSharedPtr<FJsonObject> JsonObject;
+				TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(resp->GetContentAsString());
+				if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
+				{
+					totalSuccess == totalSuccess && JsonObject->GetStringField(TEXT("status")) == TEXT("OK");
+					if (totalSuccess)
+					{
+						// make sure streaming is off, it conflicts with exporting
+						totalSuccess == totalSuccess && (false == JsonObject->GetObjectField(TEXT("result"))->GetBoolField(TEXT("a2e_streaming_live_mode")));
+					}
+				}
+				else
+				{
+					totalSuccess = false;
+				}
+			}
+			waiting = false;
+		});
+		while (waiting) {};
+		if (!totalSuccess)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("GetSettings failed, aborting Initializing"));
+			return;
+		}
+
+		GetPlayerInstance([&waiting, &totalSuccess] (FHttpRequestPtr req, FHttpResponsePtr resp, bool success)
+		{
+			totalSuccess = totalSuccess && success;
+			if (success)
+			{
+				TSharedPtr<FJsonObject> JsonObject;
+				TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(resp->GetContentAsString());
+				if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
+				{
+					totalSuccess == totalSuccess && JsonObject->GetStringField(TEXT("status")) == TEXT("OK");
+					totalSuccess == totalSuccess && JsonObject->GetStringField(TEXT("message")) == TEXT("Suceeded to retrieve Player instances");
+					if (totalSuccess)
+					{
+						TArray<FString> stringArray;
+						totalSuccess == totalSuccess && JsonObject->GetObjectField(TEXT("result"))->TryGetStringArrayField(TEXT("regular"), stringArray);
+						totalSuccess == totalSuccess && stringArray.Num() == 1 && stringArray[0] == TEXT("/World/audio2face/Player");
+					}
+				}
+				else
+				{
+					totalSuccess = false;
+				}
+			}
+			waiting = false;
+		});
+		while (waiting) {};
+		if (!totalSuccess)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("GetPlayerInstance failed, aborting Initializing"));
+			return;
+		}
+
+		SetPlayerRootPath([&waiting, &totalSuccess] (FHttpRequestPtr req, FHttpResponsePtr resp, bool success)
+		{
+			totalSuccess = totalSuccess && success;
+			if (success)
+			{
+				TSharedPtr<FJsonObject> JsonObject;
+				TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(resp->GetContentAsString());
+				if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
+				{
+					totalSuccess == totalSuccess && JsonObject->GetStringField(TEXT("status")) == TEXT("OK");
+				}
+				else
+				{
+					totalSuccess = false;
+				}
+			}
+			waiting = false;
+		});
+		while (waiting) {};
+		if (!totalSuccess)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("SetPlayerRootPath failed, aborting Initializing"));
+			return;
+		}
+
+		GetBlendshapeSolver([&waiting, &totalSuccess] (FHttpRequestPtr req, FHttpResponsePtr resp, bool success)
+		{
+			totalSuccess = totalSuccess && success;
+			if (success)
+			{
+				TSharedPtr<FJsonObject> JsonObject;
+				TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(resp->GetContentAsString());
+				if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
+				{
+					totalSuccess == totalSuccess && JsonObject->GetStringField(TEXT("status")) == TEXT("OK");
+					if (totalSuccess)
+					{
+						TArray<FString> stringArray;
+						totalSuccess == totalSuccess && JsonObject->TryGetStringArrayField(TEXT("result"), stringArray);
+						totalSuccess == totalSuccess && stringArray.Num() == 1 && stringArray[0] == TEXT("/World/audio2face/BlendshapeSolve");
+					}
+				}
+				else
+				{
+					totalSuccess = false;
+				}
+			}
+			waiting = false;
+		});
+		while (waiting) {};
+		if (!totalSuccess)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("GetPlayerTracks failed, aborting Initializing"));
+			return;
+		}
+	});
 }
 
-	GetInstance
+void Audio2FaceRESTHandler::GetBlendshapes(FString wavFileName, FString shapesFilePath, FString shapesFileName,
+	TFunction<void(FString shapesFile, bool success)> callback)
 {
-  "status": "OK",
-  "result": {
-	"fullface_instances": [
-	  "/World/audio2face/CoreFullface"
-	]
-  },
-  "message": "Succeeded"
-}
+	AsyncTask(ENamedThreads::AnyThread, [&] ()
+	{
+		bool waiting = true;
+		bool totalSuccess = false;
+		SetPlayerTrack(wavFileName, [&totalSuccess, &waiting] (FHttpRequestPtr req, FHttpResponsePtr resp, bool success)
+		{
+			totalSuccess = totalSuccess && success;
+			if (success)
+			{
+				TSharedPtr<FJsonObject> JsonObject;
+				TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(resp->GetContentAsString());
+				if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
+				{
+					totalSuccess = totalSuccess && JsonObject->GetStringField(TEXT("status")) == TEXT("OK");
+				}
+				else
+				{
+					totalSuccess = false;
+				}
+			}
+			waiting = false;
+		});
+		while (waiting) {};
+		if (!totalSuccess)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("SetPlayerTrack failed, aborting GetBlendshapes"));
+			callback(FString(), totalSuccess);
+			return;
+		}
 
-	GetSettings
-{
-  "status": "OK",
-  "result": {
-	"a2e_streaming_live_mode": false
-}
-
-	GetPlayerInstance
-{
-  "status": "OK",
-  "result": {
-	"regular": [
-	  "/World/audio2face/Player"
-	],
-	"streaming": []
-  },
-  "message": "Suceeded to retrieve Player instances"
-}
-
-	SetPlayerRootPath
-{
-  "status": "OK",
-  "message": "Set the audio file root to D:\\Documents\\Unreal Projects\\VoxtaTestProject\\Plugins\\UnrealVoxta\\Content"
-}
-
-	GetPlayerTracks
-{
-  "status": "OK",
-  "result": [
-	"speak.wav"
-  ],
-  "message": "Suceeded"
-}
-
-	GetBlendshapeSolver
-{
-  "status": "OK",
-  "result": [
-	"/World/audio2face/BlendshapeSolve"
-  ]
-}
-	*/
-}
-
-void Audio2FaceRESTHandler::GetBlendshapes()
-{
-	/*
-
-	SetPlayerTrack
-{
-  "status": "OK",
-  "message": "Set track to speak.wav"
-}
-
-	GetBlendshapes
-{
-  "status": "OK"
-}
-	*/
+		GenerateBlendShapes(shapesFilePath, shapesFileName,
+			[&totalSuccess, &waiting, &shapesFilePath, &shapesFileName, callback]
+			(FHttpRequestPtr req, FHttpResponsePtr resp, bool success)
+		{
+			totalSuccess = totalSuccess && success;
+			if (success)
+			{
+				TSharedPtr<FJsonObject> JsonObject;
+				TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(resp->GetContentAsString());
+				if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
+				{
+					totalSuccess = totalSuccess && JsonObject->GetStringField(TEXT("status")) == TEXT("OK");
+				}
+				else
+				{
+					totalSuccess = false;
+				}
+			}
+			if (totalSuccess)
+			{
+				callback(FPaths::Combine(shapesFilePath, shapesFileName), totalSuccess);
+			}
+			if (!totalSuccess)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("GenerateBlendShapes failed, aborting GetBlendshapes"));
+				callback(FString(), totalSuccess);
+				return;
+			}
+		});
+	});
 }
 
 void Audio2FaceRESTHandler::GetStatus(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback)
@@ -175,7 +354,7 @@ void Audio2FaceRESTHandler::GetBlendshapeSolver(TFunction<void(FHttpRequestPtr, 
 	Request->ProcessRequest();
 }
 
-void Audio2FaceRESTHandler::SetPlayerTrack(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback)
+void Audio2FaceRESTHandler::SetPlayerTrack(FString fileName, TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback)
 {
 	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = GetBaseRequest(Callback);
 	Request->SetURL("http://localhost:8011/A2F/Player/SetTrack");
@@ -183,7 +362,7 @@ void Audio2FaceRESTHandler::SetPlayerTrack(TFunction<void(FHttpRequestPtr, FHttp
 
 	TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
 	JsonObject->SetStringField(TEXT("a2f_player"), TEXT("/World/audio2face/Player"));
-	JsonObject->SetStringField(TEXT("file_name"), TEXT("speak.wav"));
+	JsonObject->SetStringField(TEXT("file_name"), fileName);
 	TArray<TSharedPtr<FJsonValue>> TimeRangeArray;
 	TimeRangeArray.Add(MakeShareable(new FJsonValueNumber(0)));
 	TimeRangeArray.Add(MakeShareable(new FJsonValueNumber(-1)));
@@ -193,7 +372,7 @@ void Audio2FaceRESTHandler::SetPlayerTrack(TFunction<void(FHttpRequestPtr, FHttp
 	Request->ProcessRequest();
 }
 
-void Audio2FaceRESTHandler::GenerateBlendShapes(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback)
+void Audio2FaceRESTHandler::GenerateBlendShapes(FString filePath, FString fileName, TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback)
 {
 	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = GetBaseRequest(Callback);
 	Request->SetURL("http://localhost:8011/A2F/Exporter/ExportBlendshapes");
@@ -201,8 +380,8 @@ void Audio2FaceRESTHandler::GenerateBlendShapes(TFunction<void(FHttpRequestPtr, 
 
 	TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
 	JsonObject->SetStringField(TEXT("solver_node"), TEXT("/World/audio2face/BlendshapeSolve"));
-	JsonObject->SetStringField(TEXT("export_directory"), TEXT("D:\\Documents\\Unreal Projects\\VoxtaTestProject\\Plugins\\UnrealVoxta\\Content"));
-	JsonObject->SetStringField(TEXT("file_name"), TEXT("blendshapes1"));
+	JsonObject->SetStringField(TEXT("export_directory"), filePath);
+	JsonObject->SetStringField(TEXT("file_name"), fileName);
 	JsonObject->SetStringField(TEXT("format"), TEXT("json"));
 	JsonObject->SetStringField(TEXT("batch"), TEXT("false"));
 	JsonObject->SetStringField(TEXT("fps"), TEXT("30"));
