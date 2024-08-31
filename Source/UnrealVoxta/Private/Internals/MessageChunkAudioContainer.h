@@ -10,6 +10,7 @@
 #include "LipSyncDataOVR.h"
 #endif
 #include "Runtime/Online/HTTP/Public/Http.h"
+#include "Audio2FaceRESTHandler.h"
 
 enum class MessageChunkState : uint8
 {
@@ -26,6 +27,7 @@ class MessageChunkAudioContainer
 public:
 	MessageChunkAudioContainer(const FString& fullUrl,
 		LipSyncType lipSyncType,
+		const Audio2FaceRESTHandler& A2FRestHandler,
 		TFunction<void(const MessageChunkAudioContainer* newState)> callback,
 		int id);
 
@@ -46,6 +48,7 @@ private:
 	const FString m_downloadUrl;
 	const TFunction<void(const MessageChunkAudioContainer* chunk)> onStateChanged;
 	TArray<uint8> m_rawData;
+	const Audio2FaceRESTHandler& m_A2FRestHandler;
 
 	void DownloadData();
 	void ImportData();

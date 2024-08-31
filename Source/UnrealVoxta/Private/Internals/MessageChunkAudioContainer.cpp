@@ -6,11 +6,13 @@
 
 MessageChunkAudioContainer::MessageChunkAudioContainer(const FString& fullUrl,
 	LipSyncType lipSyncType,
+	const Audio2FaceRESTHandler& A2FRestHandler,
 	TFunction<void(const MessageChunkAudioContainer* newState)> callback,
 	int id) :
 	m_index(id),
 	m_lipSyncType(lipSyncType),
 	m_downloadUrl(fullUrl),
+	m_A2FRestHandler(A2FRestHandler),
 	onStateChanged(callback)
 {
 }
@@ -73,21 +75,11 @@ void MessageChunkAudioContainer::DownloadData()
 	}
 	UpdateState(MessageChunkState::Busy);
 
-	FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([&] (float DeltaTime)
-		{
-			FString filePath = FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("UnrealVoxta"),
-				TEXT("Content"), TEXT("speak.wav"));
-			FString FileContents;
-			FFileHelper::LoadFileToArray(m_rawData, *filePath);
-			UpdateState(MessageChunkState::Idle_Downloaded);
-			return false;
-		}));
-
-	//	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> httpRequest = FHttpModule::Get().CreateRequest();
-	//	httpRequest->SetVerb("GET");
-	//	httpRequest->SetURL(m_downloadUrl);
-	//	httpRequest->OnProcessRequestComplete().BindRaw(this, &MessageChunkAudioContainer::OnRequestComplete);
-	//	httpRequest->ProcessRequest();
+	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> httpRequest = FHttpModule::Get().CreateRequest();
+	httpRequest->SetVerb("GET");
+	httpRequest->SetURL(m_downloadUrl);
+	httpRequest->OnProcessRequestComplete().BindRaw(this, &MessageChunkAudioContainer::OnRequestComplete);
+	httpRequest->ProcessRequest();
 }
 
 void MessageChunkAudioContainer::ImportData()
@@ -112,7 +104,7 @@ void MessageChunkAudioContainer::GenerateLipSync()
 			break;
 		case LipSyncType::Audio2Face:
 			LipSyncGenerator::GenerateA2FLipSyncData(m_rawData,
-				[this] (ULipSyncDataA2F* lipsyncData)
+				m_A2FRestHandler, [this] (ULipSyncDataA2F* lipsyncData)
 				{
 					m_lipSyncData = Cast<ILipSyncDataBase>(MoveTemp(lipsyncData));
 					UpdateState(MessageChunkState::ReadyForPlayback);

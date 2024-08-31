@@ -64,49 +64,93 @@ void LipSyncGenerator::GenerateOVRLipSyncData(const TArray<uint8>& rawAudioData,
 }
 #endif
 
-void LipSyncGenerator::GenerateA2FLipSyncData(const TArray<uint8>& rawAudioData, TFunction<void(ULipSyncDataA2F*)> callback)
+int LipSyncGenerator::counter = 0;
+
+void LipSyncGenerator::GenerateA2FLipSyncData(const TArray<uint8>& rawAudioData, const Audio2FaceRESTHandler& A2FRestHandler, TFunction<void(ULipSyncDataA2F*)> callback)
 {
+	counter++;
+
+	FString wavPath = FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("UnrealVoxta"),
+		TEXT("Content"), FString::Format(*FString(TEXT("speakspoketalkerino{0}.wav")), { counter }));
+
 	// TODO Write wav file
+	WriteWavFile(rawAudioData, wavPath);
 
-	// Audio2FaceRESTHandler::Initialize(); if needed
-	// Audio2FaceRESTHandler::GetBlendshapes()
-
-	FString filePath = FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("UnrealVoxta"),
-			TEXT("Content"), TEXT("blendshapes1_bsweight.json"));
-	FString FileContents;
-	FFileHelper::LoadFileToString(FileContents, *filePath);
-
-	TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject());
-	const TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(FileContents);
-
-	if (!(JsonObject.IsValid() && FJsonSerializer::Deserialize(JsonReader, JsonObject)))
-	{
-		UE_LOG(LogTemp, Error, TEXT("Failed to parse JSON A2F LipSyncData"));
-		return;
-	}
-
-	int32 fps;
-	JsonObject->TryGetNumberField(TEXT("exportFps"), fps);
-	int32 numFrames;
-	JsonObject->TryGetNumberField(TEXT("numFrames"), numFrames);
-
-	const TArray<TSharedPtr<FJsonValue>>* WeightMat;
-	JsonObject->TryGetArrayField(TEXT("weightMat"), WeightMat);
-
-	TArray<TArray<float>> curveValues;
-	for (const TSharedPtr<FJsonValue>& Row : *WeightMat)
-	{
-		TArray<float> FloatRow;
-		const TArray<TSharedPtr<FJsonValue>>& values = Row->AsArray();
-		for (const TSharedPtr<FJsonValue>& Value : values)
+	FString jsonName = FString::Format(*FString(TEXT("speakspoketalkerino{0}.json")), { counter });
+	A2FRestHandler.GetBlendshapes(wavPath, FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("UnrealVoxta"),
+		TEXT("Content")), jsonName,
+		[&, callback, jsonName] (FString shapesFile, bool success)
 		{
-			FloatRow.Add(Value->AsNumber());
-		}
-		curveValues.Add(FloatRow);
-	}
+			FString filePath = FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("UnrealVoxta"),
+				TEXT("Content"), jsonName);
 
-	ULipSyncDataA2F* data = NewObject<ULipSyncDataA2F>();
-	data->SetA2FCurveWeights(curveValues, fps);
-	data->AddToRoot();
-	callback(data);
+			FString FileContents;
+			FFileHelper::LoadFileToString(FileContents, *filePath);
+
+			TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject());
+			const TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(FileContents);
+
+			if (!(JsonObject.IsValid() && FJsonSerializer::Deserialize(JsonReader, JsonObject)))
+			{
+				UE_LOG(LogTemp, Error, TEXT("Failed to parse JSON A2F LipSyncData"));
+				return;
+			}
+
+			int32 fps;
+			JsonObject->TryGetNumberField(TEXT("exportFps"), fps);
+			int32 numFrames;
+			JsonObject->TryGetNumberField(TEXT("numFrames"), numFrames);
+
+			const TArray<TSharedPtr<FJsonValue>>* WeightMat;
+			JsonObject->TryGetArrayField(TEXT("weightMat"), WeightMat);
+
+			TArray<TArray<float>> curveValues;
+			for (const TSharedPtr<FJsonValue>& Row : *WeightMat)
+			{
+				TArray<float> FloatRow;
+				const TArray<TSharedPtr<FJsonValue>>& values = Row->AsArray();
+				for (const TSharedPtr<FJsonValue>& Value : values)
+				{
+					FloatRow.Add(Value->AsNumber());
+				}
+				curveValues.Add(FloatRow);
+			}
+
+			ULipSyncDataA2F* data = NewObject<ULipSyncDataA2F>();
+			data->SetA2FCurveWeights(curveValues, fps);
+			data->AddToRoot();
+			callback(data);
+		});
+}
+
+void LipSyncGenerator::WriteWavFile(const TArray<uint8>& rawAudioData, const FString& filePath)
+{
+	FWaveModInfo waveInfo;
+	uint8* waveData = const_cast<uint8*>(rawAudioData.GetData());
+
+	if (waveInfo.ReadWaveInfo(waveData, rawAudioData.Num()))
+	{
+		// Create a file handle
+		IFileHandle* FileHandle = FPlatformFileManager::Get().GetPlatformFile().OpenWrite(*filePath);
+
+		if (FileHandle)
+		{
+			// Write the WAV header
+			FileHandle->Write(waveData, waveInfo.SampleDataStart - waveData);
+
+			// Write the audio data
+			FileHandle->Write(waveInfo.SampleDataStart, waveInfo.SampleDataSize);
+
+			// Close the file
+			delete FileHandle;
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("Failed to open file for writing"));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to read wave info"));
+	}
 }

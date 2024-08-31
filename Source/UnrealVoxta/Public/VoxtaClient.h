@@ -15,6 +15,7 @@
 #include "VoxtaData/Public/ServerResponses/ServerResponseCharacterList.h"
 #include "VoxtaData/Public/ChatSession.h"
 #include "VoxtaData/Public/VoxtaClientState.h"
+#include "Audio2FaceRESTHandler.h"
 #include "VoxtaClient.generated.h"
 
 /// <summary>
@@ -129,7 +130,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	int GetServerPort() const;
 
+	const Audio2FaceRESTHandler& GetA2FHandler() const;
+
 private:
+	Audio2FaceRESTHandler m_A2FHandler;
+
 	VoxtaLogger m_logUtility;
 	TSharedPtr<IHubConnection> m_hub;
 	VoxtaApiRequestHandler m_voxtaRequestApi;

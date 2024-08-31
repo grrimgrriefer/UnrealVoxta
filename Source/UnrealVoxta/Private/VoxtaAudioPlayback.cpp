@@ -88,6 +88,7 @@ void UVoxtaAudioPlayback::PlaybackMessage(const FCharDataBase& sender, const FCh
 			m_orderedAudio.Add(MessageChunkAudioContainer(
 				FString::Format(*FString(TEXT("http://{0}:{1}{2}")), { m_hostAddress, m_hostPort, message.m_audioUrls[i] }),
 				m_lipSyncType,
+				m_clientReference->GetA2FHandler(),
 				[&] (const MessageChunkAudioContainer* chunk) { OnChunkStateChange(chunk); },
 				i));
 		}

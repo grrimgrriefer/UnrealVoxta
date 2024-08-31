@@ -12,9 +12,8 @@
 class VOXTADATAA2F_API Audio2FaceRESTHandler
 {
 public:
-
-	void Initialize();
-	void GetBlendshapes(FString wavFileName, FString shapesFilePath, FString shapesFileName, TFunction<void(FString shapesFile, bool success)> callback);
+	void TryInitialize();
+	void GetBlendshapes(FString wavFileName, FString shapesFilePath, FString shapesFileName, TFunction<void(FString shapesFile, bool success)> callback) const;
 
 private:
 	void GetStatus(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback);
@@ -26,9 +25,9 @@ private:
 	void GetPlayerTracks(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback); // not needed?
 	void GetBlendshapeSolver(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback);
 
-	void SetPlayerTrack(FString fileName, TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback);
-	void GenerateBlendShapes(FString filePath, FString fileName, TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback);
+	void SetPlayerTrack(FString fileName, TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback) const;
+	void GenerateBlendShapes(FString filePath, FString fileName, TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback) const;
 
-	FString JsonToString(TSharedRef<FJsonObject> JsonObject);
-	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> GetBaseRequest(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback);
+	FString JsonToString(TSharedRef<FJsonObject> JsonObject) const;
+	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> GetBaseRequest(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> callback) const;
 };
