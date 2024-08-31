@@ -76,13 +76,17 @@ void LipSyncGenerator::GenerateA2FLipSyncData(const TArray<uint8>& rawAudioData,
 	// TODO Write wav file
 	WriteWavFile(rawAudioData, wavPath);
 
-	FString jsonName = FString::Format(*FString(TEXT("speakspoketalkerino{0}.json")), { counter });
-	A2FRestHandler.GetBlendshapes(wavPath, FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("UnrealVoxta"),
+	FString wavName = FString::Format(*FString(TEXT("speakspoketalkerino{0}.wav")), { counter });
+
+	FString jsonName = FString::Format(*FString(TEXT("speakspoketalkerino{0}")), { counter });
+	FString jsonImportName = FString::Format(*FString(TEXT("speakspoketalkerino{0}_bsweight.json")), { counter });
+
+	A2FRestHandler.GetBlendshapes(wavName, FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("UnrealVoxta"),
 		TEXT("Content")), jsonName,
-		[&, callback, jsonName] (FString shapesFile, bool success)
+		[&, callback, jsonImportName] (FString shapesFile, bool success)
 		{
 			FString filePath = FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("UnrealVoxta"),
-				TEXT("Content"), jsonName);
+				TEXT("Content"), jsonImportName);
 
 			FString FileContents;
 			FFileHelper::LoadFileToString(FileContents, *filePath);

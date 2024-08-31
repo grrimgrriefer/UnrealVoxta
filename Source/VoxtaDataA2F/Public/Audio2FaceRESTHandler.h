@@ -18,12 +18,12 @@ public:
 private:
 	void GetStatus(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback);
 	void LoadUsdFile(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback);
-	void GetInstance(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback);
-	void GetSettings(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback);
-	void GetPlayerInstance(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback);
-	void SetPlayerRootPath(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback);
-	void GetPlayerTracks(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback); // not needed?
-	void GetBlendshapeSolver(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback);
+	//void GetInstance(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback);
+	//void GetSettings(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback);
+	//void GetPlayerInstance(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback);
+	void SetPlayerRootPath(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback) const;
+	//void GetPlayerTracks(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback); // not needed?
+	//void GetBlendshapeSolver(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback);
 
 	void SetPlayerTrack(FString fileName, TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback) const;
 	void GenerateBlendShapes(FString filePath, FString fileName, TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback) const;

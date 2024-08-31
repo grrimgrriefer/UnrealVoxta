@@ -73,7 +73,6 @@ void UAudio2FacePlaybackHandler::GetA2FCurveWeights(TArray<float>& targetArrayRe
 	}
 	else
 	{
-		UE_LOG(LogTemp, Log, TEXT("Fetching current curves"));
 		targetArrayRef = m_currentCurves;
 	}
 }
@@ -111,14 +110,13 @@ void UAudio2FacePlaybackHandler::OnAudioPlaybackPercent(const UAudioComponent*, 
 		InitNeutralPose();
 		return;
 	}
-	UE_LOGFMT(LogTemp, Log, "percentage: {0}", Percent);
 	float currentFrame = SoundWave->Duration * m_lipsyncData->GetFramePerSecond() * Percent;
 	float totalFrameCount = m_lipsyncData->GetA2FCurveWeights().Num();
 	int closestFrame = FMath::RoundToInt(currentFrame);
-	int floorFrame = FMath::Floor(currentFrame);
 	if (closestFrame >= totalFrameCount)
 	{
 		InitNeutralPose();
+		// this should never happen
 		return;
 	}
 	if (FMath::IsNearlyEqual(currentFrame, closestFrame))
@@ -126,15 +124,17 @@ void UAudio2FacePlaybackHandler::OnAudioPlaybackPercent(const UAudioComponent*, 
 		m_currentCurves = m_lipsyncData->GetA2FCurveWeights()[closestFrame];
 		return;
 	}
-	else if (floorFrame + 1 < totalFrameCount)
+	int ceilingFrame = FMath::CeilToInt(currentFrame);
+	int floorFrame = FMath::FloorToInt(currentFrame);
+	if (ceilingFrame < totalFrameCount)
 	{
 		float normalizedBlend = currentFrame - floorFrame;
 		const TArray<float>& floor = m_lipsyncData->GetA2FCurveWeights()[floorFrame];
-		const TArray<float>& ceiling = m_lipsyncData->GetA2FCurveWeights()[floorFrame + 1];
+		const TArray<float>& ceiling = m_lipsyncData->GetA2FCurveWeights()[ceilingFrame];
 
 		for (int i = 0; i < floor.Num(); i++)
 		{
-			m_currentCurves[i] = (floor[i] * normalizedBlend) + (ceiling[i] * (1.f - normalizedBlend));
+			m_currentCurves[i] = (floor[i] * (1.f - normalizedBlend)) + (ceiling[i] * normalizedBlend);
 		}
 	}
 	else
