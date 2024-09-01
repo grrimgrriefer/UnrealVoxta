@@ -64,32 +64,21 @@ void LipSyncGenerator::GenerateOVRLipSyncData(const TArray<uint8>& rawAudioData,
 }
 #endif
 
-int LipSyncGenerator::counter = 0;
-
-void LipSyncGenerator::GenerateA2FLipSyncData(const TArray<uint8>& rawAudioData, const Audio2FaceRESTHandler& A2FRestHandler, TFunction<void(ULipSyncDataA2F*)> callback)
+void LipSyncGenerator::GenerateA2FLipSyncData(const TArray<uint8>& rawAudioData, Audio2FaceRESTHandler& A2FRestHandler, TFunction<void(ULipSyncDataA2F*)> callback)
 {
-	counter++;
+	FString guid = FGuid::NewGuid().ToString();
+	FString cacheFolder = FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("UnrealVoxta"), TEXT("Content"), TEXT("A2FCache"));
+	FString wavName = FString::Format(*FString(TEXT("A2FCachedData{0}.wav")), { guid });
+	FString jsonName = FString::Format(*FString(TEXT("A2FCachedData{0}")), { guid });
+	FString jsonImportName = FString::Format(*FString(TEXT("{0}_bsweight.json")), { jsonName });
 
-	FString wavPath = FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("UnrealVoxta"),
-		TEXT("Content"), FString::Format(*FString(TEXT("speakspoketalkerino{0}.wav")), { counter }));
+	WriteWavFile(rawAudioData, FPaths::Combine(cacheFolder, wavName));
 
-	// TODO Write wav file
-	WriteWavFile(rawAudioData, wavPath);
-
-	FString wavName = FString::Format(*FString(TEXT("speakspoketalkerino{0}.wav")), { counter });
-
-	FString jsonName = FString::Format(*FString(TEXT("speakspoketalkerino{0}")), { counter });
-	FString jsonImportName = FString::Format(*FString(TEXT("speakspoketalkerino{0}_bsweight.json")), { counter });
-
-	A2FRestHandler.GetBlendshapes(wavName, FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("UnrealVoxta"),
-		TEXT("Content")), jsonName,
-		[&, callback, jsonImportName] (FString shapesFile, bool success)
+	A2FRestHandler.GetBlendshapes(wavName, cacheFolder, jsonName,
+		[Callback = callback, JsonFullPath = FPaths::Combine(cacheFolder, jsonImportName)] (FString shapesFile, bool success)
 		{
-			FString filePath = FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("UnrealVoxta"),
-				TEXT("Content"), jsonImportName);
-
 			FString FileContents;
-			FFileHelper::LoadFileToString(FileContents, *filePath);
+			FFileHelper::LoadFileToString(FileContents, *JsonFullPath);
 
 			TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject());
 			const TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(FileContents);
@@ -123,7 +112,7 @@ void LipSyncGenerator::GenerateA2FLipSyncData(const TArray<uint8>& rawAudioData,
 			ULipSyncDataA2F* data = NewObject<ULipSyncDataA2F>();
 			data->SetA2FCurveWeights(curveValues, fps);
 			data->AddToRoot();
-			callback(data);
+			Callback(data);
 		});
 }
 

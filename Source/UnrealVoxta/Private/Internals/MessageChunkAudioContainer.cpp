@@ -6,7 +6,7 @@
 
 MessageChunkAudioContainer::MessageChunkAudioContainer(const FString& fullUrl,
 	LipSyncType lipSyncType,
-	const Audio2FaceRESTHandler& A2FRestHandler,
+	Audio2FaceRESTHandler& A2FRestHandler,
 	TFunction<void(const MessageChunkAudioContainer* newState)> callback,
 	int id) :
 	m_index(id),
@@ -90,6 +90,12 @@ void MessageChunkAudioContainer::ImportData()
 
 void MessageChunkAudioContainer::GenerateLipSync()
 {
+	if (m_state != MessageChunkState::Idle_Imported)
+	{
+		return;
+	}
+	UpdateState(MessageChunkState::Busy);
+
 	switch (m_lipSyncType)
 	{
 		case LipSyncType::OVRLipSync:
@@ -103,6 +109,11 @@ void MessageChunkAudioContainer::GenerateLipSync()
 #endif
 			break;
 		case LipSyncType::Audio2Face:
+			if (m_A2FRestHandler.IsBusy())
+			{
+				m_state = MessageChunkState::Idle_Imported; // TODO find a more clean way to do this
+				return;
+			}
 			LipSyncGenerator::GenerateA2FLipSyncData(m_rawData,
 				m_A2FRestHandler, [this] (ULipSyncDataA2F* lipsyncData)
 				{

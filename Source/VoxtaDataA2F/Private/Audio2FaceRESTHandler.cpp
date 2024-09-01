@@ -6,6 +6,7 @@
 
 void Audio2FaceRESTHandler::TryInitialize()
 {
+	m_currentState = currentState::initializing;
 	AsyncTask(ENamedThreads::AnyThread, [&] ()
 	{
 		GetStatus([&] (FHttpRequestPtr req, FHttpResponsePtr resp, bool success)
@@ -23,17 +24,40 @@ void Audio2FaceRESTHandler::TryInitialize()
 						SetPlayerRootPath([&] (FHttpRequestPtr req3, FHttpResponsePtr resp3, bool success3)
 						{
 							UE_LOGFMT(LogTemp, Warning, "{0}", resp3->GetContentAsString());
+							if (success3)
+							{
+								m_currentState = currentState::idle;
+							}
+							else
+							{
+								m_currentState = currentState::notConnected;
+							}
 						});
 					}
+					else
+					{
+						m_currentState = currentState::notConnected;
+					}
 				});
+			}
+			else
+			{
+				m_currentState = currentState::notConnected;
 			}
 		});
 	});
 }
 
 void Audio2FaceRESTHandler::GetBlendshapes(FString wavFileName, FString shapesFilePath, FString shapesFileName,
-	TFunction<void(FString shapesFile, bool success)> callback) const
+	TFunction<void(FString shapesFile, bool success)> callback)
 {
+	if (m_currentState != currentState::idle)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Always check if the RESTHandler is busy before generating blendshapes, skipping request"));
+		return;
+	}
+	m_currentState = currentState::busy;
+
 	AsyncTask(ENamedThreads::AnyThread, [&, WavFileName0 = wavFileName, ShapesFilePath0 = shapesFilePath,
 		ShapesFileName0 = shapesFileName, Callback0 = callback] ()
 		{
@@ -73,9 +97,9 @@ void Audio2FaceRESTHandler::GetBlendshapes(FString wavFileName, FString shapesFi
 					UE_LOG(LogTemp, Log, TEXT("SetPlayerTrack success"));
 
 					GenerateBlendShapes(ShapesFilePath2, ShapesFileName2,
-						[&totalSuccess, ShapesFilePath3 = ShapesFilePath2, ShapesFileName3 = ShapesFileName2, Callback3 = Callback2] (FHttpRequestPtr req, FHttpResponsePtr resp, bool success)
+						[&, TotalSuccess = totalSuccess, ShapesFilePath3 = ShapesFilePath2, ShapesFileName3 = ShapesFileName2, Callback3 = Callback2] (FHttpRequestPtr req, FHttpResponsePtr resp, bool success)
 					{
-						totalSuccess = totalSuccess && success;
+						bool totalSuccess = TotalSuccess && success;
 						if (success)
 						{
 							TSharedPtr<FJsonObject> JsonObject;
@@ -92,17 +116,18 @@ void Audio2FaceRESTHandler::GetBlendshapes(FString wavFileName, FString shapesFi
 						UE_LOGFMT(LogTemp, Warning, "{0}", resp->GetContentAsString());
 
 						AsyncTask(ENamedThreads::GameThread,
-							[totalSuccess, ShapesFilePath4 = ShapesFilePath3, ShapesFileName4 = ShapesFileName3, Callback4 = Callback3] ()
+							[&, TotalSuccess2 = totalSuccess, ShapesFilePath4 = ShapesFilePath3, ShapesFileName4 = ShapesFileName3, Callback4 = Callback3] ()
 						{
-							if (totalSuccess)
+							if (TotalSuccess2)
 							{
 								UE_LOG(LogTemp, Log, TEXT("GenerateBlendShapes success"));
-								Callback4(FPaths::Combine(ShapesFilePath4, ShapesFileName4), totalSuccess);
+								m_currentState = currentState::idle;
+								Callback4(FPaths::Combine(ShapesFilePath4, ShapesFileName4), TotalSuccess2);
 							}
-							if (!totalSuccess)
+							else
 							{
 								UE_LOG(LogTemp, Warning, TEXT("GenerateBlendShapes failed, aborting GetBlendshapes"));
-								Callback4(FString(), totalSuccess);
+								Callback4(FString(), TotalSuccess2);
 								return;
 							}
 						});
@@ -112,7 +137,12 @@ void Audio2FaceRESTHandler::GetBlendshapes(FString wavFileName, FString shapesFi
 	});
 }
 
-void Audio2FaceRESTHandler::GetStatus(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback)
+bool Audio2FaceRESTHandler::IsBusy() const
+{
+	return m_currentState != currentState::idle;
+}
+
+void Audio2FaceRESTHandler::GetStatus(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback) const
 {
 	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = GetBaseRequest(Callback);
 	Request->SetURL("http://localhost:8011/status");
@@ -120,7 +150,7 @@ void Audio2FaceRESTHandler::GetStatus(TFunction<void(FHttpRequestPtr, FHttpRespo
 	Request->ProcessRequest();
 }
 
-void Audio2FaceRESTHandler::LoadUsdFile(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback)
+void Audio2FaceRESTHandler::LoadUsdFile(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback) const
 {
 	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = GetBaseRequest(Callback);
 	Request->SetURL("http://localhost:8011/A2F/USD/Load");
@@ -175,7 +205,7 @@ void Audio2FaceRESTHandler::SetPlayerRootPath(TFunction<void(FHttpRequestPtr, FH
 
 	TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
 	JsonObject->SetStringField(TEXT("a2f_player"), TEXT("/World/audio2face/Player"));
-	JsonObject->SetStringField(TEXT("dir_path"), TEXT("D:\\Documents\\Unreal Projects\\VoxtaTestProject\\Plugins\\UnrealVoxta\\Content"));
+	JsonObject->SetStringField(TEXT("dir_path"), TEXT("D:\\Documents\\Unreal Projects\\VoxtaTestProject\\Plugins\\UnrealVoxta\\Content\\A2FCache"));
 
 	Request->SetContentAsString(JsonToString(JsonObject.ToSharedRef()));
 	Request->ProcessRequest();

@@ -96,11 +96,6 @@ int UVoxtaClient::GetServerPort() const
 	return m_hostPort;
 }
 
-const Audio2FaceRESTHandler& UVoxtaClient::GetA2FHandler() const
-{
-	return m_A2FHandler;
-}
-
 void UVoxtaClient::StartListeningToServer()
 {
 	m_hub->On(m_receiveMessageEventName).BindUObject(this, &UVoxtaClient::OnReceivedMessage);

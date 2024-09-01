@@ -130,10 +130,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	int GetServerPort() const;
 
-	const Audio2FaceRESTHandler& GetA2FHandler() const;
+	Audio2FaceRESTHandler m_A2FHandler;
 
 private:
-	Audio2FaceRESTHandler m_A2FHandler;
 
 	VoxtaLogger m_logUtility;
 	TSharedPtr<IHubConnection> m_hub;

@@ -13,15 +13,24 @@ class VOXTADATAA2F_API Audio2FaceRESTHandler
 {
 public:
 	void TryInitialize();
-	void GetBlendshapes(FString wavFileName, FString shapesFilePath, FString shapesFileName, TFunction<void(FString shapesFile, bool success)> callback) const;
+	void GetBlendshapes(FString wavFileName, FString shapesFilePath, FString shapesFileName, TFunction<void(FString shapesFile, bool success)> callback);
+	bool IsBusy() const;
 
 private:
-	void GetStatus(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback);
-	void LoadUsdFile(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback);
+	enum class currentState : uint8
+	{
+		notConnected,
+		initializing,
+		idle,
+		busy
+	};
+
+	void GetStatus(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback) const;
+	void LoadUsdFile(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback) const;
+	void SetPlayerRootPath(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback) const;
 	//void GetInstance(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback);
 	//void GetSettings(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback);
 	//void GetPlayerInstance(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback);
-	void SetPlayerRootPath(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback) const;
 	//void GetPlayerTracks(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback); // not needed?
 	//void GetBlendshapeSolver(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback);
 
@@ -30,4 +39,6 @@ private:
 
 	FString JsonToString(TSharedRef<FJsonObject> JsonObject) const;
 	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> GetBaseRequest(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> callback) const;
+
+	currentState m_currentState = currentState::notConnected;
 };
