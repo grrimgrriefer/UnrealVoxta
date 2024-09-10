@@ -6,7 +6,7 @@
 
 MessageChunkAudioContainer::MessageChunkAudioContainer(const FString& fullUrl,
 	LipSyncType lipSyncType,
-	Audio2FaceRESTHandler& A2FRestHandler,
+	Audio2FaceRESTHandler* A2FRestHandler,
 	TFunction<void(const MessageChunkAudioContainer* newState)> callback,
 	int id) :
 	m_index(id),
@@ -109,7 +109,7 @@ void MessageChunkAudioContainer::GenerateLipSync()
 #endif
 			break;
 		case LipSyncType::Audio2Face:
-			if (m_A2FRestHandler.IsBusy())
+			if (m_A2FRestHandler->IsBusy())
 			{
 				m_state = MessageChunkState::Idle_Imported; // TODO find a more clean way to do this
 				return;

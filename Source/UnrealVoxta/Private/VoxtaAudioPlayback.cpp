@@ -10,13 +10,13 @@ UVoxtaAudioPlayback::UVoxtaAudioPlayback()
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
-void UVoxtaAudioPlayback::InitializeAudioPlayback(UVoxtaClient* voxtaClient, const FString& characterId)
+void UVoxtaAudioPlayback::InitializeAudioPlayback(const FString& characterId)
 {
 	m_characterId = characterId;
-	m_clientReference = voxtaClient;
+	m_clientReference = GetWorld()->GetGameInstance()->GetSubsystem<UVoxtaClient>();
 	m_clientReference->VoxtaClientCharMessageAddedEvent.AddUniqueDynamic(this, &UVoxtaAudioPlayback::PlaybackMessage);
-	m_hostAddress = voxtaClient->GetServerAddress();
-	m_hostPort = voxtaClient->GetServerPort();
+	m_hostAddress = m_clientReference->GetServerAddress();
+	m_hostPort = m_clientReference->GetServerPort();
 }
 
 void UVoxtaAudioPlayback::MarkCustomPlaybackComplete(const FGuid& guid)
@@ -88,7 +88,7 @@ void UVoxtaAudioPlayback::PlaybackMessage(const FCharDataBase& sender, const FCh
 			m_orderedAudio.Add(MessageChunkAudioContainer(
 				FString::Format(*FString(TEXT("http://{0}:{1}{2}")), { m_hostAddress, m_hostPort, message.m_audioUrls[i] }),
 				m_lipSyncType,
-				m_clientReference->m_A2FHandler,
+				m_clientReference->GetA2FHandler(),
 				[&] (const MessageChunkAudioContainer* chunk) { OnChunkStateChange(chunk); },
 				i));
 		}

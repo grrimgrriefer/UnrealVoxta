@@ -64,7 +64,7 @@ void LipSyncGenerator::GenerateOVRLipSyncData(const TArray<uint8>& rawAudioData,
 }
 #endif
 
-void LipSyncGenerator::GenerateA2FLipSyncData(const TArray<uint8>& rawAudioData, Audio2FaceRESTHandler& A2FRestHandler, TFunction<void(ULipSyncDataA2F*)> callback)
+void LipSyncGenerator::GenerateA2FLipSyncData(const TArray<uint8>& rawAudioData, Audio2FaceRESTHandler* A2FRestHandler, TFunction<void(ULipSyncDataA2F*)> callback)
 {
 	FString guid = FGuid::NewGuid().ToString();
 	FString cacheFolder = FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("UnrealVoxta"), TEXT("Content"), TEXT("A2FCache"));
@@ -74,7 +74,7 @@ void LipSyncGenerator::GenerateA2FLipSyncData(const TArray<uint8>& rawAudioData,
 
 	WriteWavFile(rawAudioData, FPaths::Combine(cacheFolder, wavName));
 
-	A2FRestHandler.GetBlendshapes(wavName, cacheFolder, jsonName,
+	A2FRestHandler->GetBlendshapes(wavName, cacheFolder, jsonName,
 		[Callback = callback, JsonFullPath = FPaths::Combine(cacheFolder, jsonImportName)] (FString shapesFile, bool success)
 		{
 			FString FileContents;

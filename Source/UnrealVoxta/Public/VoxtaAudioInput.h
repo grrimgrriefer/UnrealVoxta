@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/ActorComponent.h"
 #include "AudioUtility/Public/AudioWebSocket.h"
 #include "AudioUtility/Public/AudioCaptureHandler.h"
 #include "VoxtaData/Public/VoxtaMicrophoneState.h"
@@ -13,8 +12,8 @@
 /// Main public-facing class responsible for containing all AudioInput related logic.
 /// Takes care of both the microphone input, as well as sending it over a websocket to the VoxtaServer.
 /// </summary>
-UCLASS(HideCategories = (Mobility, Rendering, LOD), ClassGroup = Voxta, meta = (BlueprintSpawnableComponent))
-class UNREALVOXTA_API UVoxtaAudioInput : public UActorComponent
+UCLASS()
+class UNREALVOXTA_API UVoxtaAudioInput : public UObject
 {
 	GENERATED_BODY()
 
@@ -80,11 +79,6 @@ public:
 	/// <returns></returns>
 	UFUNCTION(BlueprintCallable)
 	FString GetInputDeviceName() const;
-
-	///~ Begin UActorComponent overrides.
-protected:
-	virtual void BeginDestroy() override;
-	///~ End UActorComponent overrides.
 
 private:
 	int m_bufferMs;

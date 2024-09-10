@@ -4,24 +4,21 @@
 #include "SignalR/Public/SignalRSubsystem.h"
 #include "VoxtaDefines.h"
 
-UVoxtaClient::UVoxtaClient()
+void UVoxtaClient::Initialize(FSubsystemCollectionBase& Collection)
 {
-	PrimaryComponentTick.bCanEverTick = true;
-}
-
-void UVoxtaClient::BeginPlay()
-{
-	Super::BeginPlay();
+	Super::Initialize(Collection);
 	m_logUtility.RegisterVoxtaLogger();
+	m_voiceInput = NewObject<UVoxtaAudioInput>(this);
+	m_A2FHandler = MakeUnique<Audio2FaceRESTHandler>();
 }
 
-void UVoxtaClient::EndPlay(const EEndPlayReason::Type EndPlayReason)
+void UVoxtaClient::Deinitialize()
 {
-	Super::EndPlay(EndPlayReason);
 	if (m_currentState != VoxtaClientState::Disconnected)
 	{
 		Disconnect(true);
 	}
+	Super::Deinitialize();
 }
 
 void UVoxtaClient::StartConnection(const FString& ipv4Address, int port)
@@ -86,6 +83,11 @@ const FChatSession* UVoxtaClient::GetChatSession() const
 	return m_chatSession.Get();
 }
 
+UVoxtaAudioInput* UVoxtaClient::GetVoiceInputHandler() const
+{
+	return m_voiceInput;
+}
+
 FString UVoxtaClient::GetServerAddress() const
 {
 	return m_hostAddress;
@@ -94,6 +96,11 @@ FString UVoxtaClient::GetServerAddress() const
 int UVoxtaClient::GetServerPort() const
 {
 	return m_hostPort;
+}
+
+Audio2FaceRESTHandler* UVoxtaClient::GetA2FHandler() const
+{
+	return m_A2FHandler.Get();
 }
 
 void UVoxtaClient::StartListeningToServer()
@@ -133,7 +140,7 @@ void UVoxtaClient::OnConnected()
 			UE_LOGFMT(VoxtaLog, Log, "VoxtaClient connected successfully");
 			SendMessageToServer(m_voxtaRequestApi.GetAuthenticateRequestData());
 
-			m_A2FHandler.TryInitialize();
+			m_A2FHandler->TryInitialize();
 			return false;
 		}));
 }
@@ -234,6 +241,7 @@ bool UVoxtaClient::HandleCharacterListResponse(const ServerResponseCharacterList
 	for (auto& charElement : response.m_characters)
 	{
 		m_characterList.Emplace(MakeUnique<FAiCharData>(charElement));
+		VoxtaClientCharacterRegisteredEventNative.Broadcast(charElement);
 		VoxtaClientCharacterRegisteredEvent.Broadcast(charElement);
 	}
 	SetState(VoxtaClientState::Idle);
@@ -288,6 +296,7 @@ bool UVoxtaClient::HandleChatStartedResponse(const ServerResponseChatStarted& re
 
 	m_chatSession = MakeUnique<FChatSession>(characters, response.m_chatId,
 		response.m_sessionId, response.m_services);
+	VoxtaClientChatSessionStartedEventNative.Broadcast(*m_chatSession.Get());
 	VoxtaClientChatSessionStartedEvent.Broadcast(*m_chatSession.Get());
 	SetState(VoxtaClientState::GeneratingReply);
 	return true;
@@ -338,6 +347,7 @@ bool UVoxtaClient::HandleChatMessageResponse(const IServerResponseChatMessageBas
 				{
 					UE_LOGFMT(VoxtaLog, Log, "Char speaking message end: {0} -> {1}", character->Get()->GetName(), chatMessage->m_text);
 					SetState(VoxtaClientState::AudioPlayback);
+					VoxtaClientCharMessageAddedEventNative.Broadcast(*character->Get(), *chatMessage);
 					VoxtaClientCharMessageAddedEvent.Broadcast(*character->Get(), *chatMessage);
 				}
 			}
@@ -350,6 +360,7 @@ bool UVoxtaClient::HandleChatMessageResponse(const IServerResponseChatMessageBas
 				{
 					return InItem.GetMessageId() == derivedResponse->m_messageId;
 				});
+			VoxtaClientCharMessageRemovedEventNative.Broadcast(messages[index]);
 			VoxtaClientCharMessageRemovedEvent.Broadcast(messages[index]);
 
 			messages.RemoveAt(index);
@@ -381,6 +392,7 @@ bool UVoxtaClient::HandleChatUpdateResponse(const ServerResponseChatUpdate& resp
 					return InItem.GetMessageId() == response.m_messageId;
 				});
 			UE_LOGFMT(VoxtaLog, Log, "Char speaking message end: {0} -> {1}", m_userData.Get()->GetName(), chatMessage->m_text);
+			VoxtaClientCharMessageAddedEventNative.Broadcast(*m_userData.Get(), *chatMessage);
 			VoxtaClientCharMessageAddedEvent.Broadcast(*m_userData.Get(), *chatMessage);
 		}
 	}
@@ -398,11 +410,13 @@ bool UVoxtaClient::HandleSpeechTranscriptionResponse(const ServerResponseSpeechT
 	{
 		case PARTIAL:
 			UE_LOGFMT(VoxtaLog, Log, "Received partial speech transcription update: {0} ", response.m_transcribedSpeech);
+			VoxtaClientSpeechTranscribedPartialEventNative.Broadcast(response.m_transcribedSpeech);
 			VoxtaClientSpeechTranscribedPartialEvent.Broadcast(response.m_transcribedSpeech);
 			break;
 		case END:
 			if (m_currentState == VoxtaClientState::WaitingForUserReponse)
 			{
+				VoxtaClientSpeechTranscribedCompleteEventNative.Broadcast(response.m_transcribedSpeech);
 				VoxtaClientSpeechTranscribedCompleteEvent.Broadcast(response.m_transcribedSpeech);
 				SendUserInput(response.m_transcribedSpeech);
 			}
@@ -419,5 +433,6 @@ bool UVoxtaClient::HandleSpeechTranscriptionResponse(const ServerResponseSpeechT
 void UVoxtaClient::SetState(VoxtaClientState newState)
 {
 	m_currentState = newState;
+	VoxtaClientStateChangedEventNative.Broadcast(m_currentState);
 	VoxtaClientStateChangedEvent.Broadcast(m_currentState);
 }

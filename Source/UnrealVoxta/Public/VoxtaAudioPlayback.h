@@ -55,7 +55,7 @@ public:
 	/// <param name="voxtaClient">A pointer to the client, used to subscribe & unsubscribe to the messageEvents.</param>
 	/// <param name="characterId">The ID of the character for which this component will be playing the audio.</param>
 	UFUNCTION(BlueprintCallable)
-	void InitializeAudioPlayback(UVoxtaClient* voxtaClient, const FString& characterId);
+	void InitializeAudioPlayback(const FString& characterId);
 
 	/// <summary>
 	/// Notify that the Audio is done with playback. Due to the unpredictable nature of the blueprint, we rely on

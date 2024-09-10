@@ -111,9 +111,3 @@ FString UVoxtaAudioInput::GetInputDeviceName() const
 {
 	return m_audioCaptureDevice.GetDeviceName();
 }
-
-void UVoxtaAudioInput::BeginDestroy()
-{
-	Super::BeginDestroy();
-	CloseSocket();
-}
