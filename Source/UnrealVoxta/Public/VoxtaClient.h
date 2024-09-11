@@ -31,7 +31,7 @@ struct FChatSession;
  * Main public-facing class, contains the stateful client for all Voxta utility.
  * Provides a simple singleton-like API for any external UI / Blueprints / other modules.
  */
-UCLASS(DisplayName = "Voxta Client")
+UCLASS(DisplayName = "Voxta Client", Category = "Voxta")
 class UNREALVOXTA_API UVoxtaClient : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
@@ -56,13 +56,13 @@ public:
 
 #pragma region events
 	/** Event fired when the internal VoxtaClient has finished transitioning to a different state. */
-	UPROPERTY(BlueprintAssignable, Category = Events, meta = (IsBindableEvent = "True"))
+	UPROPERTY(BlueprintAssignable, Category = "Voxta", meta = (IsBindableEvent = "True"))
 	FVoxtaClientStateChanged VoxtaClientStateChangedEvent;
 	/** Static Event variation of VoxtaClientStateChangedEvent */
 	FVoxtaClientStateChangedNative VoxtaClientStateChangedEventNative;
 
 	/** Event fired when the internal VoxtaClient has loaded the metadata of an AiCharData. */
-	UPROPERTY(BlueprintAssignable, Category = Events, meta = (IsBindableEvent = "True"))
+	UPROPERTY(BlueprintAssignable, Category = "Voxta", meta = (IsBindableEvent = "True"))
 	FVoxtaClientCharacterRegistered VoxtaClientCharacterRegisteredEvent;
 	/** Static Event variation of VoxtaClientCharacterRegisteredEvent */
 	FVoxtaClientCharacterRegisteredNative VoxtaClientCharacterRegisteredEventNative;
@@ -72,25 +72,25 @@ public:
 	 *
 	 * Note: This is triggered for both AI and user messages!
 	 */
-	UPROPERTY(BlueprintAssignable, Category = Events, meta = (IsBindableEvent = "True"))
+	UPROPERTY(BlueprintAssignable, Category = "Voxta", meta = (IsBindableEvent = "True"))
 	FVoxtaClientCharMessageAdded VoxtaClientCharMessageAddedEvent;
 	/** Static Event variation of VoxtaClientCharMessageAddedEvent */
 	FVoxtaClientCharMessageAddedNative VoxtaClientCharMessageAddedEventNative;
 
 	/** Event fired when the server has notified the client that a message has been removed. */
-	UPROPERTY(BlueprintAssignable, Category = Events, meta = (IsBindableEvent = "True"))
+	UPROPERTY(BlueprintAssignable, Category = "Voxta", meta = (IsBindableEvent = "True"))
 	FVoxtaClientCharMessageRemoved VoxtaClientCharMessageRemovedEvent;
 	/** Static Event variation of VoxtaClientCharMessageRemovedEvent */
 	FVoxtaClientCharMessageRemovedNative VoxtaClientCharMessageRemovedEventNative;
 
 	/** Event fired when the server is in progress of transcribing speech, it contains the current version of the transcription. */
-	UPROPERTY(BlueprintAssignable, Category = Events, meta = (IsBindableEvent = "True"))
+	UPROPERTY(BlueprintAssignable, Category = "Voxta", meta = (IsBindableEvent = "True"))
 	FVoxtaClientSpeechTranscribed VoxtaClientSpeechTranscribedPartialEvent;
 	/** Static Event variation of VoxtaClientSpeechTranscribedPartialEvent */
 	FVoxtaClientSpeechTranscribedNative VoxtaClientSpeechTranscribedPartialEventNative;
 
 	/** Event fired when the server has finished transcribing speech, it contains the final version of whatever the user said. */
-	UPROPERTY(BlueprintAssignable, Category = Events, meta = (IsBindableEvent = "True"))
+	UPROPERTY(BlueprintAssignable, Category = "Voxta", meta = (IsBindableEvent = "True"))
 	FVoxtaClientSpeechTranscribed VoxtaClientSpeechTranscribedCompleteEvent;
 	/** Static Event variation of VoxtaClientSpeechTranscribedCompleteEvent */
 	FVoxtaClientSpeechTranscribedNative VoxtaClientSpeechTranscribedCompleteEventNative;
@@ -100,7 +100,7 @@ public:
 	 *
 	 * Note: This is triggered right after the configuration is set, and before the first initial AI message is received.
 	 */
-	UPROPERTY(BlueprintAssignable, Category = Events, meta = (IsBindableEvent = "True"))
+	UPROPERTY(BlueprintAssignable, Category = "Voxta", meta = (IsBindableEvent = "True"))
 	FVoxtaClientChatSessionStarted VoxtaClientChatSessionStartedEvent;
 	/** Static Event variation of VoxtaClientChatSessionStartedEvent */
 	FVoxtaClientChatSessionStartedNative VoxtaClientChatSessionStartedEventNative;
@@ -119,7 +119,7 @@ public:
 	 * @param ipv4Address The ipv4 address where the Voxta SignalR hub is hosted.
 	 * @param port The HTTP port used for the Voxta SignalR hub.
 	 */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Voxta")
 	void StartConnection(const FString& ipv4Address, int port);
 
 	/**
@@ -130,7 +130,7 @@ public:
 	 *
 	 * @param silent Set to true if you want to disconnect without sending a state-change notification.
 	 */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Voxta")
 	void Disconnect(bool silent = false);
 
 	/**
@@ -140,7 +140,7 @@ public:
 	 *
 	 * @param charId The charID of the character that you want to load.
 	 */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Voxta")
 	void StartChatWithCharacter(FString charId);
 
 	/**
@@ -150,7 +150,7 @@ public:
 	 *
 	 * @param inputText The text that should be considered user input in the conversation.
 	 */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Voxta")
 	void SendUserInput(FString inputText);
 
 	/**
@@ -161,20 +161,24 @@ public:
 	 *
 	 * @param messageId The ID of the message that has completed the playback on the client.
 	 */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Voxta")
 	void NotifyAudioPlaybackComplete(const FString& messageId);
 
 	/** @return The ipv4 address where this client expects the Voxta server to be hosted. */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintPure, Category = "Voxta")
 	FString GetServerAddress() const;
 
 	/** @return The HTTP port where this client expects the Voxta server to be hosted. */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintPure, Category = "Voxta")
 	int GetServerPort() const;
 
 	/** @return An pointer to the VoxtaAudioInput handler. */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintPure, Category = "Voxta")
 	UVoxtaAudioInput* GetVoiceInputHandler() const;
+
+	/** @return The current state of the VoxtaClient internal. */
+	UFUNCTION(BlueprintPure, Category = "Voxta")
+	VoxtaClientState GetCurrentState() const;
 
 	/** @return An immutable pointer to the ChatSession. */
 	const FChatSession* GetChatSession() const;
@@ -243,17 +247,29 @@ private:
 	void OnMessageSent(const FSignalRInvokeResult& deliveryReceipt);
 
 	/// <summary>
-	///
+	/// Fetches an immutable pointer to an immutable struct containing the AI CharData that matches
+	/// the id with the provided one in the parameters.
 	/// </summary>
-	/// <param name="charId"></param>
-	/// <returns></returns>
-	const TUniquePtr<const FAiCharData>* GetCharacterDataById(const FString& charId);
+	/// <param name="charId">The id of the AI character you want to retrieve.</param>
+	/// <returns>An immutable pointer to the immutable struct of the AI character.</returns>
+	const TUniquePtr<const FAiCharData>* GetAiCharacterDataById(const FString& charId);
 
+	/// <summary>
+	/// Fetches a raw pointer to the ChatMessage that maches the id given in the parameters.
+	///
+	/// Note: The text & audio in this data is not guarenteed to be complete. Be aware that only after the
+	/// id has been broadcasted by VoxtaClientCharMessageAddedEvent that the message is considered final.
+	/// </summary>
+	/// <param name="messageId">The id of the chatmessage you want to retrieve.</param>
+	/// <returns>A raw pointer to the chatmessage if it was found.</returns>
 	FChatMessage* GetChatMessageById(const FString& messageId);
 
 	/// <summary>
-	/// Mark the internal VoxtaClient to have finished the transition to a different VoxtaClientState
+	/// Update the internal 'current state' to a new state.
+	///
+	/// Note: Calling this will trigger the VoxtaClientStateChangedEvent immediately after changing the value.
 	/// </summary>
+	/// <param name="newState">The new state that can be considered to be active in the client.</param>
 	void SetState(VoxtaClientState newState);
 
 #pragma region VoxtaServer response handlers

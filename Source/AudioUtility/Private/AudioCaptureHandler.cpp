@@ -12,10 +12,10 @@ void AudioCaptureHandler::RegisterSocket(TWeakPtr<AudioWebSocket> socket, int bu
 
 bool AudioCaptureHandler::TryInitializeVoiceCapture(int sampleRate, int numChannels)
 {
-	if (m_voiceCaptureDevice)
+	if (m_voiceCaptureDevice.IsValid())
 	{
-		UE_LOGFMT(AudioLog, Error, "Unable to start capture as the stream is already open");
-		return false;
+		UE_LOGFMT(AudioLog, Warning, "Skipped creating voice capture as it was already created earlier.");
+		return true;
 	}
 
 	FVoiceModule& VoiceModule = FVoiceModule::Get();
@@ -66,6 +66,12 @@ bool AudioCaptureHandler::TryStartVoiceCapture()
 		return false;
 	}
 
+	if (m_isCapturing)
+	{
+		UE_LOGFMT(AudioLog, Warning, "Voice capture is currently already capturing, ignoring new attempt to start.");
+		return false;
+	}
+
 	// we only use 75% of the buffer, the extra 25% is space in case the thread encounters minor lag / delay.
 	m_voiceRunnerThread = MakeUnique<FVoiceRunnerThread>(this, (m_bufferMillisecondSize / 1000.f * 0.75f));
 	if (!m_voiceRunnerThread.IsValid())
@@ -89,6 +95,7 @@ bool AudioCaptureHandler::TryStartVoiceCapture()
 
 void AudioCaptureHandler::StopCapture()
 {
+	FScopeLock Lock(&m_captureGuard);
 	if (m_voiceRunnerThread.IsValid())
 	{
 		m_voiceRunnerThread->Stop();
@@ -105,6 +112,7 @@ void AudioCaptureHandler::StopCapture()
 void AudioCaptureHandler::ShutDown()
 {
 	StopCapture();
+	FScopeLock Lock(&m_captureGuard);
 	m_voiceRunnerThread = nullptr;
 }
 
@@ -151,6 +159,7 @@ void AudioCaptureHandler::SendInternal(const TArray<uint8> rawData) const
 
 void AudioCaptureHandler::CaptureAndSendVoiceData()
 {
+	FScopeLock Lock(&m_captureGuard);
 	CaptureVoiceInternal(m_socketDataBuffer);
 
 	if (m_socketDataBuffer.Num() > 0)
@@ -167,6 +176,7 @@ void AudioCaptureHandler::CaptureAndSendVoiceData()
 
 float AudioCaptureHandler::GetAmplitude() const
 {
+	FScopeLock Lock(&m_captureGuard);
 	if (m_voiceCaptureDevice.IsValid())
 	{
 		return m_voiceCaptureDevice->GetCurrentAmplitude();

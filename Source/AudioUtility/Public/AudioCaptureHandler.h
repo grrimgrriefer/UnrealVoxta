@@ -8,6 +8,7 @@
 #include "Voice.h"
 #include "RuntimeAudioImporter/AudioStructs.h"
 #include "VoiceRunnerThread.h"
+#include "Misc/ScopeLock.h"
 
 /// <summary>
 /// Handles audio input by wrapping the engine's inner FVoiceModule.
@@ -79,6 +80,8 @@ private:
 	FString m_deviceName = TEXT("");
 	bool m_isCapturing = false;
 	int m_bufferMillisecondSize;
+
+	mutable FCriticalSection m_captureGuard;
 
 	TUniquePtr<FVoiceRunnerThread> m_voiceRunnerThread;
 	TWeakPtr<AudioWebSocket> m_webSocket;

@@ -12,7 +12,7 @@
 /// Main public-facing class responsible for containing all AudioInput related logic.
 /// Takes care of both the microphone input, as well as sending it over a websocket to the VoxtaServer.
 /// </summary>
-UCLASS()
+UCLASS(Category = "Voxta")
 class UNREALVOXTA_API UVoxtaAudioInput : public UObject
 {
 	GENERATED_BODY()
@@ -23,24 +23,18 @@ public:
 	/// <summary>
 	/// Event fired when both the audiosocket and the capturedevice are initialized
 	/// </summary>
-	UPROPERTY(BlueprintAssignable, Category = "Events")
+	UPROPERTY(BlueprintAssignable, Category = "Voxta", meta = (IsBindableEvent = "True"))
 	FVoxtaAudioInputInitializedEventCallback VoxtaAudioInputInitializedEvent;
 
 	/// <summary>
-	/// Creates the AudioWebSocket with the provided IP and port.
+	/// Creates the AudioWebSocket and connects audioSocket input hosted on the VoxtaServer's IP and port.
 	/// Note: It will automatically connect the socket to the server initiate the JSON config handshake, so the server is ready to receive audio.
 	/// </summary>
-	/// <param name="serverIP">The ipv4 address where the VoxtaServer is hosted.</param>
-	/// <param name="serverPort">The port used to reach the VoxtaServer (should always be 5384, I think?)</param>
 	/// <param name="bufferMs">Microphone buffersize in Milliseconds. Bigger values is less taxing but introduces more delay.</param>
 	/// <param name="sampleRate">The samplerate used for microphone, 16000 is ideal due to serverside conversion.</param>
 	/// <param name="inputChannels">The input channels for the microphone, 1 is ideal.</param>
-	UFUNCTION(BlueprintCallable)
-	void InitializeSocket(const FString& serverIP,
-		int serverPort,
-		int bufferMs = 200,
-		int sampleRate = 16000,
-		int inputChannels = 1);
+	UFUNCTION(BlueprintCallable, Category = "Voxta")
+	void InitializeSocket(int bufferMs = 200, int sampleRate = 16000, int inputChannels = 1);
 
 	/// <summary>
 	/// Shuts down the Microphone audio stream and closes the websocket gracefully.
@@ -50,7 +44,7 @@ public:
 	/// <summary>
 	/// Starts the voice capture, sending captured audiodata to the server in fixed timesteps (bufferMs).
 	/// </summary>
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Voxta")
 
 	void StartStreaming();
 
@@ -58,18 +52,18 @@ public:
 	/// Stops the voice capture.
 	/// Note: This will cancel the last batch of audio data. (i.e. 0-200ms data lost)
 	/// </summary>
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Voxta")
 	void StopStreaming();
 
 	/// <summary>
 	/// Returns true if the AudioCapture device is actively streaming data to the VoxtaServer.
 	/// </summary>
 	/// <returns>Returns true if the AudioCapture device is actively streaming data.</returns>
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Voxta")
 	bool IsRecording() const;
 
 	// TODO: spaw this with decibels, amplitude is kinda useless.
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Voxta")
 	float GetNormalizedAmplitude() const;
 
 	/// <summary>
@@ -77,7 +71,7 @@ public:
 	/// The formatting has no fixed standards.
 	/// </summary>
 	/// <returns></returns>
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Voxta")
 	FString GetInputDeviceName() const;
 
 private:

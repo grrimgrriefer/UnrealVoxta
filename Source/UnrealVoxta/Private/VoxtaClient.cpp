@@ -259,7 +259,7 @@ bool UVoxtaClient::HandleCharacterListResponse(const ServerResponseCharacterList
 
 bool UVoxtaClient::HandleCharacterLoadedResponse(const ServerResponseCharacterLoaded& response)
 {
-	const TUniquePtr<const FAiCharData>* character = GetCharacterDataById(response.m_characterId);
+	const TUniquePtr<const FAiCharData>* character = GetAiCharacterDataById(response.m_characterId);
 
 	if (character)
 	{
@@ -341,7 +341,7 @@ bool UVoxtaClient::HandleChatMessageResponse(const IServerResponseChatMessageBas
 
 			if (chatMessage)
 			{
-				const TUniquePtr<const FAiCharData>* character = GetCharacterDataById(derivedResponse->m_senderId);
+				const TUniquePtr<const FAiCharData>* character = GetAiCharacterDataById(derivedResponse->m_senderId);
 
 				if (character)
 				{
@@ -427,7 +427,12 @@ bool UVoxtaClient::HandleSpeechTranscriptionResponse(const ServerResponseSpeechT
 	return true;
 }
 
-const TUniquePtr<const FAiCharData>* UVoxtaClient::GetCharacterDataById(const FString& charId)
+VoxtaClientState UVoxtaClient::GetCurrentState() const
+{
+	return m_currentState;
+}
+
+const TUniquePtr<const FAiCharData>* UVoxtaClient::GetAiCharacterDataById(const FString& charId)
 {
 	return m_characterList.FindByPredicate([charId] (const TUniquePtr<const FAiCharData>& InItem)
 		{
