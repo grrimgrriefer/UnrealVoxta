@@ -3,27 +3,35 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "VoxtaAudioInput.h"
 #include "Internals/VoxtaLogger.h"
-#include "SignalR/Private/HubConnection.h"
 #include "Internals/VoxtaApiRequestHandler.h"
 #include "Internals/VoxtaApiResponseHandler.h"
-#include "VoxtaData/Public/AiCharData.h"
-#include "VoxtaData/Public/ChatMessage.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseBase.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseWelcome.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseCharacterList.h"
-#include "VoxtaData/Public/ChatSession.h"
 #include "VoxtaData/Public/VoxtaClientState.h"
-#include "Audio2FaceRESTHandler.h"
 #include "VoxtaClient.generated.h"
+
+class FSignalRValue;
+class IHubConnection;
+class FSignalRInvokeResult;
+class UVoxtaAudioInput;
+class Audio2FaceRESTHandler;
+struct IServerResponseChatMessageBase;
+struct ServerResponseWelcome;
+struct ServerResponseCharacterList;
+struct ServerResponseCharacterLoaded;
+struct ServerResponseChatStarted;
+struct ServerResponseChatUpdate;
+struct ServerResponseSpeechTranscription;
+struct FAiCharData;
+struct FUserCharData;
+struct FCharDataBase;
+struct FChatSession;
 
 /**
  * UVoxtaClient
  * Main public-facing class, contains the stateful client for all Voxta utility.
  * Provides a simple singleton-like API for any external UI / Blueprints / other modules.
  */
-UCLASS()
+UCLASS(DisplayName = "Voxta Client")
 class UNREALVOXTA_API UVoxtaClient : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
@@ -98,6 +106,11 @@ public:
 	FVoxtaClientChatSessionStartedNative VoxtaClientChatSessionStartedEventNative;
 #pragma endregion
 
+#pragma region UGameInstanceSubsystem overrides
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+	virtual void Deinitialize() override;
+#pragma endregion
+
 #pragma region public API
 	/**
 	 * Main initializer for the VoxtaClient.
@@ -159,20 +172,16 @@ public:
 	UFUNCTION(BlueprintCallable)
 	int GetServerPort() const;
 
+	/** @return An pointer to the VoxtaAudioInput handler. */
+	UFUNCTION(BlueprintCallable)
+	UVoxtaAudioInput* GetVoiceInputHandler() const;
+
 	/** @return An immutable pointer to the ChatSession. */
 	const FChatSession* GetChatSession() const;
-
-	/** @return An pointer to the VoxtaAudioInput handler. */
-	UVoxtaAudioInput* GetVoiceInputHandler() const;
 
 	/** @return An reference to the A2F handler instance, should probably be moved elsewhere, idk yet. */
 	Audio2FaceRESTHandler* GetA2FHandler() const;
 
-#pragma endregion
-
-#pragma region UGameInstanceSubsystem overrides
-	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
-	virtual void Deinitialize() override;
 #pragma endregion
 
 protected:
@@ -212,7 +221,7 @@ private:
 	/// <param name="response">The raw reponse object</param>
 	/// <param name="message">The message that will be logged.</param>
 	/// <param name="handler">The function responsible for handling the derived object.</param>
-	/// <returns></returns>
+	/// <returns>True if the response was handled correctly, false otherwise.</returns>
 	template<typename T>
 	bool HandleResponseHelper(const IServerResponseBase* response, const char* message, bool (UVoxtaClient::* handler)(const T&));
 
@@ -229,7 +238,18 @@ private:
 	/// the message sucessfully. This response does NOT contain any new information, as those are sent
 	/// via the OnReceivedMessage function.
 	/// </summary>
-	void OnMessageSent(const FSignalRInvokeResult& result);
+	/// <param name="deliveryReceipt">The receipt of delivery, given to us by the Server.
+	/// should not contain any errors.</param>
+	void OnMessageSent(const FSignalRInvokeResult& deliveryReceipt);
+
+	/// <summary>
+	///
+	/// </summary>
+	/// <param name="charId"></param>
+	/// <returns></returns>
+	const TUniquePtr<const FAiCharData>* GetCharacterDataById(const FString& charId);
+
+	FChatMessage* GetChatMessageById(const FString& messageId);
 
 	/// <summary>
 	/// Mark the internal VoxtaClient to have finished the transition to a different VoxtaClientState

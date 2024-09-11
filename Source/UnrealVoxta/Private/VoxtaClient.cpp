@@ -2,6 +2,9 @@
 
 #include "VoxtaClient.h"
 #include "SignalR/Public/SignalRSubsystem.h"
+#include "SignalR/Private/HubConnection.h"
+#include "VoxtaData/Public/ChatSession.h"
+#include "Audio2FaceRESTHandler.h"
 #include "VoxtaDefines.h"
 
 void UVoxtaClient::Initialize(FSubsystemCollectionBase& Collection)
@@ -25,7 +28,13 @@ void UVoxtaClient::StartConnection(const FString& ipv4Address, int port)
 {
 	if (m_currentState != VoxtaClientState::Disconnected)
 	{
-		UE_LOGFMT(VoxtaLog, Warning, "VoxtaClient has alread (tried to be) connected, ignoring new connection attempt");
+		UE_LOGFMT(VoxtaLog, Warning, "VoxtaClient is already in state: {0}, ignoring new connection attempt", UEnum::GetValueAsString(m_currentState));
+		return;
+	}
+
+	if (port < 0 || port > MAX_uint16)
+	{
+		UE_LOGFMT(VoxtaLog, Warning, "Port {0} is an impossible number, please double check your settings.", port);
 		return;
 	}
 
@@ -48,7 +57,7 @@ void UVoxtaClient::Disconnect(bool silent)
 {
 	if (m_currentState == VoxtaClientState::Disconnected)
 	{
-		UE_LOGFMT(VoxtaLog, Warning, "VoxtaClient is currently not connected, ignoring disconnect attempt");
+		UE_LOGFMT(VoxtaLog, Log, "VoxtaClient is currently not connected, ignoring disconnect attempt");
 		return;
 	}
 	if (!silent)
@@ -170,11 +179,11 @@ void UVoxtaClient::SendMessageToServer(const FSignalRValue& message)
 	m_hub->Invoke(m_sendMessageEventName, message).BindUObject(this, &UVoxtaClient::OnMessageSent);
 }
 
-void UVoxtaClient::OnMessageSent(const FSignalRInvokeResult& result)
+void UVoxtaClient::OnMessageSent(const FSignalRInvokeResult& deliveryReceipt)
 {
-	if (result.HasError())
+	if (deliveryReceipt.HasError())
 	{
-		UE_LOGFMT(VoxtaLog, Error, "Failed to send message due to error: {err}.", result.GetErrorMessage());
+		UE_LOGFMT(VoxtaLog, Error, "Failed to send message due to error: {err}.", deliveryReceipt.GetErrorMessage());
 	}
 }
 
@@ -250,10 +259,7 @@ bool UVoxtaClient::HandleCharacterListResponse(const ServerResponseCharacterList
 
 bool UVoxtaClient::HandleCharacterLoadedResponse(const ServerResponseCharacterLoaded& response)
 {
-	auto character = m_characterList.FindByPredicate([response] (const TUniquePtr<const FAiCharData>& InItem)
-		{
-			return InItem->GetId() == response.m_characterId;
-		});
+	const TUniquePtr<const FAiCharData>* character = GetCharacterDataById(response.m_characterId);
 
 	if (character)
 	{
@@ -318,10 +324,8 @@ bool UVoxtaClient::HandleChatMessageResponse(const IServerResponseChatMessageBas
 		case MessageChunk:
 		{
 			auto derivedResponse = StaticCast<const ServerResponseChatMessageChunk*>(&response);
-			auto chatMessage = messages.FindByPredicate([derivedResponse] (const FChatMessage& InItem)
-				{
-					return InItem.GetMessageId() == derivedResponse->m_messageId;
-				});
+			FChatMessage* chatMessage = GetChatMessageById(derivedResponse->m_messageId);
+
 			if (chatMessage)
 			{
 				(*chatMessage).m_text.Append((*chatMessage).m_text.IsEmpty() ? derivedResponse->m_messageText
@@ -333,16 +337,12 @@ bool UVoxtaClient::HandleChatMessageResponse(const IServerResponseChatMessageBas
 		case MessageEnd:
 		{
 			auto derivedResponse = StaticCast<const ServerResponseChatMessageEnd*>(&response);
-			auto chatMessage = messages.FindByPredicate([derivedResponse] (const FChatMessage& InItem)
-				{
-					return InItem.GetMessageId() == derivedResponse->m_messageId;
-				});
+			FChatMessage* chatMessage = GetChatMessageById(derivedResponse->m_messageId);
+
 			if (chatMessage)
 			{
-				auto character = m_characterList.FindByPredicate([derivedResponse] (const TUniquePtr<const FAiCharData>& InItem)
-					{
-						return InItem->GetId() == derivedResponse->m_senderId;
-					});
+				const TUniquePtr<const FAiCharData>* character = GetCharacterDataById(derivedResponse->m_senderId);
+
 				if (character)
 				{
 					UE_LOGFMT(VoxtaLog, Log, "Char speaking message end: {0} -> {1}", character->Get()->GetName(), chatMessage->m_text);
@@ -387,10 +387,7 @@ bool UVoxtaClient::HandleChatUpdateResponse(const ServerResponseChatUpdate& resp
 			{
 				UE_LOGFMT(VoxtaLog, Error, "Recieved chat update for a non-user character, needs implementation. {0} {1}", response.m_senderId, response.m_text);
 			}
-			auto chatMessage = m_chatSession->m_chatMessages.FindByPredicate([response] (const FChatMessage& InItem)
-				{
-					return InItem.GetMessageId() == response.m_messageId;
-				});
+			FChatMessage* chatMessage = GetChatMessageById(response.m_messageId);
 			UE_LOGFMT(VoxtaLog, Log, "Char speaking message end: {0} -> {1}", m_userData.Get()->GetName(), chatMessage->m_text);
 			VoxtaClientCharMessageAddedEventNative.Broadcast(*m_userData.Get(), *chatMessage);
 			VoxtaClientCharMessageAddedEvent.Broadcast(*m_userData.Get(), *chatMessage);
@@ -428,6 +425,22 @@ bool UVoxtaClient::HandleSpeechTranscriptionResponse(const ServerResponseSpeechT
 			break;
 	}
 	return true;
+}
+
+const TUniquePtr<const FAiCharData>* UVoxtaClient::GetCharacterDataById(const FString& charId)
+{
+	return m_characterList.FindByPredicate([charId] (const TUniquePtr<const FAiCharData>& InItem)
+		{
+			return InItem->GetId() == charId;
+		});
+}
+
+FChatMessage* UVoxtaClient::GetChatMessageById(const FString& messageId)
+{
+	return m_chatSession->m_chatMessages.FindByPredicate([messageId] (const FChatMessage& InItem)
+		{
+			return InItem.GetMessageId() == messageId;
+		});
 }
 
 void UVoxtaClient::SetState(VoxtaClientState newState)
