@@ -114,7 +114,7 @@ Audio2FaceRESTHandler* UVoxtaClient::GetA2FHandler() const
 
 void UVoxtaClient::StartListeningToServer()
 {
-	m_hub->On(m_receiveMessageEventName).BindUObject(this, &UVoxtaClient::OnReceivedMessage);
+	m_hub->On(RECEIVE_MESSAGE_EVENT_NAME).BindUObject(this, &UVoxtaClient::OnReceivedMessage);
 	m_hub->OnConnected().AddUObject(this, &UVoxtaClient::OnConnected);
 	m_hub->OnConnectionError().AddUObject(this, &UVoxtaClient::OnConnectionError);
 	m_hub->OnClosed().AddUObject(this, &UVoxtaClient::OnClosed);
@@ -176,7 +176,7 @@ void UVoxtaClient::OnClosed()
 
 void UVoxtaClient::SendMessageToServer(const FSignalRValue& message)
 {
-	m_hub->Invoke(m_sendMessageEventName, message).BindUObject(this, &UVoxtaClient::OnMessageSent);
+	m_hub->Invoke(SEND_MESSAGE_EVENT_NAME, message).BindUObject(this, &UVoxtaClient::OnMessageSent);
 }
 
 void UVoxtaClient::OnMessageSent(const FSignalRInvokeResult& deliveryReceipt)

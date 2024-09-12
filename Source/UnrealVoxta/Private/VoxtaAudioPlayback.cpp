@@ -1,6 +1,7 @@
 // Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
 
 #include "VoxtaAudioPlayback.h"
+#include "ChatMessage.h"
 #if WITH_OVRLIPSYNC
 #include "LipSyncDataOVR.h"
 #endif
@@ -14,7 +15,8 @@ void UVoxtaAudioPlayback::InitializeAudioPlayback(const FString& characterId)
 {
 	m_characterId = characterId;
 	m_clientReference = GetWorld()->GetGameInstance()->GetSubsystem<UVoxtaClient>();
-	m_clientReference->VoxtaClientCharMessageAddedEvent.AddUniqueDynamic(this, &UVoxtaAudioPlayback::PlaybackMessage);
+	m_CharMessageAddedHandle = m_clientReference->VoxtaClientCharMessageAddedEventNative.AddUObject(this, &UVoxtaAudioPlayback::PlaybackMessage);
+
 	m_hostAddress = m_clientReference->GetServerAddress();
 	m_hostPort = m_clientReference->GetServerPort();
 }
@@ -33,8 +35,7 @@ void UVoxtaAudioPlayback::MarkCustomPlaybackComplete(const FGuid& guid)
 void UVoxtaAudioPlayback::BeginPlay()
 {
 	Super::BeginPlay();
-	OnAudioFinished.AddUniqueDynamic(this, &UVoxtaAudioPlayback::OnAudioPlaybackFinished);
-
+	m_playbackFinishedHandle = OnAudioFinishedNative.AddUObject(this, &UVoxtaAudioPlayback::OnAudioPlaybackFinished);
 	if (m_lipSyncType == LipSyncType::Audio2Face)
 	{
 		m_audio2FacePlaybackHandler = NewObject<UAudio2FacePlaybackHandler>();
@@ -44,10 +45,11 @@ void UVoxtaAudioPlayback::BeginPlay()
 void UVoxtaAudioPlayback::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
-	OnAudioFinished.RemoveDynamic(this, &UVoxtaAudioPlayback::OnAudioPlaybackFinished);
+	OnAudioFinishedNative.Remove(m_playbackFinishedHandle);
+
 	if (m_clientReference)
 	{
-		m_clientReference->VoxtaClientCharMessageAddedEvent.RemoveDynamic(this, &UVoxtaAudioPlayback::PlaybackMessage);
+		m_clientReference->VoxtaClientCharMessageAddedEventNative.Remove(m_CharMessageAddedHandle);
 	}
 	if (m_audio2FacePlaybackHandler != nullptr)
 	{
@@ -140,7 +142,7 @@ void UVoxtaAudioPlayback::TryPlayCurrentAudioChunk()
 	}
 }
 
-void UVoxtaAudioPlayback::OnAudioPlaybackFinished()
+void UVoxtaAudioPlayback::OnAudioPlaybackFinished(UAudioComponent* component)
 {
 	if (m_lipSyncType == LipSyncType::Custom)
 	{

@@ -36,7 +36,7 @@ void UVoxtaAudioInput::InitializeSocket(int bufferMs, int sampleRate, int inputC
 	m_audioWebSocket->Connect();
 }
 
-void UVoxtaAudioInput::OnSocketConnected()
+void UVoxtaAudioInput::InitializeVoiceCapture()
 {
 	const FString socketInitialHeader = FString::Format(*FString(TEXT("{\"contentType\":\"audio/wav\",\"sampleRate\":{0},"
 		"\"channels\":{1},\"bitsPerSample\": 16,\"bufferMilliseconds\":{2}}")), { m_sampleRate, m_inputChannels, m_bufferMs });
@@ -50,7 +50,13 @@ void UVoxtaAudioInput::OnSocketConnected()
 	{
 		m_connectionState = VoxtaMicrophoneState::Ready;
 		VoxtaAudioInputInitializedEvent.Broadcast();
+		VoxtaAudioInputInitializedEventNative.Broadcast();
 	}
+}
+
+void UVoxtaAudioInput::OnSocketConnected()
+{
+	InitializeVoiceCapture();
 }
 
 void UVoxtaAudioInput::OnSocketConnectionError(const FString& error)
@@ -111,9 +117,9 @@ bool UVoxtaAudioInput::IsRecording() const
 	return m_connectionState == VoxtaMicrophoneState::InUse;
 }
 
-float UVoxtaAudioInput::GetNormalizedAmplitude() const
+float UVoxtaAudioInput::GetInputDecibels() const
 {
-	return m_audioCaptureDevice.GetAmplitude() / 20.f; //TODO: swap amplitude for decibels
+	return m_audioCaptureDevice.GetDecibels();
 }
 
 FString UVoxtaAudioInput::GetInputDeviceName() const

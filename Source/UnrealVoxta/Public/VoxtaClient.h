@@ -51,7 +51,6 @@ public:
 	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaClientCharMessageRemovedNative, const FChatMessage&);
 	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaClientSpeechTranscribedNative, const FString&);
 	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaClientChatSessionStartedNative, const FChatSession&);
-
 #pragma endregion
 
 #pragma region events
@@ -112,6 +111,7 @@ public:
 #pragma endregion
 
 #pragma region public API
+public:
 	/**
 	 * Main initializer for the VoxtaClient.
 	 * This will start the SignalR connection to the hub and begin listening to server responses.
@@ -188,6 +188,7 @@ public:
 
 #pragma endregion
 
+#pragma region data
 protected:
 	UPROPERTY()
 	UVoxtaAudioInput* m_voiceInput;
@@ -196,14 +197,13 @@ protected:
 	TUniquePtr<Audio2FaceRESTHandler> m_A2FHandler;
 
 private:
-	const FString m_sendMessageEventName = TEXT("SendMessage");
-	const FString m_receiveMessageEventName = TEXT("ReceiveMessage");
+	const FString SEND_MESSAGE_EVENT_NAME = TEXT("SendMessage");
+	const FString RECEIVE_MESSAGE_EVENT_NAME = TEXT("ReceiveMessage");
 
 	VoxtaLogger m_logUtility;
 	VoxtaApiRequestHandler m_voxtaRequestApi;
 	VoxtaApiResponseHandler m_voxtaResponseApi;
 
-#pragma region raw data
 	TUniquePtr<FUserCharData> m_userData;
 	TArray<TUniquePtr<const FAiCharData>> m_characterList;
 	TUniquePtr<FChatSession> m_chatSession;
@@ -213,6 +213,7 @@ private:
 #pragma endregion
 
 #pragma region private API
+private:
 	/// <summary>
 	/// Register internal listeners to the event triggers of the SignalR hub connection.
 	/// </summary>
@@ -289,6 +290,5 @@ private:
 	void OnConnectionError(const FString& error);
 	void OnClosed();
 #pragma endregion
-
 #pragma endregion
 };

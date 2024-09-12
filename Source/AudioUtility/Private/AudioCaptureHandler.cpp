@@ -116,7 +116,7 @@ void AudioCaptureHandler::ShutDown()
 	m_voiceRunnerThread = nullptr;
 }
 
-void AudioCaptureHandler::CaptureVoiceInternal(TArray<uint8>& voiceDataBuffer) const
+void AudioCaptureHandler::CaptureVoiceInternal(TArray<uint8>& voiceDataBuffer, float& decibels) const
 {
 	if (!m_voiceCaptureDevice.IsValid())
 	{
@@ -125,17 +125,15 @@ void AudioCaptureHandler::CaptureVoiceInternal(TArray<uint8>& voiceDataBuffer) c
 	}
 
 	uint32 AvailableBytes = 0;
-	auto CaptureState = m_voiceCaptureDevice->GetCaptureState(AvailableBytes);
 
-	if (AvailableBytes < 1)
+	if (m_voiceCaptureDevice->GetCaptureState(AvailableBytes) == EVoiceCaptureState::Ok)
 	{
-		return;
-	}
+		if (AvailableBytes < 1)
+		{
+			return;
+		}
+		voiceDataBuffer.Reset();
 
-	voiceDataBuffer.Reset();
-
-	if (CaptureState == EVoiceCaptureState::Ok)
-	{
 		uint32 VoiceCaptureReadBytes = 0;
 
 		voiceDataBuffer.SetNumUninitialized(AvailableBytes);
@@ -144,6 +142,8 @@ void AudioCaptureHandler::CaptureVoiceInternal(TArray<uint8>& voiceDataBuffer) c
 			AvailableBytes,
 			VoiceCaptureReadBytes
 		);
+
+		decibels = AnalyseDecibels(voiceDataBuffer, VoiceCaptureReadBytes);
 	}
 }
 
@@ -160,7 +160,7 @@ void AudioCaptureHandler::SendInternal(const TArray<uint8> rawData) const
 void AudioCaptureHandler::CaptureAndSendVoiceData()
 {
 	FScopeLock Lock(&m_captureGuard);
-	CaptureVoiceInternal(m_socketDataBuffer);
+	CaptureVoiceInternal(m_socketDataBuffer, m_decibels);
 
 	if (m_socketDataBuffer.Num() > 0)
 	{
@@ -174,17 +174,35 @@ void AudioCaptureHandler::CaptureAndSendVoiceData()
 	}
 }
 
-float AudioCaptureHandler::GetAmplitude() const
+float AudioCaptureHandler::GetDecibels() const
 {
 	FScopeLock Lock(&m_captureGuard);
-	if (m_voiceCaptureDevice.IsValid())
+	if (m_voiceCaptureDevice.IsValid() && m_isCapturing)
 	{
-		return m_voiceCaptureDevice->GetCurrentAmplitude();
+		return m_decibels;
 	}
-	return -1.f;
+	return -100.f;
 }
 
 FString AudioCaptureHandler::GetDeviceName() const
 {
 	return m_deviceName;
+}
+
+float AudioCaptureHandler::AnalyseDecibels(const TArray<uint8>& VoiceData, uint32 DataSize) const
+{
+	int16 Sample;
+	float SumSquared = 0.0f;
+
+	for (uint32 i = 0; i < DataSize / 2; ++i)
+	{
+		Sample = (VoiceData[i * 2 + 1] << 8) | VoiceData[i * 2];
+		SumSquared += static_cast<float>(Sample) * static_cast<float>(Sample);
+	}
+
+	float MeanSquared = SumSquared / (DataSize / 2.f);
+	float RootMeanSquare = FMath::Sqrt(MeanSquared);
+	float Decibels = 20.0f * FMath::LogX(10.0f, RootMeanSquare / 32768.0f);
+
+	return Decibels;
 }

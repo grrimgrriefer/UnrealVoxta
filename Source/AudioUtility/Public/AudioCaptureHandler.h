@@ -61,12 +61,7 @@ public:
 	/// </summary>
 	void ShutDown();
 
-	/// <summary>
-	/// The current loudness of the microphone.
-	/// Returns -1.0 if the capture is not supported or the capture is not initialized.
-	/// </summary>
-	/// <returns>Returns -1.0 if the capture is not supported or the capture is not initialized.</returns>
-	float GetAmplitude() const;
+	float GetDecibels() const;
 
 	/// <summary>
 	/// Returns the name of the device used by the VoiceModule, if initialized.
@@ -80,6 +75,7 @@ private:
 	FString m_deviceName = TEXT("");
 	bool m_isCapturing = false;
 	int m_bufferMillisecondSize;
+	float m_decibels = -1.f;
 
 	mutable FCriticalSection m_captureGuard;
 
@@ -101,11 +97,13 @@ private:
 	/// Populate the provided buffer with data captured from the VoiceCapture.
 	/// </summary>
 	/// <param name="rawData">The array that will be filled with the raw audio data.</param>
-	void CaptureVoiceInternal(TArray<uint8>& voiceDataBuffer) const;
+	void CaptureVoiceInternal(TArray<uint8>& voiceDataBuffer, float& decibels) const;
 
 	/// <summary>
 	/// Send the provided raw audio data to the socket.
 	/// </summary>
 	/// <param name="rawData">The array of raw audio data.</param>
 	void SendInternal(const TArray<uint8> rawData) const;
+
+	float AnalyseDecibels(const TArray<uint8>& VoiceData, uint32 DataSize) const;
 };

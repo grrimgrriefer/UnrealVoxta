@@ -101,6 +101,9 @@ private:
 	FString m_messageId;
 	TArray<MessageChunkAudioContainer> m_orderedAudio;
 
+	FDelegateHandle m_CharMessageAddedHandle;
+	FDelegateHandle m_playbackFinishedHandle;
+
 	FString m_hostAddress;
 	int m_hostPort;
 
@@ -126,7 +129,7 @@ private:
 	/// Will try to play the next audio component if available.
 	/// </summary>
 	UFUNCTION()
-	void OnAudioPlaybackFinished();
+	void OnAudioPlaybackFinished(UAudioComponent* component);
 
 	void MarkAudioChunkPlaybackCompleteInternal();
 
