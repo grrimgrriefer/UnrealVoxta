@@ -78,14 +78,28 @@ void MessageChunkAudioContainer::DownloadData()
 	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> httpRequest = FHttpModule::Get().CreateRequest();
 	httpRequest->SetVerb("GET");
 	httpRequest->SetURL(m_downloadUrl);
-	httpRequest->OnProcessRequestComplete().BindRaw(this, &MessageChunkAudioContainer::OnRequestComplete);
+	httpRequest->OnProcessRequestComplete().BindLambda([Self = TWeakPtr<MessageChunkAudioContainer>(AsShared())]
+	(FHttpRequestPtr request, FHttpResponsePtr response, bool bWasSuccessful)
+		{
+			if (TSharedPtr<MessageChunkAudioContainer> sharedSelf = Self.Pin())
+			{
+				sharedSelf->m_rawData = response->GetContent();
+				sharedSelf->UpdateState(MessageChunkState::Idle_Downloaded);
+			}
+		});
 	httpRequest->ProcessRequest();
 }
 
 void MessageChunkAudioContainer::ImportData()
 {
 	URuntimeAudioImporterLibrary::ImportAudioFromBuffer(TArray64<uint8>(m_rawData),
-		[this] (UImportedSoundWave* soundWave) { OnImportComplete(soundWave); });
+		[Self = TWeakPtr<MessageChunkAudioContainer>(AsShared())] (UImportedSoundWave* soundWave)
+		{
+			if (TSharedPtr<MessageChunkAudioContainer> sharedSelf = Self.Pin())
+			{
+				sharedSelf->OnImportComplete(soundWave);
+			}
+		});
 }
 
 void MessageChunkAudioContainer::GenerateLipSync()
@@ -101,10 +115,13 @@ void MessageChunkAudioContainer::GenerateLipSync()
 		case LipSyncType::OVRLipSync:
 #if WITH_OVRLIPSYNC
 			LipSyncGenerator::GenerateOVRLipSyncData(m_rawData,
-				[this] (ULipSyncDataOVR* lipsyncData)
+				[Self = TWeakPtr<MessageChunkAudioContainer>(AsShared())] (ULipSyncDataOVR* lipsyncData)
 				{
-					m_lipSyncData = Cast<ILipSyncDataBase>(MoveTemp(lipsyncData));
-					UpdateState(MessageChunkState::ReadyForPlayback);
+					if (TSharedPtr<MessageChunkAudioContainer> sharedSelf = Self.Pin())
+					{
+						sharedSelf->m_lipSyncData = Cast<ILipSyncDataBase>(MoveTemp(lipsyncData));
+						sharedSelf->UpdateState(MessageChunkState::ReadyForPlayback);
+					}
 				});
 #endif
 			break;
@@ -114,23 +131,20 @@ void MessageChunkAudioContainer::GenerateLipSync()
 				m_state = MessageChunkState::Idle_Imported; // TODO find a more clean way to do this
 				return;
 			}
-			LipSyncGenerator::GenerateA2FLipSyncData(m_rawData,
-				m_A2FRestHandler, [this] (ULipSyncDataA2F* lipsyncData)
+			LipSyncGenerator::GenerateA2FLipSyncData(m_rawData, m_A2FRestHandler,
+				[Self = TWeakPtr<MessageChunkAudioContainer>(AsShared())] (ULipSyncDataA2F* lipsyncData)
 				{
-					m_lipSyncData = Cast<ILipSyncDataBase>(MoveTemp(lipsyncData));
-					UpdateState(MessageChunkState::ReadyForPlayback);
+					if (TSharedPtr<MessageChunkAudioContainer> sharedSelf = Self.Pin())
+					{
+						sharedSelf->m_lipSyncData = Cast<ILipSyncDataBase>(MoveTemp(lipsyncData));
+						sharedSelf->UpdateState(MessageChunkState::ReadyForPlayback);
+					}
 				});
 			break;
 		default:
 			UE_LOG(LogTemp, Error, TEXT("No built-in support yet for lipsync that isn't OVR or A2F."));
 			break;
 	}
-}
-
-void MessageChunkAudioContainer::OnRequestComplete(FHttpRequestPtr request, FHttpResponsePtr response, bool bWasSuccessful)
-{
-	m_rawData = response->GetContent();
-	UpdateState(MessageChunkState::Idle_Downloaded);
 }
 
 void MessageChunkAudioContainer::OnImportComplete(USoundWaveProcedural* soundWave)

@@ -72,10 +72,12 @@ public:
 private:
 	friend class FVoiceRunnerThread;
 
+	const float DEFAULT_SILENCE_DECIBELS = -100.f;
+
 	FString m_deviceName = TEXT("");
 	bool m_isCapturing = false;
 	int m_bufferMillisecondSize;
-	float m_decibels = -1.f;
+	float m_decibels = DEFAULT_SILENCE_DECIBELS;
 
 	mutable FCriticalSection m_captureGuard;
 

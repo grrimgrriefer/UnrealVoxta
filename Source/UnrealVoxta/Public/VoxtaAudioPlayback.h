@@ -99,7 +99,7 @@ private:
 	UVoxtaClient* m_clientReference;
 	FString m_characterId;
 	FString m_messageId;
-	TArray<MessageChunkAudioContainer> m_orderedAudio;
+	TArray<TSharedPtr<MessageChunkAudioContainer>> m_orderedAudio;
 
 	FDelegateHandle m_CharMessageAddedHandle;
 	FDelegateHandle m_playbackFinishedHandle;

@@ -11,6 +11,7 @@
 #endif
 #include "Runtime/Online/HTTP/Public/Http.h"
 #include "Audio2FaceRESTHandler.h"
+#include "Templates/SharedPointer.h"
 
 enum class MessageChunkState : uint8
 {
@@ -22,7 +23,7 @@ enum class MessageChunkState : uint8
 	CleanedUp
 };
 
-class MessageChunkAudioContainer
+class MessageChunkAudioContainer : public TSharedFromThis<MessageChunkAudioContainer>
 {
 public:
 	MessageChunkAudioContainer(const FString& fullUrl,
@@ -53,7 +54,6 @@ private:
 	void DownloadData();
 	void ImportData();
 	void GenerateLipSync();
-	void OnRequestComplete(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
 	void OnImportComplete(USoundWaveProcedural* soundWave);
 	void UpdateState(MessageChunkState newState);
 };

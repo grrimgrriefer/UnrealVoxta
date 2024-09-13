@@ -72,6 +72,7 @@ bool AudioCaptureHandler::TryStartVoiceCapture()
 		return false;
 	}
 
+	m_decibels = DEFAULT_SILENCE_DECIBELS;
 	// we only use 75% of the buffer, the extra 25% is space in case the thread encounters minor lag / delay.
 	m_voiceRunnerThread = MakeUnique<FVoiceRunnerThread>(this, (m_bufferMillisecondSize / 1000.f * 0.75f));
 	if (!m_voiceRunnerThread.IsValid())
@@ -96,6 +97,7 @@ bool AudioCaptureHandler::TryStartVoiceCapture()
 void AudioCaptureHandler::StopCapture()
 {
 	FScopeLock Lock(&m_captureGuard);
+	m_decibels = DEFAULT_SILENCE_DECIBELS;
 	if (m_voiceRunnerThread.IsValid())
 	{
 		m_voiceRunnerThread->Stop();
@@ -177,11 +179,7 @@ void AudioCaptureHandler::CaptureAndSendVoiceData()
 float AudioCaptureHandler::GetDecibels() const
 {
 	FScopeLock Lock(&m_captureGuard);
-	if (m_voiceCaptureDevice.IsValid() && m_isCapturing)
-	{
-		return m_decibels;
-	}
-	return -100.f;
+	return m_decibels;
 }
 
 FString AudioCaptureHandler::GetDeviceName() const

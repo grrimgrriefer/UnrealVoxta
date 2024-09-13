@@ -24,13 +24,15 @@ FVoiceRunnerThread::~FVoiceRunnerThread()
 uint32 FVoiceRunnerThread::Run()
 {
 	uint32 Result = THREAD_RETURN_DEFAULT_VALUE;
+	FPlatformProcess::Sleep(m_sleepTime);
+
 	while (!m_isStopped)
 	{
-		FPlatformProcess::Sleep(m_sleepTime);
 		if (m_voiceComponent)
 		{
 			m_voiceComponent->CaptureAndSendVoiceData();
 			Result = SEND_VOICE_DATA_SUCCESS;
+			FPlatformProcess::Sleep(m_sleepTime);
 		}
 		else
 		{
