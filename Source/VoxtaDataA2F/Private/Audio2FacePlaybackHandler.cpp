@@ -77,7 +77,7 @@ void UAudio2FacePlaybackHandler::GetA2FCurveWeights(TArray<float>& targetArrayRe
 	}
 }
 
-void UAudio2FacePlaybackHandler::Play(UAudioComponent* audioComponent, ULipSyncDataA2F* lipsyncData)
+void UAudio2FacePlaybackHandler::Play(UAudioComponent* audioComponent, const ULipSyncDataA2F* lipsyncData)
 {
 	m_audioComponent = audioComponent;
 	m_lipsyncData = lipsyncData;

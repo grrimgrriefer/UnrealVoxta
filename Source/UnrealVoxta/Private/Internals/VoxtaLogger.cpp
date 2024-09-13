@@ -1,6 +1,8 @@
 // Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
 
 #include "VoxtaLogger.h"
+#include "Misc/CoreMiscDefines.h"
+#include "Logging/LogMacros.h"
 
 DEFINE_LOG_CATEGORY(VoxtaLog);
 
@@ -20,7 +22,8 @@ void VoxtaLogger::RegisterVoxtaLogger()
 
 void VoxtaLogger::Serialize(const TCHAR* Message, ELogVerbosity::Type Verbosity, const class FName& Category)
 {
-	if (Category == m_voxtaLogCategory || Category == m_signalRLogCategory || Category == m_httpLogCategory)
+#if WITH_EDITOR
+	if (Category == m_voxtaLogCategory)
 	{
 		FColor color;
 		switch (Verbosity)
@@ -28,23 +31,16 @@ void VoxtaLogger::Serialize(const TCHAR* Message, ELogVerbosity::Type Verbosity,
 			case ELogVerbosity::Warning:
 				color = FColor::Orange;
 				break;
-			case ELogVerbosity::Display:
-			case ELogVerbosity::Log:
-				color = FColor::Cyan;
-				if (Category == m_signalRLogCategory || Category == m_httpLogCategory)
-				{
-					return;
-				}
-				break;
 			case ELogVerbosity::Error:
-			default:
 				color = FColor::Red;
-				break;
+			default:
+				return;
 		}
 
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, color, FString::Format(*FString(TEXT("[{0}]: {1} -> {2}")), {
+		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 3.0f, color, FString::Format(*FString(TEXT("[{0}]: {1} -> {2}")), {
 			ToString(Verbosity),
 			FDateTime::Now().ToString(TEXT("%Y-%m-%d %H:%M:%S")),
 			Message }));
+#endif
 	}
 }

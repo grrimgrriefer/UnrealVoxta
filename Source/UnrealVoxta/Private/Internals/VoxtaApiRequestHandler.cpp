@@ -2,6 +2,8 @@
 
 #include "VoxtaApiRequestHandler.h"
 #include "VoxtaDefines.h"
+#include "SignalR/Public/SignalRValue.h"
+#include "AiCharData.h"
 
 FSignalRValue VoxtaApiRequestHandler::GetAuthenticateRequestData() const
 {

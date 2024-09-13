@@ -4,25 +4,31 @@
 
 #include "CoreMinimal.h"
 #include "VoxtaDefines.h"
-#include "SignalR/Public/SignalRValue.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseBase.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseWelcome.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseCharacterList.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseCharacterLoaded.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseChatStarted.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseChatMessageStart.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseChatMessageChunk.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseChatMessageEnd.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseChatMessageCancelled.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseChatUpdate.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseSpeechTranscription.h"
-#include "VoxtaData/Public/VoxtaServiceData.h"
 
+class FSignalRValue;
+struct IServerResponseBase;
+struct ServerResponseWelcome;
+struct ServerResponseCharacterList;
+struct ServerResponseCharacterLoaded;
+struct ServerResponseChatStarted;
+struct ServerResponseChatMessageStart;
+struct ServerResponseChatMessageChunk;
+struct ServerResponseChatMessageEnd;
+struct ServerResponseChatMessageCancelled;
+struct ServerResponseChatUpdate;
+struct ServerResponseSpeechTranscription;
+
+/**
+ * VoxtaApiResponseHandler
+ * Helper class that provides utility to deserialize VoxtaServer responses that are received via the SignalR socket.
+ *
+ * Note: All methods and fields must be const (immutable), as this class should remain stateless.
+ */
 class VoxtaApiResponseHandler
 {
+#pragma region public API
 public:
-	// Message types that the internal VoxtaClient will consider to be 'safe to ignore'
-	// any message not recognized and not
+	/** A collection of message types to ignore. */
 	const TSet<FString> ignoredMessageTypes{
 		API_STRING("chatStarting"),
 		API_STRING("chatLoadingMessage"),
@@ -37,17 +43,19 @@ public:
 		API_STRING("memoryUpdated")
 	};
 
-	/// <summary>
-	/// Deserialize a reponse from the VoxtaServer into an easily queried object.
-	/// </summary>
-	/// <param name="serverResponseData">The raw response fromt the Voxta server</param>
-	/// <returns>A pointer to the deserialized object.</returns>
+	/**
+	 * Internal helper class to deserialize a reponse from the VoxtaServer into the corresponding data struct.
+	 *
+	 * @param serverResponseData The raw data received from the SignalR message.
+	 *
+	 * @return The uniqueptr to the deserialized object, which derives from IServerResponseBase.
+	 */
 	TUniquePtr<IServerResponseBase> GetResponseData(
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
+#pragma endregion
 
+#pragma region VoxtaServer response deserialize handlers
 private:
-	///~ Begin internal deserialize helpers.
-
 	TUniquePtr<ServerResponseWelcome> GetWelcomeResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
 
@@ -80,5 +88,5 @@ private:
 
 	TUniquePtr<ServerResponseSpeechTranscription> GetSpeechRecognitionEnd(
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
-	///~ End internal deserialize helpers.
+#pragma endregion
 };

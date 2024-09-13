@@ -18,7 +18,7 @@ public:
 	UAudio2FacePlaybackHandler();
 
 	void GetA2FCurveWeights(TArray<float>& sourceCurves) const;
-	void Play(UAudioComponent* InAudioComponent, ULipSyncDataA2F* InSequence);
+	void Play(UAudioComponent* InAudioComponent, const ULipSyncDataA2F* InSequence);
 	void Stop();
 
 protected:
@@ -26,7 +26,7 @@ protected:
 	void OnAudioPlaybackFinished(UAudioComponent*);
 
 private:
-	ULipSyncDataA2F* m_lipsyncData;
+	const ULipSyncDataA2F* m_lipsyncData;
 	UAudioComponent* m_audioComponent;
 
 	FDelegateHandle PlaybackPercentHandle;

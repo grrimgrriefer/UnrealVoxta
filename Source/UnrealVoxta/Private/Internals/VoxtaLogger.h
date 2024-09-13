@@ -3,28 +3,32 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include <Logging/StructuredLog.h>
-#include "Misc/AssertionMacros.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(VoxtaLog, Log, All);
-
+/**
+ * VoxtaLogger
+ * Internal class that enables the automatic printing of warnings and errors in the VoxtaLog category, on the
+ * top left corner of the screen while inside of the editor.
+ */
 class VoxtaLogger : public FOutputDevice
 {
+#pragma region public API
 public:
+	/** Unregister VoxtaLogger from GLog. I.e. cleanup */
 	~VoxtaLogger();
 
-	/// <summary>
-	/// Add the VoxtaLog to the GlobalLogSingleton.
-	/// </summary>
+	/** Register VoxtaLogger with GLog, allowing the override to run on any logs printed to the console. */
 	void RegisterVoxtaLogger();
+#pragma endregion
 
-	///~ Begin FOutputDevice overrides.
+#pragma region FOutputDevice overrides
 protected:
 	virtual void Serialize(const TCHAR* Message, ELogVerbosity::Type Verbosity, const class FName& Category) override;
-	///~ End FOutputDevice overrides.
+#pragma endregion
 
+#pragma region data
 private:
 	const FName m_voxtaLogCategory = TEXT("VoxtaLog");
 	const FName m_signalRLogCategory = TEXT("LogSignalR");
 	const FName m_httpLogCategory = TEXT("LogHttp");
+#pragma endregion
 };

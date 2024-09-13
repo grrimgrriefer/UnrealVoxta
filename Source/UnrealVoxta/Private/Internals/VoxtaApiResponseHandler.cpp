@@ -1,54 +1,67 @@
 // Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
 
 #include "VoxtaApiResponseHandler.h"
-#include "VoxtaLogger.h"
+#include "Logging/StructuredLog.h"
+#include "SignalR/Public/SignalRValue.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseBase.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseWelcome.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseCharacterList.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseCharacterLoaded.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseChatStarted.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseChatMessageStart.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseChatMessageChunk.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseChatMessageEnd.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseChatMessageCancelled.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseChatUpdate.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseSpeechTranscription.h"
+#include "VoxtaData/Public/VoxtaServiceData.h"
 
 TUniquePtr<IServerResponseBase> VoxtaApiResponseHandler::GetResponseData(
 	const TMap<FString, FSignalRValue>& serverResponseData) const
 {
 	using enum ServerResponseType;
 	const FString type = serverResponseData[API_STRING("$type")].AsString();
-	if (type == "welcome")
+	if (type == TEXT("welcome"))
 	{
 		return GetWelcomeResponse(serverResponseData);
 	}
-	else if (type == "charactersListLoaded")
+	else if (type == TEXT("charactersListLoaded"))
 	{
 		return GetCharacterListLoadedResponse(serverResponseData);
 	}
-	else if (type == "characterLoaded")
+	else if (type == TEXT("characterLoaded"))
 	{
 		return GetCharacterLoadedResponse(serverResponseData);
 	}
-	else if (type == "chatStarted")
+	else if (type == TEXT("chatStarted"))
 	{
 		return GetChatStartedResponse(serverResponseData);
 	}
-	else if (type == "replyStart")
+	else if (type == TEXT("replyStart"))
 	{
 		return GetReplyStartReponseResponse(serverResponseData);
 	}
-	else if (type == "replyChunk")
+	else if (type == TEXT("replyChunk"))
 	{
 		return GetReplyChunkReponseResponse(serverResponseData);
 	}
-	else if (type == "replyEnd")
+	else if (type == TEXT("replyEnd"))
 	{
 		return GetReplyEndReponseResponse(serverResponseData);
 	}
-	else if (type == "replyCancelled")
+	else if (type == TEXT("replyCancelled"))
 	{
 		return GetReplyCancelledResponse(serverResponseData);
 	}
-	else if (type == "update")
+	else if (type == TEXT("update"))
 	{
 		return GetChatUpdateResponse(serverResponseData);
 	}
-	else if (type == "speechRecognitionPartial")
+	else if (type == TEXT("speechRecognitionPartial"))
 	{
 		return GetSpeechRecognitionPartial(serverResponseData);
 	}
-	else if (type == "speechRecognitionEnd")
+	else if (type == TEXT("speechRecognitionEnd"))
 	{
 		return GetSpeechRecognitionEnd(serverResponseData);
 	}
@@ -113,9 +126,9 @@ TUniquePtr<ServerResponseChatStarted> VoxtaApiResponseHandler::GetChatStartedRes
 	using enum VoxtaServiceData::ServiceType;
 	TMap<const VoxtaServiceData::ServiceType, const VoxtaServiceData> services;
 	TMap<VoxtaServiceData::ServiceType, FString> serviceTypes = {
-		{ TextGen, "textGen" },
-		{ SpeechToText, "speechToText" },
-		{ TextToSpeech, "textToSpeech" }
+		{ TextGen, TEXT("textGen") },
+		{ SpeechToText, TEXT("speechToText") },
+		{ TextToSpeech, TEXT("textToSpeech") }
 	};
 
 	for (const auto& [enumType, stringValue] : serviceTypes)

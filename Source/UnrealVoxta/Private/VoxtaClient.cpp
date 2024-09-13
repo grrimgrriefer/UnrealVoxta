@@ -6,6 +6,19 @@
 #include "VoxtaData/Public/ChatSession.h"
 #include "Audio2FaceRESTHandler.h"
 #include "VoxtaDefines.h"
+#include "Logging/StructuredLog.h"
+#include "VoxtaAudioInput.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseBase.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseWelcome.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseCharacterList.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseCharacterLoaded.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseChatStarted.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseChatMessageStart.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseChatMessageChunk.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseChatMessageEnd.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseChatMessageCancelled.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseChatUpdate.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseSpeechTranscription.h"
 
 void UVoxtaClient::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -206,7 +219,7 @@ bool UVoxtaClient::HandleResponse(const TMap<FString, FSignalRValue>& responseDa
 		return true;
 	}
 
-	auto response = m_voxtaResponseApi.GetResponseData(responseData);
+	TUniquePtr<IServerResponseBase> response = m_voxtaResponseApi.GetResponseData(responseData);
 	if (!response)
 	{
 		return false;

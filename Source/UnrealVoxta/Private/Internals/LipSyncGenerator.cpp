@@ -4,9 +4,11 @@
 #if WITH_OVRLIPSYNC
 #include "OVRLipSyncContextWrapper.h"
 #include "OVRLipSyncFrame.h"
+#include "LipSyncDataOVR.h"
 #endif
 #include "Serialization/JsonReader.h"
 #include "Audio2FaceRESTHandler.h"
+#include "LipSyncDataA2F.h"
 
 #if WITH_OVRLIPSYNC
 void LipSyncGenerator::GenerateOVRLipSyncData(const TArray<uint8>& rawAudioData, TFunction<void(ULipSyncDataOVR*)> callback)
@@ -72,7 +74,34 @@ void LipSyncGenerator::GenerateA2FLipSyncData(const TArray<uint8>& rawAudioData,
 	FString jsonName = FString::Format(*FString(TEXT("A2FCachedData{0}")), { guid });
 	FString jsonImportName = FString::Format(*FString(TEXT("{0}_bsweight.json")), { jsonName });
 
-	WriteWavFile(rawAudioData, FPaths::Combine(cacheFolder, wavName));
+	FWaveModInfo waveInfo;
+	uint8* waveData = const_cast<uint8*>(rawAudioData.GetData());
+
+	if (waveInfo.ReadWaveInfo(waveData, rawAudioData.Num()))
+	{
+		// Create a file handle
+		IFileHandle* FileHandle = FPlatformFileManager::Get().GetPlatformFile().OpenWrite(*FPaths::Combine(cacheFolder, wavName));
+
+		if (FileHandle)
+		{
+			// Write the WAV header
+			FileHandle->Write(waveData, waveInfo.SampleDataStart - waveData);
+
+			// Write the audio data
+			FileHandle->Write(waveInfo.SampleDataStart, waveInfo.SampleDataSize);
+
+			// Close the file
+			delete FileHandle;
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("Failed to open file for writing"));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to read wave info"));
+	}
 
 	A2FRestHandler->GetBlendshapes(wavName, cacheFolder, jsonName,
 		[Callback = callback, JsonFullPath = FPaths::Combine(cacheFolder, jsonImportName)] (FString shapesFile, bool success)
@@ -114,36 +143,4 @@ void LipSyncGenerator::GenerateA2FLipSyncData(const TArray<uint8>& rawAudioData,
 			data->AddToRoot();
 			Callback(data);
 		});
-}
-
-void LipSyncGenerator::WriteWavFile(const TArray<uint8>& rawAudioData, const FString& filePath)
-{
-	FWaveModInfo waveInfo;
-	uint8* waveData = const_cast<uint8*>(rawAudioData.GetData());
-
-	if (waveInfo.ReadWaveInfo(waveData, rawAudioData.Num()))
-	{
-		// Create a file handle
-		IFileHandle* FileHandle = FPlatformFileManager::Get().GetPlatformFile().OpenWrite(*filePath);
-
-		if (FileHandle)
-		{
-			// Write the WAV header
-			FileHandle->Write(waveData, waveInfo.SampleDataStart - waveData);
-
-			// Write the audio data
-			FileHandle->Write(waveInfo.SampleDataStart, waveInfo.SampleDataSize);
-
-			// Close the file
-			delete FileHandle;
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("Failed to open file for writing"));
-		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("Failed to read wave info"));
-	}
 }

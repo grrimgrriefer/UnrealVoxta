@@ -3,35 +3,38 @@
 #include "MessageChunkAudioContainer.h"
 #include "LipSyncGenerator.h"
 #include "RuntimeAudioImporter/RuntimeAudioImporterLibrary.h"
+#include "Runtime/Online/HTTP/Public/Http.h"
+#include "Audio2FaceRESTHandler.h"
+#include "Sound/SoundWaveProcedural.h"
 
 MessageChunkAudioContainer::MessageChunkAudioContainer(const FString& fullUrl,
 	LipSyncType lipSyncType,
 	Audio2FaceRESTHandler* A2FRestHandler,
 	TFunction<void(const MessageChunkAudioContainer* newState)> callback,
 	int id) :
-	m_index(id),
-	m_lipSyncType(lipSyncType),
-	m_downloadUrl(fullUrl),
-	m_A2FRestHandler(A2FRestHandler),
-	onStateChanged(callback)
+	INDEX(id),
+	LIP_SYNC_TYPE(lipSyncType),
+	FULL_DOWNLOAD_URL(fullUrl),
+	ON_STATE_CHANGED(callback),
+	m_A2FRestHandler(A2FRestHandler)
 {
 }
 
 void MessageChunkAudioContainer::CleanupData()
 {
 	m_soundWave->RemoveFromRoot();
-	if (m_lipSyncType != LipSyncType::None)
+	if (LIP_SYNC_TYPE != LipSyncType::None)
 	{
 		m_lipSyncData->CleanupData();
 	}
-	m_rawData.Empty();
+	m_rawAudioData.Empty();
 	m_state = MessageChunkState::CleanedUp;
 	UE_LOG(LogTemp, Log, TEXT("Cleaned up MessageChunkAudioContainer."));
 }
 
-TArray<uint8> MessageChunkAudioContainer::GetRawData()
+const TArray<uint8>& MessageChunkAudioContainer::GetRawAudioData() const
 {
-	return m_rawData;
+	return m_rawAudioData;
 }
 
 void MessageChunkAudioContainer::Continue()
@@ -45,7 +48,7 @@ void MessageChunkAudioContainer::Continue()
 			ImportData();
 			break;
 		case MessageChunkState::Idle_Imported:
-			if (m_lipSyncType == LipSyncType::None)
+			if (LIP_SYNC_TYPE == LipSyncType::None)
 			{
 				UpdateState(MessageChunkState::ReadyForPlayback);
 			}
@@ -62,9 +65,19 @@ void MessageChunkAudioContainer::Continue()
 }
 
 template<class T>
-T* MessageChunkAudioContainer::GetLipSyncDataPtr() const
+const T* MessageChunkAudioContainer::GetLipSyncData() const
 {
-	return StaticCast<T*>(m_lipSyncData);
+	return StaticCast<const T*>(m_lipSyncData);
+}
+
+const MessageChunkState& MessageChunkAudioContainer::GetCurrentState() const
+{
+	return m_state;
+}
+
+USoundWaveProcedural* MessageChunkAudioContainer::GetSoundWave() const
+{
+	return m_soundWave;
 }
 
 void MessageChunkAudioContainer::DownloadData()
@@ -77,13 +90,13 @@ void MessageChunkAudioContainer::DownloadData()
 
 	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> httpRequest = FHttpModule::Get().CreateRequest();
 	httpRequest->SetVerb("GET");
-	httpRequest->SetURL(m_downloadUrl);
+	httpRequest->SetURL(FULL_DOWNLOAD_URL);
 	httpRequest->OnProcessRequestComplete().BindLambda([Self = TWeakPtr<MessageChunkAudioContainer>(AsShared())]
 	(FHttpRequestPtr request, FHttpResponsePtr response, bool bWasSuccessful)
 		{
 			if (TSharedPtr<MessageChunkAudioContainer> sharedSelf = Self.Pin())
 			{
-				sharedSelf->m_rawData = response->GetContent();
+				sharedSelf->m_rawAudioData = response->GetContent();
 				sharedSelf->UpdateState(MessageChunkState::Idle_Downloaded);
 			}
 		});
@@ -92,12 +105,14 @@ void MessageChunkAudioContainer::DownloadData()
 
 void MessageChunkAudioContainer::ImportData()
 {
-	URuntimeAudioImporterLibrary::ImportAudioFromBuffer(TArray64<uint8>(m_rawData),
+	URuntimeAudioImporterLibrary::ImportAudioFromBuffer(TArray64<uint8>(m_rawAudioData),
 		[Self = TWeakPtr<MessageChunkAudioContainer>(AsShared())] (UImportedSoundWave* soundWave)
 		{
 			if (TSharedPtr<MessageChunkAudioContainer> sharedSelf = Self.Pin())
 			{
-				sharedSelf->OnImportComplete(soundWave);
+				sharedSelf->m_soundWave = soundWave;
+				sharedSelf->m_soundWave->AddToRoot();
+				sharedSelf->UpdateState(MessageChunkState::Idle_Imported);
 			}
 		});
 }
@@ -110,11 +125,11 @@ void MessageChunkAudioContainer::GenerateLipSync()
 	}
 	UpdateState(MessageChunkState::Busy);
 
-	switch (m_lipSyncType)
+	switch (LIP_SYNC_TYPE)
 	{
 		case LipSyncType::OVRLipSync:
 #if WITH_OVRLIPSYNC
-			LipSyncGenerator::GenerateOVRLipSyncData(m_rawData,
+			LipSyncGenerator::GenerateOVRLipSyncData(m_rawAudioData,
 				[Self = TWeakPtr<MessageChunkAudioContainer>(AsShared())] (ULipSyncDataOVR* lipsyncData)
 				{
 					if (TSharedPtr<MessageChunkAudioContainer> sharedSelf = Self.Pin())
@@ -131,7 +146,7 @@ void MessageChunkAudioContainer::GenerateLipSync()
 				m_state = MessageChunkState::Idle_Imported; // TODO find a more clean way to do this
 				return;
 			}
-			LipSyncGenerator::GenerateA2FLipSyncData(m_rawData, m_A2FRestHandler,
+			LipSyncGenerator::GenerateA2FLipSyncData(m_rawAudioData, m_A2FRestHandler,
 				[Self = TWeakPtr<MessageChunkAudioContainer>(AsShared())] (ULipSyncDataA2F* lipsyncData)
 				{
 					if (TSharedPtr<MessageChunkAudioContainer> sharedSelf = Self.Pin())
@@ -147,13 +162,6 @@ void MessageChunkAudioContainer::GenerateLipSync()
 	}
 }
 
-void MessageChunkAudioContainer::OnImportComplete(USoundWaveProcedural* soundWave)
-{
-	m_soundWave = soundWave;
-	m_soundWave->AddToRoot();
-	UpdateState(MessageChunkState::Idle_Imported);
-}
-
 void MessageChunkAudioContainer::UpdateState(MessageChunkState newState)
 {
 	if (m_state == MessageChunkState::CleanedUp)
@@ -162,14 +170,9 @@ void MessageChunkAudioContainer::UpdateState(MessageChunkState newState)
 		return;
 	}
 
-	if (newState == MessageChunkState::ReadyForPlayback)
-	{
-		m_rawData.Empty(); // save some memory
-	}
-
 	m_state = newState;
 	if (m_state != MessageChunkState::Busy)
 	{
-		onStateChanged(this);
+		ON_STATE_CHANGED(this);
 	}
 }

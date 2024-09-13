@@ -96,15 +96,6 @@ private:
 
 #pragma region private API
 private:
-	/// <summary>
-	/// Send the Socket header to the VoxtaServer, so it knows the wave format specs to expect.
-	/// Followed by trying to initialize the VoiceCapture (request the samplerate & channels from the hardware)
-	/// which is then connected to the socket.
-	///
-	/// Note: This activates the mic, but it does NOT start capturing voice data. You must call StartStreaming to
-	/// begin capturing the actual audiodata.
-	/// </summary>
-
 	/**
 	 * Send the Socket header to the VoxtaServer, so it knows the wave format specs to expect.
 	 * Followed by trying to initialize the VoiceCapture (request the samplerate & channels from the hardware)

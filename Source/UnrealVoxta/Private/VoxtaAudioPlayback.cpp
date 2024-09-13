@@ -2,14 +2,15 @@
 
 #include "VoxtaAudioPlayback.h"
 #include "ChatMessage.h"
+#include "VoxtaClient.h"
+#include "Audio2FacePlaybackHandler.h"
+#include "Internals/MessageChunkAudioContainer.h"
 #if WITH_OVRLIPSYNC
+#include "OVRLipSyncPlaybackActorComponent.h"
 #include "LipSyncDataOVR.h"
 #endif
-
-UVoxtaAudioPlayback::UVoxtaAudioPlayback()
-{
-	PrimaryComponentTick.bCanEverTick = true;
-}
+#include "CharDataBase.h"
+#include "Sound/SoundWaveProcedural.h"
 
 void UVoxtaAudioPlayback::InitializeAudioPlayback(const FString& characterId)
 {
@@ -19,11 +20,15 @@ void UVoxtaAudioPlayback::InitializeAudioPlayback(const FString& characterId)
 
 	m_hostAddress = m_clientReference->GetServerAddress();
 	m_hostPort = m_clientReference->GetServerPort();
+
+#if WITH_OVRLIPSYNC
+	m_ovrLipSync = GetOwner()->FindComponentByClass<UOVRLipSyncPlaybackActorComponent>();
+#endif
 }
 
 void UVoxtaAudioPlayback::MarkCustomPlaybackComplete(const FGuid& guid)
 {
-	if (m_orderedAudio[currentAudioClip]->m_lipSyncData->GetGuid() != guid)
+	if (m_orderedAudio[currentAudioClip]->GetLipSyncData<ILipSyncDataBase>()->GetGuid() != guid)
 	{
 		UE_LOG(LogTemp, Error, TEXT("Custom LipSync does not support playing audiochunks out of order."));
 		return;
@@ -63,13 +68,6 @@ void UVoxtaAudioPlayback::EndPlay(const EEndPlayReason::Type EndPlayReason)
 #endif
 }
 
-void UVoxtaAudioPlayback::RegisterOVRLipSyncComponent()
-{
-#if WITH_OVRLIPSYNC
-	m_ovrLipSync = GetOwner()->FindComponentByClass<UOVRLipSyncPlaybackActorComponent>();
-#endif
-}
-
 void UVoxtaAudioPlayback::GetA2FCurveWeights(TArray<float>& targetArrayRef)
 {
 	if (m_audio2FacePlaybackHandler != nullptr)
@@ -106,34 +104,34 @@ void UVoxtaAudioPlayback::TryPlayCurrentAudioChunk()
 		UE_LOG(LogTemp, Error, TEXT("Tried to play an audiochunk but playback was not Idle, this should never happen."));
 		return;
 	}
-	if (m_orderedAudio[currentAudioClip]->m_state == MessageChunkState::ReadyForPlayback)
+	if (m_orderedAudio[currentAudioClip]->GetCurrentState() == MessageChunkState::ReadyForPlayback)
 	{
 		// TODO: move this to somewhere else if things get too complicated
 		m_internalState = InternalState::Playing;
 
-		switch (m_orderedAudio[currentAudioClip]->m_lipSyncType)
+		switch (m_orderedAudio[currentAudioClip]->LIP_SYNC_TYPE)
 		{
 			case LipSyncType::None:
-				SetSound(m_orderedAudio[currentAudioClip]->m_soundWave);
+				SetSound(m_orderedAudio[currentAudioClip]->GetSoundWave());
 				Play();
 				break;
 			case LipSyncType::Custom:
 				VoxtaMessageAudioChunkReadyForCustomPlaybackEvent.Broadcast(
-					m_orderedAudio[currentAudioClip]->GetRawData(),
-					m_orderedAudio[currentAudioClip]->m_soundWave,
-					m_orderedAudio[currentAudioClip]->m_lipSyncData->GetGuid());
+					m_orderedAudio[currentAudioClip]->GetRawAudioData(),
+					m_orderedAudio[currentAudioClip]->GetSoundWave(),
+					m_orderedAudio[currentAudioClip]->GetLipSyncData<ILipSyncDataBase>()->GetGuid());
 				break;
 			case LipSyncType::OVRLipSync:
 #if WITH_OVRLIPSYNC
-				SetSound(m_orderedAudio[currentAudioClip]->m_soundWave);
-				Cast<UOVRLipSyncPlaybackActorComponent>(m_ovrLipSync)->Start(this, m_orderedAudio[currentAudioClip]->GetLipSyncDataPtr<ULipSyncDataOVR>()->GetOvrLipSyncData());
+				SetSound(m_orderedAudio[currentAudioClip]->GetSoundWave());
+				Cast<UOVRLipSyncPlaybackActorComponent>(m_ovrLipSync)->Start(this, m_orderedAudio[currentAudioClip]->GetLipSyncData<ULipSyncDataOVR>()->GetOvrLipSyncData());
 #else
 				UE_LOG(LogTemp, Error, TEXT("OvrLipSync was selected, but the module is not present in the project."));
 #endif
 				break;
 			case LipSyncType::Audio2Face:
-				SetSound(m_orderedAudio[currentAudioClip]->m_soundWave);
-				m_audio2FacePlaybackHandler->Play(this, m_orderedAudio[currentAudioClip]->GetLipSyncDataPtr<ULipSyncDataA2F>());
+				SetSound(m_orderedAudio[currentAudioClip]->GetSoundWave());
+				m_audio2FacePlaybackHandler->Play(this, m_orderedAudio[currentAudioClip]->GetLipSyncData<ULipSyncDataA2F>());
 				break;
 			default:
 				UE_LOG(LogTemp, Error, TEXT("Unsupported selection for LipSync, this should never happen."));
@@ -177,14 +175,14 @@ void UVoxtaAudioPlayback::OnChunkStateChange(const MessageChunkAudioContainer* c
 		return;
 	}
 
-	if (m_orderedAudio[chunk->m_index]->m_state == MessageChunkState::ReadyForPlayback && m_internalState == InternalState::Idle)
+	if (m_orderedAudio[chunk->INDEX]->GetCurrentState() == MessageChunkState::ReadyForPlayback && m_internalState == InternalState::Idle)
 	{
 		TryPlayCurrentAudioChunk();
 	}
-	m_orderedAudio[chunk->m_index]->Continue();
-	if (chunk->m_index + 1 < m_orderedAudio.Num())
+	m_orderedAudio[chunk->INDEX]->Continue();
+	if (chunk->INDEX + 1 < m_orderedAudio.Num())
 	{
-		m_orderedAudio[chunk->m_index + 1]->Continue();
+		m_orderedAudio[chunk->INDEX + 1]->Continue();
 	}
 }
 

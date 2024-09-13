@@ -185,7 +185,6 @@ public:
 
 	/** @return An reference to the A2F handler instance, should probably be moved elsewhere, idk yet. */
 	Audio2FaceRESTHandler* GetA2FHandler() const;
-
 #pragma endregion
 
 #pragma region data
