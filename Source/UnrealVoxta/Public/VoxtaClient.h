@@ -214,63 +214,71 @@ private:
 
 #pragma region private API
 private:
-	/// <summary>
-	/// Register internal listeners to the event triggers of the SignalR hub connection.
-	/// </summary>
+	/**
+	 * Register internal listeners to the event triggers of the SignalR hub connection.
+	 */
 	void StartListeningToServer();
 
-	/// <summary>
-	/// Template helper function to call the appropriate response handler, also takes care of casting to the derived type.
-	/// </summary>
-	/// <typeparam name="T">Derived type, inherits from IServerResponseBase.</typeparam>
-	/// <param name="response">The raw reponse object</param>
-	/// <param name="message">The message that will be logged.</param>
-	/// <param name="handler">The function responsible for handling the derived object.</param>
-	/// <returns>True if the response was handled correctly, false otherwise.</returns>
+	/**
+	 * Template helper function to call the appropriate response handler, also takes care of casting to the derived type.
+	 *
+	 * @param response The raw reponse object.
+	 * @param message The message that will be logged.
+	 * @param handler The function responsible for handling the derived object.
+	 *
+	 * @return True if the response was handled correctly, false otherwise.
+	 */
 	template<typename T>
 	bool HandleResponseHelper(const IServerResponseBase* response, const char* message, bool (UVoxtaClient::* handler)(const T&));
 
-	/// <summary>
-	/// Send a SignalR formatted message to the VoxtaServer.
-	/// This also registers the OnMessageSent to be called when receiving the server response.
-	/// </summary>
-	/// <param name="message">The SignalR formatted message to be sent to the server.</param>
+	/**
+	 * Send a SignalR formatted message to the VoxtaServer.
+	 * This also registers the OnMessageSent to be called when receiving the server response.
+	 *
+	 * @param message The SignalR formatted message to be sent to the server.
+	 */
 	void SendMessageToServer(const FSignalRValue& message);
 
-	/// <summary>
-	/// Listener to the reponse from the Voxta server.
-	/// Note: This reponse just notifies the internal VoxtaClient that the server received
-	/// the message sucessfully. This response does NOT contain any new information, as those are sent
-	/// via the OnReceivedMessage function.
-	/// </summary>
-	/// <param name="deliveryReceipt">The receipt of delivery, given to us by the Server.
-	/// should not contain any errors.</param>
+	/**
+	 * Listener to the reponse from the Voxta server.
+	 *
+	 * Note: This reponse just notifies the internal VoxtaClient that the server received
+	 * the message sucessfully. This response does NOT contain any new information, as those are sent
+	 * via the OnReceivedMessage function.
+	 *
+	 * @param deliveryReceiptThe receipt of delivery, given to us by the Server. This should not contain any errors.
+	 */
 	void OnMessageSent(const FSignalRInvokeResult& deliveryReceipt);
 
-	/// <summary>
-	/// Fetches an immutable pointer to an immutable struct containing the AI CharData that matches
-	/// the id with the provided one in the parameters.
-	/// </summary>
-	/// <param name="charId">The id of the AI character you want to retrieve.</param>
-	/// <returns>An immutable pointer to the immutable struct of the AI character.</returns>
+	/**
+	 * Fetches an immutable pointer to the immutable struct containing the AI CharData that matches
+	 * the id with the provided one in the parameters.
+	 *
+	 * @param charId The id of the AI character you want to retrieve.
+	 *
+	 * @return An immutable pointer to the immutable struct of the AI character.
+	 */
 	const TUniquePtr<const FAiCharData>* GetAiCharacterDataById(const FString& charId);
 
-	/// <summary>
-	/// Fetches a raw pointer to the ChatMessage that maches the id given in the parameters.
-	///
-	/// Note: The text & audio in this data is not guarenteed to be complete. Be aware that only after the
-	/// id has been broadcasted by VoxtaClientCharMessageAddedEvent that the message is considered final.
-	/// </summary>
-	/// <param name="messageId">The id of the chatmessage you want to retrieve.</param>
-	/// <returns>A raw pointer to the chatmessage if it was found.</returns>
+	/**
+	 * Fetches a raw pointer to the ChatMessage that maches the id given in the parameters.
+	 *
+	 * Note: The text & audio in this data is not guarenteed to be complete. Be aware that only after the
+	 * id has been broadcasted by VoxtaClientCharMessageAddedEvent that the message is considered final.
+	 *
+	 * @param messageId The id of the chatmessage you want to retrieve.
+	 *
+	 * @return A raw pointer to the chatmessage if it was found.
+	 */
 	FChatMessage* GetChatMessageById(const FString& messageId);
 
-	/// <summary>
-	/// Update the internal 'current state' to a new state.
-	///
-	/// Note: Calling this will trigger the VoxtaClientStateChangedEvent immediately after changing the value.
-	/// </summary>
-	/// <param name="newState">The new state that can be considered to be active in the client.</param>
+	/**
+	 * Update the internal 'current state' to a new state.
+	 *
+	 * Note: Calling this will trigger the VoxtaClientStateChangedEvent immediately after changing the value.
+	 *
+	 * @param newState The new state that can be considered to be active in the client.
+	 */
 	void SetState(VoxtaClientState newState);
 
 #pragma region VoxtaServer response handlers

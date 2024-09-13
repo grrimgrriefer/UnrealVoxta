@@ -37,6 +37,7 @@ public:
 public:
 	/**
 	 * Creates the AudioWebSocket and connects audioSocket input hosted on the VoxtaServer's IP and port.
+	 *
 	 * Note: It will automatically connect the socket to the server initiate the JSON config handshake, so the server is ready to receive audio.
 	 *
 	 * @param bufferMs Microphone buffersize in Milliseconds. Bigger values is less taxing but introduces more delay.
@@ -59,6 +60,7 @@ public:
 
 	/**
 	 * Stops the voice capture.
+	 *
 	 * Note: This will cancel the last batch of audio data. (i.e. 0-200ms data lost)
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
@@ -68,8 +70,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Voxta")
 	bool IsRecording() const;
 
-	/** @return The decibels of the last recorded audiodata iteration (updated every ~30ms)
-	 *  Note: These values are roughly in the range of -100db (silence) and 0db (max loudness)
+	/**
+	 * @return The decibels of the last recorded audiodata iteration (updated every ~30ms)
+	 *
+	 * Note: These values are roughly in the range of -100db (silence) and 0db (max loudness)
 	*/
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
 	float GetInputDecibels() const;
@@ -100,6 +104,15 @@ private:
 	/// Note: This activates the mic, but it does NOT start capturing voice data. You must call StartStreaming to
 	/// begin capturing the actual audiodata.
 	/// </summary>
+
+	/**
+	 * Send the Socket header to the VoxtaServer, so it knows the wave format specs to expect.
+	 * Followed by trying to initialize the VoiceCapture (request the samplerate & channels from the hardware)
+	 * which is then connected to the socket.
+	 *
+	 * Note: This activates the mic, but it does NOT start capturing voice data. You must call StartStreaming to
+	 * begin capturing the actual audiodata.
+	 */
 	void InitializeVoiceCapture();
 
 #pragma region IWebSocket listeners
