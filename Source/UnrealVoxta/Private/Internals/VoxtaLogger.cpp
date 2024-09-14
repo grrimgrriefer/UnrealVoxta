@@ -23,7 +23,7 @@ void VoxtaLogger::RegisterVoxtaLogger()
 void VoxtaLogger::Serialize(const TCHAR* Message, ELogVerbosity::Type Verbosity, const class FName& Category)
 {
 #if WITH_EDITOR
-	if (Category == m_voxtaLogCategory)
+	if (Category == VOXTA_LOG_CATEGORY)
 	{
 		FColor color;
 		switch (Verbosity)

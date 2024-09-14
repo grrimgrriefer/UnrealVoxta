@@ -28,8 +28,8 @@ class VoxtaApiResponseHandler
 {
 #pragma region public API
 public:
-	/** A collection of message types to ignore. */
-	const TSet<FString> ignoredMessageTypes{
+	/** A collection of message types received from VoxtaServer that are considered safe to ignore. */
+	const TSet<FString> IGNORED_MESSAGE_TYPES{
 		API_STRING("chatStarting"),
 		API_STRING("chatLoadingMessage"),
 		API_STRING("chatsSessionsUpdated"),

@@ -35,7 +35,7 @@ public:
 	 * Generate the A2F curves based in a background thread and attach it to the ULipSyncDataOVR instance.
 	 *
 	 * @param rawAudioData The raw audiodata in bytes.
-	 * @param A2FRestHandler
+	 * @param A2FRestHandler A pointer to the A2F REST APi handler.
 	 * @param callback The callback that will be triggered when the A2F curves have been created and imported back into the gamethread.
 	 */
 	static void GenerateA2FLipSyncData(const TArray<uint8>& rawAudioData, Audio2FaceRESTHandler* A2FRestHandler, TFunction<void(ULipSyncDataA2F*)> callback);

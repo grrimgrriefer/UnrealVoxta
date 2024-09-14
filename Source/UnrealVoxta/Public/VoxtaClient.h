@@ -106,7 +106,7 @@ public:
 #pragma endregion
 
 #pragma region UGameInstanceSubsystem overrides
-	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+	virtual void Initialize(FSubsystemCollectionBase& collection) override;
 	virtual void Deinitialize() override;
 #pragma endregion
 
@@ -116,8 +116,12 @@ public:
 	 * Main initializer for the VoxtaClient.
 	 * This will start the SignalR connection to the hub and begin listening to server responses.
 	 *
+	 * Note: There is no restart functionality atm, so this can only be called for a cold-start.
+	 *
 	 * @param ipv4Address The ipv4 address where the Voxta SignalR hub is hosted.
 	 * @param port The HTTP port used for the Voxta SignalR hub.
+	 *
+	 * TODO: Add restart option
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
 	void StartConnection(const FString& ipv4Address, int port);
@@ -141,7 +145,7 @@ public:
 	 * @param charId The charID of the character that you want to load.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
-	void StartChatWithCharacter(FString charId);
+	void StartChatWithCharacter(const FString& charId);
 
 	/**
 	 * Inform the server that the user has said something.
@@ -151,7 +155,7 @@ public:
 	 * @param inputText The text that should be considered user input in the conversation.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
-	void SendUserInput(FString inputText);
+	void SendUserInput(const FString& inputText);
 
 	/**
 	 * Inform the server that the audioplayback is complete.
@@ -166,7 +170,7 @@ public:
 
 	/** @return The ipv4 address where this client expects the Voxta server to be hosted. */
 	UFUNCTION(BlueprintPure, Category = "Voxta")
-	FString GetServerAddress() const;
+	const FString& GetServerAddress() const;
 
 	/** @return The HTTP port where this client expects the Voxta server to be hosted. */
 	UFUNCTION(BlueprintPure, Category = "Voxta")
@@ -188,20 +192,18 @@ public:
 #pragma endregion
 
 #pragma region data
-protected:
-	UPROPERTY()
-	UVoxtaAudioInput* m_voiceInput;
-
-	TSharedPtr<IHubConnection> m_hub;
-	TUniquePtr<Audio2FaceRESTHandler> m_A2FHandler;
-
 private:
 	const FString SEND_MESSAGE_EVENT_NAME = TEXT("SendMessage");
 	const FString RECEIVE_MESSAGE_EVENT_NAME = TEXT("ReceiveMessage");
 
+	UPROPERTY()
+	UVoxtaAudioInput* m_voiceInput;
+
 	VoxtaLogger m_logUtility;
 	VoxtaApiRequestHandler m_voxtaRequestApi;
 	VoxtaApiResponseHandler m_voxtaResponseApi;
+	TSharedPtr<IHubConnection> m_hub;
+	TUniquePtr<Audio2FaceRESTHandler> m_A2FHandler;
 
 	TUniquePtr<FUserCharData> m_userData;
 	TArray<TUniquePtr<const FAiCharData>> m_characterList;
@@ -213,22 +215,15 @@ private:
 
 #pragma region private API
 private:
-	/**
-	 * Register internal listeners to the event triggers of the SignalR hub connection.
-	 */
+	/** Register internal listeners to the event triggers of the SignalR hub connection. */
 	void StartListeningToServer();
 
-	/**
-	 * Template helper function to call the appropriate response handler, also takes care of casting to the derived type.
-	 *
-	 * @param response The raw reponse object.
-	 * @param message The message that will be logged.
-	 * @param handler The function responsible for handling the derived object.
-	 *
-	 * @return True if the response was handled correctly, false otherwise.
-	 */
-	template<typename T>
-	bool HandleResponseHelper(const IServerResponseBase* response, const char* message, bool (UVoxtaClient::* handler)(const T&));
+#pragma region IHubConnection listeners
+	void OnReceivedMessage(const TArray<FSignalRValue>& arguments);
+	void OnConnected();
+	void OnConnectionError(const FString& error);
+	void OnClosed();
+#pragma endregion
 
 	/**
 	 * Send a SignalR formatted message to the VoxtaServer.
@@ -250,35 +245,19 @@ private:
 	void OnMessageSent(const FSignalRInvokeResult& deliveryReceipt);
 
 	/**
-	 * Fetches an immutable pointer to the immutable struct containing the AI CharData that matches
-	 * the id with the provided one in the parameters.
+	 * Template helper function to call the appropriate response handler,
+	 * also takes care of casting to the derived type.
 	 *
-	 * @param charId The id of the AI character you want to retrieve.
+	 * @tparam T The target type to cast towards to, should derive from IServerResponseBase.
+	 * @param response The raw reponse object.
+	 * @param message The message that will be logged.
+	 * @param handler The function responsible for handling the derived object.
 	 *
-	 * @return An immutable pointer to the immutable struct of the AI character.
+	 * @return True if the response was handled correctly, false otherwise.
 	 */
-	const TUniquePtr<const FAiCharData>* GetAiCharacterDataById(const FString& charId);
-
-	/**
-	 * Fetches a raw pointer to the ChatMessage that maches the id given in the parameters.
-	 *
-	 * Note: The text & audio in this data is not guarenteed to be complete. Be aware that only after the
-	 * id has been broadcasted by VoxtaClientCharMessageAddedEvent that the message is considered final.
-	 *
-	 * @param messageId The id of the chatmessage you want to retrieve.
-	 *
-	 * @return A raw pointer to the chatmessage if it was found.
-	 */
-	FChatMessage* GetChatMessageById(const FString& messageId);
-
-	/**
-	 * Update the internal 'current state' to a new state.
-	 *
-	 * Note: Calling this will trigger the VoxtaClientStateChangedEvent immediately after changing the value.
-	 *
-	 * @param newState The new state that can be considered to be active in the client.
-	 */
-	void SetState(VoxtaClientState newState);
+	template<typename T>
+	bool HandleResponseHelper(const IServerResponseBase* response, const FString& logMessage,
+		bool (UVoxtaClient::* handler)(const T&));
 
 #pragma region VoxtaServer response handlers
 	bool HandleResponse(const TMap<FString, FSignalRValue>& responseData);
@@ -291,11 +270,34 @@ private:
 	bool HandleSpeechTranscriptionResponse(const ServerResponseSpeechTranscription& response);
 #pragma endregion
 
-#pragma region IHubConnection listeners
-	void OnReceivedMessage(const TArray<FSignalRValue>& arguments);
-	void OnConnected();
-	void OnConnectionError(const FString& error);
-	void OnClosed();
-#pragma endregion
+	/**
+	 * Fetch the immutable UniquePtr to the Ai Character data struct that matches the given charId.
+	 *
+	 * @param charId The Id of the Ai Character that you want to retrieve.
+	 *
+	 * @return An immutable UniquePtr to the immutable Ai Character data struct, or nullptr if it was not found.
+	 */
+	const TUniquePtr<const FAiCharData>* GetAiCharacterDataById(const FString& charId) const;
+
+	/**
+	 * Fetches a raw pointer to the ChatMessage that maches the id given in the parameters.
+	 *
+	 * Note: The text & audio in this data is not guarenteed to be complete. Be aware that only after the
+	 * id has been broadcasted by VoxtaClientCharMessageAddedEvent that the message is considered final.
+	 *
+	 * @param messageId The id of the chatmessage you want to retrieve.
+	 *
+	 * @return A raw pointer to the chatmessage, or nullptr if it was not found.
+	 */
+	FChatMessage* GetChatMessageById(const FString& messageId) const;
+
+	/**
+	 * Update the internal 'current state' to a new state.
+	 *
+	 * Note: Calling this will trigger the VoxtaClientStateChangedEvent immediately after changing the value.
+	 *
+	 * @param newState The new state that can be considered to be active in the client.
+	 */
+	void SetState(VoxtaClientState newState);
 #pragma endregion
 };

@@ -27,8 +27,8 @@ protected:
 
 #pragma region data
 private:
-	const FName m_voxtaLogCategory = TEXT("VoxtaLog");
-	const FName m_signalRLogCategory = TEXT("LogSignalR");
-	const FName m_httpLogCategory = TEXT("LogHttp");
+	const FName VOXTA_LOG_CATEGORY = TEXT("VoxtaLog");
+	const FName SIGNALR_LOG_CATEGORY = TEXT("LogSignalR");
+	const FName HTTP_LOG_CATEGORY = TEXT("LogHttp");
 #pragma endregion
 };

@@ -66,16 +66,15 @@ public:
 
 	/** The type of lipsync that this voiceline instance will support with its data. */
 	const LipSyncType LIP_SYNC_TYPE;
-
-#pragma region
+#pragma endregion
 
 #pragma region data
 private:
 	const FString FULL_DOWNLOAD_URL;
 	const TFunction<void(const MessageChunkAudioContainer* chunk)> ON_STATE_CHANGED;
+
 	TArray<uint8> m_rawAudioData;
 	Audio2FaceRESTHandler* m_A2FRestHandler;
-
 	USoundWaveProcedural* m_soundWave;
 	MessageChunkState m_state = MessageChunkState::Idle;
 	ILipSyncDataBase* m_lipSyncData;
@@ -95,7 +94,11 @@ private:
 	 */
 	void GenerateLipSync();
 
-	/** Update the internal state to keep track where this instance is with processing the data for the voiceline. */
+	/**
+	 * Update the internal state to keep track where this instance is with processing the data for the voiceline.
+	 *
+	 * @param newState The new state that this instance should consider itself in. (will be broadcasted after setting internally)
+	 */
 	void UpdateState(MessageChunkState newState);
 #pragma endregion
 };

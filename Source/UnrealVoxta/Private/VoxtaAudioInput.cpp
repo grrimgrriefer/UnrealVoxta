@@ -65,9 +65,9 @@ void UVoxtaAudioInput::OnSocketConnectionError(const FString& error)
 	m_connectionState = VoxtaMicrophoneState::Closed;
 }
 
-void UVoxtaAudioInput::OnSocketClosed(int statusCode, const FString& reason, bool bWasClean)
+void UVoxtaAudioInput::OnSocketClosed(int statusCode, const FString& reason, bool wasClean)
 {
-	if (!bWasClean)
+	if (!wasClean)
 	{
 		UE_LOGFMT(VoxtaLog, Warning, "Audio socket was improperly closed because of reason: {0} Code: {1}", reason, statusCode);
 	}

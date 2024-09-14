@@ -47,14 +47,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
 	void InitializeSocket(int bufferMs = 200, int sampleRate = 16000, int inputChannels = 1);
 
-	/**
-	 * Shuts down the Microphone audio stream and closes the websocket gracefully.
-	 */
+	/** Shuts down the Microphone audio stream and closes the websocket gracefully. */
 	void CloseSocket();
 
-	/**
-	 * Starts the voice capture, sending captured audiodata to the server in fixed timesteps (bufferMs).
-	 */
+	/** Starts the voice capture, sending captured audiodata to the server in fixed timesteps (bufferMs). */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
 	void StartStreaming();
 
@@ -109,7 +105,7 @@ private:
 #pragma region IWebSocket listeners
 	void OnSocketConnected();
 	void OnSocketConnectionError(const FString& error);
-	void OnSocketClosed(int statusCode, const FString& reason, bool bWasClean);
+	void OnSocketClosed(int statusCode, const FString& reason, bool wasClean);
 #pragma endregion
 #pragma endregion
 };

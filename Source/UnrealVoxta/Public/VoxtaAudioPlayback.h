@@ -25,6 +25,7 @@ class UNREALVOXTA_API UVoxtaAudioPlayback : public UAudioComponent, public IVoxt
 
 #pragma region internal helper classes
 private:
+	/** Internal helper enum to keep track of what we are doing at the moment. */
 	enum class InternalState : uint8
 	{
 		Idle,
@@ -81,20 +82,20 @@ public:
 	void MarkCustomPlaybackComplete(const FGuid& guid);
 #pragma endregion
 
+#pragma region UActorComponent overrides
+protected:
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type endPlayReason) override;
+#pragma endregion
+
 #pragma region IVoxtaAudioPlaybackBase overrides
 public:
 	virtual void GetA2FCurveWeights(TArray<float>& targetArrayRef) override;
 #pragma endregion
 
-#pragma region UActorComponent overrides
-protected:
-	virtual void BeginPlay() override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-#pragma endregion
-
 #pragma region data
-protected:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Voxta")
+private:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true"))
 	LipSyncType m_lipSyncType;
 
 	UPROPERTY()
@@ -103,19 +104,18 @@ protected:
 	UPROPERTY()
 	UAudio2FacePlaybackHandler* m_audio2FacePlaybackHandler;
 
-private:
 	UVoxtaClient* m_clientReference;
 	FString m_characterId;
 	FString m_messageId;
 	TArray<TSharedPtr<MessageChunkAudioContainer>> m_orderedAudio;
 
-	FDelegateHandle m_CharMessageAddedHandle;
+	FDelegateHandle m_charMessageAddedHandle;
 	FDelegateHandle m_playbackFinishedHandle;
 
 	FString m_hostAddress;
 	int m_hostPort;
 	InternalState m_internalState;
-	int currentAudioClip = 0;
+	int m_currentAudioClip = 0;
 #pragma endregion
 
 #pragma region private API
@@ -135,14 +135,24 @@ private:
 	 * Triggered by the UAudioComponent, will trigger playback of the next chunk if it is present.
 	 *
 	 * Note: This does nothing when using Custom LipSync, as then we're waitin for 'MarkCustomPlaybackComplete'
+	 *
+	 * @param component A pointer to the component that has finished it's playback
+	 * (should always be a pointer to itself).
 	 */
 	UFUNCTION()
 	void OnAudioPlaybackFinished(UAudioComponent* component);
 
-	/** Keeps track of which index is currently being played and will trigger the finished event if we're done playing. */
+	/**
+	 * Keeps track of which index is currently being played
+	 * and will trigger the finished event if we're done playing.
+	 */
 	void MarkAudioChunkPlaybackCompleteInternal();
 
-	/** Triggers the next state for the container as well as triggering other parallel jobs if applicable. */
+	/**
+	 * Triggers the next state for the container as well as triggering other parallel jobs if applicable.
+	 *
+	 * @param finishedChunk An immutable pointer to the instance that had its state changed.
+	 */
 	void OnChunkStateChange(const MessageChunkAudioContainer* finishedChunk);
 
 	/** Clean up the soundwaves correctly, so there's no memory leaks. */
