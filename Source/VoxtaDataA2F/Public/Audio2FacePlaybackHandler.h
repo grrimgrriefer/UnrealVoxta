@@ -15,10 +15,10 @@ class VOXTADATAA2F_API UAudio2FacePlaybackHandler : public UObject
 public:
 	static const FName CurveNames[52];
 
-	UAudio2FacePlaybackHandler();
+	void Initialize(UAudioComponent* InAudioComponent);
 
 	void GetA2FCurveWeights(TArray<float>& sourceCurves) const;
-	void Play(UAudioComponent* InAudioComponent, const ULipSyncDataA2F* InSequence);
+	void Play(const ULipSyncDataA2F* InSequence);
 	void Stop();
 
 protected:

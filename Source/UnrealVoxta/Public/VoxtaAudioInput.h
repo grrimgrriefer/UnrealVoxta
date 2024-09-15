@@ -13,7 +13,9 @@ class AudioWebSocket;
  * UVoxtaAudioInput
  * Main public-facing class responsible for containing all AudioInput related logic.
  * Takes care of both the microphone input, as well as sending it over a websocket to the VoxtaServer.
- * Can be accessed via the voxta subsystem, voxtaClient->GetVoiceInputHandler()
+ *
+ * Note: You should create instantiate this manually, just access it via the voxta subsystem:
+ * [ GetWorld()->GetGameInstance()->GetSubsystem<UVoxtaClient>() ]->GetVoiceInputHandler()
  */
 UCLASS(Category = "Voxta")
 class UNREALVOXTA_API UVoxtaAudioInput : public UObject

@@ -70,7 +70,7 @@ public:
 	 * @param characterId The ID of the character for which this component will be playing the audio.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
-	void InitializeAudioPlayback(const FString& characterId);
+	void Initialize(const FString& characterId);
 
 	/**
 	 * Notify that the Audio is done with playback. Due to the unpredictable nature of the blueprint, we rely on
@@ -95,18 +95,17 @@ public:
 
 #pragma region data
 private:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true"))
-	LipSyncType m_lipSyncType;
+	UPROPERTY(EditAnywhere, Category = "Voxta", meta = (AllowPrivateAccess = "true"))
+	const LipSyncType m_lipSyncType;
 
+	// TODO: use interface so we don't have to cast to cast to UAudio2FacePlaybackHandler or
+	// UOVRLipSyncPlaybackActorComponent everytime
 	UPROPERTY()
-	UActorComponent* m_ovrLipSync;
-
-	UPROPERTY()
-	UAudio2FacePlaybackHandler* m_audio2FacePlaybackHandler;
+	UObject* m_lipSyncHandler;
 
 	UVoxtaClient* m_clientReference;
 	FString m_characterId;
-	FString m_messageId;
+	FString m_currentlyPlayingMessageId;
 	TArray<TSharedPtr<MessageChunkAudioContainer>> m_orderedAudio;
 
 	FDelegateHandle m_charMessageAddedHandle;
@@ -115,7 +114,7 @@ private:
 	FString m_hostAddress;
 	int m_hostPort;
 	InternalState m_internalState;
-	int m_currentAudioClip = 0;
+	int m_currentAudioClipIndex = 0;
 #pragma endregion
 
 #pragma region private API
@@ -128,8 +127,8 @@ private:
 	UFUNCTION()
 	void PlaybackMessage(const FCharDataBase& sender, const FChatMessage& message);
 
-	/** Try to begin playing the next audioclip, if it is available */
-	void TryPlayCurrentAudioChunk();
+	/** Begin playing the audioclip on the currently marked index, if it is available */
+	void PlayCurrentAudioChunkIfAvailable();
 
 	/**
 	 * Triggered by the UAudioComponent, will trigger playback of the next chunk if it is present.

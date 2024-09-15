@@ -13,28 +13,40 @@
 #include "Sound/SoundWaveProcedural.h"
 #include "Logging/StructuredLog.h"
 
-void UVoxtaAudioPlayback::InitializeAudioPlayback(const FString& characterId)
+void UVoxtaAudioPlayback::Initialize(const FString& characterId)
 {
 	m_characterId = characterId;
 	m_clientReference = GetWorld()->GetGameInstance()->GetSubsystem<UVoxtaClient>();
-	m_charMessageAddedHandle = m_clientReference->VoxtaClientCharMessageAddedEventNative.AddUObject(this, &UVoxtaAudioPlayback::PlaybackMessage);
+#if WITH_OVRLIPSYNC
+	if (m_lipSyncType == LipSyncType::OVRLipSync)
+	{
+		m_lipSyncHandler = GetOwner()->FindComponentByClass<UOVRLipSyncPlaybackActorComponent>();
+	}
+#endif
 
 	m_hostAddress = m_clientReference->GetServerAddress();
 	m_hostPort = m_clientReference->GetServerPort();
+	m_charMessageAddedHandle = m_clientReference->VoxtaClientCharMessageAddedEventNative.AddUObject(
+		this, &UVoxtaAudioPlayback::PlaybackMessage);
 
-#if WITH_OVRLIPSYNC
-	m_ovrLipSync = GetOwner()->FindComponentByClass<UOVRLipSyncPlaybackActorComponent>();
-#endif
+	UE_LOGFMT(VoxtaLog, Log, "Initialized audioplayback for characterId {0}. Audio will be downloaded from: {1}",
+		characterId, FString::Format(*FString(TEXT("http://{0}:{1}/")), { m_hostAddress, m_hostPort }));
 }
 
 void UVoxtaAudioPlayback::MarkCustomPlaybackComplete(const FGuid& guid)
 {
-	if (m_orderedAudio[m_currentAudioClip]->GetLipSyncData<ILipSyncDataBase>()->GetGuid() != guid)
+	const FGuid expectedGuid = m_orderedAudio[m_currentAudioClipIndex]->GetLipSyncData<ILipSyncDataBase>()->GetGuid();
+	if (expectedGuid != guid)
 	{
-		UE_LOGFMT(VoxtaLog, Error, "Custom LipSync does not support playing audiochunks out of order.");
+		UE_LOGFMT(VoxtaLog, Error, "Custom LipSync does not support playing audiochunks out of order. "
+			"Was expecting id: {0} received id: {1}", expectedGuid.ToString(), guid.ToString());
 		return;
 	}
+
 	m_internalState = InternalState::Idle;
+	UE_LOGFMT(VoxtaLog, Log, "Playback of audioClip with guid: {0} is markd as complete, continueing Voxta logic.",
+		guid.ToString());
+
 	MarkAudioChunkPlaybackCompleteInternal();
 }
 
@@ -44,45 +56,61 @@ void UVoxtaAudioPlayback::BeginPlay()
 	m_playbackFinishedHandle = OnAudioFinishedNative.AddUObject(this, &UVoxtaAudioPlayback::OnAudioPlaybackFinished);
 	if (m_lipSyncType == LipSyncType::Audio2Face)
 	{
-		m_audio2FacePlaybackHandler = NewObject<UAudio2FacePlaybackHandler>();
+		m_lipSyncHandler = NewObject<UAudio2FacePlaybackHandler>(this);
+		Cast<UAudio2FacePlaybackHandler>(m_lipSyncHandler)->Initialize(this);
+
+		UE_LOGFMT(VoxtaLog, Log, "Created Audio2Face lipsync handler for characterId: {0}.", m_characterId);
 	}
 }
 
 void UVoxtaAudioPlayback::EndPlay(const EEndPlayReason::Type endPlayReason)
 {
 	Super::EndPlay(endPlayReason);
+	if (endPlayReason != EEndPlayReason::Quit && endPlayReason != EEndPlayReason::EndPlayInEditor)
+	{
+		UE_LOGFMT(VoxtaLog, Warning, "Removed audioplayback for character with id: {0} due to EndPlay with reason {1}.",
+			m_characterId, UEnum::GetValueAsString(endPlayReason));
+	}
+
 	OnAudioFinishedNative.Remove(m_playbackFinishedHandle);
 
 	if (m_clientReference)
 	{
 		m_clientReference->VoxtaClientCharMessageAddedEventNative.Remove(m_charMessageAddedHandle);
 	}
-	if (m_audio2FacePlaybackHandler != nullptr)
+	if (m_lipSyncType == LipSyncType::Audio2Face && m_lipSyncHandler)
 	{
-		m_audio2FacePlaybackHandler->Stop();
+		Cast<UAudio2FacePlaybackHandler>(m_lipSyncHandler)->Stop();
 	}
 #if WITH_OVRLIPSYNC
-	if (m_lipSyncType == LipSyncType::OVRLipSync)
+	if (m_lipSyncType == LipSyncType::OVRLipSync && m_lipSyncHandler)
 	{
-		Cast<UOVRLipSyncPlaybackActorComponent>(m_ovrLipSync)->Stop();
+		Cast<UOVRLipSyncPlaybackActorComponent>(m_lipSyncHandler)->Stop();
 	}
 #endif
 }
 
 void UVoxtaAudioPlayback::GetA2FCurveWeights(TArray<float>& targetArrayRef)
 {
-	if (m_audio2FacePlaybackHandler != nullptr)
+	if (m_lipSyncType == LipSyncType::Audio2Face && m_lipSyncHandler)
 	{
-		m_audio2FacePlaybackHandler->GetA2FCurveWeights(targetArrayRef);
+		Cast<UAudio2FacePlaybackHandler>(m_lipSyncHandler)->GetA2FCurveWeights(targetArrayRef);
+	}
+	else
+	{
+		UE_LOGFMT(VoxtaLog, Error, "Only ask for A2F CurveWeights if Audio2Face is enabled. "
+			"Character with id: {0} is currently marked as using: {1} for lipsync.",
+			m_characterId, UEnum::GetValueAsString(m_lipSyncType));
 	}
 }
 
 void UVoxtaAudioPlayback::PlaybackMessage(const FCharDataBase& sender, const FChatMessage& message)
 {
+	// Listener gets invoked for all messages, safe to ignore the ones for other characters
 	if (sender.GetId() == m_characterId)
 	{
 		Cleanup();
-		m_messageId = message.GetMessageId();
+		m_currentlyPlayingMessageId = message.GetMessageId();
 
 		for (int i = 0; i < message.m_audioUrls.Num(); i++)
 		{
@@ -95,48 +123,66 @@ void UVoxtaAudioPlayback::PlaybackMessage(const FCharDataBase& sender, const FCh
 		}
 		m_internalState = InternalState::Idle;
 		m_orderedAudio[0]->Continue();
+
+		UE_LOGFMT(VoxtaLog, Log, "Started playback for messageId: {0} of SenderId: {1}. Full message contains {2} "
+			"audio chunks that will be played in sequence.",
+			m_currentlyPlayingMessageId, m_characterId, m_orderedAudio.Num());
 	}
 }
 
-void UVoxtaAudioPlayback::TryPlayCurrentAudioChunk()
+void UVoxtaAudioPlayback::PlayCurrentAudioChunkIfAvailable()
 {
 	if (m_internalState != InternalState::Idle)
 	{
-		UE_LOGFMT(VoxtaLog, Error, "Tried to play an audiochunk but playback was not Idle, this should never happen.");
+		UE_LOGFMT(VoxtaLog, Error, "Tried to play an audiochunk but playback is in state: {0}, should be {1} instead.",
+			UEnum::GetValueAsString(m_internalState), UEnum::GetValueAsString(InternalState::Idle));
 		return;
 	}
-	if (m_orderedAudio[m_currentAudioClip]->GetCurrentState() == MessageChunkState::ReadyForPlayback)
+	MessageChunkAudioContainer* currentClip = m_orderedAudio[m_currentAudioClipIndex].Get();
+	if (currentClip->GetCurrentState() == MessageChunkState::ReadyForPlayback)
 	{
-		// TODO: move this to somewhere else if things get too complicated
 		m_internalState = InternalState::Playing;
 
-		switch (m_orderedAudio[m_currentAudioClip]->LIP_SYNC_TYPE)
+		if (currentClip->LIP_SYNC_TYPE != LipSyncType::Custom)
+		{
+			UE_LOGFMT(VoxtaLog, Log, "Starting playback of audio chunk index: {0}, with lipsync type: {1}.",
+				currentClip->INDEX, UEnum::GetValueAsString(currentClip->LIP_SYNC_TYPE));
+		}
+
+		switch (currentClip->LIP_SYNC_TYPE)
 		{
 			case LipSyncType::None:
-				SetSound(m_orderedAudio[m_currentAudioClip]->GetSoundWave());
+				SetSound(currentClip->GetSoundWave());
 				Play();
 				break;
 			case LipSyncType::Custom:
-				VoxtaMessageAudioChunkReadyForCustomPlaybackEvent.Broadcast(
-					m_orderedAudio[m_currentAudioClip]->GetRawAudioData(),
-					m_orderedAudio[m_currentAudioClip]->GetSoundWave(),
-					m_orderedAudio[m_currentAudioClip]->GetLipSyncData<ILipSyncDataBase>()->GetGuid());
+				TArray<uint8> rawData = currentClip->GetRawAudioData();
+				USoundWaveProcedural* soundWave = currentClip->GetSoundWave();
+				FGuid guid = currentClip->GetLipSyncData<ILipSyncDataBase>()->GetGuid();
+
+				UE_LOGFMT(VoxtaLog, Log, "Broadcasting that audio chunk with guid: {0} is ready for playback with "
+					"custom lipsync. Voxta logic will wait to continue until it is marked as finished "
+					"via MarkCustomPlaybackComplete", guid);
+
+				VoxtaMessageAudioChunkReadyForCustomPlaybackEventNative.Broadcast(rawData, soundWave, guid);
+				VoxtaMessageAudioChunkReadyForCustomPlaybackEvent.Broadcast(rawData, soundWave, guid);
 				break;
 			case LipSyncType::OVRLipSync:
 #if WITH_OVRLIPSYNC
-				SetSound(m_orderedAudio[m_currentAudioClip]->GetSoundWave());
-				Cast<UOVRLipSyncPlaybackActorComponent>(m_ovrLipSync)->Start(this, m_orderedAudio[m_currentAudioClip]->GetLipSyncData<ULipSyncDataOVR>()->GetOvrLipSyncData());
+				SetSound(currentClip->GetSoundWave());
+				Cast<UOVRLipSyncPlaybackActorComponent>(m_lipSyncHandler)->Start(
+					this, currentClip->GetLipSyncData<ULipSyncDataOVR>()->GetOvrLipSyncData());
 #else
 				UE_LOGFMT(VoxtaLog, Error, "OvrLipSync was selected, but the module is not present in the project.");
 #endif
 				break;
 			case LipSyncType::Audio2Face:
-				SetSound(m_orderedAudio[m_currentAudioClip]->GetSoundWave());
-				m_audio2FacePlaybackHandler->Play(this, m_orderedAudio[m_currentAudioClip]->GetLipSyncData<ULipSyncDataA2F>());
+				SetSound(currentClip->GetSoundWave());
+				Cast<UAudio2FacePlaybackHandler>(m_lipSyncHandler)->Play(currentClip->GetLipSyncData<ULipSyncDataA2F>());
 				break;
 			default:
-				UE_LOGFMT(VoxtaLog, Error, "Unsupported selection for LipSync, this should never happen.");
-				break;
+				UE_LOGFMT(VoxtaLog, Error, "Unsupported selection for LipSync, this should never happen. Aborting playback");
+				return;
 		}
 	}
 }
@@ -148,22 +194,28 @@ void UVoxtaAudioPlayback::OnAudioPlaybackFinished(UAudioComponent* component)
 		// We cannot rely on callbacks, as the user might play audio through another provider.
 		return;
 	}
+
+	UE_LOGFMT(VoxtaLog, Log, "Automatic playback of audio chunk index: {0} is complete.", m_currentAudioClipIndex);
+
 	m_internalState = InternalState::Idle;
 	MarkAudioChunkPlaybackCompleteInternal();
 }
 
 void UVoxtaAudioPlayback::MarkAudioChunkPlaybackCompleteInternal()
 {
-	m_orderedAudio[m_currentAudioClip]->CleanupData();
-	m_currentAudioClip += 1;
-	if (m_currentAudioClip < m_orderedAudio.Num())
+	m_orderedAudio[m_currentAudioClipIndex]->CleanupData();
+	m_currentAudioClipIndex += 1;
+	if (m_currentAudioClipIndex < m_orderedAudio.Num())
 	{
-		TryPlayCurrentAudioChunk();
+		PlayCurrentAudioChunkIfAvailable();
 	}
 	else
 	{
-		UE_LOGFMT(VoxtaLog, Log, "Playback finished.");
-		VoxtaMessageAudioPlaybackFinishedEvent.Broadcast(m_messageId);
+		UE_LOGFMT(VoxtaLog, Log, "Playback of all audiochunks for message with id: {0} is finished.",
+			m_currentlyPlayingMessageId);
+
+		VoxtaMessageAudioPlaybackFinishedEventNative.Broadcast(m_currentlyPlayingMessageId);
+		VoxtaMessageAudioPlaybackFinishedEvent.Broadcast(m_currentlyPlayingMessageId);
 		Cleanup();
 	}
 }
@@ -178,7 +230,7 @@ void UVoxtaAudioPlayback::OnChunkStateChange(const MessageChunkAudioContainer* c
 
 	if (m_orderedAudio[chunk->INDEX]->GetCurrentState() == MessageChunkState::ReadyForPlayback && m_internalState == InternalState::Idle)
 	{
-		TryPlayCurrentAudioChunk();
+		PlayCurrentAudioChunkIfAvailable();
 	}
 	m_orderedAudio[chunk->INDEX]->Continue();
 	if (chunk->INDEX + 1 < m_orderedAudio.Num())
@@ -189,12 +241,15 @@ void UVoxtaAudioPlayback::OnChunkStateChange(const MessageChunkAudioContainer* c
 
 void UVoxtaAudioPlayback::Cleanup()
 {
-	m_messageId.Empty();
-	m_currentAudioClip = 0;
+	UE_LOGFMT(VoxtaLog, Log, "Cleaning up all memory usage for audio related to audio for message with id: {0}.",
+		m_currentlyPlayingMessageId);
+
+	m_currentlyPlayingMessageId = FString(TEXT("NULL"));
+	m_currentAudioClipIndex = 0;
 	m_internalState = InternalState::Done;
 	for (TSharedPtr<MessageChunkAudioContainer> audioChunk : m_orderedAudio)
 	{
-		audioChunk->CleanupData(); // Should not be necessary, but can't hurt
+		audioChunk->CleanupData();
 		audioChunk = nullptr;
 	}
 	m_orderedAudio.Empty();

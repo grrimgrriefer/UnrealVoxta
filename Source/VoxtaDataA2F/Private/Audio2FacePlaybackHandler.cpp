@@ -61,8 +61,9 @@ const FName UAudio2FacePlaybackHandler::CurveNames[52] =
 	API_NAME("TongueOut")
 };
 
-UAudio2FacePlaybackHandler::UAudio2FacePlaybackHandler()
+void UAudio2FacePlaybackHandler::Initialize(UAudioComponent* audioComponent)
 {
+	m_audioComponent = audioComponent;
 }
 
 void UAudio2FacePlaybackHandler::GetA2FCurveWeights(TArray<float>& targetArrayRef) const
@@ -77,9 +78,8 @@ void UAudio2FacePlaybackHandler::GetA2FCurveWeights(TArray<float>& targetArrayRe
 	}
 }
 
-void UAudio2FacePlaybackHandler::Play(UAudioComponent* audioComponent, const ULipSyncDataA2F* lipsyncData)
+void UAudio2FacePlaybackHandler::Play(const ULipSyncDataA2F* lipsyncData)
 {
-	m_audioComponent = audioComponent;
 	m_lipsyncData = lipsyncData;
 
 	m_forcedNeutral = false;

@@ -5,11 +5,11 @@
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 
+/**
+ * FUnrealVoxtaModule
+ * We don't do anything during loading or unloading of the module.
+ * This class just exists because Unreal expects it.
+ */
 class FUnrealVoxtaModule : public IModuleInterface
 {
-public:
-
-	/** IModuleInterface implementation */
-	virtual void StartupModule() override;
-	virtual void ShutdownModule() override;
 };
