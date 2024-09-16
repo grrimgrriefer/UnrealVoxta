@@ -5,6 +5,7 @@
 #include "Components/AudioComponent.h"
 #include "VoxtaAudioPlaybackBase.h"
 #include "LipSyncType.h"
+#include "AudioPlaybackInternalState.h"
 #include "VoxtaAudioPlayback.generated.h"
 
 class MessageChunkAudioContainer;
@@ -22,17 +23,6 @@ UCLASS(HideCategories = (Mobility, Rendering, LOD), ClassGroup = Voxta, meta = (
 class UNREALVOXTA_API UVoxtaAudioPlayback : public UAudioComponent, public IVoxtaAudioPlaybackBase
 {
 	GENERATED_BODY()
-
-#pragma region internal helper classes
-private:
-	/** Internal helper enum to keep track of what we are doing at the moment. */
-	enum class InternalState : uint8
-	{
-		Idle,
-		Playing,
-		Done
-	};
-#pragma endregion
 
 public:
 #pragma region delegate declarations
@@ -95,8 +85,8 @@ public:
 
 #pragma region data
 private:
-	UPROPERTY(EditAnywhere, Category = "Voxta", meta = (AllowPrivateAccess = "true"))
-	const LipSyncType m_lipSyncType;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true"))
+	LipSyncType m_lipSyncType;
 
 	// TODO: use interface so we don't have to cast to cast to UAudio2FacePlaybackHandler or
 	// UOVRLipSyncPlaybackActorComponent everytime
@@ -113,7 +103,7 @@ private:
 
 	FString m_hostAddress;
 	int m_hostPort;
-	InternalState m_internalState;
+	AudioPlaybackInternalState m_internalState;
 	int m_currentAudioClipIndex = 0;
 #pragma endregion
 

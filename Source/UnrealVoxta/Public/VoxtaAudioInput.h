@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AudioUtility/Public/AudioCaptureHandler.h"
+#include "VoxtaAudioUtility/Public/AudioCaptureHandler.h"
 #include "VoxtaData/Public/VoxtaMicrophoneState.h"
 #include "VoxtaAudioInput.generated.h"
 
@@ -76,9 +76,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
 	float GetInputDecibels() const;
 
-	/** @return The name reported by the hardware device. */
+	/** @return The an immutable reference to the name reported by the hardware device. */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
-	FString GetInputDeviceName() const;
+	const FString& GetInputDeviceName() const;
 #pragma endregion
 
 #pragma region data

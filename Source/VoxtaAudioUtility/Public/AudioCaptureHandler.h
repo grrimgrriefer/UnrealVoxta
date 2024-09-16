@@ -67,7 +67,7 @@ public:
 	/// Returns the name of the device used by the VoiceModule, if initialized.
 	/// </summary>
 	/// <returns>Returns the name of the device used by the VoiceModule, if initialized.</returns>
-	FString GetDeviceName() const;
+	const FString& GetDeviceName() const;
 
 private:
 	friend class FVoiceRunnerThread;

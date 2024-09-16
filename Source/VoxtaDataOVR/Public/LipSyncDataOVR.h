@@ -3,9 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "OVRLipSyncFrame.h"
 #include "LipSyncDataBase.h"
 #include "LipSyncDataOVR.generated.h"
+
+class UOVRLipSyncFrameSequence;
 
 UCLASS()
 class VOXTADATAOVR_API ULipSyncDataOVR : public UObject, public ILipSyncDataBase

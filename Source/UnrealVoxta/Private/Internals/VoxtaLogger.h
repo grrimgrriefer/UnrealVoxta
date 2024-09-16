@@ -8,6 +8,8 @@
  * VoxtaLogger
  * Internal class that enables the automatic printing of warnings and errors in the VoxtaLog category, on the
  * top left corner of the screen while inside of the editor.
+ *
+ * Note: Only works inside the editor, does nothing in packaged builds.
  */
 class VoxtaLogger : public FOutputDevice
 {

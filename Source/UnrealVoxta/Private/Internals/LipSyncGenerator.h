@@ -7,7 +7,6 @@
 #if WITH_OVRLIPSYNC
 class ULipSyncDataOVR;
 #endif
-class ULipSyncDataOVR;
 class ULipSyncDataA2F;
 class Audio2FaceRESTHandler;
 
@@ -26,7 +25,8 @@ public:
 	 * Generate a UOVRLipSyncFrameSequence in a background thread and attach it to the ULipSyncDataOVR instance.
 	 *
 	 * @param rawAudioData The raw audiodata in bytes.
-	 * @param callback The callback that will be triggered when the OVR lipsync data has been created & pushed back on the gamethread.
+	 * @param callback The callback that will be triggered when the OVR lipsync data has been created & pushed
+	 * back on the gamethread.
 	 */
 	static void GenerateOVRLipSyncData(const TArray<uint8>& rawAudioData, TFunction<void(ULipSyncDataOVR*)> callback);
 #endif
@@ -36,7 +36,9 @@ public:
 	 *
 	 * @param rawAudioData The raw audiodata in bytes.
 	 * @param A2FRestHandler A pointer to the A2F REST APi handler.
-	 * @param callback The callback that will be triggered when the A2F curves have been created and imported back into the gamethread.
+	 * @param callback The callback that will be triggered when the A2F curves have been created and imported
+	 * back into the gamethread.
 	 */
-	static void GenerateA2FLipSyncData(const TArray<uint8>& rawAudioData, Audio2FaceRESTHandler* A2FRestHandler, TFunction<void(ULipSyncDataA2F*)> callback);
+	static void GenerateA2FLipSyncData(const TArray<uint8>& rawAudioData, Audio2FaceRESTHandler* A2FRestHandler,
+		TFunction<void(ULipSyncDataA2F*)> callback);
 };

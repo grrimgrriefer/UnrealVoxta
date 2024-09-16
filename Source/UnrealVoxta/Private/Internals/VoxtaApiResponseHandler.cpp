@@ -75,26 +75,29 @@ TUniquePtr<IServerResponseBase> VoxtaApiResponseHandler::GetResponseData(
 TUniquePtr<ServerResponseWelcome> VoxtaApiResponseHandler::GetWelcomeResponse(
 	const TMap<FString, FSignalRValue>& serverResponseData) const
 {
-	auto& user = serverResponseData[API_STRING("user")].AsObject();
-	return MakeUnique<ServerResponseWelcome>(
-		FUserCharData(user[API_STRING("id")].AsString(), user[API_STRING("name")].AsString()));
+	TMap<FString, FSignalRValue> user = serverResponseData[API_STRING("user")].AsObject();
+	return MakeUnique<ServerResponseWelcome>(FUserCharData(user[API_STRING("id")].AsString(),
+		user[API_STRING("name")].AsString()));
 }
 
 TUniquePtr<ServerResponseCharacterList> VoxtaApiResponseHandler::GetCharacterListLoadedResponse(
 	const TMap<FString, FSignalRValue>& serverResponseData) const
 {
-	auto& charArray = serverResponseData[API_STRING("characters")].AsArray();
+	TArray<FSignalRValue> charArray = serverResponseData[API_STRING("characters")].AsArray();
 	TArray<FAiCharData> chars;
 	chars.Reserve(charArray.Num());
-	for (auto& charElement : charArray)
+	for (const FSignalRValue& charElement : charArray)
 	{
-		auto& characterData = charElement.AsObject();
-		auto character = FAiCharData(characterData[API_STRING("id")].AsString(),
+		const TMap<FString, FSignalRValue>& characterData = charElement.AsObject();
+		chars.Emplace(FAiCharData(
+			characterData[API_STRING("id")].AsString(),
 			characterData[API_STRING("name")].AsString(),
-			characterData.Contains(API_STRING("creatorNotes")) ? characterData[API_STRING("creatorNotes")].AsString() : "",
-			characterData.Contains(API_STRING("explicitContent")) ? characterData[API_STRING("explicitContent")].AsBool() : false,
-			characterData.Contains(API_STRING("favorite")) ? characterData[API_STRING("favorite")].AsBool() : false);
-		chars.Emplace(character);
+			characterData.Contains(API_STRING("creatorNotes"))
+			? characterData[API_STRING("creatorNotes")].AsString() : "",
+			characterData.Contains(API_STRING("explicitContent"))
+			? characterData[API_STRING("explicitContent")].AsBool() : false,
+			characterData.Contains(API_STRING("favorite"))
+			? characterData[API_STRING("favorite")].AsBool() : false));
 	}
 	return MakeUnique<ServerResponseCharacterList>(chars);
 }
@@ -102,8 +105,8 @@ TUniquePtr<ServerResponseCharacterList> VoxtaApiResponseHandler::GetCharacterLis
 TUniquePtr<ServerResponseCharacterLoaded> VoxtaApiResponseHandler::GetCharacterLoadedResponse(
 	const TMap<FString, FSignalRValue>& serverResponseData) const
 {
-	auto& characterData = serverResponseData[API_STRING("character")].AsObject();
-	auto& ttsConfig = characterData[API_STRING("textToSpeech")].AsArray();
+	TMap<FString, FSignalRValue> characterData = serverResponseData[API_STRING("character")].AsObject();
+	const TArray<FSignalRValue>& ttsConfig = characterData[API_STRING("textToSpeech")].AsArray();
 
 	return MakeUnique<ServerResponseCharacterLoaded>(characterData[API_STRING("id")].AsString(),
 		characterData[API_STRING("enableThinkingSpeech")].AsBool());
@@ -112,17 +115,17 @@ TUniquePtr<ServerResponseCharacterLoaded> VoxtaApiResponseHandler::GetCharacterL
 TUniquePtr<ServerResponseChatStarted> VoxtaApiResponseHandler::GetChatStartedResponse(
 	const TMap<FString, FSignalRValue>& serverResponseData) const
 {
-	auto& user = serverResponseData[API_STRING("user")].AsObject();
-	auto& charIdArray = serverResponseData[API_STRING("characters")].AsArray();
+	TMap<FString, FSignalRValue> user = serverResponseData[API_STRING("user")].AsObject();
+	TArray<FSignalRValue> charIdArray = serverResponseData[API_STRING("characters")].AsArray();
 	TArray<FString> chars;
 	chars.Reserve(charIdArray.Num());
-	for (auto& charElement : charIdArray)
+	for (const FSignalRValue& charElement : charIdArray)
 	{
-		auto& characterData = charElement.AsObject();
+		const TMap<FString, FSignalRValue>& characterData = charElement.AsObject();
 		chars.Emplace(characterData[API_STRING("id")].AsString());
 	}
 
-	auto& servicesMap = serverResponseData[API_STRING("services")].AsObject();
+	TMap<FString, FSignalRValue> servicesMap = serverResponseData[API_STRING("services")].AsObject();
 	using enum VoxtaServiceData::ServiceType;
 	TMap<const VoxtaServiceData::ServiceType, const VoxtaServiceData> services;
 	TMap<VoxtaServiceData::ServiceType, FString> serviceTypes = {
@@ -135,13 +138,14 @@ TUniquePtr<ServerResponseChatStarted> VoxtaApiResponseHandler::GetChatStartedRes
 	{
 		if (servicesMap.Contains(stringValue))
 		{
-			auto& serviceData = servicesMap[stringValue].AsObject();
+			const TMap<FString, FSignalRValue>& serviceData = servicesMap[stringValue].AsObject();
 			services.Emplace(enumType, VoxtaServiceData(enumType, serviceData[API_STRING("serviceName")].AsString(),
 				serviceData[API_STRING("serviceId")].AsString()));
 		}
 	}
 	return MakeUnique<ServerResponseChatStarted>(user[API_STRING("id")].AsString(),
-		chars, services, serverResponseData[API_STRING("chatId")].AsString(), serverResponseData[API_STRING("sessionId")].AsString());
+		chars, services, serverResponseData[API_STRING("chatId")].AsString(),
+		serverResponseData[API_STRING("sessionId")].AsString());
 }
 
 TUniquePtr<ServerResponseChatMessageStart> VoxtaApiResponseHandler::GetReplyStartReponseResponse(
@@ -197,7 +201,8 @@ TUniquePtr<ServerResponseSpeechTranscription> VoxtaApiResponseHandler::GetSpeech
 	const TMap<FString, FSignalRValue>& serverResponseData) const
 {
 	return MakeUnique<ServerResponseSpeechTranscription>(
-		serverResponseData[API_STRING("text")].AsString(), ServerResponseSpeechTranscription::TranscriptionState::PARTIAL);
+		serverResponseData[API_STRING("text")].AsString(),
+		ServerResponseSpeechTranscription::TranscriptionState::PARTIAL);
 }
 
 TUniquePtr<ServerResponseSpeechTranscription> VoxtaApiResponseHandler::GetSpeechRecognitionEnd(
@@ -205,7 +210,8 @@ TUniquePtr<ServerResponseSpeechTranscription> VoxtaApiResponseHandler::GetSpeech
 {
 	bool isValid = serverResponseData.Contains(API_STRING("text"));
 	return MakeUnique<ServerResponseSpeechTranscription>(
-		isValid ? serverResponseData[API_STRING("text")].AsString() : FString(),
+		isValid ? serverResponseData[API_STRING("text")].AsString()
+			: FString(),
 		isValid ? ServerResponseSpeechTranscription::TranscriptionState::END
-		: ServerResponseSpeechTranscription::TranscriptionState::CANCELLED);
+			: ServerResponseSpeechTranscription::TranscriptionState::CANCELLED);
 }

@@ -182,7 +182,7 @@ float AudioCaptureHandler::GetDecibels() const
 	return m_decibels;
 }
 
-FString AudioCaptureHandler::GetDeviceName() const
+const FString& AudioCaptureHandler::GetDeviceName() const
 {
 	return m_deviceName;
 }

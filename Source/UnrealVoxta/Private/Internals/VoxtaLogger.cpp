@@ -8,16 +8,20 @@ DEFINE_LOG_CATEGORY(VoxtaLog);
 
 VoxtaLogger::~VoxtaLogger()
 {
+#if WITH_EDITOR
 	if (GLog != nullptr)
 	{
 		GLog->RemoveOutputDevice(this);
 	}
+#endif
 }
 
 void VoxtaLogger::RegisterVoxtaLogger()
 {
+#if WITH_EDITOR
 	check(GLog);
 	GLog->AddOutputDevice(this);
+#endif
 }
 
 void VoxtaLogger::Serialize(const TCHAR* Message, ELogVerbosity::Type Verbosity, const class FName& Category)

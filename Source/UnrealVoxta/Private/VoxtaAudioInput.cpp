@@ -36,6 +36,69 @@ void UVoxtaAudioInput::InitializeSocket(int bufferMs, int sampleRate, int inputC
 	m_audioWebSocket->Connect();
 }
 
+void UVoxtaAudioInput::CloseSocket()
+{
+	UE_LOGFMT(VoxtaLog, Warning, "Closing socket & shutting down voice capture gracefully.");
+
+	m_audioCaptureDevice.ShutDown();
+	if (m_audioWebSocket != nullptr)
+	{
+		m_audioWebSocket->Close();
+	}
+	m_connectionState = VoxtaMicrophoneState::Closed;
+}
+
+void UVoxtaAudioInput::StartStreaming()
+{
+	if (m_connectionState != VoxtaMicrophoneState::Ready)
+	{
+		UE_LOGFMT(VoxtaLog, Warning, "Attempting to start streaming AudioInput to VoxtaServer, but the socket was not "
+			" ready, aborting attempt. Current state: {0}", UEnum::GetValueAsString(m_connectionState));
+		return;
+	}
+
+	if (m_audioCaptureDevice.TryStartVoiceCapture())
+	{
+		UE_LOGFMT(VoxtaLog, Log, "Started voice capture via AudioInput.");
+		m_connectionState = VoxtaMicrophoneState::InUse;
+	}
+	else
+	{
+		UE_LOGFMT(VoxtaLog, Error, "Failed to start the audio capture. Socket will not stream data :(");
+	}
+}
+
+void UVoxtaAudioInput::StopStreaming()
+{
+	if (m_connectionState == VoxtaMicrophoneState::InUse)
+	{
+		UE_LOGFMT(VoxtaLog, Log, "Stopping voice capture via AudioInput.");
+		return;
+	}
+	else
+	{
+		UE_LOGFMT(VoxtaLog, Warning, "Attempted to stop streaming AudioInput via the socket, but it is not in use. "
+			"Current state: {0}");
+	}
+	m_audioCaptureDevice.StopCapture();
+	m_connectionState = VoxtaMicrophoneState::Ready;
+}
+
+bool UVoxtaAudioInput::IsRecording() const
+{
+	return m_connectionState == VoxtaMicrophoneState::InUse;
+}
+
+float UVoxtaAudioInput::GetInputDecibels() const
+{
+	return m_audioCaptureDevice.GetDecibels();
+}
+
+const FString& UVoxtaAudioInput::GetInputDeviceName() const
+{
+	return m_audioCaptureDevice.GetDeviceName();
+}
+
 void UVoxtaAudioInput::InitializeVoiceCapture()
 {
 	const FString socketInitialHeader = FString::Format(*FString(TEXT("{\"contentType\":\"audio/wav\","
@@ -88,67 +151,4 @@ void UVoxtaAudioInput::OnSocketClosed(int statusCode, const FString& reason, boo
 			reason, statusCode);
 	}
 	m_connectionState = VoxtaMicrophoneState::Closed;
-}
-
-void UVoxtaAudioInput::StartStreaming()
-{
-	if (m_connectionState != VoxtaMicrophoneState::Ready)
-	{
-		UE_LOGFMT(VoxtaLog, Warning, "Attempting to start streaming AudioInput to VoxtaServer, but the socket was not "
-			" ready, aborting attempt. Current state: {0}", UEnum::GetValueAsString(m_connectionState));
-		return;
-	}
-
-	if (m_audioCaptureDevice.TryStartVoiceCapture())
-	{
-		UE_LOGFMT(VoxtaLog, Log, "Started voice capture via AudioInput.");
-		m_connectionState = VoxtaMicrophoneState::InUse;
-	}
-	else
-	{
-		UE_LOGFMT(VoxtaLog, Error, "Failed to start the audio capture. Socket will not stream data :(");
-	}
-}
-
-void UVoxtaAudioInput::StopStreaming()
-{
-	if (m_connectionState == VoxtaMicrophoneState::InUse)
-	{
-		UE_LOGFMT(VoxtaLog, Log, "Stopping voice capture via AudioInput.");
-		return;
-	}
-	else
-	{
-		UE_LOGFMT(VoxtaLog, Warning, "Attempted to stop streaming AudioInput via the socket, but it is not in use. "
-			"Current state: {0}");
-	}
-	m_audioCaptureDevice.StopCapture();
-	m_connectionState = VoxtaMicrophoneState::Ready;
-}
-
-void UVoxtaAudioInput::CloseSocket()
-{
-	UE_LOGFMT(VoxtaLog, Warning, "Closing socket & shutting down voice capture gracefully.");
-
-	m_audioCaptureDevice.ShutDown();
-	if (m_audioWebSocket != nullptr)
-	{
-		m_audioWebSocket->Close();
-	}
-	m_connectionState = VoxtaMicrophoneState::Closed;
-}
-
-bool UVoxtaAudioInput::IsRecording() const
-{
-	return m_connectionState == VoxtaMicrophoneState::InUse;
-}
-
-float UVoxtaAudioInput::GetInputDecibels() const
-{
-	return m_audioCaptureDevice.GetDecibels();
-}
-
-FString UVoxtaAudioInput::GetInputDeviceName() const
-{
-	return m_audioCaptureDevice.GetDeviceName();
 }

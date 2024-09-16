@@ -12,7 +12,7 @@ public class UnrealVoxta : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"Core", "AudioUtility", "VoxtaData", "SignalR", "HTTP", "Voice", "VoxtaDataA2F"
+				"Core", "VoxtaAudioUtility", "VoxtaData", "SignalR", "HTTP", "Voice", "VoxtaDataA2F"
 			}
 			);
 

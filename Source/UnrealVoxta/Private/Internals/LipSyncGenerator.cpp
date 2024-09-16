@@ -1,22 +1,26 @@
 // Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
 
 #include "LipSyncGenerator.h"
+#include "Logging/StructuredLog.h"
+#include "VoxtaDefines.h"
+#include "Serialization/JsonReader.h"
 #if WITH_OVRLIPSYNC
 #include "OVRLipSyncContextWrapper.h"
 #include "OVRLipSyncFrame.h"
 #include "LipSyncDataOVR.h"
 #endif
-#include "Serialization/JsonReader.h"
 #include "Audio2FaceRESTHandler.h"
 #include "LipSyncDataA2F.h"
 
 #if WITH_OVRLIPSYNC
-void LipSyncGenerator::GenerateOVRLipSyncData(const TArray<uint8>& rawAudioData, TFunction<void(ULipSyncDataOVR*)> callback)
+void LipSyncGenerator::GenerateOVRLipSyncData(const TArray<uint8>& rawAudioData,
+	TFunction<void(ULipSyncDataOVR*)> callback)
 {
 	if (rawAudioData.Num() <= 44)
 	{
-		UE_LOG(LogTemp, Error, TEXT("Invalid rawAudioData, cannot generate OVR lipsync."));
-		checkNoEntry();
+		UE_LOGFMT(VoxtaLog, Error, "Invalid rawAudioData, cannot generate OVR lipsync data.");
+		callback(nullptr);
+		return;
 	}
 
 	FWaveModInfo waveInfo;
@@ -24,29 +28,29 @@ void LipSyncGenerator::GenerateOVRLipSyncData(const TArray<uint8>& rawAudioData,
 
 	if (waveInfo.ReadWaveInfo(waveData, rawAudioData.Num()))
 	{
-		int32 numChannels = *waveInfo.pChannels;
-		int32 sampleRate = *waveInfo.pSamplesPerSec;
-		auto pcmDataSize = waveInfo.SampleDataSize / sizeof(int16_t);
 		int16_t* pcmData = reinterpret_cast<int16_t*>(waveData + 44);
-		int32 chunkSizeSamples = static_cast<int32>(sampleRate * (1.f / 100.f));
-		int32 chunkSize = numChannels * chunkSizeSamples;
-		int bufferSize = 4096;
-
 		FString modelPath = FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("OVRLipSync"),
 			TEXT("OfflineModel"), TEXT("ovrlipsync_offline_model.pb"));
 
-		Async(EAsyncExecution::Thread, [SampleRate = sampleRate, BufferSize = bufferSize, ModelPath = modelPath,
-			ChunkSize = chunkSize, PCMDataSize = pcmDataSize, PCMData = pcmData, ChunkSizeSamples = chunkSizeSamples,
-			NumChannels = numChannels, Callback1 = callback] ()
+		Async(EAsyncExecution::Thread, [WaveInfo = waveInfo, ModelPath = modelPath,
+			PCMData = pcmData, Callback1 = callback] ()
 		{
-			UOVRLipSyncContextWrapper context(ovrLipSyncContextProvider_Enhanced, SampleRate, BufferSize, ModelPath);
+			int32 numChannels = *WaveInfo.pChannels;
+			int32 sampleRate = *WaveInfo.pSamplesPerSec;
+			auto pcmDataSize = WaveInfo.SampleDataSize / sizeof(int16_t);
+			int32 chunkSizeSamples = static_cast<int32>(sampleRate * (1.f / 100.f));
+			int32 chunkSize = numChannels * chunkSizeSamples;
+			int bufferSize = 4096;
+
+			UOVRLipSyncContextWrapper context(ovrLipSyncContextProvider_Enhanced, sampleRate, bufferSize, ModelPath);
 			float laughterScore = 0.0f;
 			int32_t FrameDelayInMs = 0;
 			TArray<float> viseme;
 			TArray<TTuple<TArray<float>, float>> frames;
-			for (int offs = 0; offs + ChunkSize < PCMDataSize; offs += ChunkSize)
+			for (uint64 offs = 0; (offs + chunkSize) < pcmDataSize; offs += chunkSize)
 			{
-				context.ProcessFrame(PCMData + offs, ChunkSizeSamples, viseme, laughterScore, FrameDelayInMs, NumChannels > 1);
+				context.ProcessFrame(PCMData + offs, chunkSizeSamples, viseme, laughterScore, FrameDelayInMs,
+					numChannels > 1);
 				frames.Emplace(viseme, laughterScore);
 			}
 			AsyncTask(ENamedThreads::GameThread, [Frames = frames, Callback2 = Callback1] ()
@@ -59,17 +63,26 @@ void LipSyncGenerator::GenerateOVRLipSyncData(const TArray<uint8>& rawAudioData,
 				}
 				data->SetFrameSequence(sequence);
 				data->AddToRoot();
+				UE_LOGFMT(VoxtaLog, Log, "Sucessfully generated OVR lipsync data: {0} frames of data.", Frames.Num());
+
 				Callback2(data);
 			});
 		});
 	}
+	else
+	{
+		UE_LOGFMT(VoxtaLog, Error, "Invalid wave header detected, cannot generate OVR lipsync data.");
+		callback(nullptr);
+	}
 }
 #endif
 
-void LipSyncGenerator::GenerateA2FLipSyncData(const TArray<uint8>& rawAudioData, Audio2FaceRESTHandler* A2FRestHandler, TFunction<void(ULipSyncDataA2F*)> callback)
+void LipSyncGenerator::GenerateA2FLipSyncData(const TArray<uint8>& rawAudioData, Audio2FaceRESTHandler* A2FRestHandler,
+	TFunction<void(ULipSyncDataA2F*)> callback)
 {
 	FString guid = FGuid::NewGuid().ToString();
-	FString cacheFolder = FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("UnrealVoxta"), TEXT("Content"), TEXT("A2FCache"));
+	FString cacheFolder = FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("UnrealVoxta"),
+		TEXT("Content"), TEXT("A2FCache"));
 	FString wavName = FString::Format(*FString(TEXT("A2FCachedData{0}.wav")), { guid });
 	FString jsonName = FString::Format(*FString(TEXT("A2FCachedData{0}")), { guid });
 	FString jsonImportName = FString::Format(*FString(TEXT("{0}_bsweight.json")), { jsonName });
@@ -79,33 +92,40 @@ void LipSyncGenerator::GenerateA2FLipSyncData(const TArray<uint8>& rawAudioData,
 
 	if (waveInfo.ReadWaveInfo(waveData, rawAudioData.Num()))
 	{
-		// Create a file handle
-		IFileHandle* FileHandle = FPlatformFileManager::Get().GetPlatformFile().OpenWrite(*FPaths::Combine(cacheFolder, wavName));
+		IFileHandle* FileHandle = FPlatformFileManager::Get().GetPlatformFile().OpenWrite(
+			*FPaths::Combine(cacheFolder, wavName));
 
 		if (FileHandle)
 		{
-			// Write the WAV header
 			FileHandle->Write(waveData, waveInfo.SampleDataStart - waveData);
-
-			// Write the audio data
 			FileHandle->Write(waveInfo.SampleDataStart, waveInfo.SampleDataSize);
-
-			// Close the file
 			delete FileHandle;
 		}
 		else
 		{
-			UE_LOG(LogTemp, Error, TEXT("Failed to open file for writing"));
+			UE_LOGFMT(VoxtaLog, Error, "Failed wav data to disk for A2F processing.");
+			callback(nullptr);
+			return;
 		}
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("Failed to read wave info"));
+		UE_LOGFMT(VoxtaLog, Error, "Invalid wave header detected, cannot generate OVR lipsync data.");
+		callback(nullptr);
+		return;
 	}
 
 	A2FRestHandler->GetBlendshapes(wavName, cacheFolder, jsonName,
-		[Callback = callback, JsonFullPath = FPaths::Combine(cacheFolder, jsonImportName)] (FString shapesFile, bool success)
+		[Callback = callback, JsonFullPath = FPaths::Combine(cacheFolder, jsonImportName)]
+		(FString shapesFile, bool success)
 		{
+			if (!success)
+			{
+				UE_LOGFMT(VoxtaLog, Error, "A2F failed to generate blendshape curves from the audiofile, aborting.");
+				Callback(nullptr);
+				return;
+			}
+
 			FString FileContents;
 			FFileHelper::LoadFileToString(FileContents, *JsonFullPath);
 
@@ -114,7 +134,8 @@ void LipSyncGenerator::GenerateA2FLipSyncData(const TArray<uint8>& rawAudioData,
 
 			if (!(JsonObject.IsValid() && FJsonSerializer::Deserialize(JsonReader, JsonObject)))
 			{
-				UE_LOG(LogTemp, Error, TEXT("Failed to parse JSON A2F LipSyncData"));
+				UE_LOGFMT(VoxtaLog, Error, "Failed to parse JSON A2F LipSyncData, this should never happen?");
+				Callback(nullptr);
 				return;
 			}
 
@@ -122,7 +143,6 @@ void LipSyncGenerator::GenerateA2FLipSyncData(const TArray<uint8>& rawAudioData,
 			JsonObject->TryGetNumberField(TEXT("exportFps"), fps);
 			int32 numFrames;
 			JsonObject->TryGetNumberField(TEXT("numFrames"), numFrames);
-
 			const TArray<TSharedPtr<FJsonValue>>* WeightMat;
 			JsonObject->TryGetArrayField(TEXT("weightMat"), WeightMat);
 
@@ -141,6 +161,8 @@ void LipSyncGenerator::GenerateA2FLipSyncData(const TArray<uint8>& rawAudioData,
 			ULipSyncDataA2F* data = NewObject<ULipSyncDataA2F>();
 			data->SetA2FCurveWeights(curveValues, fps);
 			data->AddToRoot();
+			UE_LOGFMT(VoxtaLog, Log, "Sucessfully generated A2F lipsync data: {0} frames of data.", numFrames);
+
 			Callback(data);
 		});
 }

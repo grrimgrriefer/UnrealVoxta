@@ -3,9 +3,9 @@
 using UnrealBuildTool;
 using System.IO;
 
-public class AudioUtility : ModuleRules
+public class VoxtaAudioUtility : ModuleRules
 {
-	public AudioUtility(ReadOnlyTargetRules Target) : base(Target)
+	public VoxtaAudioUtility(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 

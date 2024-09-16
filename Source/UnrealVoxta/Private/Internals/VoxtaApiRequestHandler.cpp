@@ -11,11 +11,14 @@ FSignalRValue VoxtaApiRequestHandler::GetAuthenticateRequestData() const
 		{ API_STRING("$type"), API_SIGNALR_STRING("authenticate") },
 		{ API_STRING("client"), API_SIGNALR_STRING("UnrealVoxta") },
 		{ API_STRING("clientVersion"), API_SIGNALR_STRING("0.0.1-preAlpha") },
-		{ API_STRING("scope"), FSignalRValue(TArray<FSignalRValue> { API_SIGNALR_STRING("role:app"), API_SIGNALR_STRING("broadcast:write") }) },
+		{ API_STRING("scope"), FSignalRValue(TArray<FSignalRValue> {
+			API_SIGNALR_STRING("role:app"),
+				API_SIGNALR_STRING("broadcast:write") }) },
 		{ API_STRING("capabilities"), FSignalRValue(TMap<FString, FSignalRValue> {
 			{ API_STRING("audioInput"),  API_SIGNALR_STRING("WebSocketStream") },
 			{ API_STRING("audioOutput"),  API_SIGNALR_STRING("Url") },
-			{ API_STRING("acceptedAudioContentTypes"), FSignalRValue(TArray<FSignalRValue> { API_SIGNALR_STRING("audio/x-wav") }) }
+			{ API_STRING("acceptedAudioContentTypes"), FSignalRValue(TArray<FSignalRValue> {
+				API_SIGNALR_STRING("audio/x-wav") }) }
 		}) }
 	});
 }
@@ -54,7 +57,8 @@ FSignalRValue VoxtaApiRequestHandler::GetStartChatRequestData(const FAiCharData*
 	});
 }
 
-FSignalRValue VoxtaApiRequestHandler::GetSendUserMessageData(const FString& sessionId, const FString& userInputText) const
+FSignalRValue VoxtaApiRequestHandler::GetSendUserMessageData(const FString& sessionId,
+	const FString& userInputText) const
 {
 	return FSignalRValue(TMap<FString, FSignalRValue> {
 		{ API_STRING("$type"), API_SIGNALR_STRING("send") },
@@ -65,7 +69,8 @@ FSignalRValue VoxtaApiRequestHandler::GetSendUserMessageData(const FString& sess
 	});
 }
 
-FSignalRValue VoxtaApiRequestHandler::GetNotifyAudioPlaybackCompleteData(const FString& sessionId, const FString& messageId) const
+FSignalRValue VoxtaApiRequestHandler::GetNotifyAudioPlaybackCompleteData(const FString& sessionId,
+	const FString& messageId) const
 {
 	return FSignalRValue(TMap<FString, FSignalRValue> {
 		{ API_STRING("$type"), API_SIGNALR_STRING("speechPlaybackComplete") },

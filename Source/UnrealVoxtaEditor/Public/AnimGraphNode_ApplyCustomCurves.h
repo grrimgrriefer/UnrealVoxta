@@ -7,9 +7,13 @@
 #include "AnimGraphNode_Base.h"
 #include "AnimGraphNode_ApplyCustomCurves.generated.h"
 
-struct FAnimNode_ApplyCustomCurves;
-
-UCLASS()
+/**
+ * The node Editor UI for the FAnimNode_ApplyCustomCurves node where we apply the custom A2F curves
+ * to the ARKit mapping.
+ *
+ * TODO: Maybe rename Editor module, depends if this turns out to be the only thing or not.
+ */
+UCLASS(Category = "Voxta")
 class UNREALVOXTAEDITOR_API UAnimGraphNode_ApplyCustomCurves : public UAnimGraphNode_Base
 {
 	GENERATED_BODY()

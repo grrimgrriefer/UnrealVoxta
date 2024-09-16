@@ -43,7 +43,7 @@ void UVoxtaAudioPlayback::MarkCustomPlaybackComplete(const FGuid& guid)
 		return;
 	}
 
-	m_internalState = InternalState::Idle;
+	m_internalState = AudioPlaybackInternalState::Idle;
 	UE_LOGFMT(VoxtaLog, Log, "Playback of audioClip with guid: {0} is markd as complete, continueing Voxta logic.",
 		guid.ToString());
 
@@ -121,7 +121,7 @@ void UVoxtaAudioPlayback::PlaybackMessage(const FCharDataBase& sender, const FCh
 				[&] (const MessageChunkAudioContainer* chunk) { OnChunkStateChange(chunk); },
 				i));
 		}
-		m_internalState = InternalState::Idle;
+		m_internalState = AudioPlaybackInternalState::Idle;
 		m_orderedAudio[0]->Continue();
 
 		UE_LOGFMT(VoxtaLog, Log, "Started playback for messageId: {0} of SenderId: {1}. Full message contains {2} "
@@ -132,16 +132,16 @@ void UVoxtaAudioPlayback::PlaybackMessage(const FCharDataBase& sender, const FCh
 
 void UVoxtaAudioPlayback::PlayCurrentAudioChunkIfAvailable()
 {
-	if (m_internalState != InternalState::Idle)
+	if (m_internalState != AudioPlaybackInternalState::Idle)
 	{
 		UE_LOGFMT(VoxtaLog, Error, "Tried to play an audiochunk but playback is in state: {0}, should be {1} instead.",
-			UEnum::GetValueAsString(m_internalState), UEnum::GetValueAsString(InternalState::Idle));
+			UEnum::GetValueAsString(m_internalState), UEnum::GetValueAsString(AudioPlaybackInternalState::Idle));
 		return;
 	}
 	MessageChunkAudioContainer* currentClip = m_orderedAudio[m_currentAudioClipIndex].Get();
 	if (currentClip->GetCurrentState() == MessageChunkState::ReadyForPlayback)
 	{
-		m_internalState = InternalState::Playing;
+		m_internalState = AudioPlaybackInternalState::Playing;
 
 		if (currentClip->LIP_SYNC_TYPE != LipSyncType::Custom)
 		{
@@ -156,6 +156,7 @@ void UVoxtaAudioPlayback::PlayCurrentAudioChunkIfAvailable()
 				Play();
 				break;
 			case LipSyncType::Custom:
+			{
 				TArray<uint8> rawData = currentClip->GetRawAudioData();
 				USoundWaveProcedural* soundWave = currentClip->GetSoundWave();
 				FGuid guid = currentClip->GetLipSyncData<ILipSyncDataBase>()->GetGuid();
@@ -167,6 +168,7 @@ void UVoxtaAudioPlayback::PlayCurrentAudioChunkIfAvailable()
 				VoxtaMessageAudioChunkReadyForCustomPlaybackEventNative.Broadcast(rawData, soundWave, guid);
 				VoxtaMessageAudioChunkReadyForCustomPlaybackEvent.Broadcast(rawData, soundWave, guid);
 				break;
+			}
 			case LipSyncType::OVRLipSync:
 #if WITH_OVRLIPSYNC
 				SetSound(currentClip->GetSoundWave());
@@ -197,7 +199,7 @@ void UVoxtaAudioPlayback::OnAudioPlaybackFinished(UAudioComponent* component)
 
 	UE_LOGFMT(VoxtaLog, Log, "Automatic playback of audio chunk index: {0} is complete.", m_currentAudioClipIndex);
 
-	m_internalState = InternalState::Idle;
+	m_internalState = AudioPlaybackInternalState::Idle;
 	MarkAudioChunkPlaybackCompleteInternal();
 }
 
@@ -222,13 +224,13 @@ void UVoxtaAudioPlayback::MarkAudioChunkPlaybackCompleteInternal()
 
 void UVoxtaAudioPlayback::OnChunkStateChange(const MessageChunkAudioContainer* chunk)
 {
-	if (m_internalState == InternalState::Done)
+	if (m_internalState == AudioPlaybackInternalState::Done)
 	{
 		UE_LOGFMT(VoxtaLog, Error, "Audio playback was marked as finished, but a chunk was still underway, discarding.");
 		return;
 	}
 
-	if (m_orderedAudio[chunk->INDEX]->GetCurrentState() == MessageChunkState::ReadyForPlayback && m_internalState == InternalState::Idle)
+	if (m_orderedAudio[chunk->INDEX]->GetCurrentState() == MessageChunkState::ReadyForPlayback && m_internalState == AudioPlaybackInternalState::Idle)
 	{
 		PlayCurrentAudioChunkIfAvailable();
 	}
@@ -246,7 +248,7 @@ void UVoxtaAudioPlayback::Cleanup()
 
 	m_currentlyPlayingMessageId = FString(TEXT("NULL"));
 	m_currentAudioClipIndex = 0;
-	m_internalState = InternalState::Done;
+	m_internalState = AudioPlaybackInternalState::Done;
 	for (TSharedPtr<MessageChunkAudioContainer> audioChunk : m_orderedAudio)
 	{
 		audioChunk->CleanupData();

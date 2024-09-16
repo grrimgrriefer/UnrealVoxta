@@ -27,10 +27,10 @@ public:
 	 * @param fullUrl The full url to download the audio data. (Should be referring to the VoxtaSever REST-api)
 	 * @param lipSyncType The type of lipsync generation that should be done for this voiceline.
 	 * @param A2FRestHandler Pointer to access the A2F REST api.
-	 * @param callback The function that will be triggered when this instance has completed a 'state' and is ready for the next.
+	 * @param callback The function that will be triggered when we have completed a 'state' and are waiting to continue.
 	 * @param id The index of this sound asset in the collection of the VoxtaAudioPlayback.
 	 *
-	 * TODO: avoid requiring the A2FRestHandler injection, maybe statics?
+	 * TODO: avoid requiring the A2FRestHandler injection, I kinda wanna move it to main subsystem but idk yet.
 	 */
 	MessageChunkAudioContainer(const FString& fullUrl,
 		LipSyncType lipSyncType,
@@ -55,10 +55,14 @@ public:
 	template<class T>
 	const T* GetLipSyncData() const;
 
-	/** @return An immutable reference to the current state of this instance. */
-	const MessageChunkState& GetCurrentState() const;
+	/** @return The current state of this instance. */
+	MessageChunkState GetCurrentState() const;
 
-	/** @return The pointer to the generated SoundWave, tied to this instance. */
+	/**
+	 * @return The pointer to the generated SoundWave, tied to this instance.
+	 *
+	 * Note: UE requires a non-const pointer to play, which is why this doesn't return an immutable pointer.
+	 */
 	USoundWaveProcedural* GetSoundWave() const;
 
 	/** The index of this sound asset in the collection of the VoxtaAudioPlayback. */
@@ -85,7 +89,7 @@ private:
 	void DownloadData();
 
 	/** Convert the imported raw audiodata into a UImportedSoundWave that can be played. */
-	void ImportData();
+	void ProcessAudioData();
 
 	/**
 	 * Generate lipsync data based on the raw audiodata, and populate the m_lipSyncData with the result

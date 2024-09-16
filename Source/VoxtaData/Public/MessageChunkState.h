@@ -4,11 +4,12 @@
 
 #include "CoreMinimal.h"
 
+UENUM()
 enum class MessageChunkState : uint8
 {
 	Idle,
 	Idle_Downloaded,
-	Idle_Imported,
+	Idle_Processed,
 	Busy,
 	ReadyForPlayback,
 	CleanedUp
