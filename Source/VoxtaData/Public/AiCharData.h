@@ -3,14 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "CharDataBase.h"
+#include "BaseCharData.h"
 #include "AiCharData.generated.h"
 
 /// <summary>
 /// Data struct that contains all the relevant information for an AI character.
 /// </summary>
 USTRUCT(BlueprintType)
-struct VOXTADATA_API FAiCharData : public FCharDataBase
+struct VOXTADATA_API FAiCharData : public FBaseCharData
 {
 	GENERATED_BODY()
 
@@ -24,14 +24,14 @@ public:
 		FStringView creatorNotes,
 		bool isExplicitContent,
 		bool isFavorite) :
-		FCharDataBase(id, name),
+		FBaseCharData(id, name),
 		m_creatorNotes(creatorNotes),
 		m_allowedExplicitContent(isExplicitContent),
 		m_isFavorite(isFavorite)
 	{
 	}
 
-	explicit FAiCharData() : FCharDataBase() {}
+	explicit FAiCharData() : FBaseCharData() {}
 
 private:
 	FString m_creatorNotes = "";

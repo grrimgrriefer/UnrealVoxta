@@ -30,17 +30,17 @@ class VoxtaApiResponseHandler
 public:
 	/** A collection of message types received from VoxtaServer that are considered safe to ignore. */
 	const TSet<FString> IGNORED_MESSAGE_TYPES{
-		API_STRING("chatStarting"),
-		API_STRING("chatLoadingMessage"),
-		API_STRING("chatsSessionsUpdated"),
-		API_STRING("contextUpdated"),
-		API_STRING("replyGenerating"),
-		API_STRING("chatFlow"),
-		API_STRING("speechRecognitionStart"),
-		API_STRING("recordingRequest"),
-		API_STRING("recordingStatus"),
-		API_STRING("speechPlaybackComplete"),
-		API_STRING("memoryUpdated")
+		EASY_STRING("chatStarting"),
+		EASY_STRING("chatLoadingMessage"),
+		EASY_STRING("chatsSessionsUpdated"),
+		EASY_STRING("contextUpdated"),
+		EASY_STRING("replyGenerating"),
+		EASY_STRING("chatFlow"),
+		EASY_STRING("speechRecognitionStart"),
+		EASY_STRING("recordingRequest"),
+		EASY_STRING("recordingStatus"),
+		EASY_STRING("speechPlaybackComplete"),
+		EASY_STRING("memoryUpdated")
 	};
 
 	/**

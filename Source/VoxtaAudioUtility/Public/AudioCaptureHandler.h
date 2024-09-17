@@ -14,7 +14,7 @@
 /// Handles audio input by wrapping the engine's inner FVoiceModule.
 /// On fixed intervals, a background thread will forward any captured audio bytes to the AudioWebSocket.
 /// </summary>
-class AUDIOUTILITY_API AudioCaptureHandler
+class VOXTAAUDIOUTILITY_API AudioCaptureHandler
 {
 public:
 	/// <summary>

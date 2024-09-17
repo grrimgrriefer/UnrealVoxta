@@ -64,15 +64,16 @@ public:
 	 * Note: UE requires a non-const pointer to play, which is why this doesn't return an immutable pointer.
 	 */
 	USoundWaveProcedural* GetSoundWave() const;
+#pragma endregion
 
+#pragma region data
+public:
 	/** The index of this sound asset in the collection of the VoxtaAudioPlayback. */
 	const int INDEX;
 
 	/** The type of lipsync that this voiceline instance will support with its data. */
 	const LipSyncType LIP_SYNC_TYPE;
-#pragma endregion
 
-#pragma region data
 private:
 	const FString FULL_DOWNLOAD_URL;
 	const TFunction<void(const MessageChunkAudioContainer* chunk)> ON_STATE_CHANGED;

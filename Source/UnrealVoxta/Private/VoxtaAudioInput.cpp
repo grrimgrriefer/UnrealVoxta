@@ -53,7 +53,7 @@ void UVoxtaAudioInput::StartStreaming()
 	if (m_connectionState != VoxtaMicrophoneState::Ready)
 	{
 		UE_LOGFMT(VoxtaLog, Warning, "Attempting to start streaming AudioInput to VoxtaServer, but the socket was not "
-			" ready, aborting attempt. Current state: {0}", UEnum::GetValueAsString(m_connectionState));
+			" ready, aborting attempt.");
 		return;
 	}
 

@@ -11,7 +11,7 @@
 /// Data struct containing all the relevant information regarding a chat session
 /// between the user and AI characters.
 /// </summary>
-USTRUCT(BlueprintType)
+USTRUCT(BlueprintType, Category = "Voxta")
 struct VOXTADATA_API FChatSession
 {
 	GENERATED_BODY()
@@ -39,17 +39,22 @@ public:
 
 	explicit FChatSession() {};
 
-protected:
-	UPROPERTY(BlueprintReadOnly)
+#pragma region data
+private:
+	UPROPERTY(BlueprintReadOnly, Category = "Voxta",
+		meta = (AllowPrivateAccess = "true", DisplayName = "Chat ID"))
 	FString m_chatId;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Voxta",
+		meta = (AllowPrivateAccess = "true", DisplayName = "Session ID"))
 	FString m_sessionId;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Voxta",
+		meta = (AllowPrivateAccess = "true", DisplayName = "Character IDs"))
 	TArray<FString> m_characterIds;
 
-private:
-	TMap<const VoxtaServiceData::ServiceType, const VoxtaServiceData> m_services; // TODO: Add functionality for runtime disabling / enabling of services.
+	// TODO: Add functionality for runtime disabling / enabling of services.
+	TMap<const VoxtaServiceData::ServiceType, const VoxtaServiceData> m_services;
 	TArray<const FAiCharData*> m_characters;
+#pragma endregion
 };

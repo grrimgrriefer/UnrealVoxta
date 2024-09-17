@@ -4,30 +4,44 @@
 
 #include "CoreMinimal.h"
 
-/// <summary>
-/// Read-only data struct containing the data to identify a VoxtaService
-/// when using the Voxta API.
-/// </summary>
+/**
+ * VoxtaServiceData
+ * Data class containing the relevant information for VoxtaServer services.
+ * Currently used as part of the FChatSession data container.
+ *
+ * Note: There is currently no support for disabling / enabling VoxtaServer services while the conversation is on-going.
+ */
 struct VoxtaServiceData
 {
+#pragma region public helper classes
 public:
-	enum class ServiceType
+	/**
+	 * ServiceType
+	 * All the possible VoxtaServer Services that the UnrealVoxta client currently supports.
+	 * Used to fetch the correct version of the service from the FChatSession data container.
+	 */
+	enum class ServiceType : uint8
 	{
-		TextGen,
-		SpeechToText,
-		TextToSpeech
+		TextGen			UMETA(DisplayName = "TextGen"),
+		SpeechToText	UMETA(DisplayName = "SpeechToText"),
+		TextToSpeech	UMETA(DisplayName = "TextToSpeech")
 	};
+#pragma endregion
 
-	const ServiceType m_serviceType;
-	const FString m_serviceName;
-	const FString m_serviceId;
-
+#pragma region public API
 	explicit VoxtaServiceData(ServiceType type,
 			FStringView name,
 			FStringView id) :
-		m_serviceType(type),
-		m_serviceName(name),
-		m_serviceId(id)
+		SERVICE_TYPE(type),
+		SERVICE_NAME(name),
+		SERVICE_ID(id)
 	{
 	}
+#pragma endregion
+
+#pragma region data
+	const ServiceType SERVICE_TYPE;
+	const FString SERVICE_NAME;
+	const FString SERVICE_ID;
+#pragma endregion
 };

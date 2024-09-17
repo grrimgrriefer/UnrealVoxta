@@ -4,7 +4,7 @@
 
 #include "Animation/AnimNodeBase.h"
 #include "CoreMinimal.h"
-#include "VoxtaAudioPlaybackBase.h"
+#include "AbstractA2FWeightProvider.h"
 #include "AnimNode_ApplyCustomCurves.generated.h"
 
 USTRUCT(BlueprintInternalUseOnly)
@@ -25,7 +25,7 @@ public:
 	//~ end FAnimNode_Base overrides
 
 private:
-	IVoxtaAudioPlaybackBase* CurveSource;
+	IA2FWeightProvider* CurveSource;
 
 	TArray<float> CachedWeights;
 };

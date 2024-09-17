@@ -9,7 +9,7 @@
 /// Main low level API to communicate with the audio streaming IWebSocket.
 /// Relies on Unreal's FWebSocketsModule implementation.
 /// </summary>
-class AUDIOUTILITY_API AudioWebSocket : public TSharedFromThis<AudioWebSocket>
+class VOXTAAUDIOUTILITY_API AudioWebSocket : public TSharedFromThis<AudioWebSocket>
 {
 public:
 	/// <summary>

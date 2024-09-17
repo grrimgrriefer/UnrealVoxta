@@ -21,7 +21,7 @@ void FAnimNode_ApplyCustomCurves::PreUpdate(const UAnimInstance* InAnimInstance)
 			UAudioComponent* FoundComponent = Actor->GetComponentByClass<UAudioComponent>();
 			if (FoundComponent)
 			{
-				CurveSource = Cast<IVoxtaAudioPlaybackBase>(FoundComponent);
+				CurveSource = Cast<IA2FWeightProvider>(FoundComponent);
 			}
 		}
 	}
@@ -29,7 +29,7 @@ void FAnimNode_ApplyCustomCurves::PreUpdate(const UAnimInstance* InAnimInstance)
 	if (CurveSource != nullptr)
 	{
 		CachedWeights.Reset();
-		CurveSource->GetA2FCurveWeights(CachedWeights);
+		CurveSource->GetA2FCurveWeightsPreUpdate(CachedWeights);
 	}
 }
 

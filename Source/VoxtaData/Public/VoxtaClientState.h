@@ -4,10 +4,14 @@
 
 #include "CoreMinimal.h"
 
-/// <summary>
-/// The possible states reponses that can be returned by the VoxtaClient when polled.
-/// </summary>
-UENUM(BlueprintType)
+/**
+ * VoxtaClientState
+ * The possible states that can be reported by the VoxtaClient when polled.
+ *
+ * Used by communication between the UVoxtaClient and external systems. (VoxtaAudioInput, blueprints, etc.)
+ * Can be fetched via GetCurrentState or through the VoxtaClientStateChangedEvent.
+ */
+UENUM(BlueprintType, Category = "Voxta")
 enum class VoxtaClientState : uint8
 {
 	Disconnected			UMETA(DisplayName = "Disconnected"),

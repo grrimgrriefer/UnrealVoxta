@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "VoxtaAudioUtility/Public/AudioCaptureHandler.h"
-#include "VoxtaData/Public/VoxtaMicrophoneState.h"
 #include "VoxtaAudioInput.generated.h"
 
 class AudioWebSocket;
@@ -79,6 +78,18 @@ public:
 	/** @return The an immutable reference to the name reported by the hardware device. */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
 	const FString& GetInputDeviceName() const;
+#pragma endregion
+
+#pragma region private helper classes
+private:
+	enum class VoxtaMicrophoneState : uint8
+	{
+		NotConnected			UMETA(DisplayName = "NotConnected"),
+		Initializing			UMETA(DisplayName = "Initializing"),
+		Ready					UMETA(DisplayName = "Ready"),
+		InUse					UMETA(DisplayName = "InUse"),
+		Closed					UMETA(DisplayName = "Closed")
+	};
 #pragma endregion
 
 #pragma region data

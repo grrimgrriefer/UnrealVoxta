@@ -6,7 +6,7 @@
 #include "AudioStructs.h"
 #include "ImportedSoundWave.h"
 
-class AUDIOUTILITY_API URuntimeAudioImporterLibrary
+class VOXTAAUDIOUTILITY_API URuntimeAudioImporterLibrary
 {
 public:
 	static void ImportAudioFromBuffer(TArray64<uint8> buffer, TFunction<void(UImportedSoundWave*)> callback);

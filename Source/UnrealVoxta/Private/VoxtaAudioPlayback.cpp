@@ -9,7 +9,7 @@
 #include "OVRLipSyncPlaybackActorComponent.h"
 #include "LipSyncDataOVR.h"
 #endif
-#include "CharDataBase.h"
+#include "BaseCharData.h"
 #include "Sound/SoundWaveProcedural.h"
 #include "Logging/StructuredLog.h"
 
@@ -90,7 +90,7 @@ void UVoxtaAudioPlayback::EndPlay(const EEndPlayReason::Type endPlayReason)
 #endif
 }
 
-void UVoxtaAudioPlayback::GetA2FCurveWeights(TArray<float>& targetArrayRef)
+void UVoxtaAudioPlayback::GetA2FCurveWeightsPreUpdate(TArray<float>& targetArrayRef)
 {
 	if (m_lipSyncType == LipSyncType::Audio2Face && m_lipSyncHandler)
 	{
@@ -104,7 +104,7 @@ void UVoxtaAudioPlayback::GetA2FCurveWeights(TArray<float>& targetArrayRef)
 	}
 }
 
-void UVoxtaAudioPlayback::PlaybackMessage(const FCharDataBase& sender, const FChatMessage& message)
+void UVoxtaAudioPlayback::PlaybackMessage(const FBaseCharData& sender, const FChatMessage& message)
 {
 	// Listener gets invoked for all messages, safe to ignore the ones for other characters
 	if (sender.GetId() == m_characterId)
@@ -134,8 +134,7 @@ void UVoxtaAudioPlayback::PlayCurrentAudioChunkIfAvailable()
 {
 	if (m_internalState != AudioPlaybackInternalState::Idle)
 	{
-		UE_LOGFMT(VoxtaLog, Error, "Tried to play an audiochunk but playback is in state: {0}, should be {1} instead.",
-			UEnum::GetValueAsString(m_internalState), UEnum::GetValueAsString(AudioPlaybackInternalState::Idle));
+		UE_LOGFMT(VoxtaLog, Error, "Tried to play an audiochunk but playback is currently not Idle.");
 		return;
 	}
 	MessageChunkAudioContainer* currentClip = m_orderedAudio[m_currentAudioClipIndex].Get();

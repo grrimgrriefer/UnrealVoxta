@@ -57,7 +57,7 @@ void UVoxtaClient::StartConnection(const FString& ipv4Address, int port)
 	m_hostPort = port;
 
 	m_hub = GEngine->GetEngineSubsystem<USignalRSubsystem>()->CreateHubConnection(
-		FString::Format(*API_STRING("http://{0}:{1}/hub"), {
+		FString::Format(*EASY_STRING("http://{0}:{1}/hub"), {
 			m_hostAddress,
 			m_hostPort
 		}));
@@ -179,7 +179,7 @@ void UVoxtaClient::OnReceivedMessage(const TArray<FSignalRValue>& arguments)
 			else
 			{
 				UE_LOGFMT(VoxtaLog, Warning, "Received server response that is not (yet) supported: {0}",
-					Arguments[0].AsObject()[API_STRING("$type")].AsString());
+					Arguments[0].AsObject()[EASY_STRING("$type")].AsString());
 			}
 			return false; // Return false to remove the ticker after it runs once
 		}));
@@ -247,7 +247,7 @@ bool UVoxtaClient::HandleResponseHelper(const IServerResponseBase* response, con
 
 bool UVoxtaClient::HandleResponse(const TMap<FString, FSignalRValue>& responseData)
 {
-	FString responseType = responseData[API_STRING("$type")].AsString();
+	FString responseType = responseData[EASY_STRING("$type")].AsString();
 	if (m_voxtaResponseApi.IGNORED_MESSAGE_TYPES.Contains(responseType))
 	{
 		UE_LOGFMT(VoxtaLog, Log, "Ignoring message of type: {0}", responseType);

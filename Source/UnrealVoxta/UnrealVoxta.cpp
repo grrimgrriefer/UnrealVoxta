@@ -2,4 +2,4 @@
 
 #include "UnrealVoxta.h"
 
-IMPLEMENT_MODULE(FUnrealVoxtaModule, UnrealVoxta)
+IMPLEMENT_MODULE(FDefaultModuleImpl, UnrealVoxta)

@@ -3,9 +3,8 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "Components/AudioComponent.h"
-#include "VoxtaAudioPlaybackBase.h"
+#include "AbstractA2FWeightProvider.h"
 #include "LipSyncType.h"
-#include "AudioPlaybackInternalState.h"
 #include "VoxtaAudioPlayback.generated.h"
 
 class MessageChunkAudioContainer;
@@ -20,7 +19,7 @@ class UVoxtaClient;
  * Also handles the automatic playback unless 'custom lipsync' is enabled.
  */
 UCLASS(HideCategories = (Mobility, Rendering, LOD), ClassGroup = Voxta, meta = (BlueprintSpawnableComponent))
-class UNREALVOXTA_API UVoxtaAudioPlayback : public UAudioComponent, public IVoxtaAudioPlaybackBase
+class UNREALVOXTA_API UVoxtaAudioPlayback : public UAudioComponent, public IA2FWeightProvider
 {
 	GENERATED_BODY()
 
@@ -72,20 +71,31 @@ public:
 	void MarkCustomPlaybackComplete(const FGuid& guid);
 #pragma endregion
 
+#pragma region IA2FWeightProvider overrides
+public:
+	virtual void GetA2FCurveWeightsPreUpdate(TArray<float>& targetArrayRef) override;
+#pragma endregion
+
 #pragma region UActorComponent overrides
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type endPlayReason) override;
 #pragma endregion
 
-#pragma region IVoxtaAudioPlaybackBase overrides
-public:
-	virtual void GetA2FCurveWeights(TArray<float>& targetArrayRef) override;
+#pragma region private helper classes
+private:
+	enum class AudioPlaybackInternalState : uint8
+	{
+		Idle,
+		Playing,
+		Done
+	};
 #pragma endregion
 
 #pragma region data
 private:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Voxta",
+		meta = (AllowPrivateAccess = "true", DisplayName = "Lipsync Type"))
 	LipSyncType m_lipSyncType;
 
 	// TODO: use interface so we don't have to cast to cast to UAudio2FacePlaybackHandler or
@@ -115,7 +125,7 @@ private:
 	 * @param message The message of which the URLs will be used to fetch the wav audio data.
 	 */
 	UFUNCTION()
-	void PlaybackMessage(const FCharDataBase& sender, const FChatMessage& message);
+	void PlaybackMessage(const FBaseCharData& sender, const FChatMessage& message);
 
 	/** Begin playing the audioclip on the currently marked index, if it is available */
 	void PlayCurrentAudioChunkIfAvailable();

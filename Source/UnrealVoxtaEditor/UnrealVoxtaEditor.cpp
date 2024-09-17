@@ -2,4 +2,4 @@
 
 #include "UnrealVoxtaEditor.h"
 
-IMPLEMENT_MODULE(FUnrealVoxtaEditorModule, UnrealVoxtaEditor)
+IMPLEMENT_MODULE(FDefaultModuleImpl, UnrealVoxtaEditor)

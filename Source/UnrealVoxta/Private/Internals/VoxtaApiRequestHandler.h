@@ -36,7 +36,7 @@ public:
 	 *
 	 * Note: Requesting the start of a chat is a seperate request, this only loads the character.
 	 *
-	 * @param characterId The FCharDataBase::m_id of the character that you want to load.
+	 * @param characterId The FBaseCharData::m_id of the character that you want to load.
 	 *
 	 * @return The SignalR formatted message containing the request.
 	 */
