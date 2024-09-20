@@ -10,7 +10,7 @@
 /// Read-only data struct containing the relevant data of the 'charactersListLoaded' response
 /// from the VoxtaServer.
 /// </summary>
-struct ServerResponseCharacterList : public IServerResponseBase
+struct ServerResponseCharacterList : public ServerResponseBase
 {
 public:
 	const TArray<FAiCharData> m_characters;

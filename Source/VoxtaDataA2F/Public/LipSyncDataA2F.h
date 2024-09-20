@@ -3,16 +3,16 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "LipSyncDataBase.h"
+#include "LipSyncBaseData.h"
 #include "LipSyncDataA2F.generated.h"
 
 UCLASS()
-class VOXTADATAA2F_API ULipSyncDataA2F : public UObject, public ILipSyncDataBase
+class VOXTADATAA2F_API ULipSyncDataA2F : public UObject, public ILipSyncBaseData
 {
 	GENERATED_BODY()
 
 public:
-	ULipSyncDataA2F() : ILipSyncDataBase(LipSyncType::Audio2Face)
+	ULipSyncDataA2F() : ILipSyncBaseData(LipSyncType::Audio2Face)
 	{
 	}
 
@@ -32,12 +32,12 @@ public:
 		return m_completeSampleCount;
 	}
 
-	//~ Start ILipSyncDataBase overrides
+	//~ Start ILipSyncBaseData overrides
 public:
 	virtual void CleanupData() override
 	{
 	}
-	//~ End ILipSyncDataBase overrides
+	//~ End ILipSyncBaseData overrides
 
 protected:
 	int m_framesPerSecond;

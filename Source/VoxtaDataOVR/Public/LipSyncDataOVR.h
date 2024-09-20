@@ -3,18 +3,18 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "LipSyncDataBase.h"
+#include "LipSyncBaseData.h"
 #include "LipSyncDataOVR.generated.h"
 
 class UOVRLipSyncFrameSequence;
 
 UCLASS()
-class VOXTADATAOVR_API ULipSyncDataOVR : public UObject, public ILipSyncDataBase
+class VOXTADATAOVR_API ULipSyncDataOVR : public UObject, public ILipSyncBaseData
 {
 	GENERATED_BODY()
 
 public:
-	ULipSyncDataOVR() : ILipSyncDataBase(LipSyncType::OVRLipSync)
+	ULipSyncDataOVR() : ILipSyncBaseData(LipSyncType::OVRLipSync)
 	{
 	}
 
@@ -28,14 +28,14 @@ public:
 		return m_ovrLipSyncFrameSequence;
 	}
 
-	//~ Start ILipSyncDataBase overrides
+	//~ Start ILipSyncBaseData overrides
 public:
 	virtual void CleanupData() override
 	{
 		m_ovrLipSyncFrameSequence = nullptr;
 		this->RemoveFromRoot();
 	}
-	//~ End ILipSyncDataBase overrides
+	//~ End ILipSyncBaseData overrides
 
 protected:
 	UPROPERTY()

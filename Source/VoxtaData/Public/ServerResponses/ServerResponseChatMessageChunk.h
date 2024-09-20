@@ -12,7 +12,7 @@
 struct ServerResponseChatMessageChunk : public IServerResponseChatMessageBase
 {
 public:
-	const FString m_senderId;
+	const FString SENDER_ID;
 	const int m_startIndex = 0;
 	const int m_endIndex = 0;
 	const FString m_messageText;
@@ -26,7 +26,7 @@ public:
 			FStringView messageText,
 			FStringView audioUrlPath) :
 		IServerResponseChatMessageBase(messageId, sessionId),
-		m_senderId(senderId),
+		SENDER_ID(senderId),
 		m_startIndex(startIndex),
 		m_endIndex(endIndex),
 		m_messageText(messageText),

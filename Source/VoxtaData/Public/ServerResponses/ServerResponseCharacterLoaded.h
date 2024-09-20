@@ -9,7 +9,7 @@
 /// Read-only data struct containing the relevant data of the 'characterLoaded' response
 /// from the VoxtaServer.
 /// </summary>
-struct ServerResponseCharacterLoaded : public IServerResponseBase
+struct ServerResponseCharacterLoaded : public ServerResponseBase
 {
 public:
 	const FString m_characterId;

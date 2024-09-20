@@ -6,9 +6,8 @@
 
 /**
  * MessageChunkState
- * All the possible states that a MessageChunkAudioContainer can be in.
+ * All the possible states that an instance of MessageChunkAudioContainer could be in.
  *
- * Technically not needed, but makes maintenance much easier.
  * Used for communication between an instance of MessageChunkAudioContainer and the VoxtaAudioPlayback that manages it.
  * Can be fetched via GetCurrentState of the MessageChunkAudioContainer instance
  */

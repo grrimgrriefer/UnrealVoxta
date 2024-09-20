@@ -9,7 +9,7 @@
 /// Abstract read-only data struct containing the shared relevant data for all
 /// the 'replyX' responses from the VoxtaServer.
 /// </summary>
-struct IServerResponseChatMessageBase : IServerResponseBase
+struct IServerResponseChatMessageBase : ServerResponseBase
 {
 public:
 	enum class MessageType
@@ -20,14 +20,14 @@ public:
 		MessageCancelled
 	};
 
-	const FString m_messageId;
-	const FString m_sessionId;
+	const FString MESSAGE_ID;
+	const FString SESSION_ID;
 
 	explicit IServerResponseChatMessageBase(
 			FStringView messageId,
 			FStringView sessionId) :
-		m_messageId(messageId),
-		m_sessionId(sessionId)
+		MESSAGE_ID(messageId),
+		SESSION_ID(sessionId)
 	{
 	}
 

@@ -4,35 +4,37 @@
 
 #include "CoreMinimal.h"
 #include "ServerResponseBase.h"
-#include "VoxtaData/Public/VoxtaServiceData.h"
 
-/// <summary>
-/// Read-only data struct containing the relevant data of the 'SpeechTranscription' response
-/// from the VoxtaServer.
-/// </summary>
-struct ServerResponseSpeechTranscription : public IServerResponseBase
+/**
+ * Read-only data struct containing the relevant data of the 'SpeechTranscription' response from the VoxtaServer.
+ */
+struct ServerResponseSpeechTranscription : public ServerResponseBase
 {
+#pragma region helper classes
 public:
+	/** Contains the possible states that of the transcribed speech, as reported by the VoxtaClient. */
 	enum class TranscriptionState
 	{
 		PARTIAL,
 		END,
 		CANCELLED
 	};
+#pragma endregion
 
-	const TranscriptionState m_transcriptionState;
-	const FString m_transcribedSpeech;
-
+#pragma region public API
+public:
+	/** Create a deserialized version of the VoxtaServer response represents the 'SpeechTranscription' data. */
 	explicit ServerResponseSpeechTranscription(FStringView transcribedSpeech,
-			TranscriptionState transcriptionState) :
-		m_transcriptionState(transcriptionState),
-		m_transcribedSpeech(transcribedSpeech)
+			TranscriptionState transcriptionState) : ServerResponseBase(ServerResponseType::SpeechTranscription),
+		TRANSCRIPTION_STATE(transcriptionState),
+		TRANSCRIBED_SPEECH(transcribedSpeech)
 	{
 	}
+#pragma endregion
 
-	///<inheritdoc />
-	ServerResponseType GetType() const final
-	{
-		return ServerResponseType::SpeechTranscription;
-	}
+#pragma region data
+public:
+	const TranscriptionState TRANSCRIPTION_STATE;
+	const FString TRANSCRIBED_SPEECH;
+#pragma endregion
 };

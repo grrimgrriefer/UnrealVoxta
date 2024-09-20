@@ -5,35 +5,31 @@
 #include "CoreMinimal.h"
 #include "ServerResponseBase.h"
 
-/// <summary>
-/// Read-only data struct containing the relevant data of the 'update' response
-/// from the VoxtaServer.
-/// </summary>
-struct ServerResponseChatUpdate : IServerResponseBase
+/**
+ * Read-only data struct containing the relevant data of the 'update' response from the VoxtaServer.
+ */
+struct ServerResponseChatUpdate : ServerResponseBase
 {
+#pragma region public API
 public:
-	const FString m_messageId;
-	const FString m_senderId;
-	const FString m_text;
-	const FString m_sessionId;
-
+	/** Create a deserialized version of the VoxtaServer response represents the 'ChatUpdate' data. */
 	explicit ServerResponseChatUpdate(FStringView messageId,
 			FStringView senderId,
 			FStringView text,
-			FStringView sessionId) :
-		m_messageId(messageId),
-		m_senderId(senderId),
-		m_text(text),
-		m_sessionId(sessionId)
+			FStringView sessionId) : ServerResponseBase(ServerResponseType::ChatUpdate),
+		MESSAGE_ID(messageId),
+		SENDER_ID(senderId),
+		TEXT_CONTENT(text),
+		SESSION_ID(sessionId)
 	{
 	}
+#pragma endregion
 
-	/// <summary>
-	/// Identifies the response type as ChatUpdate.
-	/// </summary>
-	/// <returns>Returns MessageType::ChatUpdate.</returns>
-	ServerResponseType GetType() const final
-	{
-		return ServerResponseType::ChatUpdate;
-	}
+#pragma region data
+public:
+	const FString MESSAGE_ID;
+	const FString SENDER_ID;
+	const FString TEXT_CONTENT;
+	const FString SESSION_ID;
+#pragma endregion
 };

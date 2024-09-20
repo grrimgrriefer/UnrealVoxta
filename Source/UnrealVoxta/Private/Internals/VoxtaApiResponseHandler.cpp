@@ -16,7 +16,7 @@
 #include "VoxtaData/Public/ServerResponses/ServerResponseSpeechTranscription.h"
 #include "VoxtaData/Public/VoxtaServiceData.h"
 
-TUniquePtr<IServerResponseBase> VoxtaApiResponseHandler::GetResponseData(
+TUniquePtr<ServerResponseBase> VoxtaApiResponseHandler::GetResponseData(
 	const TMap<FString, FSignalRValue>& serverResponseData) const
 {
 	using enum ServerResponseType;

@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "LipSyncDataBase.h"
+#include "LipSyncBaseBase.h"
 #include "LipSyncDataCustom.generated.h"
 
 /**
@@ -20,13 +20,18 @@ class ULipSyncDataCustom : public UObject, public ILipSyncDataBase
 
 #pragma region public API
 public:
-	ULipSyncDataCustom() : ILipSyncDataBase(LipSyncType::Custom)
+	/** Create an instance of the LipSyncData holder for CustomLipSync. */
+	explicit ULipSyncDataCustom() : ILipSyncDataBase(LipSyncType::Custom)
 	{
 	};
 #pragma endregion
 
 #pragma region ILipSyncDataBase overrides
 public:
+	/**
+	 * Clean up the data that was made / kept that was directly tied to the playback of one voiceline.
+	 * Once this is called all memory will be cleaned and the playback can no longer be done.
+	 */
 	virtual void CleanupData() override
 	{
 	}

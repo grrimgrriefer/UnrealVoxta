@@ -36,8 +36,8 @@ class UNREALVOXTA_API UVoxtaClient : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
 
-public:
 #pragma region delegate declarations
+public:
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientStateChanged, VoxtaClientState, newState);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientCharacterRegistered, const FAiCharData&, charData);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FVoxtaClientCharMessageAdded, const FBaseCharData&, sender, const FChatMessage&, message);
@@ -54,6 +54,7 @@ public:
 #pragma endregion
 
 #pragma region events
+public:
 	/** Event fired when the internal VoxtaClient has finished transitioning to a different state. */
 	UPROPERTY(BlueprintAssignable, Category = "Voxta", meta = (IsBindableEvent = "True"))
 	FVoxtaClientStateChanged VoxtaClientStateChangedEvent;
@@ -106,7 +107,10 @@ public:
 #pragma endregion
 
 #pragma region UGameInstanceSubsystem overrides
+public:
+	/** Initialization of the instance of the system */
 	virtual void Initialize(FSubsystemCollectionBase& collection) override;
+	/** Deinitialization of the instance of the system */
 	virtual void Deinitialize() override;
 #pragma endregion
 
@@ -219,9 +223,14 @@ private:
 	void StartListeningToServer();
 
 #pragma region IHubConnection listeners
+private:
+	/** Called when a new message was received via the connection. */
 	void OnReceivedMessage(const TArray<FSignalRValue>& arguments);
+	/** Called when a connection has been established successfully. */
 	void OnConnected();
+	/** Called when a connection could not be established. */
 	void OnConnectionError(const FString& error);
+	/** Called when a web socket connection has been closed. */
 	void OnClosed();
 #pragma endregion
 
@@ -248,7 +257,7 @@ private:
 	 * Template helper function to call the appropriate response handler,
 	 * also takes care of casting to the derived type.
 	 *
-	 * @tparam T The target type to cast towards to, should derive from IServerResponseBase.
+	 * @tparam T The target type to cast towards to, should derive from ServerResponseBase.
 	 * @param response The raw reponse object.
 	 * @param message The message that will be logged.
 	 * @param handler The function responsible for handling the derived object.
@@ -256,17 +265,26 @@ private:
 	 * @return True if the response was handled correctly, false otherwise.
 	 */
 	template<typename T>
-	bool HandleResponseHelper(const IServerResponseBase* response, const FString& logMessage,
+	bool HandleResponseHelper(const ServerResponseBase* response, const FString& logMessage,
 		bool (UVoxtaClient::* handler)(const T&));
 
 #pragma region VoxtaServer response handlers
+private:
+	/** Main response helper, will redirect to the appropriate version with the deserialized data. */
 	bool HandleResponse(const TMap<FString, FSignalRValue>& responseData);
+	/** Takes care of ServerResponseWelcome responses. */
 	bool HandleWelcomeResponse(const ServerResponseWelcome& response);
+	/** Takes care of ServerResponseCharacterList responses. */
 	bool HandleCharacterListResponse(const ServerResponseCharacterList& response);
+	/** Takes care of ServerResponseCharacterLoaded responses. */
 	bool HandleCharacterLoadedResponse(const ServerResponseCharacterLoaded& response);
+	/** Takes care of ServerResponseChatStarted responses. */
 	bool HandleChatStartedResponse(const ServerResponseChatStarted& response);
+	/** Takes care of IServerResponseChatMessageBase responses. */
 	bool HandleChatMessageResponse(const IServerResponseChatMessageBase& response);
+	/** Takes care of ServerResponseChatUpdate responses. */
 	bool HandleChatUpdateResponse(const ServerResponseChatUpdate& response);
+	/** Takes care of ServerResponseSpeechTranscription responses. */
 	bool HandleSpeechTranscriptionResponse(const ServerResponseSpeechTranscription& response);
 #pragma endregion
 

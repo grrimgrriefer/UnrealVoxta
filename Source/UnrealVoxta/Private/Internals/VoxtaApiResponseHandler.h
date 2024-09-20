@@ -6,7 +6,7 @@
 #include "VoxtaDefines.h"
 
 class FSignalRValue;
-struct IServerResponseBase;
+struct ServerResponseBase;
 struct ServerResponseWelcome;
 struct ServerResponseCharacterList;
 struct ServerResponseCharacterLoaded;
@@ -48,44 +48,55 @@ public:
 	 *
 	 * @param serverResponseData The raw data received from the SignalR message.
 	 *
-	 * @return The uniqueptr to the deserialized object, which derives from IServerResponseBase.
+	 * @return The uniqueptr to the deserialized object, which derives from ServerResponseBase.
 	 */
-	TUniquePtr<IServerResponseBase> GetResponseData(
+	TUniquePtr<ServerResponseBase> GetResponseData(
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
 #pragma endregion
 
 #pragma region VoxtaServer response deserialize handlers
 private:
+	/** ServerResponseWelcome override of the generic GetResponseData */
 	TUniquePtr<ServerResponseWelcome> GetWelcomeResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
 
+	/** ServerResponseCharacterList override of the generic GetResponseData */
 	TUniquePtr<ServerResponseCharacterList> GetCharacterListLoadedResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
 
+	/** ServerResponseCharacterLoaded override of the generic GetResponseData */
 	TUniquePtr<ServerResponseCharacterLoaded> GetCharacterLoadedResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
 
+	/** ServerResponseChatStarted override of the generic GetResponseData */
 	TUniquePtr<ServerResponseChatStarted> GetChatStartedResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
 
+	/** ServerResponseChatMessageStart override of the generic GetResponseData */
 	TUniquePtr<ServerResponseChatMessageStart> GetReplyStartReponseResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
 
+	/** ServerResponseChatMessageChunk override of the generic GetResponseData */
 	TUniquePtr<ServerResponseChatMessageChunk> GetReplyChunkReponseResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
 
+	/** ServerResponseChatMessageEnd override of the generic GetResponseData */
 	TUniquePtr<ServerResponseChatMessageEnd> GetReplyEndReponseResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
 
+	/** ServerResponseChatMessageCancelled override of the generic GetResponseData */
 	TUniquePtr<ServerResponseChatMessageCancelled> GetReplyCancelledResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
 
+	/** ServerResponseChatUpdate override of the generic GetResponseData */
 	TUniquePtr<ServerResponseChatUpdate> GetChatUpdateResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
 
+	/** ServerResponseSpeechTranscription (partial) override of the generic GetResponseData */
 	TUniquePtr<ServerResponseSpeechTranscription> GetSpeechRecognitionPartial(
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
 
+	/** ServerResponseSpeechTranscription (end) override of the generic GetResponseData */
 	TUniquePtr<ServerResponseSpeechTranscription> GetSpeechRecognitionEnd(
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
 #pragma endregion

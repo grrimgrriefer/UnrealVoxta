@@ -6,7 +6,7 @@
 
 /**
  * VoxtaClientState
- * The possible states that can be reported by the VoxtaClient when polled.
+ * Contains the possible states that can be reported by the VoxtaClient when polled.
  *
  * Used by communication between the UVoxtaClient and external systems. (VoxtaAudioInput, blueprints, etc.)
  * Can be fetched via GetCurrentState or through the VoxtaClientStateChangedEvent.

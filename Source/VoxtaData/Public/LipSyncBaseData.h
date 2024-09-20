@@ -4,40 +4,49 @@
 
 #include "CoreMinimal.h"
 #include "LipSyncType.h"
-#include "LipSyncDataBase.generated.h"
+#include "LipSyncBaseData.generated.h"
 
 /**
- * ULipSyncDataBase
- * Used by UE to ensure the ILipSyncDataBase interface is picked up by Unreal's Reflection system
+ * ULipSyncBaseData
+ * Used by UE to ensure the ILipSyncBaseData interface is picked up by Unreal's Reflection system
  */
 UINTERFACE(MinimalAPI, meta = (CannotImplementInterfaceInBlueprint))
-class ULipSyncDataBase : public UInterface
+class ULipSyncBaseData : public UInterface
 {
 	GENERATED_BODY()
 };
 
 /**
- * ILipSyncDataBase
+ * ILipSyncBaseData
  * The interface implemented by whoever should hold the LipSync related data & be responsible for cleaning it up.
+ * Each MessageChunkAudioContainer should have one instance of a class deriving from this class (except if for
+ * LipSyncType None)
  *
- * Note: This instance only contains the data for a single VoiceLine. It is not recycled, nor is it guaranteed to
+ * Note: Instances of this only contain the data for a single VoiceLine. It is not recycled, nor is it guaranteed to
  * contain all the lipsync data for the entire ChatMessage.
+ *
  * In practice this is used to ensure the VoxtaAudioPlayback and (most of ) the MessageChunkAudioContainer
  * doesn't need to know which type of lipsync is used.
  */
-class ILipSyncDataBase
+class ILipSyncBaseData
 {
 	GENERATED_BODY()
 
-public:
 #pragma region public API
-	ILipSyncDataBase()
+public:
+	/** Default constructor, should not be used manually, but is enforced by Unreal */
+	explicit ILipSyncBaseData()
 	{
 		m_id = FGuid::NewGuid();
 		m_lipsyncType = LipSyncType::None;
 	};
 
-	ILipSyncDataBase(LipSyncType lipSyncType)
+	/**
+	 * Assigns a unique ID to the instance and sets the LipSyncType in a const field.
+	 *
+	 * @param lipSyncType The type of data that this instance will hold (for which lipsync type)
+	 */
+	explicit ILipSyncBaseData(LipSyncType lipSyncType)
 	{
 		m_id = FGuid::NewGuid();
 		m_lipsyncType = lipSyncType;

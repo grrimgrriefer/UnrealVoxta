@@ -23,8 +23,8 @@ class UNREALVOXTA_API UVoxtaAudioPlayback : public UAudioComponent, public IA2FW
 {
 	GENERATED_BODY()
 
-public:
 #pragma region delegate declarations
+public:
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaMessageAudioPlaybackCompleted, const FString&, messageId);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FVoxtaMessageAudioChunkReadyForCustomPlayback, const TArray<uint8>&, rawBytes, const USoundWaveProcedural*, processedSoundWave, const FGuid&, audioChunkGuid);
 
@@ -33,6 +33,7 @@ public:
 #pragma endregion
 
 #pragma region events
+public:
 	/** Event fired when the UAudioComponent reports that the audio has finished playing. */
 	UPROPERTY(BlueprintAssignable, Category = "Voxta", meta = (IsBindableEvent = "True"))
 	FVoxtaMessageAudioPlaybackCompleted VoxtaMessageAudioPlaybackFinishedEvent;
@@ -73,17 +74,34 @@ public:
 
 #pragma region IA2FWeightProvider overrides
 public:
+	/**
+	 * Retrieve the A2F curveWeights for the upcoming update tick.
+	 *
+	 * @param targetArrayRef The array that will be used to fill the new curves. Old values will be overwritten.
+	 */
 	virtual void GetA2FCurveWeightsPreUpdate(TArray<float>& targetArrayRef) override;
 #pragma endregion
 
 #pragma region UActorComponent overrides
 protected:
+	/**
+	 * Begins Play for the component.
+	 * Called when the owning Actor begins play or when the component is created if the Actor has already begun play.
+	 * Actor BeginPlay normally happens right after PostInitializeComponents but can be delayed for networked or child actors.
+	 * Requires component to be registered and initialized.
+	 */
 	virtual void BeginPlay() override;
+
+	/**
+	 * Ends gameplay for this component.
+	 * Called from AActor::EndPlay only if bHasBegunPlay is true
+	 */
 	virtual void EndPlay(const EEndPlayReason::Type endPlayReason) override;
 #pragma endregion
 
 #pragma region private helper classes
 private:
+	/** Internal helper class, easier to keep track of what's going on, as well as user-friendly logging. */
 	enum class AudioPlaybackInternalState : uint8
 	{
 		Idle,
@@ -118,6 +136,7 @@ private:
 #pragma endregion
 
 #pragma region private API
+private:
 	/**
 	 * The main entrypoint, hooked into the VoxtaClient and will trigger the download & playback of the audio.
 	 *

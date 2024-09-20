@@ -5,31 +5,52 @@
 #include "CoreMinimal.h"
 #include "BaseCharData.generated.h"
 
-/// <summary>
-/// Base struct that contains all the relevant information for an AI character.
-///
-/// NOTE: This is not abstract due to USTRUCT, but should be considered as such.
-/// </summary>
-USTRUCT(BlueprintType)
+/**
+ * FBaseCharData
+ * Read-only data struct containing all the universal information fields. Can be used by systems who don't need to
+ * know if this is an AiCharacer or a UserCharacter representing the User (player).
+ *
+ * Resides in the UVoxtaClient directly.
+ * Cannot be retrieved or fetched through any public API, but will be referenced via the
+ * VoxtaClientCharMessageAddedEvent when the user has contributed a message to the chat.
+ */
+USTRUCT(BlueprintType, Category = "Voxta")
 struct VOXTADATA_API FBaseCharData
 {
 	GENERATED_BODY()
 
+#pragma region public API
 public:
+	/**  @return Immutable reference to the VoxtaServer assigned id of this character. */
 	FStringView GetId() const { return m_id; }
+
+	/**  @return Immutable reference to the name of the character who said this message. */
 	FStringView GetName() const { return m_name; }
 
+	/**
+	 * Create an instance of the datacontainer for the CharData.
+	 *
+	 * @param id The id (guid in string version) that the VoxtaServer has assigned to this character.
+	 * @param name The name of this character, as reported by VoxtaServer
+	 */
 	explicit FBaseCharData(FStringView id, FStringView name) :
 		m_id(id),
 		m_name(name)
-	{}
+	{
+	}
 
+	/** Default constructor, should not be used manually, but is enforced by Unreal */
 	explicit FBaseCharData() {};
+#pragma endregion
 
-protected:
-	UPROPERTY(BlueprintReadOnly)
+#pragma region data
+private:
+	UPROPERTY(BlueprintReadOnly, Category = "Voxta",
+		meta = (AllowPrivateAccess = "true", DisplayName = "Character ID"))
 	FString m_id;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Voxta",
+		meta = (AllowPrivateAccess = "true", DisplayName = "Name"))
 	FString m_name;
+#pragma endregion
 };

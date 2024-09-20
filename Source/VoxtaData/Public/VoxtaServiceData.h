@@ -7,10 +7,11 @@
 /**
  * VoxtaServiceData
  * Data class containing the relevant information for VoxtaServer services.
- * Currently used as part of the FChatSession data container.
  *
- * Note: There is currently no support for disabling / enabling VoxtaServer services while the conversation is on-going.
- */
+ * Resides in the FChatSession data container.
+ * Cannot be fetched by anything yet, as it serves no use at the moment. (TODO: support for runtime enabling/disabling
+ * of VoxtaServer Services)
+  */
 struct VoxtaServiceData
 {
 #pragma region public helper classes
@@ -29,6 +30,14 @@ public:
 #pragma endregion
 
 #pragma region public API
+public:
+	/**
+	 * Create an instance, containing the data for one specific VoxtaServer service.
+	 *
+	 * @param type The kind of service is this data tied to.
+	 * @param name The name of this service. (hard-coded, NOT from VoxtaServer)
+	 * @param id The VoxtaServer assigned id (guid in string format) tied to this service.
+	 */
 	explicit VoxtaServiceData(ServiceType type,
 			FStringView name,
 			FStringView id) :
@@ -40,6 +49,7 @@ public:
 #pragma endregion
 
 #pragma region data
+public:
 	const ServiceType SERVICE_TYPE;
 	const FString SERVICE_NAME;
 	const FString SERVICE_ID;

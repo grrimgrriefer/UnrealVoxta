@@ -6,26 +6,22 @@
 #include "ServerResponseBase.h"
 #include "UserCharData.h"
 
-/// <summary>
-/// Read-only data struct containing the relevant data of the 'welcome' response
-/// from the VoxtaServer.
-/// </summary>
-struct ServerResponseWelcome : public IServerResponseBase
+/**
+ * Read-only data struct containing the relevant data of the 'welcome' response from the VoxtaServer.
+ */
+struct ServerResponseWelcome : public ServerResponseBase
 {
+#pragma region public API
 public:
-	const FUserCharData m_user;
-
-	explicit ServerResponseWelcome(const FUserCharData& userData) :
-		m_user(userData)
+	/** Create a deserialized version of the VoxtaServer response represents the 'Welcome' data. */
+	explicit ServerResponseWelcome(const FUserCharData& userData) : ServerResponseBase(ServerResponseType::Welcome),
+		USER_DATA(userData)
 	{
 	}
+#pragma endregion
 
-	/// <summary>
-	/// Identifies the response type as Welcome.
-	/// </summary>
-	/// <returns>Returns MessageType::Welcome.</returns>
-	ServerResponseType GetType() const final
-	{
-		return ServerResponseType::Welcome;
-	}
+#pragma region data
+public:
+	const FUserCharData USER_DATA;
+#pragma endregion
 };

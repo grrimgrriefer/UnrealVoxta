@@ -86,6 +86,7 @@ private:
 #pragma endregion
 
 #pragma region private API
+private:
 	/** Download the audio data into memory from the VoxtaServer REST api. */
 	void DownloadData();
 

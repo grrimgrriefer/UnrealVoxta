@@ -6,10 +6,10 @@
 
 /**
  * ServerResponseType
- * Used to identify the response type of a reply that has been received by the VoxtaServer.
+ * Contains the possible response types that can be reported by the VoxtaApiReponseHandler.
  *
- * Technically not necessary, but makes maintenance a lot easier.
- * Can be fetched via that IServerResponseBase.GetType() of any instance deriving from it.
+ * Used to identify the response type of a reply that has been received by the VoxtaServer.
+ * Can be fetched via that ServerResponseBase.GetType() of any instance deriving from it.
  */
 UENUM()
 enum class ServerResponseType : uint8

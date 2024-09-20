@@ -233,7 +233,7 @@ void UVoxtaClient::OnMessageSent(const FSignalRInvokeResult& deliveryReceipt)
 }
 
 template<typename T>
-bool UVoxtaClient::HandleResponseHelper(const IServerResponseBase* response, const FString& logMessage,
+bool UVoxtaClient::HandleResponseHelper(const ServerResponseBase* response, const FString& logMessage,
 	bool (UVoxtaClient::* handler)(const T&))
 {
 	const T* derivedResponse = StaticCast<const T*>(response);
@@ -254,7 +254,7 @@ bool UVoxtaClient::HandleResponse(const TMap<FString, FSignalRValue>& responseDa
 		return true;
 	}
 
-	TUniquePtr<IServerResponseBase> response = m_voxtaResponseApi.GetResponseData(responseData);
+	TUniquePtr<ServerResponseBase> response = m_voxtaResponseApi.GetResponseData(responseData);
 	if (!response.IsValid())
 	{
 		UE_LOGFMT(VoxtaLog, Error, "Failed to deserialize message of type: {0}", responseType);
@@ -294,7 +294,7 @@ bool UVoxtaClient::HandleResponse(const TMap<FString, FSignalRValue>& responseDa
 
 bool UVoxtaClient::HandleWelcomeResponse(const ServerResponseWelcome& response)
 {
-	m_userData = MakeUnique<FUserCharData>(response.m_user);
+	m_userData = MakeUnique<FUserCharData>(response.USER_DATA);
 
 	UE_LOGFMT(VoxtaLog, Log, "Authenticated with Voxta Server. Welcome {0}! :D", m_userData->GetName());
 
@@ -361,7 +361,7 @@ bool UVoxtaClient::HandleChatStartedResponse(const ServerResponseChatStarted& re
 	}
 
 	m_chatSession = MakeUnique<FChatSession>(chatCharacters, response.m_chatId,
-		response.m_sessionId, response.m_services);
+		response.SESSION_ID, response.m_services);
 	VoxtaClientChatSessionStartedEventNative.Broadcast(*m_chatSession.Get());
 	VoxtaClientChatSessionStartedEvent.Broadcast(*m_chatSession.Get());
 	SetState(VoxtaClientState::GeneratingReply);
@@ -370,7 +370,7 @@ bool UVoxtaClient::HandleChatStartedResponse(const ServerResponseChatStarted& re
 
 bool UVoxtaClient::HandleChatMessageResponse(const IServerResponseChatMessageBase& response)
 {
-	TArray<FChatMessage>& messages = m_chatSession->m_chatMessages;
+	TArray<FChatMessage>& messages = m_chatSession->GetChatMessages();
 	using enum IServerResponseChatMessageBase::MessageType;
 	switch (response.GetMessageType())
 	{
@@ -378,16 +378,16 @@ bool UVoxtaClient::HandleChatMessageResponse(const IServerResponseChatMessageBas
 		{
 			const ServerResponseChatMessageStart* derivedResponse =
 				StaticCast<const ServerResponseChatMessageStart*>(&response);
-			messages.Emplace(FChatMessage(derivedResponse->m_messageId, derivedResponse->m_senderId));
+			messages.Emplace(FChatMessage(derivedResponse->MESSAGE_ID, derivedResponse->SENDER_ID));
 
-			UE_LOGFMT(VoxtaLog, Log, "Registered start of message with id: {0}", derivedResponse->m_messageId);
+			UE_LOGFMT(VoxtaLog, Log, "Registered start of message with id: {0}", derivedResponse->MESSAGE_ID);
 			break;
 		}
 		case MessageChunk:
 		{
 			const ServerResponseChatMessageChunk* derivedResponse =
 				StaticCast<const ServerResponseChatMessageChunk*>(&response);
-			FChatMessage* chatMessage = GetChatMessageById(derivedResponse->m_messageId);
+			FChatMessage* chatMessage = GetChatMessageById(derivedResponse->MESSAGE_ID);
 
 			if (chatMessage)
 			{
@@ -398,7 +398,7 @@ bool UVoxtaClient::HandleChatMessageResponse(const IServerResponseChatMessageBas
 					: " " + derivedResponse->m_messageText);
 				chatMessage->m_audioUrls.Emplace(derivedResponse->m_audioUrlPath);
 
-				UE_LOGFMT(VoxtaLog, Log, "Updated message contents of message with id: {0}", derivedResponse->m_messageId);
+				UE_LOGFMT(VoxtaLog, Log, "Updated message contents of message with id: {0}", derivedResponse->MESSAGE_ID);
 			}
 			else
 			{
@@ -411,16 +411,16 @@ bool UVoxtaClient::HandleChatMessageResponse(const IServerResponseChatMessageBas
 		{
 			const ServerResponseChatMessageEnd* derivedResponse =
 				StaticCast<const ServerResponseChatMessageEnd*>(&response);
-			FChatMessage* chatMessage = GetChatMessageById(derivedResponse->m_messageId);
+			const FChatMessage* chatMessage = GetChatMessageById(derivedResponse->MESSAGE_ID);
 
 			if (chatMessage)
 			{
-				const TUniquePtr<const FAiCharData>* character = GetAiCharacterDataById(derivedResponse->m_senderId);
+				const TUniquePtr<const FAiCharData>* character = GetAiCharacterDataById(derivedResponse->SENDER_ID);
 
 				if (character->IsValid())
 				{
 					UE_LOGFMT(VoxtaLog, Log, "Message with id: {0} marked as complete. Speaker: {1} Contents: {2}",
-						derivedResponse->m_messageId, character->Get()->GetName(), chatMessage->m_text);
+						derivedResponse->MESSAGE_ID, character->Get()->GetName(), chatMessage->m_text);
 
 					SetState(VoxtaClientState::AudioPlayback);
 					VoxtaClientCharMessageAddedEventNative.Broadcast(*character->Get(), *chatMessage);
@@ -429,7 +429,7 @@ bool UVoxtaClient::HandleChatMessageResponse(const IServerResponseChatMessageBas
 				else
 				{
 					UE_LOGFMT(VoxtaLog, Warning, "Received a messageEnd for a character that we don't have registered. "
-						"senderId: {0} messageId: {1}", derivedResponse->m_senderId, chatMessage->GetMessageId());
+						"senderId: {0} messageId: {1}", derivedResponse->SENDER_ID, chatMessage->GetMessageId());
 				}
 			}
 			else
@@ -445,11 +445,11 @@ bool UVoxtaClient::HandleChatMessageResponse(const IServerResponseChatMessageBas
 				StaticCast<const ServerResponseChatMessageCancelled*>(&response);
 			int index = messages.IndexOfByPredicate([derivedResponse] (const FChatMessage& InItem)
 				{
-					return InItem.GetMessageId() == derivedResponse->m_messageId;
+					return InItem.GetMessageId() == derivedResponse->MESSAGE_ID;
 				});
 
 			UE_LOGFMT(VoxtaLog, Log, "Message with id: {0} marked as cancelled, removing it from the history.",
-				derivedResponse->m_messageId);
+				derivedResponse->MESSAGE_ID);
 
 			VoxtaClientCharMessageRemovedEventNative.Broadcast(messages[index]);
 			VoxtaClientCharMessageRemovedEvent.Broadcast(messages[index]);
@@ -461,32 +461,32 @@ bool UVoxtaClient::HandleChatMessageResponse(const IServerResponseChatMessageBas
 
 bool UVoxtaClient::HandleChatUpdateResponse(const ServerResponseChatUpdate& response)
 {
-	if (response.m_sessionId == m_chatSession->GetSessionId())
+	if (response.SESSION_ID == m_chatSession->GetSessionId())
 	{
-		if (GetChatMessageById(response.m_messageId) != nullptr)
+		if (GetChatMessageById(response.MESSAGE_ID) != nullptr)
 		{
 			UE_LOGFMT(VoxtaLog, Error, "Recieved a chat update but a message with that id already exists, "
 				"let me know if this ever triggers as it has no implementation. Sender: {0} MessageId {1} Content: {2}",
-				response.m_senderId, response.m_messageId, response.m_text);
+				response.SENDER_ID, response.MESSAGE_ID, response.TEXT_CONTENT);
 			return false;
 		}
 		else
 		{
-			if (m_userData.Get()->GetId() != response.m_senderId)
+			if (m_userData.Get()->GetId() != response.SENDER_ID)
 			{
 				UE_LOGFMT(VoxtaLog, Error, "Recieved chat update for an ai character, "
 					"let me know if this ever triggers cuz it seemed to be only user-specific. Sender: {0} Content: {1}",
-					response.m_senderId, response.m_text);
+					response.SENDER_ID, response.TEXT_CONTENT);
 				return false;
 			}
 
 			UE_LOGFMT(VoxtaLog, Log, "Adding user-message to history due to update from VoxtaServer. "
-				"MessageId {0} Content: {1}", response.m_messageId, response.m_text);
+				"MessageId {0} Content: {1}", response.MESSAGE_ID, response.TEXT_CONTENT);
 
-			m_chatSession->m_chatMessages.Emplace(
-				FChatMessage(response.m_messageId, response.m_senderId, response.m_text));
+			m_chatSession->GetChatMessages().Emplace(
+				FChatMessage(response.MESSAGE_ID, response.SENDER_ID, response.TEXT_CONTENT));
 
-			FChatMessage* chatMessage = GetChatMessageById(response.m_messageId);
+			const FChatMessage* chatMessage = GetChatMessageById(response.MESSAGE_ID);
 			VoxtaClientCharMessageAddedEventNative.Broadcast(*m_userData.Get(), *chatMessage);
 			VoxtaClientCharMessageAddedEvent.Broadcast(*m_userData.Get(), *chatMessage);
 		}
@@ -494,7 +494,7 @@ bool UVoxtaClient::HandleChatUpdateResponse(const ServerResponseChatUpdate& resp
 	else
 	{
 		UE_LOGFMT(VoxtaLog, Warning, "Recieved chat update for a different session? This should never happen, I think. "
-			"SessionId: {0} SenderId: {1} Content: {2}", response.m_sessionId, response.m_senderId, response.m_text);
+			"SessionId: {0} SenderId: {1} Content: {2}", response.SESSION_ID, response.SENDER_ID, response.TEXT_CONTENT);
 	}
 	return true;
 }
@@ -502,24 +502,24 @@ bool UVoxtaClient::HandleChatUpdateResponse(const ServerResponseChatUpdate& resp
 bool UVoxtaClient::HandleSpeechTranscriptionResponse(const ServerResponseSpeechTranscription& response)
 {
 	using enum ServerResponseSpeechTranscription::TranscriptionState;
-	switch (response.m_transcriptionState)
+	switch (response.TRANSCRIPTION_STATE)
 	{
 		case PARTIAL:
 			UE_LOGFMT(VoxtaLog, Log, "Received update for partial speech transcription. Current version of "
-				"transcription: {0} ", response.m_transcribedSpeech);
+				"transcription: {0} ", response.TRANSCRIBED_SPEECH);
 
-			VoxtaClientSpeechTranscribedPartialEventNative.Broadcast(response.m_transcribedSpeech);
-			VoxtaClientSpeechTranscribedPartialEvent.Broadcast(response.m_transcribedSpeech);
+			VoxtaClientSpeechTranscribedPartialEventNative.Broadcast(response.TRANSCRIBED_SPEECH);
+			VoxtaClientSpeechTranscribedPartialEvent.Broadcast(response.TRANSCRIBED_SPEECH);
 			break;
 		case END:
 			if (m_currentState == VoxtaClientState::WaitingForUserReponse)
 			{
 				UE_LOGFMT(VoxtaLog, Log, "Received finalized version of speech transcription: {0}",
-					response.m_transcribedSpeech);
+					response.TRANSCRIBED_SPEECH);
 
-				VoxtaClientSpeechTranscribedCompleteEventNative.Broadcast(response.m_transcribedSpeech);
-				VoxtaClientSpeechTranscribedCompleteEvent.Broadcast(response.m_transcribedSpeech);
-				SendUserInput(response.m_transcribedSpeech);
+				VoxtaClientSpeechTranscribedCompleteEventNative.Broadcast(response.TRANSCRIBED_SPEECH);
+				VoxtaClientSpeechTranscribedCompleteEvent.Broadcast(response.TRANSCRIBED_SPEECH);
+				SendUserInput(response.TRANSCRIBED_SPEECH);
 			}
 			// no logging for else, as Transcription sometimes sends the final version more than once, not sure why.
 			break;
@@ -540,7 +540,7 @@ const TUniquePtr<const FAiCharData>* UVoxtaClient::GetAiCharacterDataById(const 
 
 FChatMessage* UVoxtaClient::GetChatMessageById(const FString& messageId) const
 {
-	return m_chatSession->m_chatMessages.FindByPredicate([&messageId] (const FChatMessage& inItem)
+	return m_chatSession->GetChatMessages().FindByPredicate([&messageId] (const FChatMessage& inItem)
 		{
 			return inItem.GetMessageId() == messageId;
 		});

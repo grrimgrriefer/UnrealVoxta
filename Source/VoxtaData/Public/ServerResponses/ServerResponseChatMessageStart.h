@@ -12,13 +12,13 @@
 struct ServerResponseChatMessageStart : public IServerResponseChatMessageBase
 {
 public:
-	const FString m_senderId;
+	const FString SENDER_ID;
 
 	explicit ServerResponseChatMessageStart(FStringView messageId,
 			FStringView senderId,
 			FStringView sessionId) :
 		IServerResponseChatMessageBase(messageId, sessionId),
-		m_senderId(senderId)
+		SENDER_ID(senderId)
 	{
 	}
 

@@ -21,13 +21,14 @@ class UNREALVOXTA_API UVoxtaAudioInput : public UObject
 {
 	GENERATED_BODY()
 
-public:
 #pragma region delegate declarations
+public:
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FVoxtaAudioInputInitialized);
 	DECLARE_MULTICAST_DELEGATE(FVoxtaAudioInputInitializedNative);
 #pragma endregion
 
 #pragma region events
+public:
 	/** Event fired after both the audiosocket and the capturedevice are initialized. */
 	UPROPERTY(BlueprintAssignable, Category = "Voxta", meta = (IsBindableEvent = "True"))
 	FVoxtaAudioInputInitialized VoxtaAudioInputInitializedEvent;
@@ -82,6 +83,7 @@ public:
 
 #pragma region private helper classes
 private:
+	/** Internal helper class, easier to keep track of what's going on, as well as user-friendly logging. */
 	enum class VoxtaMicrophoneState : uint8
 	{
 		NotConnected			UMETA(DisplayName = "NotConnected"),
@@ -116,8 +118,12 @@ private:
 	void InitializeVoiceCapture();
 
 #pragma region IWebSocket listeners
+private:
+	/** Triggered by the SignalR socket when connected (success). Not guarenteed to be on GameThread. */
 	void OnSocketConnected();
+	/** Triggered by the SignalR socket when could not connect (failure). Not guarenteed to be on GameThread. */
 	void OnSocketConnectionError(const FString& error);
+	/** Triggered by the SignalR socket when was closed (intentional / forced). Not guarenteed to be on GameThread. */
 	void OnSocketClosed(int statusCode, const FString& reason, bool wasClean);
 #pragma endregion
 #pragma endregion
