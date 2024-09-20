@@ -2,9 +2,9 @@
 
 using UnrealBuildTool;
 
-public class VoxtaDataA2F : ModuleRules
+public class VoxtaUtility_A2F : ModuleRules
 {
-	public VoxtaDataA2F(ReadOnlyTargetRules Target) : base(Target)
+	public VoxtaUtility_A2F(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 

@@ -35,7 +35,7 @@ void UVoxtaAudioPlayback::Initialize(const FString& characterId)
 
 void UVoxtaAudioPlayback::MarkCustomPlaybackComplete(const FGuid& guid)
 {
-	const FGuid expectedGuid = m_orderedAudio[m_currentAudioClipIndex]->GetLipSyncData<ILipSyncDataBase>()->GetGuid();
+	const FGuid expectedGuid = m_orderedAudio[m_currentAudioClipIndex]->GetLipSyncData<ILipSyncBaseData>()->GetGuid();
 	if (expectedGuid != guid)
 	{
 		UE_LOGFMT(VoxtaLog, Error, "Custom LipSync does not support playing audiochunks out of order. "
@@ -112,10 +112,10 @@ void UVoxtaAudioPlayback::PlaybackMessage(const FBaseCharData& sender, const FCh
 		Cleanup();
 		m_currentlyPlayingMessageId = message.GetMessageId();
 
-		for (int i = 0; i < message.m_audioUrls.Num(); i++)
+		for (int i = 0; i < message.GetAudioUrls().Num(); i++)
 		{
 			m_orderedAudio.Add(MakeShared<MessageChunkAudioContainer>(
-				FString::Format(*FString(TEXT("http://{0}:{1}{2}")), { m_hostAddress, m_hostPort, message.m_audioUrls[i] }),
+				FString::Format(*FString(TEXT("http://{0}:{1}{2}")), { m_hostAddress, m_hostPort, message.GetAudioUrls()[i] }),
 				m_lipSyncType,
 				m_clientReference->GetA2FHandler(),
 				[&] (const MessageChunkAudioContainer* chunk) { OnChunkStateChange(chunk); },
@@ -158,7 +158,7 @@ void UVoxtaAudioPlayback::PlayCurrentAudioChunkIfAvailable()
 			{
 				TArray<uint8> rawData = currentClip->GetRawAudioData();
 				USoundWaveProcedural* soundWave = currentClip->GetSoundWave();
-				FGuid guid = currentClip->GetLipSyncData<ILipSyncDataBase>()->GetGuid();
+				FGuid guid = currentClip->GetLipSyncData<ILipSyncBaseData>()->GetGuid();
 
 				UE_LOGFMT(VoxtaLog, Log, "Broadcasting that audio chunk with guid: {0} is ready for playback with "
 					"custom lipsync. Voxta logic will wait to continue until it is marked as finished "

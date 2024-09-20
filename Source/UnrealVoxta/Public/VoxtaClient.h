@@ -14,7 +14,7 @@ class IHubConnection;
 class FSignalRInvokeResult;
 class UVoxtaAudioInput;
 class Audio2FaceRESTHandler;
-struct IServerResponseChatMessageBase;
+struct ServerResponseChatMessageBase;
 struct ServerResponseWelcome;
 struct ServerResponseCharacterList;
 struct ServerResponseCharacterLoaded;
@@ -280,8 +280,8 @@ private:
 	bool HandleCharacterLoadedResponse(const ServerResponseCharacterLoaded& response);
 	/** Takes care of ServerResponseChatStarted responses. */
 	bool HandleChatStartedResponse(const ServerResponseChatStarted& response);
-	/** Takes care of IServerResponseChatMessageBase responses. */
-	bool HandleChatMessageResponse(const IServerResponseChatMessageBase& response);
+	/** Takes care of ServerResponseChatMessageBase responses. */
+	bool HandleChatMessageResponse(const ServerResponseChatMessageBase& response);
 	/** Takes care of ServerResponseChatUpdate responses. */
 	bool HandleChatUpdateResponse(const ServerResponseChatUpdate& response);
 	/** Takes care of ServerResponseSpeechTranscription responses. */

@@ -261,7 +261,7 @@ bool UVoxtaClient::HandleResponse(const TMap<FString, FSignalRValue>& responseDa
 		return false;
 	}
 
-	switch (response->GetType())
+	switch (response->RESPONSE_TYPE)
 	{
 		using enum ServerResponseType;
 		case Welcome:
@@ -277,7 +277,7 @@ bool UVoxtaClient::HandleResponse(const TMap<FString, FSignalRValue>& responseDa
 			return HandleResponseHelper<ServerResponseChatStarted>(response.Get(),
 				TEXT("Chat started successfully"), &UVoxtaClient::HandleChatStartedResponse);
 		case ChatMessage:
-			return HandleResponseHelper<IServerResponseChatMessageBase>(response.Get(),
+			return HandleResponseHelper<ServerResponseChatMessageBase>(response.Get(),
 				TEXT("Chat Message received successfully"), &UVoxtaClient::HandleChatMessageResponse);
 		case ChatUpdate:
 			return HandleResponseHelper<ServerResponseChatUpdate>(response.Get(),
@@ -306,7 +306,7 @@ bool UVoxtaClient::HandleWelcomeResponse(const ServerResponseWelcome& response)
 bool UVoxtaClient::HandleCharacterListResponse(const ServerResponseCharacterList& response)
 {
 	m_characterList.Empty();
-	for (const FAiCharData charElement : response.m_characters)
+	for (const FAiCharData charElement : response.CHARACTERS)
 	{
 		m_characterList.Emplace(MakeUnique<FAiCharData>(charElement));
 		VoxtaClientCharacterRegisteredEventNative.Broadcast(charElement);
@@ -318,7 +318,7 @@ bool UVoxtaClient::HandleCharacterListResponse(const ServerResponseCharacterList
 
 bool UVoxtaClient::HandleCharacterLoadedResponse(const ServerResponseCharacterLoaded& response)
 {
-	const TUniquePtr<const FAiCharData>* character = GetAiCharacterDataById(response.m_characterId);
+	const TUniquePtr<const FAiCharData>* character = GetAiCharacterDataById(response.CHARACTER_ID);
 
 	if (character)
 	{
@@ -328,7 +328,7 @@ bool UVoxtaClient::HandleCharacterLoadedResponse(const ServerResponseCharacterLo
 	else
 	{
 		UE_LOGFMT(VoxtaLog, Error, "Loaded a character with id: {0} that doesn't exist in the list? "
-			"This should never happen..", response.m_characterId);
+			"This should never happen..", response.CHARACTER_ID);
 		return false;
 	}
 }
@@ -338,41 +338,41 @@ bool UVoxtaClient::HandleChatStartedResponse(const ServerResponseChatStarted& re
 	TArray<const FAiCharData*> chatCharacters;
 	for (const TUniquePtr<const FAiCharData>& aiChar : m_characterList)
 	{
-		if (response.m_characterIds.Contains(aiChar->GetId()))
+		if (response.CHARACTER_IDS.Contains(aiChar->GetId()))
 		{
 			chatCharacters.Add(aiChar.Get());
 		}
 	}
 
-	if (!response.m_services.Contains(VoxtaServiceData::ServiceType::SpeechToText))
+	if (!response.SERVICES.Contains(VoxtaServiceData::ServiceType::SpeechToText))
 	{
 		UE_LOGFMT(VoxtaLog, Error, "No valid SpeechToText service is active on the server.");
 		return false;
 	}
-	if (!response.m_services.Contains(VoxtaServiceData::ServiceType::TextGen))
+	if (!response.SERVICES.Contains(VoxtaServiceData::ServiceType::TextGen))
 	{
 		UE_LOGFMT(VoxtaLog, Error, "No valid TextGen service is active on the server.");
 		return false;
 	}
-	if (!response.m_services.Contains(VoxtaServiceData::ServiceType::TextToSpeech))
+	if (!response.SERVICES.Contains(VoxtaServiceData::ServiceType::TextToSpeech))
 	{
 		UE_LOGFMT(VoxtaLog, Error, "No valid TextToSpeech service is active on the server.");
 		return false;
 	}
 
-	m_chatSession = MakeUnique<FChatSession>(chatCharacters, response.m_chatId,
-		response.SESSION_ID, response.m_services);
+	m_chatSession = MakeUnique<FChatSession>(chatCharacters, response.CHAT_ID,
+		response.SESSION_ID, response.SERVICES);
 	VoxtaClientChatSessionStartedEventNative.Broadcast(*m_chatSession.Get());
 	VoxtaClientChatSessionStartedEvent.Broadcast(*m_chatSession.Get());
 	SetState(VoxtaClientState::GeneratingReply);
 	return true;
 }
 
-bool UVoxtaClient::HandleChatMessageResponse(const IServerResponseChatMessageBase& response)
+bool UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessageBase& response)
 {
 	TArray<FChatMessage>& messages = m_chatSession->GetChatMessages();
-	using enum IServerResponseChatMessageBase::MessageType;
-	switch (response.GetMessageType())
+	using enum ServerResponseChatMessageBase::ChatMessageType;
+	switch (response.MESSAGE_TYPE)
 	{
 		case MessageStart:
 		{
@@ -393,17 +393,15 @@ bool UVoxtaClient::HandleChatMessageResponse(const IServerResponseChatMessageBas
 			{
 				// Add a space before the text when appending it to the previous. As VoxtaServer ends the last sentence
 				// of a chunk directly after the period, without an extra space.
-				chatMessage->m_text.Append(chatMessage->m_text.IsEmpty()
-					? derivedResponse->m_messageText
-					: " " + derivedResponse->m_messageText);
-				chatMessage->m_audioUrls.Emplace(derivedResponse->m_audioUrlPath);
-
+				chatMessage->AppendMoreContent(chatMessage->GetTextContent().IsEmpty()
+					? derivedResponse->MESSAGE_TEXT
+					: " " + derivedResponse->MESSAGE_TEXT, derivedResponse->AUDIO_URL_PATH);
 				UE_LOGFMT(VoxtaLog, Log, "Updated message contents of message with id: {0}", derivedResponse->MESSAGE_ID);
 			}
 			else
 			{
 				UE_LOGFMT(VoxtaLog, Warning, "Received a messageChunk without already having the start of the message. "
-					"messageId: {0} content: {1}", chatMessage->GetMessageId(), chatMessage->m_text);
+					"messageId: {0} content: {1}", chatMessage->GetMessageId(), chatMessage->GetTextContent());
 			}
 			break;
 		}
@@ -420,7 +418,7 @@ bool UVoxtaClient::HandleChatMessageResponse(const IServerResponseChatMessageBas
 				if (character->IsValid())
 				{
 					UE_LOGFMT(VoxtaLog, Log, "Message with id: {0} marked as complete. Speaker: {1} Contents: {2}",
-						derivedResponse->MESSAGE_ID, character->Get()->GetName(), chatMessage->m_text);
+						derivedResponse->MESSAGE_ID, character->Get()->GetName(), chatMessage->GetTextContent());
 
 					SetState(VoxtaClientState::AudioPlayback);
 					VoxtaClientCharMessageAddedEventNative.Broadcast(*character->Get(), *chatMessage);
@@ -435,7 +433,7 @@ bool UVoxtaClient::HandleChatMessageResponse(const IServerResponseChatMessageBas
 			else
 			{
 				UE_LOGFMT(VoxtaLog, Warning, "Received a messageEnd without already having the start of the message. "
-					"messageId: {0} content: {1}", chatMessage->GetMessageId(), chatMessage->m_text);
+					"messageId: {0} content: {1}", chatMessage->GetMessageId(), chatMessage->GetTextContent());
 			}
 			break;
 		}
@@ -484,7 +482,7 @@ bool UVoxtaClient::HandleChatUpdateResponse(const ServerResponseChatUpdate& resp
 				"MessageId {0} Content: {1}", response.MESSAGE_ID, response.TEXT_CONTENT);
 
 			m_chatSession->GetChatMessages().Emplace(
-				FChatMessage(response.MESSAGE_ID, response.SENDER_ID, response.TEXT_CONTENT));
+				FChatMessage(response.MESSAGE_ID, response.TEXT_CONTENT));
 
 			const FChatMessage* chatMessage = GetChatMessageById(response.MESSAGE_ID);
 			VoxtaClientCharMessageAddedEventNative.Broadcast(*m_userData.Get(), *chatMessage);

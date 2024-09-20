@@ -8,7 +8,7 @@
 
 class USoundWaveProcedural;
 class Audio2FaceRESTHandler;
-class ILipSyncDataBase;
+class ILipSyncBaseData;
 
 /**
  * MessageChunkAudioContainer
@@ -82,7 +82,7 @@ private:
 	Audio2FaceRESTHandler* m_A2FRestHandler;
 	USoundWaveProcedural* m_soundWave;
 	MessageChunkState m_state = MessageChunkState::Idle;
-	ILipSyncDataBase* m_lipSyncData;
+	ILipSyncBaseData* m_lipSyncData;
 #pragma endregion
 
 #pragma region private API

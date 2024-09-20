@@ -7,7 +7,7 @@
 #include "LipSyncDataA2F.generated.h"
 
 UCLASS()
-class VOXTADATAA2F_API ULipSyncDataA2F : public UObject, public ILipSyncBaseData
+class VOXTAUTILITY_A2F_API ULipSyncDataA2F : public UObject, public ILipSyncBaseData
 {
 	GENERATED_BODY()
 

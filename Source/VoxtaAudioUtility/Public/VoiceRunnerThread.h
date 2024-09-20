@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "HAL/Runnable.h"
 
 #define VOICE_COMPONENT_NULL 255
 #define THREAD_RETURN_DEFAULT_VALUE 254
@@ -11,11 +10,18 @@
 #define SEND_VOICE_DATA_SUCCESS 1
 
 class AudioCaptureHandler;
+class FRunnableThread;
 
 /// <summary>
 /// FRunnable that will trigger the AudioCaptureHandler to send data on a fixed timeinterval.
 /// Note: This will run on its own thread, so any functionality used must be threadsafe.
 /// </summary>
+
+/**
+ * FVoiceRunnerThread
+ * Main public-facing class, contains the stateful client for all Voxta utility.
+ * Provides a simple singleton-like API for any external UI / Blueprints / other modules.
+ */
 class FVoiceRunnerThread : public FRunnable
 {
 public:

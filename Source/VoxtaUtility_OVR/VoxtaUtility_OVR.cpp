@@ -1,6 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "VoxtaDataOVR.h"
+#include "VoxtaUtility_OVR.h"
 #include "Modules/ModuleManager.h"
 
-IMPLEMENT_MODULE( FDefaultModuleImpl, VoxtaDataOVR );
+IMPLEMENT_MODULE( FDefaultModuleImpl, VoxtaUtility_OVR );

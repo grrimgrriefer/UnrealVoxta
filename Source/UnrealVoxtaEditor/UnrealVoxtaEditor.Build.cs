@@ -11,7 +11,7 @@ public class UnrealVoxtaEditor : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"Core", "VoxtaData", "VoxtaDataA2F"
+				"Core", "VoxtaData", "VoxtaUtility_A2F"
 			}
 			);
 

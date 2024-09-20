@@ -10,7 +10,7 @@
 #include "Interfaces/IHttpRequest.h"
 #include "Audio2FaceRESTHandler.h"
 #include "Sound/SoundWaveProcedural.h"
-#include "LipSyncDataBase.h"
+#include "LipSyncBaseData.h"
 
 MessageChunkAudioContainer::MessageChunkAudioContainer(const FString& fullUrl,
 	LipSyncType lipSyncType,
@@ -185,7 +185,7 @@ void MessageChunkAudioContainer::GenerateLipSync()
 					{
 						if (TSharedPtr<MessageChunkAudioContainer> sharedSelf = Self.Pin())
 						{
-							sharedSelf->m_lipSyncData = Cast<ILipSyncDataBase>(MoveTemp(lipsyncData));
+							sharedSelf->m_lipSyncData = Cast<ILipSyncBaseData>(MoveTemp(lipsyncData));
 
 							UE_LOGFMT(VoxtaLog, Error, "Sucessfully genrated OVR lipsyncdata for "
 								"index {0}", sharedSelf->INDEX);
@@ -223,7 +223,7 @@ void MessageChunkAudioContainer::GenerateLipSync()
 					{
 						if (TSharedPtr<MessageChunkAudioContainer> sharedSelf = Self.Pin())
 						{
-							sharedSelf->m_lipSyncData = Cast<ILipSyncDataBase>(MoveTemp(lipsyncData));
+							sharedSelf->m_lipSyncData = Cast<ILipSyncBaseData>(MoveTemp(lipsyncData));
 
 							UE_LOGFMT(VoxtaLog, Error, "Sucessfully genrated A2F lipsyncdata for "
 								"index {0}", sharedSelf->INDEX);

@@ -8,7 +8,7 @@
 #include "Audio2FacePlaybackHandler.generated.h"
 
 UCLASS()
-class VOXTADATAA2F_API UAudio2FacePlaybackHandler : public UObject
+class VOXTAUTILITY_A2F_API UAudio2FacePlaybackHandler : public UObject
 {
 	GENERATED_BODY()
 

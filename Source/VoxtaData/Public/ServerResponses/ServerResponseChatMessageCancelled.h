@@ -5,24 +5,17 @@
 #include "CoreMinimal.h"
 #include "ServerResponseChatMessageBase.h"
 
-/// <summary>
-/// Read-only data struct containing the relevant data of the 'replyCancelled' response
-/// from the VoxtaServer.
-/// </summary>
-struct ServerResponseChatMessageCancelled : public IServerResponseChatMessageBase
+/**
+ * Read-only data struct containing the relevant data of the 'replyCancelled' response from the VoxtaServer.
+ */
+struct ServerResponseChatMessageCancelled : public ServerResponseChatMessageBase
 {
+#pragma region public API
 public:
+	/** Create a deserialized version of the VoxtaServer response represents the 'MessageCancelled' data. */
 	explicit ServerResponseChatMessageCancelled(FStringView messageId, FStringView sessionId) :
-		IServerResponseChatMessageBase(messageId, sessionId)
+		ServerResponseChatMessageBase(ChatMessageType::MessageCancelled, messageId, sessionId)
 	{
 	}
-
-	/// <summary>
-	/// Identifies the response type as MessageCancelled.
-	/// </summary>
-	/// <returns>Returns MessageType::MessageCancelled.</returns>
-	MessageType GetMessageType() const final
-	{
-		return MessageType::MessageCancelled;
-	}
+#pragma endregion
 };

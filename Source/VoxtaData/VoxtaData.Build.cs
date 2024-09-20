@@ -25,7 +25,7 @@ public class VoxtaData : ModuleRules
 		if (projectHasOvrLipSync)
 		{
 			PublicDependencyModuleNames.Add("OVRLipSync");
-			PublicDependencyModuleNames.Add("VoxtaDataOVR");
+			PublicDependencyModuleNames.Add("VoxtaUtility_OVR");
 			PublicDefinitions.Add("WITH_OVRLIPSYNC=1");
 		}
 		else

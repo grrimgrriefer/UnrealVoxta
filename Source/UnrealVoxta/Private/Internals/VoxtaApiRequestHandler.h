@@ -56,7 +56,7 @@ public:
 	 *
 	 * Note: By default, the addition of a user message will trigger an auto-reply from the AI character.
 	 *
-	 * @param sessionId The ChatSession::m_chatId of the currently active chat.
+	 * @param sessionId The ChatSession::CHAT_ID of the currently active chat.
 	 * @param userInputText The text that the server should consider as what the user said.
 	 *
 	 * @return The SignalR formatted message containing the request.
@@ -67,7 +67,7 @@ public:
 	 * Retrieve a SignalR formatted message to inform the VoxtaServer that the playback is completed on the client.
 	 * Meaning it can being listening to the audioSocket for speech.
 	 *
-	 * @param sessionId The ChatSession::m_chatId of the currently active chat.
+	 * @param sessionId The ChatSession::CHAT_ID of the currently active chat.
 	 * @param messageId The FChatMessage.GetMessageId of the message that is done with the playback.
 	 *
 	 * @return The SignalR formatted message containing the request.

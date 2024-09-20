@@ -8,7 +8,7 @@
 #include "AnimNode_ApplyCustomCurves.generated.h"
 
 USTRUCT(BlueprintInternalUseOnly)
-struct VOXTADATAA2F_API FAnimNode_ApplyCustomCurves : public FAnimNode_Base
+struct VOXTAUTILITY_A2F_API FAnimNode_ApplyCustomCurves : public FAnimNode_Base
 {
 	GENERATED_BODY()
 

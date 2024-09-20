@@ -9,7 +9,7 @@
 #include "Json.h"
 #include "JsonUtilities.h"
 
-class VOXTADATAA2F_API Audio2FaceRESTHandler
+class VOXTAUTILITY_A2F_API Audio2FaceRESTHandler
 {
 public:
 	void TryInitialize();

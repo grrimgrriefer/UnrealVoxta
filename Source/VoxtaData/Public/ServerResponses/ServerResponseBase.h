@@ -5,12 +5,13 @@
 #include "CoreMinimal.h"
 #include "ServerResponseType.h"
 
-/// <summary>
-/// Abstract read-only data struct that all responses from the VoxtaServer derive from.
-/// Main use for this is to ensure a streamlined public API.
-/// </summary>
+/**
+ * Abstract read-only data struct that all responses from the VoxtaServer derive from.
+ * Main use for this is to ensure a streamlined public API.
+ */
 struct ServerResponseBase
 {
+#pragma region public API
 public:
 	virtual ~ServerResponseBase() = default;
 
@@ -18,16 +19,10 @@ public:
 		RESPONSE_TYPE(responseType)
 	{
 	}
+#pragma endregion
 
-	/// <summary>
-	/// Const fuction that fetches the type of Response that the derived type represents.
-	/// </summary>
-	/// <returns>The type that identifies the derived response.</returns>
-	ServerResponseType GetType() const
-	{
-		return RESPONSE_TYPE;
-	}
-
-private:
-	ServerResponseType RESPONSE_TYPE;
+#pragma region data
+public:
+	const ServerResponseType RESPONSE_TYPE;
+#pragma endregion
 };

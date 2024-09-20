@@ -5,29 +5,25 @@
 #include "CoreMinimal.h"
 #include "ServerResponseChatMessageBase.h"
 
-/// <summary>
-/// Read-only data struct containing the relevant data of the 'replyStart' response
-/// from the VoxtaServer.
-/// </summary>
-struct ServerResponseChatMessageStart : public IServerResponseChatMessageBase
+/**
+ * Read-only data struct containing the relevant data of the 'replyStart' response from the VoxtaServer.
+ */
+struct ServerResponseChatMessageStart : public ServerResponseChatMessageBase
 {
+#pragma region public API
 public:
-	const FString SENDER_ID;
-
+	/** Create a deserialized version of the VoxtaServer response represents the 'MessageStart' data. */
 	explicit ServerResponseChatMessageStart(FStringView messageId,
 			FStringView senderId,
 			FStringView sessionId) :
-		IServerResponseChatMessageBase(messageId, sessionId),
+		ServerResponseChatMessageBase(ChatMessageType::MessageStart, messageId, sessionId),
 		SENDER_ID(senderId)
 	{
 	}
+#pragma endregion
 
-	/// <summary>
-	/// Identifies the response type as MessageStart.
-	/// </summary>
-	/// <returns>Returns MessageType::MessageStart.</returns>
-	MessageType GetMessageType() const final
-	{
-		return MessageType::MessageStart;
-	}
+#pragma region data
+public:
+	const FString SENDER_ID;
+#pragma endregion
 };

@@ -5,28 +5,25 @@
 #include "CoreMinimal.h"
 #include "ServerResponseBase.h"
 
-/// <summary>
-/// Read-only data struct containing the relevant data of the 'characterLoaded' response
-/// from the VoxtaServer.
-/// </summary>
+/**
+ * Read-only data struct containing the relevant data of the 'characterLoaded' response from the VoxtaServer.
+ */
 struct ServerResponseCharacterLoaded : public ServerResponseBase
 {
+#pragma region public API
 public:
-	const FString m_characterId;
-	const bool m_enableThinkingSpeech;
-
+	/** Create a deserialized version of the VoxtaServer response represents the 'CharacterLoaded' data. */
 	explicit ServerResponseCharacterLoaded(FStringView characterId, bool enableThinkingSpeech) :
-		m_characterId(characterId),
-		m_enableThinkingSpeech(enableThinkingSpeech)
+		ServerResponseBase(ServerResponseType::CharacterLoaded),
+		CHARACTER_ID(characterId),
+		ENABLE_THINKING_SPEECH(enableThinkingSpeech)
 	{
 	}
+#pragma endregion
 
-	/// <summary>
-	/// Identifies the response type as CharacterLoaded.
-	/// </summary>
-	/// <returns>Returns MessageType::CharacterLoaded.</returns>
-	ServerResponseType GetType() const final
-	{
-		return ServerResponseType::CharacterLoaded;
-	}
+#pragma region data
+public:
+	const FString CHARACTER_ID;
+	const bool ENABLE_THINKING_SPEECH;
+#pragma endregion
 };

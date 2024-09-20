@@ -9,7 +9,7 @@
 class UOVRLipSyncFrameSequence;
 
 UCLASS()
-class VOXTADATAOVR_API ULipSyncDataOVR : public UObject, public ILipSyncBaseData
+class VOXTAUTILITY_OVR_API ULipSyncDataOVR : public UObject, public ILipSyncBaseData
 {
 	GENERATED_BODY()
 

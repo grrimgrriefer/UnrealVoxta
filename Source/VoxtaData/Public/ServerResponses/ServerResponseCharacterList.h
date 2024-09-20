@@ -6,23 +6,23 @@
 #include "ServerResponseBase.h"
 #include "AiCharData.h"
 
-/// <summary>
-/// Read-only data struct containing the relevant data of the 'charactersListLoaded' response
-/// from the VoxtaServer.
-/// </summary>
+/**
+ * Read-only data struct containing the relevant data of the 'charactersListLoaded' response from the VoxtaServer.
+ */
 struct ServerResponseCharacterList : public ServerResponseBase
 {
+#pragma region public API
 public:
-	const TArray<FAiCharData> m_characters;
-
+	/** Create a deserialized version of the VoxtaServer response represents the 'CharacterList' data. */
 	explicit ServerResponseCharacterList(const TArray<FAiCharData>& characters) :
-		m_characters(characters)
+		ServerResponseBase(ServerResponseType::CharacterList),
+		CHARACTERS(characters)
 	{
 	}
+#pragma endregion
 
-	///<inheritdoc />
-	ServerResponseType GetType() const final
-	{
-		return ServerResponseType::CharacterList;
-	}
+#pragma region data
+public:
+	const TArray<FAiCharData> CHARACTERS;
+#pragma endregion
 };

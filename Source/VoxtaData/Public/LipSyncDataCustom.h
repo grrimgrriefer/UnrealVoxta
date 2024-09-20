@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "LipSyncBaseBase.h"
+#include "LipSyncBaseData.h"
 #include "LipSyncDataCustom.generated.h"
 
 /**
@@ -14,19 +14,19 @@
  * interface gets very messy.
  */
 UCLASS()
-class ULipSyncDataCustom : public UObject, public ILipSyncDataBase
+class ULipSyncDataCustom : public UObject, public ILipSyncBaseData
 {
 	GENERATED_BODY()
 
 #pragma region public API
 public:
 	/** Create an instance of the LipSyncData holder for CustomLipSync. */
-	explicit ULipSyncDataCustom() : ILipSyncDataBase(LipSyncType::Custom)
+	explicit ULipSyncDataCustom() : ILipSyncBaseData(LipSyncType::Custom)
 	{
 	};
 #pragma endregion
 
-#pragma region ILipSyncDataBase overrides
+#pragma region ILipSyncBaseData overrides
 public:
 	/**
 	 * Clean up the data that was made / kept that was directly tied to the playback of one voiceline.
