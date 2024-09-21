@@ -4,6 +4,7 @@
 #include "VoxtaClient.h"
 #include "RuntimeAudioImporter/ImportedSoundWave.h"
 #include "Logging/StructuredLog.h"
+#include "AudioWebSocket.h"
 
 void UVoxtaAudioInput::InitializeSocket(int bufferMs, int sampleRate, int inputChannels)
 {

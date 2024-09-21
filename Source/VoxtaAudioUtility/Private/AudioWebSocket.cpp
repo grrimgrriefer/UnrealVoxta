@@ -1,8 +1,9 @@
 // Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
 
 #include "AudioWebSocket.h"
-#include "RuntimeAudioImporter/AudioStructs.h"
+#include "VoxtaDefines.h"
 #include "Logging/StructuredLog.h"
+#include "WebSocketsModule.h"
 
 AudioWebSocket::AudioWebSocket(const FString& serverIP, uint16 serverPort) :
 	m_serverIP(serverIP),
@@ -13,49 +14,65 @@ AudioWebSocket::AudioWebSocket(const FString& serverIP, uint16 serverPort) :
 bool AudioWebSocket::Connect()
 {
 	// websocket url might change in future versions, this is still correct as of beta.v117
-	const FString uri = FString::Format(*FString(TEXT("ws://{0}:{1}/ws/audio/input/stream")), { m_serverIP, m_serverPort });
+	const FString uri = FString::Format(*FString(TEXT("ws://{0}:{1}/ws/audio/input/stream")),
+		{ m_serverIP, m_serverPort });
 	m_socketConnection = FWebSocketsModule::Get().CreateWebSocket(uri, FString(), TMap<FString, FString>());
 
 	if (m_socketConnection.IsValid())
 	{
 		m_socketConnection->OnConnected().AddLambda(
 			[Self = TWeakPtr<AudioWebSocket>(AsShared())] ()
-		{
-			if (TSharedPtr<AudioWebSocket> SharedSelf = Self.Pin())
 			{
-				SharedSelf->OnConnectedEvent.Broadcast();
-			}
-		});
+				if (TSharedPtr<AudioWebSocket> SharedSelf = Self.Pin())
+				{
+					SharedSelf->OnConnectedEvent.Broadcast();
+				}
+				else
+				{
+					UE_LOGFMT(VoxtaLog, Warning, "AudioWebSocket connection was successful but the reference was "
+						"no longer valid.");
+				}
+			});
 		m_socketConnection->OnConnectionError().AddLambda(
 			[Self = TWeakPtr<AudioWebSocket>(AsShared())] (const FString& ErrString)
-		{
-			UE_LOGFMT(AudioLog, Warning, "Websocket err: {0}", ErrString);
-
-			if (TSharedPtr<AudioWebSocket> SharedSelf = Self.Pin())
 			{
-				SharedSelf->OnConnectionErrorEvent.Broadcast(ErrString);
-			}
-		});
+				UE_LOGFMT(VoxtaLog, Warning, "Websocket err: {0}", ErrString);
+
+				if (TSharedPtr<AudioWebSocket> SharedSelf = Self.Pin())
+				{
+					SharedSelf->OnConnectionErrorEvent.Broadcast(ErrString);
+				}
+				else
+				{
+					UE_LOGFMT(VoxtaLog, Warning, "AudioWebSocket received an error but the reference was "
+						"no longer valid.");
+				}
+			});
 		m_socketConnection->OnClosed().AddLambda(
 			[Self = TWeakPtr<AudioWebSocket>(AsShared())] (int32 StatusCode, const FString& Reason, bool bWasClean)
-		{
-			if (TSharedPtr<AudioWebSocket> SharedSelf = Self.Pin())
 			{
-				UE_LOGFMT(AudioLog, Log, "Websocket closing: Code={0}, Reason={1}, wasClean={2}",
-					StatusCode,
-					Reason,
-					bWasClean);
-				SharedSelf->OnClosedEvent.Broadcast(StatusCode, Reason, bWasClean);
-			}
-		});
+				if (TSharedPtr<AudioWebSocket> SharedSelf = Self.Pin())
+				{
+					UE_LOGFMT(VoxtaLog, Log, "Websocket closing: Code={0}, Reason={1}, wasClean={2}",
+						StatusCode,
+						Reason,
+						bWasClean);
+					SharedSelf->OnClosedEvent.Broadcast(StatusCode, Reason, bWasClean);
+				}
+				else
+				{
+					UE_LOGFMT(VoxtaLog, Warning, "AudioWebSocket closed itself but but the reference was "
+						"no longer valid.");
+				}
+			});
 
-		UE_LOGFMT(AudioLog, Log, "Connecting audio input websocket at: {0}", uri);
+		UE_LOGFMT(VoxtaLog, Log, "Connecting audio input websocket at: {0}", uri);
 		m_socketConnection->Connect();
 		return true;
 	}
 	else
 	{
-		UE_LOGFMT(AudioLog, Error, "Cannot start websocket.");
+		UE_LOGFMT(VoxtaLog, Error, "Cannot start websocket.");
 		return false;
 	}
 }
@@ -68,7 +85,7 @@ void AudioWebSocket::Close(int code, const FString& reason)
 	}
 	else
 	{
-		UE_LOGFMT(AudioLog, Warning, "Cannot close the socket, audioWebSocket is already destroyed.");
+		UE_LOGFMT(VoxtaLog, Warning, "Cannot close the socket, audioWebSocket is already destroyed.");
 	}
 }
 
@@ -80,7 +97,7 @@ void AudioWebSocket::Send(const void* buffer, unsigned int nBufferFrames)
 	}
 	else
 	{
-		UE_LOGFMT(AudioLog, Error, "Cannot send audio data, audioWebSocket is destroyed.");
+		UE_LOGFMT(VoxtaLog, Error, "Cannot send audio data, audioWebSocket is destroyed.");
 	}
 }
 
@@ -92,6 +109,6 @@ void AudioWebSocket::Send(const FString& message)
 	}
 	else
 	{
-		UE_LOGFMT(AudioLog, Error, "Cannot send audio data, audioWebSocket is destroyed.");
+		UE_LOGFMT(VoxtaLog, Error, "Cannot send audio data, audioWebSocket is destroyed.");
 	}
 }

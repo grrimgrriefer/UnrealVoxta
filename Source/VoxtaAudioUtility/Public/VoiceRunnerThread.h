@@ -12,36 +12,57 @@
 class AudioCaptureHandler;
 class FRunnableThread;
 
-/// <summary>
-/// FRunnable that will trigger the AudioCaptureHandler to send data on a fixed timeinterval.
-/// Note: This will run on its own thread, so any functionality used must be threadsafe.
-/// </summary>
-
 /**
  * FVoiceRunnerThread
- * Main public-facing class, contains the stateful client for all Voxta utility.
- * Provides a simple singleton-like API for any external UI / Blueprints / other modules.
+ * Logic that runs on a background-thread and will trigger the AudioCaptureHandler repeatedly on a fixed timeinterval
+ * to ensure it will send whatever was captured in the timestep to be sent to VoxtaServer microphone input socket.
+ *
+ * Note: keep in mind to double check locks when using/changing anything this touches
  */
 class FVoiceRunnerThread : public FRunnable
 {
+#pragma region public API
 public:
-	/// <summary>
-	/// Register the pointer to the AudioCaptureHandler and set the sleepTime interval (in milliseconds)
-	/// </summary>
+	/**
+	 * Register values for the runner but does not start it yet.
+	 *
+	 * @param voiceComponent The component that will receive the 'CaptureAndSendVoiceData' signal.
+	 * @param sleepTime The time (in seconds) that should be waited between triggers.
+	 */
 	FVoiceRunnerThread(AudioCaptureHandler* voiceComponent, float sleepTime);
 
-	/// <summary>
-	/// Start the thread that will have this runnable assigned to it.
-	/// </summary>
+	/**
+	 * Create & start a new background thread, triggering 'CaptureAndSendVoiceData' on the provided
+	 * voice component repeatedly, given the provided timestep.
+	 */
 	void Start();
+#pragma endregion
 
-	///~ Begin FRunnable overrides.
+#pragma region FRunnable overrides
 public:
+	/** Virtual destructor */
 	virtual ~FVoiceRunnerThread() override;
-	virtual void Stop() override;
-	uint32 Run() override;
-	///~ End FRunnable overrides.
 
+	/**
+	 * Stops the runnable object.
+	 *
+	 * This is called if a thread is requested to terminate early.
+	 * @see Init, Run, Exit
+	 */
+	virtual void Stop() override;
+
+	/**
+	 * Runs the runnable object.
+	 *
+	 * This is where all per object thread work is done. This is only called if the initialization was successful.
+	 *
+	 * @return The exit code of the runnable object
+	 * @see Init, Stop, Exit
+	 */
+	uint32 Run() override;
+#pragma endregion
+
+#pragma region data
 private:
 	UPROPERTY()
 	AudioCaptureHandler* m_voiceComponent;
@@ -49,4 +70,5 @@ private:
 
 	float m_sleepTime;
 	bool m_isStopped;
+#pragma endregion
 };

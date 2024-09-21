@@ -1,8 +1,18 @@
 // Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
 
 #include "AudioCaptureHandler.h"
+#include "VoxtaDefines.h"
 #include "VoiceRunnerThread.h"
 #include "Logging/StructuredLog.h"
+#include "AudioWebSocket.h"
+#include "Voice.h"
+#include "AudioCaptureCore.h"
+
+// not entirely sure why this is needed here, TODO: figure out the dependency mess
+#ifndef VOXTA_LOG_DEFINED
+DEFINE_LOG_CATEGORY(VoxtaLog);
+#define VOXTA_LOG_DEFINED
+#endif
 
 void AudioCaptureHandler::RegisterSocket(TWeakPtr<AudioWebSocket> socket, int bufferMillisecondSize)
 {
@@ -14,7 +24,7 @@ bool AudioCaptureHandler::TryInitializeVoiceCapture(int sampleRate, int numChann
 {
 	if (m_voiceCaptureDevice.IsValid())
 	{
-		UE_LOGFMT(AudioLog, Warning, "Skipped creating voice capture as it was already created earlier.");
+		UE_LOGFMT(VoxtaLog, Warning, "Skipped creating voice capture as it was already created earlier.");
 		return true;
 	}
 
@@ -27,22 +37,22 @@ bool AudioCaptureHandler::TryInitializeVoiceCapture(int sampleRate, int numChann
 		Audio::FCaptureDeviceInfo OutInfo;
 		if (!AudioCapture.GetCaptureDeviceInfo(OutInfo, INDEX_NONE))
 		{
-			UE_LOGFMT(AudioLog, Error, "Failed to fetch microhpone device information {0}", m_deviceName);
+			UE_LOGFMT(VoxtaLog, Error, "Failed to fetch microhpone device information {0}", m_deviceName);
 			return false;
 		}
 		m_deviceName = OutInfo.DeviceName;
-		UE_LOGFMT(AudioLog, Log, "Using microphone device {0}", m_deviceName);
+		UE_LOGFMT(VoxtaLog, Log, "Using microphone device {0}", m_deviceName);
 
 		m_voiceCaptureDevice = VoiceModule.CreateVoiceCapture(m_deviceName, sampleRate, numChannels);
 	}
 	if (m_voiceCaptureDevice.IsValid())
 	{
-		UE_LOGFMT(AudioLog, Log, "Created voice capture");
+		UE_LOGFMT(VoxtaLog, Log, "Created voice capture");
 		return true;
 	}
 	else
 	{
-		UE_LOGFMT(AudioLog, Error, "Unable to create the voice caputre");
+		UE_LOGFMT(VoxtaLog, Error, "Unable to create the voice caputre");
 		return false;
 	}
 }
@@ -60,42 +70,47 @@ void AudioCaptureHandler::ConfigureSilenceTresholds(float micNoiseGateThreshold,
 
 bool AudioCaptureHandler::TryStartVoiceCapture()
 {
+	UE_LOGFMT(VoxtaLog, Log, "Starting voice capture.");
+
 	if (!m_voiceCaptureDevice.IsValid())
 	{
-		UE_LOGFMT(AudioLog, Error, "Unable to start capturing for sound wave, VoiceCapture pointer is invalid.");
+		UE_LOGFMT(VoxtaLog, Error, "Unable to start capturing for sound wave, VoiceCapture pointer is invalid.");
 		return false;
 	}
 
 	if (m_isCapturing)
 	{
-		UE_LOGFMT(AudioLog, Warning, "Voice capture is currently already capturing, ignoring new attempt to start.");
+		UE_LOGFMT(VoxtaLog, Warning, "Voice capture is currently already capturing, ignoring new attempt to start.");
 		return false;
 	}
 
 	m_decibels = DEFAULT_SILENCE_DECIBELS;
-	// we only use 75% of the buffer, the extra 25% is space in case the thread encounters minor lag / delay.
+	// we let the thread notify us at 75% of the buffer, in case we encounter minor lag / delay,
+	// so no audio data is lost. (within reason)
 	m_voiceRunnerThread = MakeUnique<FVoiceRunnerThread>(this, (m_bufferMillisecondSize / 1000.f * 0.75f));
 	if (!m_voiceRunnerThread.IsValid())
 	{
-		UE_LOGFMT(LogVoice, Error, "VoiceRunnerThread has been destroyed.");
+		UE_LOGFMT(VoxtaLog, Error, "VoiceRunnerThread has been destroyed.");
 		return false;
 	}
 
 	if (!m_voiceCaptureDevice->Start())
 	{
-		UE_LOGFMT(AudioLog, Error, "Unable to start capturing for sound wave");
+		UE_LOGFMT(VoxtaLog, Error, "Unable to start capturing for sound wave");
 		return false;
 	}
 
 	m_voiceRunnerThread->Start();
 
-	UE_LOGFMT(AudioLog, Log, "Successfully started voice capture & background thread");
+	UE_LOGFMT(VoxtaLog, Log, "Successfully started voice capture & background thread");
 	m_isCapturing = true;
 	return true;
 }
 
 void AudioCaptureHandler::StopCapture()
 {
+	UE_LOGFMT(VoxtaLog, Log, "Stopping voice capture.");
+
 	FScopeLock Lock(&m_captureGuard);
 	m_decibels = DEFAULT_SILENCE_DECIBELS;
 	if (m_voiceRunnerThread.IsValid())
@@ -122,7 +137,7 @@ void AudioCaptureHandler::CaptureVoiceInternal(TArray<uint8>& voiceDataBuffer, f
 {
 	if (!m_voiceCaptureDevice.IsValid())
 	{
-		UE_LOGFMT(AudioLog, Warning, "VoiceCapture device has been destroyed, can't capture any more data.");
+		UE_LOGFMT(VoxtaLog, Warning, "VoiceCapture device has been destroyed, can't capture any more data.");
 		return;
 	}
 
@@ -151,12 +166,20 @@ void AudioCaptureHandler::CaptureVoiceInternal(TArray<uint8>& voiceDataBuffer, f
 
 void AudioCaptureHandler::SendInternal(const TArray<uint8> rawData) const
 {
-	if (rawData.Num() > (m_bufferMillisecondSize * 32))
+	if (rawData.Num() > (m_bufferMillisecondSize * 32)) // 16 bits per sample
 	{
-		UE_LOGFMT(LogTemp, Warning, "Client: cannot send data, too big: {0}", rawData.Num());
+		UE_LOGFMT(VoxtaLog, Warning, "VoiceCapture cannot send data, too big: {0}. Skipping.", rawData.Num());
 		return;
 	}
-	m_webSocket.Pin()->Send(rawData.GetData(), rawData.Num());
+
+	if (TSharedPtr<AudioWebSocket> SharedSelf = m_webSocket.Pin())
+	{
+		SharedSelf->Send(rawData.GetData(), rawData.Num());
+	}
+	else
+	{
+		UE_LOGFMT(VoxtaLog, Error, "VoiceCapture instance was destroyed while trying to send data through the socket");
+	}
 }
 
 void AudioCaptureHandler::CaptureAndSendVoiceData()
@@ -172,7 +195,7 @@ void AudioCaptureHandler::CaptureAndSendVoiceData()
 	}
 	else
 	{
-		UE_LOGFMT(LogTemp, Warning, "No data to send");
+		UE_LOGFMT(VoxtaLog, Warning, "No data to send");
 	}
 }
 

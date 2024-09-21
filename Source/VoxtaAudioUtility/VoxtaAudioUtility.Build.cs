@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
 
 using UnrealBuildTool;
 using System.IO;
@@ -11,8 +11,8 @@ public class VoxtaAudioUtility : ModuleRules
 
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "ApplicationCore", "InputCore", "WebSockets", "AudioMixer", "AudioCaptureCore" });
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "Voice", "AudioPlatformConfiguration", "SignalProcessing", "AudioExtensions" });
-		
+		PrivateDependencyModuleNames.AddRange(new string[] { "Voice", "VoxtaData", "AudioPlatformConfiguration", "SignalProcessing", "AudioExtensions" });
+
 		if (Target.Platform.IsInGroup(UnrealPlatformGroup.Windows) ||
 			Target.Platform == UnrealTargetPlatform.Mac)
 		{
@@ -36,6 +36,6 @@ public class VoxtaAudioUtility : ModuleRules
 
 			string BuildPath = Utils.MakePathRelativeTo(ModuleDirectory, Target.RelativeEnginePath);
 			AdditionalPropertiesForReceipt.Add("AndroidPlugin", Path.Combine(BuildPath, "RuntimeAudioImporter_AndroidAPL.xml"));
-		}		
-    }
+		}
+	}
 }

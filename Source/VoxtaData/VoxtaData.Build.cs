@@ -1,5 +1,4 @@
-// Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details. Copyright Epic Games, Inc. All
-// Rights Reserved.
+// Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
 
 using UnrealBuildTool;
 
@@ -9,7 +8,7 @@ public class VoxtaData : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "VoxtaData" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore" });
 
 		// There has to be a cleaner way to do this lmao
 		bool projectHasOvrLipSync = false;
@@ -25,7 +24,6 @@ public class VoxtaData : ModuleRules
 		if (projectHasOvrLipSync)
 		{
 			PublicDependencyModuleNames.Add("OVRLipSync");
-			PublicDependencyModuleNames.Add("VoxtaUtility_OVR");
 			PublicDefinitions.Add("WITH_OVRLIPSYNC=1");
 		}
 		else

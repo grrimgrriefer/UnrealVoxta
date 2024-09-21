@@ -4,7 +4,10 @@
 #include "Misc/CoreMiscDefines.h"
 #include "Logging/LogMacros.h"
 
+#ifndef VOXTA_LOG_DEFINED
 DEFINE_LOG_CATEGORY(VoxtaLog);
+#define VOXTA_LOG_DEFINED
+#endif
 
 VoxtaLogger::~VoxtaLogger()
 {
