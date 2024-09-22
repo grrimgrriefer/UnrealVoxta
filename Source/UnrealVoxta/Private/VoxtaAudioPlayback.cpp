@@ -118,7 +118,19 @@ void UVoxtaAudioPlayback::PlaybackMessage(const FBaseCharData& sender, const FCh
 				FString::Format(*FString(TEXT("http://{0}:{1}{2}")), { m_hostAddress, m_hostPort, message.GetAudioUrls()[i] }),
 				m_lipSyncType,
 				m_clientReference->GetA2FHandler(),
-				[&] (const MessageChunkAudioContainer* chunk) { OnChunkStateChange(chunk); },
+				[Self = TWeakPtr<UVoxtaAudioPlayback>(AsShared())]
+				(const MessageChunkAudioContainer* chunk)
+				{
+					if (TSharedPtr<UVoxtaAudioPlayback> SharedSelf = Self.Pin())
+					{
+						SharedSelf->OnChunkStateChange(chunk);
+					}
+					else
+					{
+						UE_LOGFMT(VoxtaLog, Warning, "Recieved a messageChunk status update, but the UVoxtaAudioPlayback"
+							" was already destroyed. Did you delete the character before the playback was finished?");
+					}
+				},
 				i));
 		}
 		m_internalState = AudioPlaybackInternalState::Idle;

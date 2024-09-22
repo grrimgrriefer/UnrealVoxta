@@ -11,6 +11,7 @@
 #endif
 #include "Audio2FaceRESTHandler.h"
 #include "LipSyncDataA2F.h"
+#include "Interfaces/IPluginManager.h"
 
 #if WITH_OVRLIPSYNC
 void LipSyncGenerator::GenerateOVRLipSyncData(const TArray<uint8>& rawAudioData,
@@ -81,8 +82,8 @@ void LipSyncGenerator::GenerateA2FLipSyncData(const TArray<uint8>& rawAudioData,
 	TFunction<void(ULipSyncDataA2F*)> callback)
 {
 	FString guid = FGuid::NewGuid().ToString();
-	FString cacheFolder = FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("UnrealVoxta"),
-		TEXT("Content"), TEXT("A2FCache"));
+	FString cacheFolder = FString::Format(*FString(TEXT("{0}\\A2FCache")),
+		{ IPluginManager::Get().FindPlugin("UnrealVoxta")->GetContentDir() });
 	FString wavName = FString::Format(*FString(TEXT("A2FCachedData{0}.wav")), { guid });
 	FString jsonName = FString::Format(*FString(TEXT("A2FCachedData{0}")), { guid });
 	FString jsonImportName = FString::Format(*FString(TEXT("{0}_bsweight.json")), { jsonName });

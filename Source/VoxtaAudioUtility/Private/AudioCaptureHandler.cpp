@@ -8,7 +8,6 @@
 #include "Voice.h"
 #include "AudioCaptureCore.h"
 
-// not entirely sure why this is needed here, TODO: figure out the dependency mess
 #ifndef VOXTA_LOG_DEFINED
 DEFINE_LOG_CATEGORY(VoxtaLog);
 #define VOXTA_LOG_DEFINED

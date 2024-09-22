@@ -56,7 +56,7 @@ public:
 	 * Clean up the data that was made / kept that was directly tied to the playback of one voiceline.
 	 * Once this is called all memory will be cleaned and the playback can no longer be done.
 	 */
-	virtual void CleanupData() = 0;
+	virtual void ReleaseData() = 0;
 
 	/**
 	 * Every instance of a type deriving from this interface assigns a Guid to itself.

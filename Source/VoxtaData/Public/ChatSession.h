@@ -69,16 +69,13 @@ public:
 
 #pragma region data
 private:
-	UPROPERTY(BlueprintReadOnly, Category = "Voxta",
-		meta = (AllowPrivateAccess = "true", DisplayName = "Chat ID"))
+	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Chat ID"))
 	FString m_chatId;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Voxta",
-		meta = (AllowPrivateAccess = "true", DisplayName = "Session ID"))
+	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Session ID"))
 	FString m_sessionId;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Voxta",
-		meta = (AllowPrivateAccess = "true", DisplayName = "Character IDs"))
+	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Character IDs"))
 	TArray<FString> m_characterIds;
 
 	TArray<FChatMessage> m_chatMessages;

@@ -22,8 +22,7 @@ class ULipSyncDataCustom : public UObject, public ILipSyncBaseData
 public:
 	/** Create an instance of the LipSyncData holder for CustomLipSync. */
 	explicit ULipSyncDataCustom() : ILipSyncBaseData(LipSyncType::Custom)
-	{
-	};
+	{};
 #pragma endregion
 
 #pragma region ILipSyncBaseData overrides
@@ -32,8 +31,7 @@ public:
 	 * Clean up the data that was made / kept that was directly tied to the playback of one voiceline.
 	 * Once this is called all memory will be cleaned and the playback can no longer be done.
 	 */
-	virtual void CleanupData() override
-	{
-	}
+	virtual void ReleaseData() override
+	{}
 #pragma endregion
 };

@@ -32,7 +32,7 @@ struct FChatSession;
  * Provides a simple singleton-like API for any external UI / Blueprints / other modules.
  */
 UCLASS(DisplayName = "Voxta Client", Category = "Voxta")
-class UNREALVOXTA_API UVoxtaClient : public UGameInstanceSubsystem
+class UNREALVOXTA_API UVoxtaClient : public UGameInstanceSubsystem, public TSharedFromThis<UVoxtaClient>
 {
 	GENERATED_BODY()
 

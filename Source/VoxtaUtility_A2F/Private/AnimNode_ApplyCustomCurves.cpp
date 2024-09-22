@@ -1,55 +1,67 @@
 // Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
 
 #include "AnimNode_ApplyCustomCurves.h"
-#include "Animation/AnimInstanceProxy.h"
 #include "Animation/AnimNodeBase.h"
 #include "Audio2FacePlaybackHandler.h"
+#include "AbstractA2FWeightProvider.h"
+#include "Logging/StructuredLog.h"
+#include "VoxtaDefines.h"
 
-void FAnimNode_ApplyCustomCurves::Update_AnyThread(const FAnimationUpdateContext& Context)
+void FAnimNode_ApplyCustomCurves::Update_AnyThread(const FAnimationUpdateContext& context)
 {
-	GetEvaluateGraphExposedInputs().Execute(Context);
-	Source.Update(Context);
+	GetEvaluateGraphExposedInputs().Execute(context);
+	m_source.Update(context);
 }
 
-void FAnimNode_ApplyCustomCurves::PreUpdate(const UAnimInstance* InAnimInstance)
+void FAnimNode_ApplyCustomCurves::PreUpdate(const UAnimInstance* animInstance)
 {
-	if (CurveSource == nullptr)
+	if (m_curveSource == nullptr)
 	{
-		AActor* Actor = InAnimInstance->GetOwningActor();
-		if (Actor != nullptr)
+		AActor* actor = animInstance->GetOwningActor();
+		if (actor != nullptr)
 		{
-			UAudioComponent* FoundComponent = Actor->GetComponentByClass<UAudioComponent>();
-			if (FoundComponent)
+			UAudioComponent* component = actor->GetComponentByClass<UAudioComponent>();
+			if (component)
 			{
-				CurveSource = Cast<IA2FWeightProvider>(FoundComponent);
+				m_curveSource = Cast<IA2FWeightProvider>(component);
+			}
+			else
+			{
+				UE_LOGFMT(VoxtaLog, Error, "Could not find the A2F curveweight provider on the character. "
+					"Did you forget to add the VoxtaAudioPlayback component?");
 			}
 		}
+		else
+		{
+			UE_LOGFMT(VoxtaLog, Error, "A2F curves can only be applied to actors & their derivatives. "
+				"Other UObject are not supported.");
+		}
 	}
 
-	if (CurveSource != nullptr)
+	if (m_curveSource != nullptr)
 	{
-		CachedWeights.Reset();
-		CurveSource->GetA2FCurveWeightsPreUpdate(CachedWeights);
+		m_cachedWeights.Reset();
+		m_curveSource->GetA2FCurveWeightsPreUpdate(m_cachedWeights);
 	}
 }
 
-void FAnimNode_ApplyCustomCurves::Evaluate_AnyThread(FPoseContext& Output)
+void FAnimNode_ApplyCustomCurves::Evaluate_AnyThread(FPoseContext& output)
 {
-	Source.Evaluate(Output);
+	m_source.Evaluate(output);
 
-	if (CachedWeights.Num() > 0)
+	if (m_cachedWeights.Num() > 0)
 	{
-		size_t CurveIdx = 0;
-		for (float Weight : CachedWeights)
+		size_t curveId = 0;
+		for (float weight : m_cachedWeights)
 		{
-			FName CurveName = UAudio2FacePlaybackHandler::CurveNames[CurveIdx++];
-			Output.Curve.Set(CurveName, Weight);
+			FName curveName = UAudio2FacePlaybackHandler::CURVE_NAMES[curveId++];
+			output.Curve.Set(curveName, weight);
 		}
 	}
 }
 
-void FAnimNode_ApplyCustomCurves::GatherDebugData(FNodeDebugData& DebugData)
+void FAnimNode_ApplyCustomCurves::GatherDebugData(FNodeDebugData& debugData)
 {
-	FAnimNode_Base::GatherDebugData(DebugData);
-	Source.GatherDebugData(DebugData);
+	FAnimNode_Base::GatherDebugData(debugData);
+	m_source.GatherDebugData(debugData);
 }

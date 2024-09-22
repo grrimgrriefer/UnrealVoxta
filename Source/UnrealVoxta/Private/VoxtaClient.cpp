@@ -161,26 +161,32 @@ void UVoxtaClient::OnReceivedMessage(const TArray<FSignalRValue>& arguments)
 {
 	/** Wait on the next tick to run the responsehandling on the GameThread,
 	 * instead of the background thread of the socket. */
-	FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([&, Arguments = arguments] (float deltaTime)
+	FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda(
+		[Self = TWeakPtr<UVoxtaClient>(AsShared()), Arguments = arguments] (float deltaTime)
 		{
-			if (m_currentState == VoxtaClientState::Disconnected || m_currentState == VoxtaClientState::Terminated)
+			if (TSharedPtr<UVoxtaClient> SharedSelf = Self.Pin())
 			{
-				UE_LOGFMT(VoxtaLog, Warning, "Tried to process a message with the connection already severed, "
-					"skipping processing of remaining response data.");
+				if (SharedSelf->m_currentState == VoxtaClientState::Disconnected ||
+					SharedSelf->m_currentState == VoxtaClientState::Terminated)
+				{
+					UE_LOGFMT(VoxtaLog, Warning, "Tried to process a message with the connection already severed, "
+						"skipping processing of remaining response data.");
+				}
+				else if (Arguments.IsEmpty() || Arguments[0].GetType() != FSignalRValue::EValueType::Object)
+				{
+					UE_LOGFMT(VoxtaLog, Error, "Received invalid message from server.");
+				}
+				else if (SharedSelf->HandleResponse(Arguments[0].AsObject()))
+				{
+					UE_LOGFMT(VoxtaLog, Log, "VoxtaServer message handled successfully.");
+				}
+				else
+				{
+					UE_LOGFMT(VoxtaLog, Warning, "Received server response that is not (yet) supported: {0}",
+						Arguments[0].AsObject()[EASY_STRING("$type")].AsString());
+				}
 			}
-			else if (Arguments.IsEmpty() || Arguments[0].GetType() != FSignalRValue::EValueType::Object)
-			{
-				UE_LOGFMT(VoxtaLog, Error, "Received invalid message from server.");
-			}
-			else if (HandleResponse(Arguments[0].AsObject()))
-			{
-				UE_LOGFMT(VoxtaLog, Log, "VoxtaServer message handled successfully.");
-			}
-			else
-			{
-				UE_LOGFMT(VoxtaLog, Warning, "Received server response that is not (yet) supported: {0}",
-					Arguments[0].AsObject()[EASY_STRING("$type")].AsString());
-			}
+			// We don't care about else, as that means the 'playmode' is over.
 			return false; // Return false to remove the ticker after it runs once
 		}));
 }
@@ -189,32 +195,47 @@ void UVoxtaClient::OnConnected()
 {
 	/** Wait on the next tick to run the responsehandling on the GameThread,
 	 * instead of the background thread of the socket. */
-	FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([&] (float deltatime)
+	FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda(
+		[Self = TWeakPtr<UVoxtaClient>(AsShared())] (float deltatime)
 		{
-			UE_LOGFMT(VoxtaLog, Log, "VoxtaClient connected successfully");
-			SendMessageToServer(m_voxtaRequestApi.GetAuthenticateRequestData());
+			if (TSharedPtr<UVoxtaClient> SharedSelf = Self.Pin())
+			{
+				UE_LOGFMT(VoxtaLog, Log, "VoxtaClient connected successfully");
+				SharedSelf->SendMessageToServer(SharedSelf->m_voxtaRequestApi.GetAuthenticateRequestData());
 
-			m_A2FHandler->TryInitialize();
+				SharedSelf->m_A2FHandler->TryInitialize();
+			}
+			// We don't care about else, as that means the 'playmode' is over.
 			return false; // Return false to remove the ticker after it runs once
 		}));
 }
 
 void UVoxtaClient::OnConnectionError(const FString& error)
 {
-	FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([&, Error = error] (float deltatime)
+	FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda(
+		[Self = TWeakPtr<UVoxtaClient>(AsShared()), Error = error] (float deltatime)
 		{
-			UE_LOGFMT(VoxtaLog, Error, "VoxtaClient connection has encountered error: {0}.", Error);
-			Disconnect();
+			if (TSharedPtr<UVoxtaClient> SharedSelf = Self.Pin())
+			{
+				UE_LOGFMT(VoxtaLog, Error, "VoxtaClient connection has encountered error: {0}.", Error);
+				SharedSelf->Disconnect();
+			}
+			// We don't care about else, as that means the 'playmode' is over.
 			return false; // Return false to remove the ticker after it runs once
 		}));
 }
 
 void UVoxtaClient::OnClosed()
 {
-	FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([&] (float deltatime)
+	FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda(
+		[Self = TWeakPtr<UVoxtaClient>(AsShared())] (float deltatime)
 		{
-			UE_LOGFMT(VoxtaLog, Warning, "VoxtaClient connection has been closed.");
-			Disconnect();
+			if (TSharedPtr<UVoxtaClient> SharedSelf = Self.Pin())
+			{
+				UE_LOGFMT(VoxtaLog, Warning, "VoxtaClient connection has been closed.");
+				SharedSelf->Disconnect();
+			}
+			// We don't care about else, as that means the 'playmode' is over.
 			return false; // Return false to remove the ticker after it runs once
 		}));
 }

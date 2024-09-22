@@ -18,6 +18,9 @@ class UNREALVOXTAEDITOR_API UAnimGraphNode_ApplyCustomCurves : public UAnimGraph
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, Category = "Settings")
-	FAnimNode_ApplyCustomCurves Node;
+#pragma region data
+private:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Node"))
+	FAnimNode_ApplyCustomCurves m_node;
+#pragma endregion
 };

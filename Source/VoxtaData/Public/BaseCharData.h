@@ -45,12 +45,10 @@ public:
 
 #pragma region data
 private:
-	UPROPERTY(BlueprintReadOnly, Category = "Voxta",
-		meta = (AllowPrivateAccess = "true", DisplayName = "Character ID"))
+	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Character ID"))
 	FString m_id;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Voxta",
-		meta = (AllowPrivateAccess = "true", DisplayName = "Name"))
+	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Name"))
 	FString m_name;
 #pragma endregion
 };

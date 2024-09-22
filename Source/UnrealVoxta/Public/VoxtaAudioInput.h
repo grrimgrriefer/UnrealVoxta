@@ -86,11 +86,11 @@ private:
 	/** Internal helper class, easier to keep track of what's going on, as well as user-friendly logging. */
 	enum class VoxtaMicrophoneState : uint8
 	{
-		NotConnected			UMETA(DisplayName = "NotConnected"),
-		Initializing			UMETA(DisplayName = "Initializing"),
-		Ready					UMETA(DisplayName = "Ready"),
-		InUse					UMETA(DisplayName = "InUse"),
-		Closed					UMETA(DisplayName = "Closed")
+		NotConnected,
+		Initializing,
+		Ready,
+		InUse,
+		Closed
 	};
 #pragma endregion
 

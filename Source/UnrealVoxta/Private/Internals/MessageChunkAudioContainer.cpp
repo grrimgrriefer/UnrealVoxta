@@ -11,6 +11,7 @@
 #include "Audio2FaceRESTHandler.h"
 #include "Sound/SoundWaveProcedural.h"
 #include "LipSyncBaseData.h"
+#include "Interfaces/IHttpResponse.h"
 
 MessageChunkAudioContainer::MessageChunkAudioContainer(const FString& fullUrl,
 	LipSyncType lipSyncType,
@@ -62,7 +63,7 @@ void MessageChunkAudioContainer::CleanupData()
 	m_soundWave->RemoveFromRoot();
 	if (LIP_SYNC_TYPE != LipSyncType::None)
 	{
-		m_lipSyncData->CleanupData();
+		m_lipSyncData->ReleaseData();
 	}
 	m_rawAudioData.Empty();
 	m_state = MessageChunkState::CleanedUp;

@@ -19,7 +19,7 @@ class UVoxtaClient;
  * Also handles the automatic playback unless 'custom lipsync' is enabled.
  */
 UCLASS(HideCategories = (Mobility, Rendering, LOD), ClassGroup = Voxta, meta = (BlueprintSpawnableComponent))
-class UNREALVOXTA_API UVoxtaAudioPlayback : public UAudioComponent, public IA2FWeightProvider
+class UNREALVOXTA_API UVoxtaAudioPlayback : public UAudioComponent, public IA2FWeightProvider, public TSharedFromThis<UVoxtaAudioPlayback>
 {
 	GENERATED_BODY()
 
@@ -41,7 +41,8 @@ public:
 
 	/**
 	 * Event fired when a chunk of audio data is ready and is marked for 'custom' lipsync.
-	 * This means we have imported and processed to audio into a SoundWave. But lipsync and playback must be handled by your own logic.
+	 * This means we have imported and processed to audio into a SoundWave. But lipsync and playback must
+	 * be handled by your own logic.
 	 *
 	 * Note: After the playback is complete, please call MarkCustomPlaybackComplete with the guid provided.
 	 *
@@ -87,7 +88,8 @@ protected:
 	/**
 	 * Begins Play for the component.
 	 * Called when the owning Actor begins play or when the component is created if the Actor has already begun play.
-	 * Actor BeginPlay normally happens right after PostInitializeComponents but can be delayed for networked or child actors.
+	 * Actor BeginPlay normally happens right after PostInitializeComponents but can be delayed for networked
+	 * or child actors.
 	 * Requires component to be registered and initialized.
 	 */
 	virtual void BeginPlay() override;
@@ -112,8 +114,7 @@ private:
 
 #pragma region data
 private:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Voxta",
-		meta = (AllowPrivateAccess = "true", DisplayName = "Lipsync Type"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Lipsync Type"))
 	LipSyncType m_lipSyncType;
 
 	// TODO: use interface so we don't have to cast to cast to UAudio2FacePlaybackHandler or

@@ -2,10 +2,17 @@
 
 #include "Audio2FacePlaybackHandler.h"
 #include "VoxtaDefines.h"
-#include <Logging/StructuredLog.h>
+#include "Logging/StructuredLog.h"
+#include "Components/AudioComponent.h"
+#include "LipSyncDataA2F.h"
+
+#ifndef VOXTA_LOG_DEFINED
+DEFINE_LOG_CATEGORY(VoxtaLog);
+#define VOXTA_LOG_DEFINED
+#endif
 
 // ArkitNames https://developer.apple.com/documentation/arkit/arfaceanchor/blendshapelocation
-const FName UAudio2FacePlaybackHandler::CurveNames[52] =
+const FName UAudio2FacePlaybackHandler::CURVE_NAMES[52] =
 {
 	EASY_NAME("EyeBlinkLeft"),
 	EASY_NAME("EyeLookDownLeft"),
@@ -84,9 +91,10 @@ void UAudio2FacePlaybackHandler::Play(const ULipSyncDataA2F* lipsyncData)
 
 	m_forcedNeutral = false;
 
-	PlaybackPercentHandle = m_audioComponent->OnAudioPlaybackPercentNative.AddUObject(
+	UE_LOGFMT(VoxtaLog, Log, "Starting playback of audio, along with A2F lip syncing.");
+	m_playbackPercentHandle = m_audioComponent->OnAudioPlaybackPercentNative.AddUObject(
 		this, &UAudio2FacePlaybackHandler::OnAudioPlaybackPercent);
-	PlaybackFinishedHandle = m_audioComponent->OnAudioFinishedNative.AddUObject(
+	m_playbackFinishedHandle = m_audioComponent->OnAudioFinishedNative.AddUObject(
 		this, &UAudio2FacePlaybackHandler::OnAudioPlaybackFinished);
 	m_audioComponent->Play();
 }
@@ -97,26 +105,26 @@ void UAudio2FacePlaybackHandler::Stop()
 	{
 		return;
 	}
-	m_audioComponent->OnAudioPlaybackPercentNative.Remove(PlaybackPercentHandle);
-	m_audioComponent->OnAudioFinishedNative.Remove(PlaybackFinishedHandle);
+	m_audioComponent->OnAudioPlaybackPercentNative.Remove(m_playbackPercentHandle);
+	m_audioComponent->OnAudioFinishedNative.Remove(m_playbackFinishedHandle);
 	m_audioComponent = nullptr;
 	InitNeutralPose();
 }
 
-void UAudio2FacePlaybackHandler::OnAudioPlaybackPercent(const UAudioComponent*, const USoundWave* SoundWave, float Percent)
+void UAudio2FacePlaybackHandler::OnAudioPlaybackPercent(const UAudioComponent*, const USoundWave* soundWave, float Percent)
 {
 	if (m_lipsyncData == nullptr)
 	{
 		InitNeutralPose();
 		return;
 	}
-	float currentFrame = SoundWave->Duration * m_lipsyncData->GetFramePerSecond() * Percent;
+	float currentFrame = soundWave->Duration * m_lipsyncData->GetFramePerSecond() * Percent;
 	float totalFrameCount = m_lipsyncData->GetA2FCurveWeights().Num();
 	int closestFrame = FMath::RoundToInt(currentFrame);
 	if (closestFrame >= totalFrameCount)
 	{
 		InitNeutralPose();
-		// this should never happen
+		UE_LOGFMT(VoxtaLog, Error, "The closest frame was outside of bounds, this should be impossible.");
 		return;
 	}
 	if (FMath::IsNearlyEqual(currentFrame, closestFrame))
@@ -139,17 +147,18 @@ void UAudio2FacePlaybackHandler::OnAudioPlaybackPercent(const UAudioComponent*, 
 	}
 	else
 	{
-		// Error too few lipsync frames, just pick last values
+		UE_LOGFMT(VoxtaLog, Warning, "Requesting more frames than rendered by A2F, clamping on last frame.");
 		m_currentCurves = m_lipsyncData->GetA2FCurveWeights()[totalFrameCount - 1];
 	}
 }
 
-void UAudio2FacePlaybackHandler::OnAudioPlaybackFinished(UAudioComponent*)
+void UAudio2FacePlaybackHandler::OnAudioPlaybackFinished(UAudioComponent* audioComponent)
 {
 	InitNeutralPose();
 }
 
 void UAudio2FacePlaybackHandler::InitNeutralPose()
 {
+	UE_LOGFMT(VoxtaLog, Log, "Defaulting A2F lipsync pose back to neutral.");
 	m_forcedNeutral = true;
 }

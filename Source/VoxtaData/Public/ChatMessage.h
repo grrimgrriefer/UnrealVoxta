@@ -63,16 +63,13 @@ public:
 
 private:
 	// TODO: Add flag to indicate once the message is complete and no further chunks are expected.
-	UPROPERTY(BlueprintReadOnly, Category = "Voxta",
-		meta = (AllowPrivateAccess = "true", DisplayName = "Message Text (so far)"))
+	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Message Text (so far)"))
 	FString m_text;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Voxta",
-		meta = (AllowPrivateAccess = "true", DisplayName = "Message ID"))
+	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Message ID"))
 	FString m_messageId;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Voxta",
-		meta = (AllowPrivateAccess = "true", DisplayName = "Character ID"))
+	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Character ID"))
 	FString m_charId;
 
 	TArray<FString> m_audioUrls;

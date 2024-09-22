@@ -24,7 +24,7 @@ public:
 	 * Clean up the OVR-lipsync data that was made & kept in memory for playback of the voiceline that is tied
 	 * to this data structure.
 	 */
-	virtual void CleanupData() override
+	virtual void ReleaseData() override
 	{
 		m_ovrLipSyncFrameSequence = nullptr;
 		this->RemoveFromRoot();
@@ -39,7 +39,7 @@ public:
 	}
 
 	/**
-	 * Register the generated UOVRLipSyncFrameSequence as part of this instance..
+	 * Register the generated UOVRLipSyncFrameSequence as part of this instance.
 	 * This will transfer ownership of the provided pointer to this object.
 	 *
 	 * @param ovrLipSyncFrameSequence The sequence of OVR curves that will be provided to the OVR audio playback

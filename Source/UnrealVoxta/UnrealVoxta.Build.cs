@@ -19,7 +19,7 @@ public class UnrealVoxta : ModuleRules
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"CoreUObject", "Engine", "Slate", "SlateCore", "Json", "JsonUtilities",
+				"CoreUObject", "Engine", "Slate", "SlateCore", "Json", "JsonUtilities", "Projects"
 			}
 			);
 

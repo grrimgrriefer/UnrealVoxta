@@ -23,9 +23,9 @@ public:
 	 */
 	enum class ServiceType : uint8
 	{
-		TextGen			UMETA(DisplayName = "TextGen"),
-		SpeechToText	UMETA(DisplayName = "SpeechToText"),
-		TextToSpeech	UMETA(DisplayName = "TextToSpeech")
+		TextGen,
+		SpeechToText,
+		TextToSpeech
 	};
 #pragma endregion
 
