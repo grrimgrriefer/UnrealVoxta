@@ -20,7 +20,7 @@ void UVoxtaAudioInput::InitializeSocket(int bufferMs, int sampleRate, int inputC
 		clientCurrentState == VoxtaClientState::AttemptingToConnect ||
 		clientCurrentState == VoxtaClientState::Terminated)
 	{
-		UE_LOGFMT(VoxtaLog, Error, "Audio socket could not be initialized as the VoxtaClient is currently {0}.", );
+		UE_LOGFMT(VoxtaLog, Error, "Audio socket could not be initialized as the VoxtaClient is currently not ready.");
 		return;
 	}
 
@@ -74,12 +74,10 @@ void UVoxtaAudioInput::StopStreaming()
 	if (m_connectionState == VoxtaMicrophoneState::InUse)
 	{
 		UE_LOGFMT(VoxtaLog, Log, "Stopping voice capture via AudioInput.");
-		return;
 	}
 	else
 	{
-		UE_LOGFMT(VoxtaLog, Warning, "Attempted to stop streaming AudioInput via the socket, but it is not in use. "
-			"Current state: {0}");
+		UE_LOGFMT(VoxtaLog, Warning, "Attempted to stop streaming AudioInput via the socket, but it is not in use. ");
 	}
 	m_audioCaptureDevice.StopCapture();
 	m_connectionState = VoxtaMicrophoneState::Ready;
@@ -129,7 +127,7 @@ void UVoxtaAudioInput::InitializeVoiceCapture()
 
 void UVoxtaAudioInput::OnSocketConnected()
 {
-	UE_LOGFMT(VoxtaLog, Log, "Succesfully connected Audiosocket (microphone input) to VoxtaServer.", );
+	UE_LOGFMT(VoxtaLog, Log, "Succesfully connected Audiosocket (microphone input) to VoxtaServer.");
 
 	InitializeVoiceCapture();
 }

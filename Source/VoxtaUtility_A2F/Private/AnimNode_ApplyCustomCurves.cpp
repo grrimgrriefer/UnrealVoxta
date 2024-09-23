@@ -15,6 +15,13 @@ void FAnimNode_ApplyCustomCurves::Update_AnyThread(const FAnimationUpdateContext
 
 void FAnimNode_ApplyCustomCurves::PreUpdate(const UAnimInstance* animInstance)
 {
+	if (!(animInstance->GetWorld()->WorldType == EWorldType::PIE) &&
+		!(animInstance->GetWorld()->WorldType == EWorldType::Game))
+	{
+		// Check if we're playing, otherwise this will trigger in blueprint editor when previewing
+		return;
+	}
+
 	if (m_curveSource == nullptr)
 	{
 		AActor* actor = animInstance->GetOwningActor();

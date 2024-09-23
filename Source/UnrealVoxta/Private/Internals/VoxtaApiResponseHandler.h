@@ -17,6 +17,7 @@ struct ServerResponseChatMessageEnd;
 struct ServerResponseChatMessageCancelled;
 struct ServerResponseChatUpdate;
 struct ServerResponseSpeechTranscription;
+struct ServerResponseError;
 
 /**
  * VoxtaApiResponseHandler
@@ -98,6 +99,10 @@ private:
 
 	/** ServerResponseSpeechTranscription (end) override of the generic GetResponseData */
 	TUniquePtr<ServerResponseSpeechTranscription> GetSpeechRecognitionEnd(
+		const TMap<FString, FSignalRValue>& serverResponseData) const;
+
+	/** ServerResponseError override of the generic GetResponseData */
+	TUniquePtr<ServerResponseError> GetErrorResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
 #pragma endregion
 };

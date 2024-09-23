@@ -34,13 +34,13 @@ bool AudioWebSocket::Connect()
 				}
 			});
 		m_socketConnection->OnConnectionError().AddLambda(
-			[Self = TWeakPtr<AudioWebSocket>(AsShared())] (const FString& ErrString)
+			[Self = TWeakPtr<AudioWebSocket>(AsShared())] (const FString& errorString)
 			{
-				UE_LOGFMT(VoxtaLog, Warning, "Websocket err: {0}", ErrString);
+				UE_LOGFMT(VoxtaLog, Warning, "Websocket err: {0}", errorString);
 
 				if (TSharedPtr<AudioWebSocket> SharedSelf = Self.Pin())
 				{
-					SharedSelf->OnConnectionErrorEvent.Broadcast(ErrString);
+					SharedSelf->OnConnectionErrorEvent.Broadcast(errorString);
 				}
 				else
 				{
@@ -49,15 +49,13 @@ bool AudioWebSocket::Connect()
 				}
 			});
 		m_socketConnection->OnClosed().AddLambda(
-			[Self = TWeakPtr<AudioWebSocket>(AsShared())] (int32 StatusCode, const FString& Reason, bool bWasClean)
+			[Self = TWeakPtr<AudioWebSocket>(AsShared())] (int32 statusCode, const FString& reason, bool bWasClean)
 			{
 				if (TSharedPtr<AudioWebSocket> SharedSelf = Self.Pin())
 				{
-					UE_LOGFMT(VoxtaLog, Log, "Websocket closing: Code={0}, Reason={1}, wasClean={2}",
-						StatusCode,
-						Reason,
-						bWasClean);
-					SharedSelf->OnClosedEvent.Broadcast(StatusCode, Reason, bWasClean);
+					UE_LOGFMT(VoxtaLog, Log, "Websocket closing: Code: {0}, reason: {1}, wasClean: {2}",
+						statusCode, reason, bWasClean);
+					SharedSelf->OnClosedEvent.Broadcast(statusCode, reason, bWasClean);
 				}
 				else
 				{

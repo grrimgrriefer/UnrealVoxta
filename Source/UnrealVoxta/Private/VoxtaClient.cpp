@@ -19,13 +19,14 @@
 #include "VoxtaData/Public/ServerResponses/ServerResponseChatMessageCancelled.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseChatUpdate.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseSpeechTranscription.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseError.h"
 
 void UVoxtaClient::Initialize(FSubsystemCollectionBase& collection)
 {
 	Super::Initialize(collection);
 	m_logUtility.RegisterVoxtaLogger();
 	m_voiceInput = NewObject<UVoxtaAudioInput>(this);
-	m_A2FHandler = MakeUnique<Audio2FaceRESTHandler>();
+	m_A2FHandler = MakeShared<Audio2FaceRESTHandler>();
 }
 
 void UVoxtaClient::Deinitialize()
@@ -85,7 +86,7 @@ void UVoxtaClient::Disconnect(bool silent)
 
 void UVoxtaClient::StartChatWithCharacter(const FString& charId)
 {
-	if (GetAiCharacterDataById(charId) == nullptr)
+	if (GetAiCharacterDataById(charId) != nullptr)
 	{
 		SendMessageToServer(m_voxtaRequestApi.GetLoadCharacterRequestData(charId));
 		SetState(VoxtaClientState::StartingChat);
@@ -162,12 +163,12 @@ void UVoxtaClient::OnReceivedMessage(const TArray<FSignalRValue>& arguments)
 	/** Wait on the next tick to run the responsehandling on the GameThread,
 	 * instead of the background thread of the socket. */
 	FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda(
-		[Self = TWeakPtr<UVoxtaClient>(AsShared()), Arguments = arguments] (float deltaTime)
+		[Self = TWeakObjectPtr<UVoxtaClient>(this), Arguments = arguments] (float deltaTime)
 		{
-			if (TSharedPtr<UVoxtaClient> SharedSelf = Self.Pin())
+			if (Self != nullptr)
 			{
-				if (SharedSelf->m_currentState == VoxtaClientState::Disconnected ||
-					SharedSelf->m_currentState == VoxtaClientState::Terminated)
+				if (Self->m_currentState == VoxtaClientState::Disconnected ||
+					Self->m_currentState == VoxtaClientState::Terminated)
 				{
 					UE_LOGFMT(VoxtaLog, Warning, "Tried to process a message with the connection already severed, "
 						"skipping processing of remaining response data.");
@@ -176,14 +177,14 @@ void UVoxtaClient::OnReceivedMessage(const TArray<FSignalRValue>& arguments)
 				{
 					UE_LOGFMT(VoxtaLog, Error, "Received invalid message from server.");
 				}
-				else if (SharedSelf->HandleResponse(Arguments[0].AsObject()))
+				else if (Self->HandleResponse(Arguments[0].AsObject()))
 				{
 					UE_LOGFMT(VoxtaLog, Log, "VoxtaServer message handled successfully.");
 				}
 				else
 				{
-					UE_LOGFMT(VoxtaLog, Warning, "Received server response that is not (yet) supported: {0}",
-						Arguments[0].AsObject()[EASY_STRING("$type")].AsString());
+					UE_LOGFMT(VoxtaLog, Warning, "Response handler reported a failure, please check the logs to see "
+						"what's wrong. Type: {0}", Arguments[0].AsObject()[EASY_STRING("$type")].AsString());
 				}
 			}
 			// We don't care about else, as that means the 'playmode' is over.
@@ -196,14 +197,14 @@ void UVoxtaClient::OnConnected()
 	/** Wait on the next tick to run the responsehandling on the GameThread,
 	 * instead of the background thread of the socket. */
 	FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda(
-		[Self = TWeakPtr<UVoxtaClient>(AsShared())] (float deltatime)
+		[Self = TWeakObjectPtr<UVoxtaClient>(this)] (float deltatime)
 		{
-			if (TSharedPtr<UVoxtaClient> SharedSelf = Self.Pin())
+			if (Self != nullptr)
 			{
 				UE_LOGFMT(VoxtaLog, Log, "VoxtaClient connected successfully");
-				SharedSelf->SendMessageToServer(SharedSelf->m_voxtaRequestApi.GetAuthenticateRequestData());
+				Self->SendMessageToServer(Self->m_voxtaRequestApi.GetAuthenticateRequestData());
 
-				SharedSelf->m_A2FHandler->TryInitialize();
+				Self->m_A2FHandler->TryInitialize();
 			}
 			// We don't care about else, as that means the 'playmode' is over.
 			return false; // Return false to remove the ticker after it runs once
@@ -213,12 +214,12 @@ void UVoxtaClient::OnConnected()
 void UVoxtaClient::OnConnectionError(const FString& error)
 {
 	FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda(
-		[Self = TWeakPtr<UVoxtaClient>(AsShared()), Error = error] (float deltatime)
+		[Self = TWeakObjectPtr<UVoxtaClient>(this), Error = error] (float deltatime)
 		{
-			if (TSharedPtr<UVoxtaClient> SharedSelf = Self.Pin())
+			if (Self != nullptr)
 			{
 				UE_LOGFMT(VoxtaLog, Error, "VoxtaClient connection has encountered error: {0}.", Error);
-				SharedSelf->Disconnect();
+				Self->Disconnect();
 			}
 			// We don't care about else, as that means the 'playmode' is over.
 			return false; // Return false to remove the ticker after it runs once
@@ -228,12 +229,12 @@ void UVoxtaClient::OnConnectionError(const FString& error)
 void UVoxtaClient::OnClosed()
 {
 	FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda(
-		[Self = TWeakPtr<UVoxtaClient>(AsShared())] (float deltatime)
+		[Self = TWeakObjectPtr<UVoxtaClient>(this)] (float deltatime)
 		{
-			if (TSharedPtr<UVoxtaClient> SharedSelf = Self.Pin())
+			if (Self != nullptr)
 			{
 				UE_LOGFMT(VoxtaLog, Warning, "VoxtaClient connection has been closed.");
-				SharedSelf->Disconnect();
+				Self->Disconnect();
 			}
 			// We don't care about else, as that means the 'playmode' is over.
 			return false; // Return false to remove the ticker after it runs once
@@ -260,7 +261,7 @@ bool UVoxtaClient::HandleResponseHelper(const ServerResponseBase* response, cons
 	const T* derivedResponse = StaticCast<const T*>(response);
 	if (derivedResponse)
 	{
-		UE_LOGFMT(VoxtaLog, Log, "{0}", logMessage);
+		UE_LOGFMT(VoxtaLog, Log, logMessage);
 		return (this->*handler)(*derivedResponse);
 	}
 	return false;
@@ -307,6 +308,10 @@ bool UVoxtaClient::HandleResponse(const TMap<FString, FSignalRValue>& responseDa
 			return HandleResponseHelper<ServerResponseSpeechTranscription>(response.Get(),
 				TEXT("Speech transcription update received successfully"),
 				&UVoxtaClient::HandleSpeechTranscriptionResponse);
+		case Error:
+			return HandleResponseHelper<ServerResponseError>(response.Get(),
+				TEXT("Error message received successfully"),
+				&UVoxtaClient::HandleErrorResponse);
 		default:
 			UE_LOGFMT(VoxtaLog, Error, "No handler available for type a message of type: {0}", responseType);
 			return false;
@@ -391,6 +396,13 @@ bool UVoxtaClient::HandleChatStartedResponse(const ServerResponseChatStarted& re
 
 bool UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessageBase& response)
 {
+	if (m_chatSession == nullptr)
+	{
+		UE_LOGFMT(VoxtaLog, Error, "Received a chat message, but there's no ongoing chat, "
+			"a critical service was likely not available.");
+		return false;
+	}
+
 	TArray<FChatMessage>& messages = m_chatSession->GetChatMessages();
 	using enum ServerResponseChatMessageBase::ChatMessageType;
 	switch (response.MESSAGE_TYPE)
@@ -502,9 +514,11 @@ bool UVoxtaClient::HandleChatUpdateResponse(const ServerResponseChatUpdate& resp
 			UE_LOGFMT(VoxtaLog, Log, "Adding user-message to history due to update from VoxtaServer. "
 				"MessageId {0} Content: {1}", response.MESSAGE_ID, response.TEXT_CONTENT);
 
-			m_chatSession->GetChatMessages().Emplace(
-				FChatMessage(response.MESSAGE_ID, response.TEXT_CONTENT));
+			FChatMessage message = FChatMessage(response.MESSAGE_ID, response.SENDER_ID);
+			message.AppendMoreContent(response.TEXT_CONTENT, FString());
+			m_chatSession->GetChatMessages().Emplace(MoveTemp(message));
 
+			// we want a pointer after it's moved to the heap, just for safety.
 			const FChatMessage* chatMessage = GetChatMessageById(response.MESSAGE_ID);
 			VoxtaClientCharMessageAddedEventNative.Broadcast(*m_userData.Get(), *chatMessage);
 			VoxtaClientCharMessageAddedEvent.Broadcast(*m_userData.Get(), *chatMessage);
@@ -546,6 +560,14 @@ bool UVoxtaClient::HandleSpeechTranscriptionResponse(const ServerResponseSpeechT
 			// transcriptions aren't registered unless finalized, so we can just ignore cancellations completely.
 			break;
 	}
+	return true;
+}
+
+bool UVoxtaClient::HandleErrorResponse(const ServerResponseError& response)
+{
+	UE_LOGFMT(VoxtaLog, Error, "Recieved error from the VoxtaServer, please check the logs for additional details. "
+		"There might be a misconfiguration on the VoxtaServer side, or you found an edge case (please report it to me). "
+		"ErrorMessage: {0}, ErrorDetails: {1}", response.ERROR_MESSAGE, response.ERROR_DETAILS);
 	return true;
 }
 

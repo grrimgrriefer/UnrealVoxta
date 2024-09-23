@@ -192,10 +192,6 @@ void AudioCaptureHandler::CaptureAndSendVoiceData()
 
 		m_socketDataBuffer.Reset();
 	}
-	else
-	{
-		UE_LOGFMT(VoxtaLog, Warning, "No data to send");
-	}
 }
 
 float AudioCaptureHandler::GetDecibels() const

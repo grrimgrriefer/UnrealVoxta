@@ -19,7 +19,7 @@ class UVoxtaClient;
  * Also handles the automatic playback unless 'custom lipsync' is enabled.
  */
 UCLASS(HideCategories = (Mobility, Rendering, LOD), ClassGroup = Voxta, meta = (BlueprintSpawnableComponent))
-class UNREALVOXTA_API UVoxtaAudioPlayback : public UAudioComponent, public IA2FWeightProvider, public TSharedFromThis<UVoxtaAudioPlayback>
+class UNREALVOXTA_API UVoxtaAudioPlayback : public UAudioComponent, public IA2FWeightProvider
 {
 	GENERATED_BODY()
 

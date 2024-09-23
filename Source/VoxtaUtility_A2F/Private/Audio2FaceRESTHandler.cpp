@@ -10,6 +10,8 @@
 
 void Audio2FaceRESTHandler::TryInitialize()
 {
+	UE_LOGFMT(VoxtaLog, Warning, "Testing to see if A2F is running on your machine... hold on.");
+
 	m_currentState = CurrentA2FState::Initializing;
 	AsyncTask(ENamedThreads::AnyThread, [Self = TWeakPtr<Audio2FaceRESTHandler>(AsShared())] ()
 	{
@@ -76,7 +78,7 @@ void Audio2FaceRESTHandler::TryInitialize()
 						}
 						else
 						{
-							UE_LOGFMT(VoxtaLog, Error, "Audio2FaceRESTHandler status request was not completed successfully, "
+							UE_LOGFMT(VoxtaLog, Warning, "Audio2FaceRESTHandler status request was not completed successfully, "
 								"assuming we don't want A2F, Aborting initialization...");
 							SharedSelf2->m_currentState = CurrentA2FState::NotConnected;
 						}
@@ -101,7 +103,7 @@ void Audio2FaceRESTHandler::GetBlendshapes(FString wavFileName, FString shapesFi
 {
 	if (m_currentState != CurrentA2FState::Idle)
 	{
-		UE_LOGFMT(LogTemp, Error, "Always check if the RESTHandler is busy before trying to request A2F blendshape generation, skipping request");
+		UE_LOGFMT(VoxtaLog, Error, "Always check if the RESTHandler is busy before trying to request A2F blendshape generation, skipping request");
 		return;
 	}
 	m_currentState = CurrentA2FState::Busy;

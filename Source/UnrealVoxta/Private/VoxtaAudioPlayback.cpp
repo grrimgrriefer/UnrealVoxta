@@ -92,16 +92,19 @@ void UVoxtaAudioPlayback::EndPlay(const EEndPlayReason::Type endPlayReason)
 
 void UVoxtaAudioPlayback::GetA2FCurveWeightsPreUpdate(TArray<float>& targetArrayRef)
 {
-	if (m_lipSyncType == LipSyncType::Audio2Face && m_lipSyncHandler)
+	if (m_lipSyncType == LipSyncType::Audio2Face)
 	{
-		Cast<UAudio2FacePlaybackHandler>(m_lipSyncHandler)->GetA2FCurveWeights(targetArrayRef);
+		if (m_lipSyncHandler != nullptr)
+		{
+			Cast<UAudio2FacePlaybackHandler>(m_lipSyncHandler)->GetA2FCurveWeights(targetArrayRef);
+		}
+		else
+		{
+			UE_LOGFMT(VoxtaLog, Error, "A2F CurveWeights could not be fetched as the handler was null. "
+				"This should never happen.");
+		}
 	}
-	else
-	{
-		UE_LOGFMT(VoxtaLog, Error, "Only ask for A2F CurveWeights if Audio2Face is enabled. "
-			"Character with id: {0} is currently marked as using: {1} for lipsync.",
-			m_characterId, UEnum::GetValueAsString(m_lipSyncType));
-	}
+	// ignore requests if we're not using A2F lipsync
 }
 
 void UVoxtaAudioPlayback::PlaybackMessage(const FBaseCharData& sender, const FChatMessage& message)
@@ -118,12 +121,12 @@ void UVoxtaAudioPlayback::PlaybackMessage(const FBaseCharData& sender, const FCh
 				FString::Format(*FString(TEXT("http://{0}:{1}{2}")), { m_hostAddress, m_hostPort, message.GetAudioUrls()[i] }),
 				m_lipSyncType,
 				m_clientReference->GetA2FHandler(),
-				[Self = TWeakPtr<UVoxtaAudioPlayback>(AsShared())]
+				[Self = TWeakObjectPtr<UVoxtaAudioPlayback>(this)]
 				(const MessageChunkAudioContainer* chunk)
 				{
-					if (TSharedPtr<UVoxtaAudioPlayback> SharedSelf = Self.Pin())
+					if (Self != nullptr)
 					{
-						SharedSelf->OnChunkStateChange(chunk);
+						Self->OnChunkStateChange(chunk);
 					}
 					else
 					{
@@ -245,10 +248,18 @@ void UVoxtaAudioPlayback::OnChunkStateChange(const MessageChunkAudioContainer* c
 	{
 		PlayCurrentAudioChunkIfAvailable();
 	}
-	m_orderedAudio[chunk->INDEX]->Continue();
+	if (m_orderedAudio[chunk->INDEX]->GetCurrentState() != MessageChunkState::Busy &&
+		m_orderedAudio[chunk->INDEX]->GetCurrentState() != MessageChunkState::ReadyForPlayback)
+	{
+		m_orderedAudio[chunk->INDEX]->Continue();
+	}
 	if (chunk->INDEX + 1 < m_orderedAudio.Num())
 	{
-		m_orderedAudio[chunk->INDEX + 1]->Continue();
+		if (m_orderedAudio[chunk->INDEX + 1]->GetCurrentState() != MessageChunkState::Busy &&
+			m_orderedAudio[chunk->INDEX + 1]->GetCurrentState() != MessageChunkState::ReadyForPlayback)
+		{
+			m_orderedAudio[chunk->INDEX + 1]->Continue();
+		}
 	}
 }
 

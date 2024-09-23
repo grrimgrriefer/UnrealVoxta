@@ -32,7 +32,7 @@ struct FChatSession;
  * Provides a simple singleton-like API for any external UI / Blueprints / other modules.
  */
 UCLASS(DisplayName = "Voxta Client", Category = "Voxta")
-class UNREALVOXTA_API UVoxtaClient : public UGameInstanceSubsystem, public TSharedFromThis<UVoxtaClient>
+class UNREALVOXTA_API UVoxtaClient : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
 
@@ -207,7 +207,7 @@ private:
 	VoxtaApiRequestHandler m_voxtaRequestApi;
 	VoxtaApiResponseHandler m_voxtaResponseApi;
 	TSharedPtr<IHubConnection> m_hub;
-	TUniquePtr<Audio2FaceRESTHandler> m_A2FHandler;
+	TSharedPtr<Audio2FaceRESTHandler> m_A2FHandler;
 
 	TUniquePtr<FUserCharData> m_userData;
 	TArray<TUniquePtr<const FAiCharData>> m_characterList;
@@ -286,6 +286,8 @@ private:
 	bool HandleChatUpdateResponse(const ServerResponseChatUpdate& response);
 	/** Takes care of ServerResponseSpeechTranscription responses. */
 	bool HandleSpeechTranscriptionResponse(const ServerResponseSpeechTranscription& response);
+	/** Takes care of ServerResponseError responses. */
+	bool HandleErrorResponse(const ServerResponseError& response);
 #pragma endregion
 
 	/**

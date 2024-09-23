@@ -150,7 +150,7 @@ void MessageChunkAudioContainer::ProcessAudioData()
 					sharedSelf->m_soundWave = soundWave;
 					sharedSelf->m_soundWave->AddToRoot();
 
-					UE_LOGFMT(VoxtaLog, Error, "Sucessfully processed raw audio data into UImportedSoundWave for "
+					UE_LOGFMT(VoxtaLog, Log, "Sucessfully processed raw audio data into UImportedSoundWave for "
 						"index {0}", sharedSelf->INDEX);
 					sharedSelf->UpdateState(MessageChunkState::Idle_Processed);
 				}
@@ -188,7 +188,7 @@ void MessageChunkAudioContainer::GenerateLipSync()
 						{
 							sharedSelf->m_lipSyncData = Cast<ILipSyncBaseData>(MoveTemp(lipsyncData));
 
-							UE_LOGFMT(VoxtaLog, Error, "Sucessfully genrated OVR lipsyncdata for "
+							UE_LOGFMT(VoxtaLog, Log, "Sucessfully genrated OVR lipsyncdata for "
 								"index {0}", sharedSelf->INDEX);
 							sharedSelf->UpdateState(MessageChunkState::ReadyForPlayback);
 						}
@@ -209,8 +209,7 @@ void MessageChunkAudioContainer::GenerateLipSync()
 			if (m_A2FRestHandler->IsBusy())
 			{
 				UE_LOGFMT(VoxtaLog, Warning, "A2F is busy at the moment, aborting lipsync generattion request, moving "
-					"the state back into Idle_Processed so it can be attempted later.",
-					INDEX);
+					"the state back into Idle_Processed so it can be attempted later.");
 				m_state = MessageChunkState::Idle_Processed; // TODO find a more clean way to do this
 				return;
 			}
@@ -226,7 +225,7 @@ void MessageChunkAudioContainer::GenerateLipSync()
 						{
 							sharedSelf->m_lipSyncData = Cast<ILipSyncBaseData>(MoveTemp(lipsyncData));
 
-							UE_LOGFMT(VoxtaLog, Error, "Sucessfully genrated A2F lipsyncdata for "
+							UE_LOGFMT(VoxtaLog, Log, "Sucessfully genrated A2F lipsyncdata for "
 								"index {0}", sharedSelf->INDEX);
 							sharedSelf->UpdateState(MessageChunkState::ReadyForPlayback);
 						}

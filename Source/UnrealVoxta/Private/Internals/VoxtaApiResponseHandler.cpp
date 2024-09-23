@@ -14,6 +14,7 @@
 #include "VoxtaData/Public/ServerResponses/ServerResponseChatMessageCancelled.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseChatUpdate.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseSpeechTranscription.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseError.h"
 #include "VoxtaData/Public/VoxtaServiceData.h"
 
 TUniquePtr<ServerResponseBase> VoxtaApiResponseHandler::GetResponseData(
@@ -65,9 +66,13 @@ TUniquePtr<ServerResponseBase> VoxtaApiResponseHandler::GetResponseData(
 	{
 		return GetSpeechRecognitionEnd(serverResponseData);
 	}
+	else if (type == TEXT("error"))
+	{
+		return GetErrorResponse(serverResponseData);
+	}
 	else
 	{
-		UE_LOGFMT(VoxtaLog, Error, "Failed to process VoxtaApiResponse of type: {type}.", type);
+		UE_LOGFMT(VoxtaLog, Error, "Failed to process VoxtaApiResponse of type: {0}.", type);
 		return nullptr;
 	}
 }
@@ -214,4 +219,12 @@ TUniquePtr<ServerResponseSpeechTranscription> VoxtaApiResponseHandler::GetSpeech
 			: FString(),
 		isValid ? ServerResponseSpeechTranscription::TranscriptionState::END
 			: ServerResponseSpeechTranscription::TranscriptionState::CANCELLED);
+}
+
+TUniquePtr<ServerResponseError> VoxtaApiResponseHandler::GetErrorResponse(
+	const TMap<FString, FSignalRValue>& serverResponseData) const
+{
+	return MakeUnique<ServerResponseError>(
+		serverResponseData[EASY_STRING("message")].AsString(),
+		serverResponseData[EASY_STRING("details")].AsString());
 }

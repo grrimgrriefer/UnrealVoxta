@@ -35,13 +35,14 @@ void VoxtaLogger::Serialize(const TCHAR* Message, ELogVerbosity::Type Verbosity,
 		FColor color;
 		switch (Verbosity)
 		{
+			case ELogVerbosity::Log:
+				return;
 			case ELogVerbosity::Warning:
 				color = FColor::Orange;
 				break;
-			case ELogVerbosity::Error:
-				color = FColor::Red;
 			default:
-				return;
+				color = FColor::Red;
+				break;
 		}
 
 		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 3.0f, color, FString::Format(*FString(TEXT("[{0}]: {1} -> {2}")), {
