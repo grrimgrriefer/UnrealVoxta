@@ -41,7 +41,7 @@ FSignalRValue VoxtaApiRequestHandler::GetLoadCharacterRequestData(const FString&
 FSignalRValue VoxtaApiRequestHandler::GetStartChatRequestData(const FAiCharData* charData) const
 {
 	auto characterParams = TMap<FString, FSignalRValue>{
-		{ EASY_STRING("id"), SIGNALR_STRINGVIEW(charData->GetId()) },
+		{ EASY_STRING("id"), FSignalRValue(charData->GetId()) },
 		{ EASY_STRING("name"), SIGNALR_STRINGVIEW(charData->GetName()) },
 		{ EASY_STRING("explicitContent"), SIGNALR_STRING("True")} };
 
@@ -50,7 +50,7 @@ FSignalRValue VoxtaApiRequestHandler::GetStartChatRequestData(const FAiCharData*
 		{ EASY_STRING("contextKey"), SIGNALR_STRING("") },
 		{ EASY_STRING("context"), SIGNALR_STRING("") },
 		{ EASY_STRING("chatId"), FSignalRValue(FGuid::NewGuid().ToString()) },
-		{ EASY_STRING("characterId"), SIGNALR_STRINGVIEW(charData->GetId()) },
+		{ EASY_STRING("characterId"), FSignalRValue(charData->GetId()) },
 		{ EASY_STRING("character"), FSignalRValue(characterParams) }
 	});
 }

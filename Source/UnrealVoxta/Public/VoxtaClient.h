@@ -14,6 +14,7 @@ class IHubConnection;
 class FSignalRInvokeResult;
 class UVoxtaAudioInput;
 class Audio2FaceRESTHandler;
+class UVoxtaAudioPlayback;
 struct ServerResponseChatMessageBase;
 struct ServerResponseWelcome;
 struct ServerResponseCharacterList;
@@ -193,6 +194,25 @@ public:
 
 	/** @return An reference to the A2F handler instance, should probably be moved elsewhere, idk yet. */
 	Audio2FaceRESTHandler* GetA2FHandler() const;
+
+	/**
+	 * Register the playback handler for this specific character, this is needed as we need to know if we want to wait
+	 * for the audio playback to be completed, or if there's no audio playback and we can just skip it.
+	 *
+	 * @param characterId The VoxtaServer assigned id of the character that is being registered for.
+	 * @param UVoxtaAudioPlayback The audioPlayback component for the specified characterId.
+	 *
+	 * @return True if the character was registered successfully (no duplicate playback for the same id)
+	 */
+	bool TryRegisterPlaybackHandler(const FString& characterId, TWeakObjectPtr<UVoxtaAudioPlayback> UVoxtaAudioPlayback);
+
+	/**
+	 * Remove the weakPointer to the audioPlayback that was registered for the specified characterId.
+	 *
+	 * @param characterId The character for which we will remove the weakPointer to whatever audioplayback was
+	 * registered for it
+	 */
+	void UnregisterPlaybackHandler(const FString& characterId);
 #pragma endregion
 
 #pragma region data
@@ -211,6 +231,7 @@ private:
 
 	TUniquePtr<FUserCharData> m_userData;
 	TArray<TUniquePtr<const FAiCharData>> m_characterList;
+	TMap<FString, TWeakObjectPtr<UVoxtaAudioPlayback>> m_existingCharacterPlaybackHandlers;
 	TUniquePtr<FChatSession> m_chatSession;
 	FString m_hostAddress;
 	uint16 m_hostPort;

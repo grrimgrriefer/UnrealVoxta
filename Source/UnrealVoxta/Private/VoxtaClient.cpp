@@ -8,6 +8,7 @@
 #include "VoxtaDefines.h"
 #include "Logging/StructuredLog.h"
 #include "VoxtaAudioInput.h"
+#include "VoxtaAudioPlayback.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseBase.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseWelcome.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseCharacterList.h"
@@ -150,6 +151,40 @@ Audio2FaceRESTHandler* UVoxtaClient::GetA2FHandler() const
 	return m_A2FHandler.Get();
 }
 
+bool UVoxtaClient::TryRegisterPlaybackHandler(const FString& characterId,
+	TWeakObjectPtr<UVoxtaAudioPlayback> playbackHandler)
+{
+	if (m_chatSession != nullptr && !m_chatSession->GetActiveServices().Contains(
+		VoxtaServiceData::ServiceType::SpeechToText))
+	{
+		UE_LOGFMT(VoxtaLog, Warning, "You tried to register a Voxta AudioPlayback handler for character {0}, but no "
+			"STT service is active on VoxtaServer. (make sure to have it enabled at start, runtime activation not yet "
+			"supported...)", characterId);
+		return false;
+	}
+
+	auto currentHandler = m_existingCharacterPlaybackHandlers.Find(characterId);
+	if (currentHandler == nullptr)
+	{
+		m_existingCharacterPlaybackHandlers.Emplace(characterId, playbackHandler);
+		UE_LOGFMT(VoxtaLog, Log, "Voxta Audioplayback handler for character: {0} registered successfully.", characterId);
+		return true;
+	}
+	else
+	{
+		UE_LOGFMT(VoxtaLog, Warning, "A Voxta Audioplayback handler for character: {0} already exists. "
+			"Multiple audio playback handlers for the same character is not supported... skipping registration.",
+			characterId);
+		return false;
+	}
+}
+
+void UVoxtaClient::UnregisterPlaybackHandler(const FString& characterId)
+{
+	m_existingCharacterPlaybackHandlers.Remove(characterId);
+	UE_LOGFMT(VoxtaLog, Log, "Voxta Audioplayback handler for character: {0} unregistered successfully.", characterId);
+}
+
 void UVoxtaClient::StartListeningToServer()
 {
 	m_hub->On(RECEIVE_MESSAGE_EVENT_NAME).BindUObject(this, &UVoxtaClient::OnReceivedMessage);
@@ -261,7 +296,7 @@ bool UVoxtaClient::HandleResponseHelper(const ServerResponseBase* response, cons
 	const T* derivedResponse = StaticCast<const T*>(response);
 	if (derivedResponse)
 	{
-		UE_LOGFMT(VoxtaLog, Log, logMessage);
+		UE_LOGFMT(VoxtaLog, Log, "{0}", logMessage);
 		return (this->*handler)(*derivedResponse);
 	}
 	return false;
@@ -372,17 +407,16 @@ bool UVoxtaClient::HandleChatStartedResponse(const ServerResponseChatStarted& re
 
 	if (!response.SERVICES.Contains(VoxtaServiceData::ServiceType::SpeechToText))
 	{
-		UE_LOGFMT(VoxtaLog, Error, "No valid SpeechToText service is active on the server.");
-		return false;
-	}
-	if (!response.SERVICES.Contains(VoxtaServiceData::ServiceType::TextGen))
-	{
-		UE_LOGFMT(VoxtaLog, Error, "No valid TextGen service is active on the server.");
-		return false;
+		UE_LOGFMT(VoxtaLog, Log, "No valid SpeechToText service is active on the server.");
 	}
 	if (!response.SERVICES.Contains(VoxtaServiceData::ServiceType::TextToSpeech))
 	{
-		UE_LOGFMT(VoxtaLog, Error, "No valid TextToSpeech service is active on the server.");
+		UE_LOGFMT(VoxtaLog, Log, "No valid TextToSpeech service is active on the server.");
+	}
+	if (!response.SERVICES.Contains(VoxtaServiceData::ServiceType::TextGen))
+	{
+		UE_LOGFMT(VoxtaLog, Error, "No valid TextGen service is active on the server. We cannot really do anything "
+			"without this... aborting creation of chat session.");
 		return false;
 	}
 
@@ -453,7 +487,27 @@ bool UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessageBase
 					UE_LOGFMT(VoxtaLog, Log, "Message with id: {0} marked as complete. Speaker: {1} Contents: {2}",
 						derivedResponse->MESSAGE_ID, character->Get()->GetName(), chatMessage->GetTextContent());
 
-					SetState(VoxtaClientState::AudioPlayback);
+					auto playbackHandler = m_existingCharacterPlaybackHandlers.Find(character->Get()->GetId());
+					if (playbackHandler != nullptr)
+					{
+						SetState(VoxtaClientState::AudioPlayback);
+						playbackHandler->Get()->PlaybackMessage(*character->Get(), *chatMessage);
+					}
+					else
+					{
+						if (chatMessage->GetAudioUrls().Num() > 0)
+						{
+							UE_LOGFMT(VoxtaLog, Warning, "Audio data was generate for characterId: {0} but no playback "
+								"handler was found. You might want to disable TTS service if you don't want audio playback. "
+								"Or add a VoxtaAudioPlayback component if you desire audioplayback. Name: {1} Contents: {2}",
+								character->Get()->GetName(), character->Get()->GetName(), chatMessage->GetTextContent());
+							NotifyAudioPlaybackComplete(chatMessage->GetMessageId());
+						}
+						else
+						{
+							SetState(VoxtaClientState::WaitingForUserReponse);
+						}
+					}
 					VoxtaClientCharMessageAddedEventNative.Broadcast(*character->Get(), *chatMessage);
 					VoxtaClientCharMessageAddedEvent.Broadcast(*character->Get(), *chatMessage);
 				}

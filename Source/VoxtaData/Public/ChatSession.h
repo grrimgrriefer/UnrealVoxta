@@ -40,6 +40,16 @@ public:
 	FString GetSessionId() const { return m_sessionId; }
 
 	/**
+	 * Used by VoxtaClient to know if it should notify audioplayback handlers, mic input, etc...
+	 *
+	 * @return The currently enabled services on VoxtaServer (not really, just what was active when starting chat) TODO
+	 */
+	const TMap<const VoxtaServiceData::ServiceType, const VoxtaServiceData>& GetActiveServices() const
+	{
+		return m_services;
+	}
+
+	/**
 	 * Create a new instance of the ChatSession, containing all relevant data to it.
 	 *
 	 * @param characters The AIcharacters participating in the chat session.

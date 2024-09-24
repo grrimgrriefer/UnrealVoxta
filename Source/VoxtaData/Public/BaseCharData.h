@@ -22,7 +22,7 @@ struct VOXTADATA_API FBaseCharData
 #pragma region public API
 public:
 	/**  @return Immutable reference to the VoxtaServer assigned id of this character. */
-	FStringView GetId() const { return m_id; }
+	const FString& GetId() const { return m_id; }
 
 	/**  @return Immutable reference to the name of the character who said this message. */
 	FStringView GetName() const { return m_name; }

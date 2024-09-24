@@ -45,7 +45,7 @@ void VoxtaLogger::Serialize(const TCHAR* Message, ELogVerbosity::Type Verbosity,
 				break;
 		}
 
-		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 3.0f, color, FString::Format(*FString(TEXT("[{0}]: {1} -> {2}")), {
+		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 10.0f, color, FString::Format(*FString(TEXT("[{0}]: {1} -> {2}")), {
 			ToString(Verbosity),
 			FDateTime::Now().ToString(TEXT("%Y-%m-%d %H:%M:%S")),
 			Message }));

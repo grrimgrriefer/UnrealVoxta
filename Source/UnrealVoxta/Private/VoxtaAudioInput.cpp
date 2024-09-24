@@ -5,6 +5,7 @@
 #include "RuntimeAudioImporter/ImportedSoundWave.h"
 #include "Logging/StructuredLog.h"
 #include "AudioWebSocket.h"
+#include "ChatSession.h"
 
 void UVoxtaAudioInput::InitializeSocket(int bufferMs, int sampleRate, int inputChannels)
 {
@@ -14,8 +15,8 @@ void UVoxtaAudioInput::InitializeSocket(int bufferMs, int sampleRate, int inputC
 		return;
 	}
 
-	UVoxtaClient* voxtaClientReference = Cast<UVoxtaClient>(GetOuter());
-	VoxtaClientState clientCurrentState = voxtaClientReference->GetCurrentState();
+	m_voxtaClient = Cast<UVoxtaClient>(GetOuter());
+	VoxtaClientState clientCurrentState = m_voxtaClient->GetCurrentState();
 	if (clientCurrentState == VoxtaClientState::Disconnected ||
 		clientCurrentState == VoxtaClientState::AttemptingToConnect ||
 		clientCurrentState == VoxtaClientState::Terminated)
@@ -28,8 +29,8 @@ void UVoxtaAudioInput::InitializeSocket(int bufferMs, int sampleRate, int inputC
 	m_sampleRate = sampleRate;
 	m_inputChannels = inputChannels;
 	m_connectionState = VoxtaMicrophoneState::Initializing;
-	m_audioWebSocket = MakeShared<AudioWebSocket>(voxtaClientReference->GetServerAddress(),
-		voxtaClientReference->GetServerPort());
+	m_audioWebSocket = MakeShared<AudioWebSocket>(m_voxtaClient->GetServerAddress(),
+		m_voxtaClient->GetServerPort());
 
 	m_audioWebSocket->OnConnectedEvent.AddUObject(this, &UVoxtaAudioInput::OnSocketConnected);
 	m_audioWebSocket->OnConnectionErrorEvent.AddUObject(this, &UVoxtaAudioInput::OnSocketConnectionError);
@@ -58,14 +59,30 @@ void UVoxtaAudioInput::StartStreaming()
 		return;
 	}
 
-	if (m_audioCaptureDevice.TryStartVoiceCapture())
+	const FChatSession* chat = m_voxtaClient->GetChatSession();
+	if (chat == nullptr)
 	{
-		UE_LOGFMT(VoxtaLog, Log, "Started voice capture via AudioInput.");
-		m_connectionState = VoxtaMicrophoneState::InUse;
+		UE_LOGFMT(VoxtaLog, Error, "You tried to start streaming audio input, but no chat is currently "
+			"on-going... aborting");
+		return;
+	}
+
+	if (chat->GetActiveServices().Contains(VoxtaServiceData::ServiceType::SpeechToText))
+	{
+		if (m_audioCaptureDevice.TryStartVoiceCapture())
+		{
+			UE_LOGFMT(VoxtaLog, Log, "Started voice capture via AudioInput.");
+			m_connectionState = VoxtaMicrophoneState::InUse;
+		}
+		else
+		{
+			UE_LOGFMT(VoxtaLog, Error, "Failed to start the audio capture. Socket will not stream data :(");
+		}
 	}
 	else
 	{
-		UE_LOGFMT(VoxtaLog, Error, "Failed to start the audio capture. Socket will not stream data :(");
+		UE_LOGFMT(VoxtaLog, Error, "You tried to start streaming audio input, but there is no STT service running. "
+			"Please make sure to have it enabled before starting. (runtime change support coming soon...)");
 	}
 }
 

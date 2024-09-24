@@ -18,7 +18,7 @@ struct FChatMessage
 #pragma region public API
 public:
 	/**  @return Immutable reference to the VoxtaServer assigned id of this message. */
-	FStringView GetMessageId() const { return m_messageId; };
+	const FString& GetMessageId() const { return m_messageId; };
 
 	/**  @return Immutable reference to the VoxtaServer assigned id of the character who said this message. */
 	FStringView GetCharId() const { return m_charId; };
@@ -41,7 +41,10 @@ public:
 	void AppendMoreContent(const FString& textContent, const FString& audioUrl)
 	{
 		m_text.Append(textContent);
-		m_audioUrls.Emplace(audioUrl);
+		if (!audioUrl.IsEmpty()) // text only response is valid, but we dont'adde empty audio urls ofc
+		{
+			m_audioUrls.Emplace(audioUrl);
+		}
 	}
 
 	/**

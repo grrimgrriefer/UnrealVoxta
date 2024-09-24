@@ -11,6 +11,8 @@ class MessageChunkAudioContainer;
 class UActorComponent;
 class UAudio2FacePlaybackHandler;
 class UVoxtaClient;
+struct FBaseCharData;
+struct FChatMessage;
 
 /**
  * UVoxtaAudioPlayback
@@ -71,6 +73,14 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
 	void MarkCustomPlaybackComplete(const FGuid& guid);
+
+	/**
+	 * The main entrypoint, hooked into the VoxtaClient and will trigger the download & playback of the audio.
+	 *
+	 * @param sender The characterID, will skip any messages not assigned to this character.
+	 * @param message The message of which the URLs will be used to fetch the wav audio data.
+	 */
+	void PlaybackMessage(const FBaseCharData& sender, const FChatMessage& message);
 #pragma endregion
 
 #pragma region IA2FWeightProvider overrides
@@ -127,7 +137,6 @@ private:
 	FString m_currentlyPlayingMessageId;
 	TArray<TSharedPtr<MessageChunkAudioContainer>> m_orderedAudio;
 
-	FDelegateHandle m_charMessageAddedHandle;
 	FDelegateHandle m_playbackFinishedHandle;
 
 	FString m_hostAddress;
@@ -138,15 +147,6 @@ private:
 
 #pragma region private API
 private:
-	/**
-	 * The main entrypoint, hooked into the VoxtaClient and will trigger the download & playback of the audio.
-	 *
-	 * @param sender The characterID, will skip any messages not assigned to this character.
-	 * @param message The message of which the URLs will be used to fetch the wav audio data.
-	 */
-	UFUNCTION()
-	void PlaybackMessage(const FBaseCharData& sender, const FChatMessage& message);
-
 	/** Begin playing the audioclip on the currently marked index, if it is available */
 	void PlayCurrentAudioChunkIfAvailable();
 

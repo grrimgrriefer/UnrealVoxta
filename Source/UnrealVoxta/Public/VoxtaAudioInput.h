@@ -7,6 +7,7 @@
 #include "VoxtaAudioInput.generated.h"
 
 class AudioWebSocket;
+class UVoxtaClient;
 
 /**
  * UVoxtaAudioInput
@@ -100,6 +101,7 @@ private:
 	int m_sampleRate;
 	int m_inputChannels;
 
+	UVoxtaClient* m_voxtaClient;
 	AudioCaptureHandler m_audioCaptureDevice;
 	TSharedPtr<AudioWebSocket> m_audioWebSocket;
 	VoxtaMicrophoneState m_connectionState;
