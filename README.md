@@ -11,18 +11,43 @@ _Made in collaboration with [DZnnah](https://twitter.com/DZnnah)_
 
 ### Third party code Licenses
 * SignalR client (MIT license): [LICENSE](./Source/SignalR/License.txt)  
-* RuntimeAudioImporter (MIT licensed): [LICENSE](./Source/AudioUtility/Public/RuntimeAudioImporter/LICENSE.txt)  
-
-### First party code License
-* Internal logic based on the native Windows C++ implementation: [TalkToMeCPP](https://github.com/grrimgrriefer/TalkToMeCPP) - [LICENSE](https://github.com/grrimgrriefer/TalkToMeCPP/blob/master/LICENSE)
+* RuntimeAudioImporter (MIT licensed): [LICENSE](./Source/VoxtaAudioUtility/Public/RuntimeAudioImporter/LICENSE.txt)  
 
 ### Optional dependencies
 * OVR lipsync: [OVR lipsync for UE 5.3](https://github.com/grrimgrriefer/OVRLipSync/releases/tag/UE-5.3)
 * A2F Omniverse lipsync: [direct link](https://install.launcher.omniverse.nvidia.com/installers/omniverse-launcher-win.exe) or download via the portal [https://www.nvidia.com/en-us/omniverse/](https://www.nvidia.com/en-us/omniverse/)
 
+> [!TIP]
+> Internal logic based on the native Windows C++ implementation: [TalkToMeCPP](https://github.com/grrimgrriefer/TalkToMeCPP). You can use this if you want the C++ code without all the Unreal Engine dependencies.
+
 ### Dev Progress
 * Trello board:
 https://trello.com/b/Biv7Si4l/unrealvoxta
+
+# Voxta TOS
+_This plugin has no additional Terms of Service, however Voxta's official Terms of Service still apply._
+
+> [!IMPORTANT]  
+> * Voxta has been developed as an experiment, and no guarantees whatsoever are offered.
+> * The content you generate with this software must be legal in the United States and your country of residence.
+> * The content you generate with this software must be legal in the United States and your country of residence.
+> * The authors have no access to any of the data generated within this tool. However, keep in mind that remote services such as OpenAI may collect your data. Make sure to read their terms of services before using their software.
+> * Furthermore, those use cases are prohibited:
+>   * Depictions of minors are prohibited.
+>   * Simulations of forced sexual interactions with non consenting characters are prohibited.
+>   * Torture and psychological violence.
+>   * Impersonation of real people.
+>   * Using the software to deceive someone, it is mandatory to inform users of the limitations and restrictions of the AI.
+> * Additionally, if using Voxta Cloud, there are additional terms:
+>   * You will not abuse the service and will not use it to harm others.
+>   * You will not use the service to generate content that is illegal or harmful.
+>   * You must immediately disclose any vulnerability to the Voxta team on Discord.
+>   * You will not take action that can harm the service, such as using it to generate a large amount of content in a short period of time.
+
+> [!NOTE]  
+> * I have no power to enforce these rules, but they might revoke your access to future releases / cloud utility if you break them. 
+> * AI characters are not real. Remember that they can say make up things that can be hurtful, and simply false. Please seek help if you feel alone, or if you develop an unhealthy relationship with the AI.
+> * In terms of the plugin itself, anything that doesn't break the [MIT license](./LICENSE) is fair game, have fun with it.
 
 # Video guide
 Full guide on how to install, how to use the templates, & info on how to make your own custom setup:  
