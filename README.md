@@ -2,8 +2,10 @@
 
 _Made in collaboration with [DZnnah](https://twitter.com/DZnnah)_  
 
-_This client is not affiliated, associated, endorsed by, or in any way officially connected to Voxta.ai_  
-Internal logic based on the native Windows C++ implementation, see [TalkToMeCPP](https://github.com/grrimgrriefer/TalkToMeCPP)
+### Notes
+* **This client is not affiliated, associated, endorsed by, or in any way officially connected to Voxta.ai**
+* This client currently suppports Voxta **v1.0.0-beta.117**, other version may / may not work.
+* Internal logic based on the native Windows C++ implementation: [TalkToMeCPP](https://github.com/grrimgrriefer/TalkToMeCPP)
 
 ### Third party code Licenses
 * SignalR client (MIT license): [LICENSE](./Source/SignalR/License.txt)
@@ -11,116 +13,141 @@ Internal logic based on the native Windows C++ implementation, see [TalkToMeCPP]
 
 ### Optional dependencies
 * OVR lipsync: [OVR lipsync for UE 5.3](https://github.com/grrimgrriefer/OVRLipSync/releases/tag/UE-5.3)
+* A2F Omniverse lipsync: [direct link](https://install.launcher.omniverse.nvidia.com/installers/omniverse-launcher-win.exe) or download via the portal [https://www.nvidia.com/en-us/omniverse/](https://www.nvidia.com/en-us/omniverse/)
 
 ### Dev Progress
 * Trello board:
 https://trello.com/b/Biv7Si4l/unrealvoxta
 
-# How to use
-[Embedded youtube video here](youtube video)  
-Full guide on how to install, how to use the templates, & info on how to make your own custom setup.
+# Video guide
+Full guide on how to install, how to use the templates, & info on how to make your own custom setup:  
+[![YouTube UnrealVoxta tutorial video](https://thumbnailLinkHere.png)](https://www.youtubelinkhere.com/watch?v=hmmmm "YouTube UnrealVoxta tutorial video")  
 
+# Blueprint template setup
+In the content folder of the plugin you will find a setup of default blueprints. This should allow you to have a fully working setup with most features enabled in only a handful of minutes. For a step-by-step guide, I refer you to the video mentioned above.  
+![TemplateBlueprints image](./Documentation/Blueprints/TemplateBlueprints.PNG "Template blueprints for example setup.")  
 
-## Blueprint example usage
-_Note, these examples are all from the Template setup, if you want to quickly get the template setup working, I advice to watch the first part of the youtube tutorial._
+# Blueprint example usage
+_Note, all of these snippets are from the above Template setup blueprints, feel free to explore & modify them how you see fit. For more in-depth explanation, I advice to watch the first part of the youtube tutorial._
 
-### Voxta category
-All components, utility and API calls regarding Voxta are in the seperate 'Voxta' category. Due to obvious reason the Events are still in the Events category but these should all be fairly obvious.  
-<span style="color:red">TODO: Image on how to get the voxta subsystem </span>  
+## Voxta category
+Most of the utility is accessed through the VoxtaClient subsystem, which can be globally accessed via any blueprint as following:  
+![GetClient image](./Documentation/Blueprints/GetClient.PNG "Retrieve the VoxtaClient subsystem.")  
 
-Every function and component has been extensively documented, so if something is unclear, just hover the mouse over it and the tooltip should explain the usage. If it's still unclear, just ping me, as I might ofc have missed something.  
-<span style="color:red">TODO: Image of a tooltip </span>  
+Everything related to Voxta is inside the 'Voxta' category. (also applies for other components and their utilities).  
+Due to obvious reason the Events are still in the Events category but these should all be fairly obvious.  
+![GetVoxtaFunctions image](./Documentation/Blueprints/GetVoxtaFunctions.PNG "Bind the registration of the playback to the event of the characters being registered.")  
 
-In the template blueprints, Voxta Events are usually used bound to local events mapped to functions, this helps make the eventgraph less cluttered, you'll see this type of hooking into event a lot:
-![alt text](./Documentation/Blueprints/BindingToEvents.JPG "Bind the registration of the playback to the event of the characters being registered.")  
+Every function and component has been extensively documented, so if something is unclear, just hover the mouse over it and the tooltip should explain the usage. If it's still unclear, just ping me, as I might ofc have missed something:  
+![Documentation1 image](./Documentation/Blueprints/Documentation1.PNG "Example of node documentation.")  
+![Documentation2 image](./Documentation/Blueprints/Documentation2.PNG "Example of parameter documentation.")  
 
-### Establishing the connection
-To start the connection, you will need to provide the host address (in ipv4 format) and port.
-![alt text](./Documentation/Blueprints/StartConnection.JPG "Start connection via UI")  
+## Event binding pattern
+In the template blueprints, Voxta Events are always bound to local events linked to functions, this helps make the eventgraph less cluttered, you'll see this pattern of hooking into events a lot:  
+![BindingToEvents image](./Documentation/Blueprints/BindingToEvents.PNG "Bind the registration of the playback to the event of the characters being registered.")  
+
+## Establishing the connection
+To start the connection, you will need to provide the host address (in ipv4 format) and port
+![StartConnection image](./Documentation/Blueprints/StartConnection.PNG "Start connection via UI")  
 _Due to custom nature of this data, it is highly adviced to retrieve these from the user through UI in some way (such as in the example above_
 
-### Character registration
+## Character registration
 Once the connection is established, the VoxtaClient will broadcast the characters that currently exist. This data can be used to populate a list of clickable buttons, which then can be presented to the user to give them a choice on which character they want to have an experience with.
-![alt text](./Documentation/Blueprints/ListOfCharacters.JPG "Loop over the list of characters and create clickable buttons for every characters.")
+![ListOfCharacters image](./Documentation/Blueprints/ListOfCharacters.PNG "Loop over the list of characters and create clickable buttons for every characters.")
 
-### Starting a conversation
-<span style="color:red">TODO: Figure out how the conversations are started lmao. Should be inside of the character button, maybe? idk?</span> 
+## Starting a conversation
+You can start a conversation using the ID of any character that is available. (IDs are broadcasted as soon as the voxtaclient connects, and they cal also be fetched afterwards via the VotaClient api)  
+In this example, a UI widget button is injected with the characterID it is mapped to, and this allows it to start the conversation when being clicked.  
+![StartConversation image](./Documentation/Blueprints/StartConversation.PNG "Star conversation with a character.")
 
-### Register the audio-playback for an AI Character
-<span style="color:red">TODO: Add an image of the VoxtaAudioPlayback component here.</span>  
-Audio is handled with a 'VoxtaAudioPlayback' actor component. This component will automatically download the audio, generate the lipsync data, and handle the playback, for any audio that is generated for the character with a matching ID.
+## Register the audio-playback for an AI Character
+Audio is handled with a 'VoxtaAudioPlayback' actor component. This component will automatically download the audio, generate the lipsync data, and handle the playback, for any audio that is generated for the character with a matching ID.  
+![VoxtaAudioPlaybackComponent image](./Documentation/Blueprints/VoxtaAudioPlaybackComponent.PNG "Add the VoxtaAudioPlayback to an Actor")
 
 It is important that once the conversation starts, you initialize the component with the ID of the character that you want it to represent. (i.e. especially for situations with multiple characters)  
-_The example below uses index == 0, but you could also fetch the name etc from the id, to map it to a specific model etc. Depending on what kind of application you're building._
-![alt text](./Documentation/Blueprints/AudioPlaybackRegistering.JPG "Connect Actor with VoxtaAudioPlayback to Voxta")
+_The example below uses index == 0, but you could also fetch the name etc from the id, to map it to a specific model etc. Depending on what kind of application you're building._  
+![RegisterCharacterAsPartOfConversation image](./Documentation/Blueprints/RegisterCharacterAsPartOfConversation.PNG "Register this Actor with VoxtaAudioPlayback to Voxta")
 
-### Sending text input from the user
+Actors with this component automatically register themselves with the VoxtaClient subsystem and an immutable pointer to them can be easily retrieved from it using the CharacterID that was used to register it:  
+![FetchAudioPlaybackFromCharacter image](./Documentation/Blueprints/FetchAudioPlaybackFromCharacter.PNG "Fetch this Actor with VoxtaAudioPlayback from Voxta")
+
+## Sending text input from the user
 The plugin supports sending user input via the microphone and via text. Above is an example of how such input is sent through via text.
-![alt text](./Documentation/Blueprints/UserInput.JPG "Send user input to Voxta.")
+![UserInput image](./Documentation/Blueprints/UserInput.PNG "Send user input to Voxta.")
 
-### Microphone audio input
-Everything regarding the Microphone audio input is handled throught the Voice Input Handler, which is available via the Voxta Client API.  
+## Microphone audio input
+Everything regarding the Microphone audio input is handled throught the Voice Input Handler, which is available via the VoxtaClient API.  
 
 First the socket has to be initialized with the VoxtaServer. The default settings are ideal for what the Server wants, but if the user's hardware does not support these value, you might have to expose them via some kind of settings menu.  
-![alt text](./Documentation/Blueprints/MicrophoneSocket.JPG "Send microphone user input to Voxta.")  
+![MicrophoneSocket image](./Documentation/Blueprints/MicrophoneSocket.PNG "Send microphone user input to Voxta.")  
 
 After the socket is initialized you can turn on the streaming while the server is 'WaitingForUserResponse' and then disable it again once the audio playback starts. You can also leave it running all the time, but this method uses less network bandwith of course.
-![alt text](./Documentation/Blueprints/StreamingMicInput.JPG "Streaming microphone audio data to VoxtaServer.")  
+![StreamingMicInput image](./Documentation/Blueprints/StreamingMicInput.PNG "Streaming microphone audio data to VoxtaServer.")  
 
 You can hook into the Voice Input Handler to get the transcribed speech while the user is still speaking. This can then be shown in the UI, etc...
-![alt text](./Documentation/Blueprints/OngoingTranscription.JPG "Display the speech as it's being transcribed while the user is speaking.")
+![StreamingMicInput image](./Documentation/Blueprints/OngoingTranscription.PNG "Display the speech as it's being transcribed while the user is speaking.")
 
-The Voice Input handler also provides general utility info, such as 'input decibels', 'current state', 'microphone device label', etc...
-![alt text](./Documentation/Blueprints/VoiceInputExtraInfo.JPG "Get info from the VoiceInputHandler.")  
+The Voice Input handler also provides general utility information, such as 'input decibels', 'current state', 'microphone device label', and more.
+![VoiceInputExtraInfo image](./Documentation/Blueprints/VoiceInputExtraInfo.PNG "Get info from the VoiceInputHandler.")  
 
-### Character responses
-When the VoxtaClient broadcasts that a message has been added for a character, the audio will be played automatically* _(unless 'Custom lipsync is enabled')_  
+## Character responses
+When the VoxtaClient broadcasts that a message has been added for a character, the audio will play automatically* _(unless 'Custom lipsync is enabled')_  
 
-However, you can also decide to add the messages to a UI chat history log. An example of how to do this can be seen below:  
-![alt text](./Documentation/Blueprints/AddMessageToUI.JPG "Add a message from a character to the chat history on the screen.")
+Alternatively, you can add the messages to a UI chat history log. An example is shown below:  
+![AddMessageToUI image](./Documentation/Blueprints/AddMessageToUI.PNG "Add a message from a character to the chat history on the screen.")
 This will spawn a custom 'text message widget' and initialize it with the data after it is added to the 'message scroll box' on the UI.
 
-Note: It is important to also support removal of messages, as the Server can remove messages, so it's important if you want to keep it in sync. Example on how to remove them from a scroll box:  
-![alt text](./Documentation/Blueprints/RemoveMessageFromUI.JPG "Remove a message from a character from the chat history on the screen.")
+Note: It is important to support the removal of messages, as the server can remove them. This ensures your UI remains in sync. Example on how to remove them from a scroll box:  
+![RemoveMessageFromUI image](./Documentation/Blueprints/RemoveMessageFromUI.PNG "Remove a message from a character from the chat history on the screen.")
 
+## Lipsync type
+Both OVR and A2F are supported out of the box (A2F is still experimental). You can select which one to use in the inspector of the VoxtaAudioPlayback component.
+![LipSyncSelection image](./Documentation/Blueprints/LipSyncSelection.PNG "Select a type of lipsync you want to use.")
 
---
-TODO: change UI blueprint so it fetches the VoxtaAudioPlayback from the VoxtaClient after it has already been registered instead of grabbing it via the tag in the world. As I really hate tags haha
---
+### Lipsync animator
+For MetaHumans, there is a template animator setup available that supports both Runtime OVR and A2F:  
+![MetahumanLipsyncTemplateSetup image](./Documentation/Blueprints/MetahumanLipsyncTemplateSetup.PNG "Use the template animation blueprint for metahumans.")
 
-* disclaimer
-  * No official client, not connected to Voxta team in any way.
-  * Preview version, things can & will break.
-  * Don't use this in projects in production.
-  * Tested & developed against v117
-* template setup in empty project
-  * Do it in a blueprint only project, (can be C++ but you can always change it later anyway)
-  * The first thing to do when starting the engine, is to shut the bitch down.
-  * Make download the release version of the plugin (unzip, if you use git, make sure to also pull the LFS files)
-* quick overview on how to setup the template
-  * Configure GameMode with the HUD template
-  * Start up VoxtaServer
-    * Make sure that TextGen, AudioGen & Microphone detection is enabled
-  * Add metahuman with OVR lipsync
-    * How to add a metahuman
-    * How to add OVR lipsync
-  * Add Audio2Face to the metahuman
-    * How to install the A2F module
-* set-by-step setup
-  * Enable only text gen
-  * Setup a basic hud with messages
-  * Add audio playback (no lipsync)
-    * Make an icon light up with the decibels
-  * Add microphone input (with live transcription etc...)
-  * Add a simple model with OVR lipsync (no metahuman)
-    * Show again where the OVR module can be downloaded from & installed.
-    * Show how to setup the animator manually, with the custom OVR viseme animations
-    * Explain how the smoothing works & that it is optional, depends a bit on the style you're going with
-  * Add a metahuman
-    * Show how to use the crowd face animation
-    * Show how to retarget a simple idle animation
-* C++ guide
-  * Make a derived type of the Actor that call the VoxtaServer, and initializes the whole stuff.
-    * No visuals, but make sure to include microphone, and audio playback etc...
+This setup fetches the LipSyncType from the VoxtaAudioPlayback component and caches it, allowing the animator blueprint to access it.
+![GetLipsyncTypeFromParent image](./Documentation/Blueprints/GetLipsyncTypeFromParent.PNG "Get the lipsynctype from the VoxtaAudioPLayback component")
 
+### 1. OVR lipsync
+Keep in mind that for OVR lipsync, you will need to add the required plugin:  
+**OVR lipsync: [OVR lipsync for UE 5.3](https://github.com/grrimgrriefer/OVRLipSync/releases/tag/UE-5.3)**  
+![OVRLipSyncPlugin image](./Documentation/Blueprints/OVRLipSyncPlugin.PNG "Add the OVR plugin to your project")
 
+The component can be added by default or at runtime like this:  
+![OVRAddComponent image](./Documentation/Blueprints/OVRAddComponent.PNG "Add the OVR lipsync component")
+
+Every frame, the current visemes are fetched and applied in the animgraph
+![FetchOvrVisemes image](./Documentation/Blueprints/FetchOvrVisemes.PNG "Fetch the visemes for the current frame")
+
+Note: Extra smoothing is applied to prevent visible snapping, especially when starting and stopping speech.  
+![OVRExtraSmoothing image](./Documentation/Blueprints/OVRExtraSmoothing.PNG "Apply extra smoothing.")
+
+Inside of the AnimGraph we then blend the Visemes according to their weight and apply them for the current frame.  
+![OVRvisemeBlending image](./Documentation/Blueprints/OVRvisemeBlending.PNG "Apply extra smoothing.")
+
+### 2. Audio2Face lipsync
+Keep in mind that for A2F lipsync, you will need to add the required plugin:  
+A2F Omniverse lipsync: [direct link](https://install.launcher.omniverse.nvidia.com/installers/omniverse-launcher-win.exe) or download via the portal [https://www.nvidia.com/en-us/omniverse/](https://www.nvidia.com/en-us/omniverse/)  
+![A2FOmniverseDownload image](./Documentation/Blueprints/A2FOmniverseDownload.PNG "Download the Omniverse application")
+
+Then, install A2F via Omniverse as follows:  
+![A2FOmniverseInstall image](./Documentation/Blueprints/A2FOmniverseInstall.PNG "Install A2F via the Omniverse application")
+
+After installation, locate your A2F installation and run the A2F_headless client:  
+![A2FOmniverseLocate image](./Documentation/Blueprints/A2FOmniverseLocate.PNG "Locate your  A2F installation via the Omniverse application")  
+![Audio2FaceHeadless image](./Documentation/Blueprints/Audio2FaceHeadless.PNG "A2F headless ready")
+
+Ensure your A2F_headless API is running and marked as "ready" for it to function correctly:
+![A2FHeadless image](./Documentation/Blueprints/A2FHeadless.PNG "A2F headless ready")
+
+Once playback in Unreal is started, the VoxtaClient will automatically attempt to connect to A2F if it is available.
+![A2FCachePath image](./Documentation/Blueprints/A2FCachePath.PNG "Set the A2F cache path")
+
+These are then applied in the animgraph using the custom node:  
+![A2FCustomCurvesApplying image](./Documentation/Blueprints/A2FCustomCurvesApplying.PNG "Apply the fetched A2F curves for the current frame")
+
+Additionally, ensure the A2F Pose mapping is correctly configured in your MetaHuman face animator blueprint.    
+![A2FPoseMapping image](./Documentation/Blueprints/A2FPoseMapping.PNG "Configure the A2F posemapping to the ARKit")

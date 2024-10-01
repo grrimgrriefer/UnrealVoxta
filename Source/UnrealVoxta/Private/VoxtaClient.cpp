@@ -141,6 +141,19 @@ VoxtaClientState UVoxtaClient::GetCurrentState() const
 	return m_currentState;
 }
 
+const UVoxtaAudioPlayback* UVoxtaClient::GetRegisteredAudioPlaybackHandlerForID(const FString& characterId) const
+{
+	auto currentHandler = m_registeredCharacterPlaybackHandlers.Find(characterId);
+	if (currentHandler == nullptr)
+	{
+		return currentHandler->Get();
+	}
+	else
+	{
+		return nullptr;
+	}
+}
+
 const FChatSession* UVoxtaClient::GetChatSession() const
 {
 	return m_chatSession.Get();
@@ -163,10 +176,10 @@ bool UVoxtaClient::TryRegisterPlaybackHandler(const FString& characterId,
 		return false;
 	}
 
-	auto currentHandler = m_existingCharacterPlaybackHandlers.Find(characterId);
+	auto currentHandler = m_registeredCharacterPlaybackHandlers.Find(characterId);
 	if (currentHandler == nullptr)
 	{
-		m_existingCharacterPlaybackHandlers.Emplace(characterId, playbackHandler);
+		m_registeredCharacterPlaybackHandlers.Emplace(characterId, playbackHandler);
 		UE_LOGFMT(VoxtaLog, Log, "Voxta Audioplayback handler for character: {0} registered successfully.", characterId);
 		return true;
 	}
@@ -181,7 +194,7 @@ bool UVoxtaClient::TryRegisterPlaybackHandler(const FString& characterId,
 
 void UVoxtaClient::UnregisterPlaybackHandler(const FString& characterId)
 {
-	m_existingCharacterPlaybackHandlers.Remove(characterId);
+	m_registeredCharacterPlaybackHandlers.Remove(characterId);
 	UE_LOGFMT(VoxtaLog, Log, "Voxta Audioplayback handler for character: {0} unregistered successfully.", characterId);
 }
 
@@ -487,7 +500,7 @@ bool UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessageBase
 					UE_LOGFMT(VoxtaLog, Log, "Message with id: {0} marked as complete. Speaker: {1} Contents: {2}",
 						derivedResponse->MESSAGE_ID, character->Get()->GetName(), chatMessage->GetTextContent());
 
-					auto playbackHandler = m_existingCharacterPlaybackHandlers.Find(character->Get()->GetId());
+					auto playbackHandler = m_registeredCharacterPlaybackHandlers.Find(character->Get()->GetId());
 					if (playbackHandler != nullptr)
 					{
 						SetState(VoxtaClientState::AudioPlayback);

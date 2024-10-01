@@ -189,6 +189,16 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Voxta")
 	VoxtaClientState GetCurrentState() const;
 
+	/**
+	 * Try to retrieve a pointer to the UVoxtaAudioPlayback that has claimed playback for the provided characterId.
+	 *
+	 * @param characterID The character for which you want to retrieve a pointer to the AudioPlayback to.
+	 *
+	 * @return An immutable pointer to the UVoxtaAudioPlayback component, nullptr if it doesn't exist.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Voxta")
+	const UVoxtaAudioPlayback* GetRegisteredAudioPlaybackHandlerForID(const FString& characterId) const;
+
 	/** @return An immutable pointer to the ChatSession. */
 	const FChatSession* GetChatSession() const;
 
@@ -231,7 +241,7 @@ private:
 
 	TUniquePtr<FUserCharData> m_userData;
 	TArray<TUniquePtr<const FAiCharData>> m_characterList;
-	TMap<FString, TWeakObjectPtr<UVoxtaAudioPlayback>> m_existingCharacterPlaybackHandlers;
+	TMap<FString, TWeakObjectPtr<UVoxtaAudioPlayback>> m_registeredCharacterPlaybackHandlers;
 	TUniquePtr<FChatSession> m_chatSession;
 	FString m_hostAddress;
 	uint16 m_hostPort;
