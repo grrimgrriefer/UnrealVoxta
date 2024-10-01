@@ -10,11 +10,11 @@ _Made in collaboration with [DZnnah](https://twitter.com/DZnnah)_
 > * This plugin currently only works in Unreal Engine 5.3
 
 ### Third party code Licenses
-* SignalR client (MIT license): [LICENSE](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Source/SignalR/License.txt)
-* RuntimeAudioImporter (MIT licensed): [LICENSE](link:Source/AudioUtility/Public/RuntimeAudioImporter/LICENSE.txt)
+* SignalR client (MIT license): [LICENSE](./Source/SignalR/License.txt)  
+* RuntimeAudioImporter (MIT licensed): [LICENSE](./Source/AudioUtility/Public/RuntimeAudioImporter/LICENSE.txt)  
 
-> [!NOTE] 
-> Internal logic based on the native Windows C++ implementation: [TalkToMeCPP](https://github.com/grrimgrriefer/TalkToMeCPP)
+### First party code License
+* Internal logic based on the native Windows C++ implementation: [TalkToMeCPP](https://github.com/grrimgrriefer/TalkToMeCPP) - [LICENSE](https://github.com/grrimgrriefer/TalkToMeCPP/blob/master/LICENSE)
 
 ### Optional dependencies
 * OVR lipsync: [OVR lipsync for UE 5.3](https://github.com/grrimgrriefer/OVRLipSync/releases/tag/UE-5.3)
@@ -44,7 +44,7 @@ Due to obvious reason the Events are still in the Events category but these shou
 ![GetVoxtaFunctions image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/Blueprints/GetVoxtaFunctions.PNG&versionDescriptor%5BversionOptions%5D=0&versionDescriptor%5BversionType%5D=0&versionDescriptor%5Bversion%5D=develop&resolveLfs=true&%24format=octetStream&api-version=5.0 "Bind the registration of the playback to the event of the characters being registered.")  
 
 Every function and component has been extensively documented, so if something is unclear, just hover the mouse over it and the tooltip should explain the usage. If it's still unclear, just ping me, as I might ofc have missed something:  
-![Documentation1 image](https://dev.azure.com/grrimgrriefer/_git/UnrealVoxta?path=/Documentation/Blueprints/Documentation1.PNG&versionDescriptor%5BversionOptions%5D=0&versionDescriptor%5BversionType%5D=0&versionDescriptor%5Bversion%5D=develop&resolveLfs=true&%24format=octetStream&api-version=5.0 "Example of node documentation.")  
+![Documentation1 image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/Blueprints/Documentation1.PNG&versionDescriptor%5BversionOptions%5D=0&versionDescriptor%5BversionType%5D=0&versionDescriptor%5Bversion%5D=develop&resolveLfs=true&%24format=octetStream&api-version=5.0  "Example of node documentation.")  
 ![Documentation2 image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/Blueprints/Documentation2.PNG&versionDescriptor%5BversionOptions%5D=0&versionDescriptor%5BversionType%5D=0&versionDescriptor%5Bversion%5D=develop&resolveLfs=true&%24format=octetStream&api-version=5.0 "Example of parameter documentation.")  
 
 ## Event binding pattern
