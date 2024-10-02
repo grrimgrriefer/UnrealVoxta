@@ -101,9 +101,13 @@ void UVoxtaAudioPlayback::PlaybackMessage(const FBaseCharData& sender, const FCh
 	}
 }
 
+LipSyncType UVoxtaAudioPlayback::GetLipSyncType() const
+{
+	return m_lipSyncType;
+}
+
 void UVoxtaAudioPlayback::BeginPlay()
 {
-	Super::BeginPlay();
 	m_playbackFinishedHandle = OnAudioFinishedNative.AddUObject(this, &UVoxtaAudioPlayback::OnAudioPlaybackFinished);
 	if (m_lipSyncType == LipSyncType::Audio2Face)
 	{
@@ -112,11 +116,11 @@ void UVoxtaAudioPlayback::BeginPlay()
 
 		UE_LOGFMT(VoxtaLog, Log, "Created Audio2Face lipsync handler for characterId: {0}.", m_characterId);
 	}
+	Super::BeginPlay();
 }
 
 void UVoxtaAudioPlayback::EndPlay(const EEndPlayReason::Type endPlayReason)
 {
-	Super::EndPlay(endPlayReason);
 	if (endPlayReason != EEndPlayReason::Quit && endPlayReason != EEndPlayReason::EndPlayInEditor)
 	{
 		UE_LOGFMT(VoxtaLog, Warning, "Removed audioplayback for character with id: {0} due to EndPlay with reason {1}.",
@@ -140,6 +144,7 @@ void UVoxtaAudioPlayback::EndPlay(const EEndPlayReason::Type endPlayReason)
 		Cast<UOVRLipSyncPlaybackActorComponent>(m_lipSyncHandler)->Stop();
 	}
 #endif
+	Super::EndPlay(endPlayReason);
 }
 
 void UVoxtaAudioPlayback::GetA2FCurveWeightsPreUpdate(TArray<float>& targetArrayRef)
@@ -150,7 +155,7 @@ void UVoxtaAudioPlayback::GetA2FCurveWeightsPreUpdate(TArray<float>& targetArray
 		{
 			Cast<UAudio2FacePlaybackHandler>(m_lipSyncHandler)->GetA2FCurveWeights(targetArrayRef);
 		}
-		else
+		else if (HasBegunPlay())
 		{
 			UE_LOGFMT(VoxtaLog, Error, "A2F CurveWeights could not be fetched as the handler was null. "
 				"This should never happen.");

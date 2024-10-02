@@ -208,9 +208,38 @@ void MessageChunkAudioContainer::GenerateLipSync()
 		case LipSyncType::Audio2Face:
 			if (m_A2FRestHandler->IsBusy())
 			{
-				UE_LOGFMT(VoxtaLog, Warning, "A2F is busy at the moment, aborting lipsync generattion request, moving "
-					"the state back into Idle_Processed so it can be attempted later.");
-				m_state = MessageChunkState::Idle_Processed; // TODO find a more clean way to do this
+				if (m_A2FRestHandler->IsInitializing())
+				{
+					FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda(
+						[Self = TWeakPtr<MessageChunkAudioContainer>(AsShared())] (float deltaTime)
+						{
+							if (Self != nullptr)
+							{
+								if (TSharedPtr<MessageChunkAudioContainer> sharedSelf = Self.Pin())
+								{
+									if (sharedSelf->m_A2FRestHandler->IsInitializing())
+									{
+										return true;
+									}
+									else
+									{
+										sharedSelf->m_state = MessageChunkState::Idle_Processed;
+										sharedSelf->GenerateLipSync();
+										return false;
+									}
+								}
+							}
+							UE_LOGFMT(VoxtaLog, Error, "MessageChunkContainer was destroyed before A2F finished "
+								"with initializing.");
+							return false;
+						}));
+				}
+				else
+				{
+					UE_LOGFMT(VoxtaLog, Warning, "A2F is still busy at the moment, skipping lipsync generattion request, "
+						"moving the state back into Idle_Processed so it can be re-attempted in a bit.");
+					m_state = MessageChunkState::Idle_Processed; // TODO find a more clean way to do this
+				}
 				return;
 			}
 

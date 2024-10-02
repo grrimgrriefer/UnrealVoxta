@@ -81,6 +81,9 @@ public:
 	 * @param message The message of which the URLs will be used to fetch the wav audio data.
 	 */
 	void PlaybackMessage(const FBaseCharData& sender, const FChatMessage& message);
+
+	/** @return The LipSyncType that this playback handler will use. */
+	LipSyncType GetLipSyncType() const;
 #pragma endregion
 
 #pragma region IA2FWeightProvider overrides

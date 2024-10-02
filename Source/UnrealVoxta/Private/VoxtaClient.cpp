@@ -181,6 +181,14 @@ bool UVoxtaClient::TryRegisterPlaybackHandler(const FString& characterId,
 	{
 		m_registeredCharacterPlaybackHandlers.Emplace(characterId, playbackHandler);
 		UE_LOGFMT(VoxtaLog, Log, "Voxta Audioplayback handler for character: {0} registered successfully.", characterId);
+
+		if (playbackHandler->GetLipSyncType() == LipSyncType::Audio2Face)
+		{
+			UE_LOGFMT(VoxtaLog, Log, "Voxta Audioplayback handler of character: {0} requires A2F, trying to establish "
+				"connection... hold on.", characterId);
+			m_A2FHandler->TryInitialize();
+		}
+
 		FVoxtaClientAudioPlaybackRegisteredEventNative.Broadcast(playbackHandler.Get(), characterId);
 		FVoxtaClientAudioPlaybackRegisteredEvent.Broadcast(playbackHandler.Get(), characterId);
 		return true;
@@ -253,8 +261,6 @@ void UVoxtaClient::OnConnected()
 			{
 				UE_LOGFMT(VoxtaLog, Log, "VoxtaClient connected successfully");
 				Self->SendMessageToServer(Self->m_voxtaRequestApi.GetAuthenticateRequestData());
-
-				Self->m_A2FHandler->TryInitialize();
 			}
 			// We don't care about else, as that means the 'playmode' is over.
 			return false; // Return false to remove the ticker after it runs once

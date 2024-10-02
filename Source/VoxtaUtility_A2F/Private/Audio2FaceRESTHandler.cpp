@@ -10,7 +10,10 @@
 
 void Audio2FaceRESTHandler::TryInitialize()
 {
-	UE_LOGFMT(VoxtaLog, Warning, "Testing to see if A2F is running on your machine... hold on.");
+	if (m_currentState != CurrentA2FState::NotConnected)
+	{
+		return;
+	}
 
 	m_currentState = CurrentA2FState::Initializing;
 	AsyncTask(ENamedThreads::AnyThread, [Self = TWeakPtr<Audio2FaceRESTHandler>(AsShared())] ()
@@ -226,6 +229,11 @@ void Audio2FaceRESTHandler::GetBlendshapes(FString wavFileName, FString shapesFi
 						"to start. Aborting blendshape generation...");
 			}
 		});
+}
+
+bool Audio2FaceRESTHandler::IsInitializing() const
+{
+	return m_currentState == CurrentA2FState::Initializing;
 }
 
 bool Audio2FaceRESTHandler::IsBusy() const

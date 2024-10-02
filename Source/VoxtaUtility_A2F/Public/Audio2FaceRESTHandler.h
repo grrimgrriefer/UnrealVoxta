@@ -37,6 +37,9 @@ public:
 	void GetBlendshapes(FString wavFileName, FString shapesFilePath, FString shapesFileName,
 		TFunction<void(FString shapesFilePath, bool success)> callback);
 
+	/** @return True if A2F is currently trying to initialize itself. */
+	bool IsInitializing() const;
+
 	/**
 	 * A2F headless cannot generate in parallel, which is why we need this.
 	 *
