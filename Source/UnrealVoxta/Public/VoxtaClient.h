@@ -45,6 +45,7 @@ public:
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientCharMessageRemoved, const FChatMessage&, message);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientSpeechTranscribed, const FString&, message);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientChatSessionStarted, const FChatSession&, chatSession);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FVoxtaClientAudioPlaybackRegistered, const UVoxtaAudioPlayback*, playbackHandler, const FString&, characterId);
 
 	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaClientStateChangedNative, VoxtaClientState);
 	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaClientCharacterRegisteredNative, const FAiCharData&);
@@ -52,6 +53,8 @@ public:
 	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaClientCharMessageRemovedNative, const FChatMessage&);
 	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaClientSpeechTranscribedNative, const FString&);
 	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaClientChatSessionStartedNative, const FChatSession&);
+	DECLARE_MULTICAST_DELEGATE_TwoParams(FVoxtaClientAudioPlaybackRegisteredNative, const UVoxtaAudioPlayback*, const FString&);
+
 #pragma endregion
 
 #pragma region events
@@ -105,6 +108,13 @@ public:
 	FVoxtaClientChatSessionStarted VoxtaClientChatSessionStartedEvent;
 	/** Static Event variation of VoxtaClientChatSessionStartedEvent */
 	FVoxtaClientChatSessionStartedNative VoxtaClientChatSessionStartedEventNative;
+
+	/**  Event fired when a playbackHandler has registered itself & claimed audioplayback for that character. */
+	UPROPERTY(BlueprintAssignable, Category = "Voxta", meta = (IsBindableEvent = "True"))
+	FVoxtaClientAudioPlaybackRegistered FVoxtaClientAudioPlaybackRegisteredEvent;
+	/** Static Event variation of VoxtaClientChatSessionStartedEvent */
+	FVoxtaClientAudioPlaybackRegisteredNative FVoxtaClientAudioPlaybackRegisteredEventNative;
+
 #pragma endregion
 
 #pragma region UGameInstanceSubsystem overrides

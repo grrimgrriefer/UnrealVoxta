@@ -10,7 +10,7 @@ FSignalRValue VoxtaApiRequestHandler::GetAuthenticateRequestData() const
 	return FSignalRValue(TMap<FString, FSignalRValue> {
 		{ EASY_STRING("$type"), SIGNALR_STRING("authenticate") },
 		{ EASY_STRING("client"), SIGNALR_STRING("UnrealVoxta") },
-		{ EASY_STRING("clientVersion"), SIGNALR_STRING("0.0.1-preAlpha") },
+		{ EASY_STRING("clientVersion"), SIGNALR_STRING("0.1.0-alpha-preview") },
 		{ EASY_STRING("scope"), FSignalRValue(TArray<FSignalRValue> {
 			SIGNALR_STRING("role:app"),
 				SIGNALR_STRING("broadcast:write") }) },

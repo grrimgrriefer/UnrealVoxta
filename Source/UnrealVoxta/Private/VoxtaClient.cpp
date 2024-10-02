@@ -181,6 +181,8 @@ bool UVoxtaClient::TryRegisterPlaybackHandler(const FString& characterId,
 	{
 		m_registeredCharacterPlaybackHandlers.Emplace(characterId, playbackHandler);
 		UE_LOGFMT(VoxtaLog, Log, "Voxta Audioplayback handler for character: {0} registered successfully.", characterId);
+		FVoxtaClientAudioPlaybackRegisteredEventNative.Broadcast(playbackHandler.Get(), characterId);
+		FVoxtaClientAudioPlaybackRegisteredEvent.Broadcast(playbackHandler.Get(), characterId);
 		return true;
 	}
 	else
