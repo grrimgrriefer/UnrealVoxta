@@ -3,9 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Internals/VoxtaLogger.h"
-#include "Internals/VoxtaApiRequestHandler.h"
-#include "Internals/VoxtaApiResponseHandler.h"
 #include "VoxtaData/Public/VoxtaClientState.h"
 #include "VoxtaClient.generated.h"
 
@@ -15,6 +12,11 @@ class FSignalRInvokeResult;
 class UVoxtaAudioInput;
 class Audio2FaceRESTHandler;
 class UVoxtaAudioPlayback;
+class VoxtaLogger;
+class VoxtaApiRequestHandler;
+class VoxtaApiResponseHandler;
+struct ServerResponseBase;
+struct ServerResponseError;
 struct ServerResponseChatMessageBase;
 struct ServerResponseWelcome;
 struct ServerResponseCharacterList;
@@ -243,9 +245,9 @@ private:
 	UPROPERTY()
 	UVoxtaAudioInput* m_voiceInput;
 
-	VoxtaLogger m_logUtility;
-	VoxtaApiRequestHandler m_voxtaRequestApi;
-	VoxtaApiResponseHandler m_voxtaResponseApi;
+	VoxtaLogger* m_logUtility;
+	VoxtaApiRequestHandler* m_voxtaRequestApi;
+	VoxtaApiResponseHandler* m_voxtaResponseApi;
 	TSharedPtr<IHubConnection> m_hub;
 	TSharedPtr<Audio2FaceRESTHandler> m_A2FHandler;
 

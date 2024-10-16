@@ -9,6 +9,9 @@
 #include "Logging/StructuredLog.h"
 #include "VoxtaAudioInput.h"
 #include "VoxtaAudioPlayback.h"
+#include "Internals/VoxtaLogger.h"
+#include "Internals/VoxtaApiRequestHandler.h"
+#include "Internals/VoxtaApiResponseHandler.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseBase.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseWelcome.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseCharacterList.h"
@@ -24,14 +27,21 @@
 
 void UVoxtaClient::Initialize(FSubsystemCollectionBase& collection)
 {
-	Super::Initialize(collection);
-	m_logUtility.RegisterVoxtaLogger();
+	m_logUtility = new VoxtaLogger();
+	m_voxtaRequestApi = new VoxtaApiRequestHandler();
+	m_voxtaResponseApi = new VoxtaApiResponseHandler();
+	m_logUtility->RegisterVoxtaLogger();
 	m_voiceInput = NewObject<UVoxtaAudioInput>(this);
 	m_A2FHandler = MakeShared<Audio2FaceRESTHandler>();
+	Super::Initialize(collection);
 }
 
 void UVoxtaClient::Deinitialize()
 {
+	delete m_logUtility;
+	delete m_voxtaRequestApi;
+	delete m_voxtaResponseApi;
+
 	if (m_currentState != VoxtaClientState::Disconnected)
 	{
 		Disconnect(true);
@@ -89,7 +99,7 @@ void UVoxtaClient::StartChatWithCharacter(const FString& charId)
 {
 	if (GetAiCharacterDataById(charId) != nullptr)
 	{
-		SendMessageToServer(m_voxtaRequestApi.GetLoadCharacterRequestData(charId));
+		SendMessageToServer(m_voxtaRequestApi->GetLoadCharacterRequestData(charId));
 		SetState(VoxtaClientState::StartingChat);
 	}
 	else
@@ -103,7 +113,7 @@ void UVoxtaClient::SendUserInput(const FString& inputText)
 {
 	if (m_currentState == VoxtaClientState::WaitingForUserReponse)
 	{
-		SendMessageToServer(m_voxtaRequestApi.GetSendUserMessageData(m_chatSession->GetSessionId(), inputText));
+		SendMessageToServer(m_voxtaRequestApi->GetSendUserMessageData(m_chatSession->GetSessionId(), inputText));
 		SetState(VoxtaClientState::GeneratingReply);
 	}
 	else
@@ -117,7 +127,7 @@ void UVoxtaClient::NotifyAudioPlaybackComplete(const FString& messageId)
 {
 	UE_LOGFMT(VoxtaLog, Log, "Marking audio playback of message {0} complete.", messageId);
 
-	SendMessageToServer(m_voxtaRequestApi.GetNotifyAudioPlaybackCompleteData(m_chatSession->GetSessionId(), messageId));
+	SendMessageToServer(m_voxtaRequestApi->GetNotifyAudioPlaybackCompleteData(m_chatSession->GetSessionId(), messageId));
 	SetState(VoxtaClientState::WaitingForUserReponse);
 }
 
@@ -260,7 +270,7 @@ void UVoxtaClient::OnConnected()
 			if (Self != nullptr)
 			{
 				UE_LOGFMT(VoxtaLog, Log, "VoxtaClient connected successfully");
-				Self->SendMessageToServer(Self->m_voxtaRequestApi.GetAuthenticateRequestData());
+				Self->SendMessageToServer(Self->m_voxtaRequestApi->GetAuthenticateRequestData());
 			}
 			// We don't care about else, as that means the 'playmode' is over.
 			return false; // Return false to remove the ticker after it runs once
@@ -326,13 +336,13 @@ bool UVoxtaClient::HandleResponseHelper(const ServerResponseBase* response, cons
 bool UVoxtaClient::HandleResponse(const TMap<FString, FSignalRValue>& responseData)
 {
 	FString responseType = responseData[EASY_STRING("$type")].AsString();
-	if (m_voxtaResponseApi.IGNORED_MESSAGE_TYPES.Contains(responseType))
+	if (m_voxtaResponseApi->IGNORED_MESSAGE_TYPES.Contains(responseType))
 	{
 		UE_LOGFMT(VoxtaLog, Log, "Ignoring message of type: {0}", responseType);
 		return true;
 	}
 
-	TUniquePtr<ServerResponseBase> response = m_voxtaResponseApi.GetResponseData(responseData);
+	TUniquePtr<ServerResponseBase> response = m_voxtaResponseApi->GetResponseData(responseData);
 	if (!response.IsValid())
 	{
 		UE_LOGFMT(VoxtaLog, Error, "Failed to deserialize message of type: {0}", responseType);
@@ -381,7 +391,7 @@ bool UVoxtaClient::HandleWelcomeResponse(const ServerResponseWelcome& response)
 	UE_LOGFMT(VoxtaLog, Log, "Authenticated with Voxta Server. Welcome {0}! :D", m_userData->GetName());
 
 	SetState(VoxtaClientState::Authenticated);
-	SendMessageToServer(m_voxtaRequestApi.GetLoadCharactersListData());
+	SendMessageToServer(m_voxtaRequestApi->GetLoadCharactersListData());
 	return true;
 }
 
@@ -404,7 +414,7 @@ bool UVoxtaClient::HandleCharacterLoadedResponse(const ServerResponseCharacterLo
 
 	if (character)
 	{
-		SendMessageToServer(m_voxtaRequestApi.GetStartChatRequestData(character->Get()));
+		SendMessageToServer(m_voxtaRequestApi->GetStartChatRequestData(character->Get()));
 		return true;
 	}
 	else
