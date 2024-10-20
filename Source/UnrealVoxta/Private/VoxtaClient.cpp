@@ -3,6 +3,7 @@
 #include "VoxtaClient.h"
 #include "SignalR/Public/SignalRSubsystem.h"
 #include "SignalR/Private/HubConnection.h"
+#include "Interfaces/IPv4/IPv4Address.h"
 #include "VoxtaData/Public/ChatSession.h"
 #include "Audio2FaceRESTHandler.h"
 #include "VoxtaDefines.h"
@@ -62,6 +63,20 @@ void UVoxtaClient::StartConnection(const FString& ipv4Address, int port)
 	{
 		UE_LOGFMT(VoxtaLog, Error, "Port {0} is an impossible number, please double check your settings. "
 			"Ignoring connection attempt.", port);
+		return;
+	}
+
+	FIPv4Address address;
+	if (ipv4Address.IsEmpty())
+	{
+		UE_LOGFMT(VoxtaLog, Error, "The provided address for the VoxtaClient to connect to was empty. "
+					"Ignoring connection attempt.", ipv4Address);
+		return;
+	}
+	else if (ipv4Address.ToLower() != LOCALHOST && !FIPv4Address::Parse(ipv4Address, address))
+	{
+		UE_LOGFMT(VoxtaLog, Error, "Address: {0} is not a valid address. "
+			"Ignoring connection attempt.", ipv4Address);
 		return;
 	}
 
