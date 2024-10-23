@@ -74,7 +74,7 @@ void FHubConnection::Stop()
 		return;
 	}
 	ConnectionState = EConnectionState::Disconnecting;
-	if (Connection.IsValid())
+	if (Connection.IsValid() && Connection->IsConnected())
 	{
 		SendCloseMessage();
 		Connection->Close();

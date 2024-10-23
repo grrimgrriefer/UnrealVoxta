@@ -34,7 +34,7 @@ private:
  *
  * NOTE: These are integration tests and require VoxtaServer to be running on localhost.
  */
-TEST_CLASS(VoxtaClientTests, "Game.Voxta")
+TEST_CLASS(VoxtaClientTests, "Voxta")
 {
 	UGameInstance* m_gameInstance;
 	UVoxtaClient* m_voxtaClient;
@@ -62,6 +62,9 @@ TEST_CLASS(VoxtaClientTests, "Game.Voxta")
 
 	AFTER_EACH()
 	{
+		// Make sure that cleanup warnings don't affect the test outcome
+		TestRunner->SetSuppressLogWarnings();
+
 		m_voxtaClient->VoxtaClientStateChangedEventNative.Remove(m_handle);
 		m_gameInstance->Shutdown();
 		m_voxtaClient = nullptr;
@@ -86,6 +89,17 @@ TEST_CLASS(VoxtaClientTests, "Game.Voxta")
 	}
 
 #pragma region StartConnection
+	TEST_METHOD(StartConnection_NewStateAndBroadCast)
+	{
+		/** Test */
+		m_voxtaClient->StartConnection(FString("127.0.0.1"), 5384);
+
+		/** Assert */
+		GLog->Flush();
+		ASSERT_THAT(AreEqual(m_newStateResponse, VoxtaClientState::AttemptingToConnect));
+		ASSERT_THAT(AreEqual(m_voxtaClient->GetCurrentState(), VoxtaClientState::AttemptingToConnect));
+	}
+
 	TEST_METHOD(StartConnection_WithEmptyAddress_ExpectDisconnectedAndErrorLog)
 	{
 		/** Setup */
@@ -106,7 +120,7 @@ TEST_CLASS(VoxtaClientTests, "Game.Voxta")
 		TestRunner->SetSuppressLogErrors();
 
 		/** Test */
-		m_voxtaClient->StartConnection(FString("500.500.500.500"), 5384);
+		m_voxtaClient->StartConnection(FString("1.2.3.4.5"), 5384);
 
 		/** Assert */
 		GLog->Flush();
@@ -141,17 +155,6 @@ TEST_CLASS(VoxtaClientTests, "Game.Voxta")
 		/** Assert */
 		GLog->Flush();
 		ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(TEXT("ignoring new connection attempt"), ELogVerbosity::Type::Warning)));
-	}
-
-	TEST_METHOD(StartConnection_NewStateAndBroadCast)
-	{
-		/** Test */
-		m_voxtaClient->StartConnection(FString("127.0.0.1"), 5384);
-
-		/** Assert */
-		GLog->Flush();
-		ASSERT_THAT(AreEqual(m_newStateResponse, VoxtaClientState::AttemptingToConnect));
-		ASSERT_THAT(AreEqual(m_voxtaClient->GetCurrentState(), VoxtaClientState::AttemptingToConnect));
 	}
 #pragma endregion
 
@@ -190,7 +193,7 @@ TEST_CLASS(VoxtaClientTests, "Game.Voxta")
 		VoxtaClientState state = m_voxtaClient->GetCurrentState();
 
 		/** Test */
-		m_voxtaClient->Disconnect();
+		m_voxtaClient->Disconnect(true);
 
 		/** Assert */
 		GLog->Flush();

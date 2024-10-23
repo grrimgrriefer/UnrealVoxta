@@ -256,7 +256,7 @@ void UVoxtaClient::OnReceivedMessage(const TArray<FSignalRValue>& arguments)
 				if (Self->m_currentState == VoxtaClientState::Disconnected ||
 					Self->m_currentState == VoxtaClientState::Terminated)
 				{
-					UE_LOGFMT(VoxtaLog, Warning, "Tried to process a message with the connection already severed, "
+					UE_LOGFMT(VoxtaLog, Log, "Tried to process a message with the connection already severed, "
 						"skipping processing of remaining response data.");
 				}
 				else if (Arguments.IsEmpty() || Arguments[0].GetType() != FSignalRValue::EValueType::Object)
