@@ -246,9 +246,9 @@ private:
 	UPROPERTY()
 	UVoxtaAudioInput* m_voiceInput;
 
-	VoxtaLogger* m_logUtility;
-	VoxtaApiRequestHandler* m_voxtaRequestApi;
-	VoxtaApiResponseHandler* m_voxtaResponseApi;
+	TSharedPtr<VoxtaLogger> m_logUtility;
+	TSharedPtr<VoxtaApiRequestHandler> m_voxtaRequestApi;
+	TSharedPtr<VoxtaApiResponseHandler> m_voxtaResponseApi;
 	TSharedPtr<IHubConnection> m_hub;
 	TSharedPtr<Audio2FaceRESTHandler> m_A2FHandler;
 

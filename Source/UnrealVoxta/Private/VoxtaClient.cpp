@@ -28,9 +28,9 @@
 
 void UVoxtaClient::Initialize(FSubsystemCollectionBase& collection)
 {
-	m_logUtility = new VoxtaLogger();
-	m_voxtaRequestApi = new VoxtaApiRequestHandler();
-	m_voxtaResponseApi = new VoxtaApiResponseHandler();
+	m_logUtility = MakeShared<VoxtaLogger>();
+	m_voxtaRequestApi = MakeShared<VoxtaApiRequestHandler>();
+	m_voxtaResponseApi = MakeShared<VoxtaApiResponseHandler>();
 	m_logUtility->RegisterVoxtaLogger();
 	m_voiceInput = NewObject<UVoxtaAudioInput>(this);
 	m_A2FHandler = MakeShared<Audio2FaceRESTHandler>();
@@ -39,10 +39,6 @@ void UVoxtaClient::Initialize(FSubsystemCollectionBase& collection)
 
 void UVoxtaClient::Deinitialize()
 {
-	delete m_logUtility;
-	delete m_voxtaRequestApi;
-	delete m_voxtaResponseApi;
-
 	if (m_currentState != VoxtaClientState::Disconnected)
 	{
 		Disconnect(true);
@@ -69,7 +65,7 @@ void UVoxtaClient::StartConnection(const FString& ipv4Address, int port)
 	FIPv4Address address;
 	if (ipv4Address.IsEmpty())
 	{
-		UE_LOGFMT(VoxtaLog, Error, "The provided address for the VoxtaClient to connect to was empty. "
+		UE_LOGFMT(VoxtaLog, Error, "The provided address: {0} for the VoxtaClient to connect to was empty. "
 					"Ignoring connection attempt.", ipv4Address);
 		return;
 	}
@@ -243,11 +239,18 @@ void UVoxtaClient::StartListeningToServer()
 
 void UVoxtaClient::OnReceivedMessage(const TArray<FSignalRValue>& arguments)
 {
+	FWeakObjectPtr weakSelf(this);
+
 	/** Wait on the next tick to run the responsehandling on the GameThread,
 	 * instead of the background thread of the socket. */
 	FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda(
-		[Self = TWeakObjectPtr<UVoxtaClient>(this), Arguments = arguments] (float deltaTime)
+		[weakSelf, Arguments = arguments] (float deltaTime)
 		{
+			if (!weakSelf.IsValid())
+			{
+				return false;
+			}
+			UVoxtaClient* Self = Cast<UVoxtaClient>(weakSelf.Get());
 			if (Self != nullptr)
 			{
 				if (Self->m_currentState == VoxtaClientState::Disconnected ||
