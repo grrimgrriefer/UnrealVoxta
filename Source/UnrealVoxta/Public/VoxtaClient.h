@@ -201,6 +201,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Voxta")
 	VoxtaClientState GetCurrentState() const;
 
+	/** @return The current user's ID, assuming we have an authenticated session. */
+	UFUNCTION(BlueprintPure, Category = "Voxta")
+	FString GetUserId() const;
+
 	/**
 	 * Try to retrieve a pointer to the UVoxtaAudioPlayback that has claimed playback for the provided characterId.
 	 *

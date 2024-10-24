@@ -108,6 +108,11 @@ void UVoxtaClient::Disconnect(bool silent)
 
 void UVoxtaClient::StartChatWithCharacter(const FString& charId)
 {
+	if (charId.IsEmpty())
+	{
+		UE_LOGFMT(VoxtaLog, Error, "Cannot start a chat as the provided characterId was empty.");
+		return;
+	}
 	if (GetAiCharacterDataById(charId) != nullptr)
 	{
 		SendMessageToServer(m_voxtaRequestApi->GetLoadCharacterRequestData(charId));
@@ -129,8 +134,8 @@ void UVoxtaClient::SendUserInput(const FString& inputText)
 	}
 	else
 	{
-		UE_LOGFMT(VoxtaLog, Error, "Cannot send userInput as the VoxtaServer is currently {0}, "
-			"please wait untile it's WaitingForUserResponse.", UEnum::GetValueAsString(m_currentState));
+		UE_LOGFMT(VoxtaLog, Error, "Cannot send userInput {0} as the VoxtaServer is currently {1}, "
+			"please wait untile it's WaitingForUserResponse.", inputText, UEnum::GetValueAsString(m_currentState));
 	}
 }
 
@@ -160,6 +165,15 @@ UVoxtaAudioInput* UVoxtaClient::GetVoiceInputHandler() const
 VoxtaClientState UVoxtaClient::GetCurrentState() const
 {
 	return m_currentState;
+}
+
+FString UVoxtaClient::GetUserId() const
+{
+	if (m_userData.IsValid())
+	{
+		return m_userData->GetId();
+	}
+	return FString();
 }
 
 const UVoxtaAudioPlayback* UVoxtaClient::GetRegisteredAudioPlaybackHandlerForID(const FString& characterId) const
