@@ -5,6 +5,7 @@
 #include "CQTest.h"
 #include "VoxtaClient.h"
 #include "AiCharData.h"
+#include "UserCharData.h"
 #include "ChatMessage.h"
 
 /**
@@ -25,7 +26,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 
 	VoxtaClientState m_newStateResponse;
 	TArray<FAiCharData> m_characters;
-	TArray<FChatMessage> m_messages;
+	TArray<TTuple<FBaseCharData, FChatMessage>> m_messages;
 
 	/** Create a new clean m_gameInstance and voxtaclient for ever test, to avoid inter-test false positives. */
 	BEFORE_EACH()
@@ -44,15 +45,15 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		});
 
 		m_characters.Empty();
-		m_characterRegisteredEventHandle = m_voxtaClient->VoxtaClientCharacterRegisteredEventNative.AddLambda([this] (const FAiCharData& charData)
+		m_characterRegisteredEventHandle = m_voxtaClient->VoxtaClientCharacterRegisteredEventNative.AddLambda([this] (const FAiCharData& aiCharData)
 		{
-			m_characters.Add(charData);
+			m_characters.Add(aiCharData);
 		});
 
 		m_messages.Empty();
-		m_charMessageAddedEventHandle = m_voxtaClient->VoxtaClientCharMessageAddedEventNative.AddLambda([this] (const FAiCharData& charData, const FChatMessage& message)
+		m_charMessageAddedEventHandle = m_voxtaClient->VoxtaClientCharMessageAddedEventNative.AddLambda([this] (const FBaseCharData& baseCharData, const FChatMessage& message)
 		{
-			m_messages.Add(message);
+			m_messages.Add(MakeTuple(baseCharData, message));
 		});
 	}
 
@@ -171,7 +172,6 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 				ASSERT_THAT(IsTrue(m_characters.Num() > 0));
 				for (int i = 0; i < m_characters.Num(); i++)
 				{
-					ASSERT_THAT(IsNotNull(m_characters[i]));
 					ASSERT_THAT(IsNotNull(m_characters[i].GetName()));
 				}
 			});
@@ -295,8 +295,9 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			/** Assert */
 			GLog->Flush();
 			ASSERT_THAT(AreEqual(m_messages.Num(), 1));
-			ASSERT_THAT(IsNotNull(m_messages[0]));
-			ASSERT_THAT(IsNotNull(m_messages[0].GetCharId(), m_characters[0].GetId()));
+			ASSERT_THAT(AreEqual(m_messages[0].Value.GetCharId(), m_characters[0].GetId()));
+			ASSERT_THAT(AreEqual(m_messages[0].Key.GetId(), m_characters[0].GetId()));
+			ASSERT_THAT(AreEqual(m_messages[0].Key.GetName(), m_characters[0].GetName()));
 		});
 	}
 #pragma endregion
@@ -354,8 +355,9 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			/** Assert */
 			GLog->Flush();
 			ASSERT_THAT(AreEqual(m_messages.Num(), 2));
-			ASSERT_THAT(AreEqual(m_messages[1].GetTextContent(), text));
-			ASSERT_THAT(AreEqual(m_messages[1].GetCharId(), m_voxtaClient->GetUserId()));
+			ASSERT_THAT(AreEqual(m_messages[1].Value.GetTextContent(), text));
+			ASSERT_THAT(AreEqual(m_messages[1].Key.GetId(), m_voxtaClient->GetUserId()));
+			ASSERT_THAT(IsTrue(m_messages[1].Key.StaticStruct() == FUserCharData::StaticStruct()));
 		});
 	}
 #pragma endregion
