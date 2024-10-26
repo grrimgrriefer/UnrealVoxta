@@ -8,6 +8,9 @@
 #include "AiCharData.h"
 #include "UserCharData.h"
 #include "ChatMessage.h"
+#include "Components/ActorTestSpawner.h"
+#include "TestGameInstance.h"
+#include "TestPlaybackActor.h"
 
 /**
  * VoxtaClientTests
@@ -17,9 +20,9 @@
  */
 TEST_CLASS(VoxtaClientTests, "Voxta")
 {
-	UGameInstance* m_gameInstance;
 	UVoxtaClient* m_voxtaClient;
 	TestLogSink* m_testLogSink;
+	FActorTestSpawner* m_actorTestSpawner;
 
 	FDelegateHandle m_stateChangedEventHandle;
 	FDelegateHandle m_characterRegisteredEventHandle;
@@ -30,16 +33,19 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 	TArray<TTuple<FBaseCharData, FChatMessage>> m_messages;
 
 	VoxtaClientState m_cache_state;
+	TWeakObjectPtr<ATestPlaybackActor> m_cache_playbackActor;
 
 	/** Create a new clean m_gameInstance and voxtaclient for ever test, to avoid inter-test false positives. */
 	BEFORE_EACH()
 	{
 		m_testLogSink = new TestLogSink();
 		GLog->AddOutputDevice(m_testLogSink);
+		TestRunner->SetSuppressLogErrors(ECQTestSuppressLogBehavior::False);
+		TestRunner->SetSuppressLogWarnings(ECQTestSuppressLogBehavior::False);
 
-		m_gameInstance = NewObject<UGameInstance>();
-		m_gameInstance->Init();
-		m_voxtaClient = m_gameInstance->GetSubsystem<UVoxtaClient>();
+		m_actorTestSpawner = new FActorTestSpawner();
+		m_actorTestSpawner->InitializeGameSubsystems();
+		m_voxtaClient = m_actorTestSpawner->GetGameInstance()->GetSubsystem<UVoxtaClient>();
 
 		m_newStateResponse = VoxtaClientState::Disconnected;
 		m_stateChangedEventHandle = m_voxtaClient->VoxtaClientStateChangedEventNative.AddLambda([this] (VoxtaClientState newState)
@@ -64,13 +70,14 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 	{
 		// Make sure that cleanup warnings don't affect the test outcome
 		TestRunner->SetSuppressLogWarnings();
+		TestRunner->SetSuppressLogErrors();
 
 		m_voxtaClient->VoxtaClientStateChangedEventNative.Remove(m_stateChangedEventHandle);
 		m_voxtaClient->VoxtaClientCharacterRegisteredEventNative.Remove(m_characterRegisteredEventHandle);
 		m_voxtaClient->VoxtaClientCharMessageAddedEventNative.Remove(m_charMessageAddedEventHandle);
-		m_gameInstance->Shutdown();
+		delete m_actorTestSpawner;
 		m_voxtaClient = nullptr;
-		m_gameInstance = nullptr;
+		m_actorTestSpawner = nullptr;
 
 		m_newStateResponse = VoxtaClientState::Disconnected;
 		m_characters.Empty();
@@ -78,9 +85,9 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 
 		GLog->Flush();
 		GLog->RemoveOutputDevice(m_testLogSink);
-		TestRunner->SetSuppressLogErrors(ECQTestSuppressLogBehavior::False);
-		TestRunner->SetSuppressLogWarnings(ECQTestSuppressLogBehavior::False);
 		delete m_testLogSink;
+
+		AddCommand(WaitForDuration(1.5));
 	}
 
 	TEST_METHOD(GetVoxtaSubsystem_ExpectNonNull)
@@ -354,18 +361,47 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		});
 	}
 
-	TEST_METHOD(StartChatWithCharacter_WaitForFirstMessage_ExpectStateChange)
+	TEST_METHOD(StartChatWithCharacter_WaitForFirstMessage_ExpectStateChangeAndAudioGeneratedWarning)
 	{
 		/** Setup */
 		FTimespan timeout = FTimespan::FromSeconds(10);
 		PreconfigureClient(PreconfigureClientState::CharacterListLoaded);
 		TestCommandBuilder.Do([this] ()
 		{
+			TestRunner->SetSuppressLogWarnings();
 			m_voxtaClient->StartChatWithCharacter(m_characters[0].GetId());
 		});
 
 		/** Test */
 		AddCommand(new FWaitUntil(*TestRunner, [&] () { return m_voxtaClient->GetCurrentState() == VoxtaClientState::WaitingForUserReponse; }, timeout));
+
+		AddCommand(WaitForDuration(0.1));
+		TestCommandBuilder.Do([this] ()
+		{
+			/** Assert */
+			GLog->Flush();
+			ASSERT_THAT(AreEqual(m_messages.Num(), 1));
+			ASSERT_THAT(AreEqual(m_messages[0].Value.GetCharId(), m_characters[0].GetId()));
+			ASSERT_THAT(AreEqual(m_messages[0].Key.GetId(), m_characters[0].GetId()));
+			ASSERT_THAT(AreEqual(m_messages[0].Key.GetName(), m_characters[0].GetName()));
+			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring("Audio data was generated", ELogVerbosity::Type::Warning)));
+		});
+	}
+
+	TEST_METHOD(StartChatWithCharacter_WaitForFirstMessageAudioPlaybackStart_ExpectStateChange)
+	{
+		/** Setup */
+		FTimespan timeout = FTimespan::FromSeconds(10);
+		PreconfigureClient(PreconfigureClientState::CharacterListLoaded);
+		TestCommandBuilder.Do([this] ()
+		{
+			m_cache_playbackActor = &m_actorTestSpawner->SpawnActor<ATestPlaybackActor>();
+			m_cache_playbackActor->Initialize(m_characters[0].GetId());
+			m_voxtaClient->StartChatWithCharacter(m_characters[0].GetId());
+		});
+
+		/** Test */
+		AddCommand(new FWaitUntil(*TestRunner, [&] () { return m_voxtaClient->GetCurrentState() == VoxtaClientState::AudioPlayback; }, timeout));
 
 		AddCommand(WaitForDuration(0.1));
 		TestCommandBuilder.Do([this] ()
@@ -457,6 +493,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 	{
 		Started,
 		CharacterListLoaded,
+		AudioPlaybackStarted,
 		ChatStarted
 	};
 
@@ -477,18 +514,23 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		}
 		TestCommandBuilder.Do([this] ()
 		{
+			m_cache_playbackActor = &m_actorTestSpawner->SpawnActor<ATestPlaybackActor>();
+			m_cache_playbackActor->Initialize(m_characters[0].GetId());
 			m_voxtaClient->StartChatWithCharacter(m_characters[0].GetId());
 		});
-		AddCommand(new FWaitUntil(*TestRunner, [&] () { return m_voxtaClient->GetCurrentState() == VoxtaClientState::WaitingForUserReponse; }));
+		AddCommand(new FWaitUntil(*TestRunner, [&] () { return m_voxtaClient->GetCurrentState() == VoxtaClientState::AudioPlayback; }));
+		if (state == PreconfigureClientState::AudioPlaybackStarted)
+		{
+			return;
+		}
+		FTimespan timeout = FTimespan::FromSeconds(10);
+		AddCommand(new FWaitUntil(*TestRunner, [&] () { return m_voxtaClient->GetCurrentState() == VoxtaClientState::WaitingForUserReponse; }, timeout));
 	}
 
 	FWaitUntil* WaitForDuration(double seconds)
 	{
 		FDateTime endTime = FDateTime::Now() + FTimespan::FromSeconds(seconds);
-		return new FWaitUntil(*TestRunner, [&] ()
-			{
-				return FDateTime::Now() > endTime;
-			}, FTimespan::FromSeconds(seconds + 5));
+		return new FWaitUntil(*TestRunner, [&] () { return FDateTime::Now() > endTime; }, FTimespan::FromSeconds(seconds + 5));
 	}
 #pragma endregion
 };

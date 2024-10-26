@@ -128,7 +128,7 @@ private:
 #pragma region data
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Lipsync Type"))
-	LipSyncType m_lipSyncType;
+	LipSyncType m_lipSyncType = LipSyncType::None;
 
 	// TODO: use interface so we don't have to cast to cast to UAudio2FacePlaybackHandler or
 	// UOVRLipSyncPlaybackActorComponent everytime

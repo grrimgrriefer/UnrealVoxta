@@ -560,10 +560,10 @@ bool UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessageBase
 					{
 						if (chatMessage->GetAudioUrls().Num() > 0)
 						{
-							UE_LOGFMT(VoxtaLog, Warning, "Audio data was generate for characterId: {0} but no playback "
+							UE_LOGFMT(VoxtaLog, Warning, "Audio data was generated for characterId: {0}, Name: {1} but no playback "
 								"handler was found. You might want to disable TTS service if you don't want audio playback. "
-								"Or add a VoxtaAudioPlayback component if you desire audioplayback. Name: {1} Contents: {2}",
-								character->Get()->GetName(), character->Get()->GetName(), chatMessage->GetTextContent());
+								"Or add a VoxtaAudioPlayback component if you desire audioplayback. Contents: {2}",
+								character->Get()->GetId(), character->Get()->GetName(), chatMessage->GetTextContent());
 							NotifyAudioPlaybackComplete(chatMessage->GetMessageId());
 						}
 						else
