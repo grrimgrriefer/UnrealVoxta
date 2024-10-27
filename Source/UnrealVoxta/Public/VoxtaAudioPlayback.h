@@ -66,6 +66,15 @@ public:
 	void Initialize(const FString& characterId);
 
 	/**
+	 * Configures the component so it only will playback messages for the specific character.
+	 * C++ overload as blueprints can change the private field of lipsyncType but C++ can't.
+	 *
+	 * @param characterId The ID of the character for which this component will be playing the audio.
+	 * @param lipSyncType The type of lipsync this character should have.
+	 */
+	void Initialize(const FString& characterId, LipSyncType lipSyncType);
+
+	/**
 	 * Notify that the Audio is done with playback. Due to the unpredictable nature of the blueprint, we rely on
 	 * a manual call for this, to avoid any confusion or false positives.
 	 *

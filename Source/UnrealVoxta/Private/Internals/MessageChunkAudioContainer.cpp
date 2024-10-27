@@ -270,8 +270,12 @@ void MessageChunkAudioContainer::GenerateLipSync()
 					}
 				});
 			break;
+		case LipSyncType::Custom:
+			m_lipSyncData = Cast<ILipSyncBaseData>(LipSyncGenerator::GenerateCustomLipSyncData());
+			UpdateState(MessageChunkState::ReadyForPlayback);
+			break;
 		default:
-			UE_LOGFMT(VoxtaLog, Error, "No built-in support yet for lipsync that isn't OVR or A2F.");
+			UE_LOGFMT(VoxtaLog, Error, "Missing LipSync support for {0}.", UEnum::GetValueAsString(LIP_SYNC_TYPE));
 			break;
 	}
 }

@@ -13,8 +13,8 @@
  * Technically not needed, but made to keep things consistent between all LipSync types. Otherwise using the
  * interface gets very messy.
  */
-UCLASS()
-class ULipSyncDataCustom : public UObject, public ILipSyncBaseData
+UCLASS(Category = "Voxta")
+class VOXTADATA_API ULipSyncDataCustom : public UObject, public ILipSyncBaseData
 {
 	GENERATED_BODY()
 
@@ -22,7 +22,8 @@ class ULipSyncDataCustom : public UObject, public ILipSyncBaseData
 public:
 	/** Create an instance of the LipSyncData holder for CustomLipSync. */
 	explicit ULipSyncDataCustom() : ILipSyncBaseData(LipSyncType::Custom)
-	{};
+	{
+	};
 #pragma endregion
 
 #pragma region ILipSyncBaseData overrides
@@ -32,6 +33,7 @@ public:
 	 * Once this is called all memory will be cleaned and the playback can no longer be done.
 	 */
 	virtual void ReleaseData() override
-	{}
+	{
+	}
 #pragma endregion
 };

@@ -11,6 +11,7 @@
 #endif
 #include "Audio2FaceRESTHandler.h"
 #include "LipSyncDataA2F.h"
+#include "LipSyncDataCustom.h"
 #include "Interfaces/IPluginManager.h"
 
 #if WITH_OVRLIPSYNC
@@ -166,4 +167,11 @@ void LipSyncGenerator::GenerateA2FLipSyncData(const TArray<uint8>& rawAudioData,
 
 			Callback(data);
 		});
+}
+
+ULipSyncDataCustom* LipSyncGenerator::GenerateCustomLipSyncData()
+{
+	ULipSyncDataCustom* data = NewObject<ULipSyncDataCustom>();
+	data->AddToRoot();
+	return data;
 }

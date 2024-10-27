@@ -8,6 +8,7 @@
 class ULipSyncDataOVR;
 #endif
 class ULipSyncDataA2F;
+class ULipSyncDataCustom;
 class Audio2FaceRESTHandler;
 
 /**
@@ -41,4 +42,12 @@ public:
 	 */
 	static void GenerateA2FLipSyncData(const TArray<uint8>& rawAudioData, Audio2FaceRESTHandler* A2FRestHandler,
 		TFunction<void(ULipSyncDataA2F*)> callback);
+
+	/**
+	 * Generate an empty ULipSyncDataCustom wrapper, currently only used for integration tests, but might have
+	 * a real implementation later, it depends.
+	 *
+	 * @return A pointer to the newly created instance of ULipSyncDataCustom
+	 */
+	static ULipSyncDataCustom* GenerateCustomLipSyncData();
 };

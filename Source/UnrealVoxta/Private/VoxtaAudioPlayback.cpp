@@ -36,8 +36,20 @@ void UVoxtaAudioPlayback::Initialize(const FString& characterId)
 		characterId, FString::Format(*FString(TEXT("http://{0}:{1}/")), { m_hostAddress, m_hostPort }));
 }
 
+void UVoxtaAudioPlayback::Initialize(const FString& characterId, LipSyncType lipSyncType)
+{
+	m_lipSyncType = lipSyncType;
+	Initialize(characterId);
+}
+
 void UVoxtaAudioPlayback::MarkCustomPlaybackComplete(const FGuid& guid)
 {
+	if (m_lipSyncType != LipSyncType::Custom)
+	{
+		UE_LOGFMT(VoxtaLog, Error, "MarkCustomPlaybackComplete only works for Custom LipSync, and not {0}. "
+			"Skipping...", UEnum::GetValueAsString(m_lipSyncType));
+		return;
+	}
 	const FGuid expectedGuid = m_orderedAudio[m_currentAudioClipIndex]->GetLipSyncData<ILipSyncBaseData>()->GetGuid();
 	if (expectedGuid != guid)
 	{
