@@ -70,6 +70,10 @@ bEnabled=true
 In the content folder of the plugin you will find a setup of default blueprints. This should allow you to have a fully working setup with most features enabled in only a handful of minutes. For a step-by-step guide, I refer you to the video mentioned above.  
 ![TemplateBlueprints image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/TemplateBlueprints.PNG&resolveLfs=true&%24format=octetStream "Template blueprints for example setup.")  
 
+# Tests
+The core functionality is covered by Integration test, more extensive testing is still WIP, but this should catch most critical issues that would break essential logic.  
+![Tests image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/Tests.PNG&resolveLfs=true&%24format=octetStream "Running Voxta tests.")  
+
 # Blueprint nodes example usage
 _Note, all of these snippets are from the above Template setup blueprints, feel free to explore & modify them how you see fit. For more in-depth explanation, I advice to watch the first part of the youtube tutorial._
 
