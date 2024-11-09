@@ -20,9 +20,9 @@ TestCommandBuilder.Do([this] () { TestRunner->SetSuppressLogWarnings(ECQTestSupp
 
 /**
  * VoxtaClientTests
- * Tester class that will test the full public API of VoxtaClient.
+ * Tester class that will test the public API of VoxtaClient.
  *
- * NOTE: These are integration tests and require VoxtaServer to be running on localhost.
+ * NOTE: These are integration tests and require VoxtaServer to be running on localhost (127.0.0.1)
  */
 TEST_CLASS(VoxtaClientTests, "Voxta")
 {
@@ -105,17 +105,73 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		delete m_testLogSink;
 	}
 
-	TEST_METHOD(GetVoxtaSubsystem_ExpectNonNull)
+#pragma region Validations
+	TEST_METHOD(Validate_GetVoxtaSubsystem_ExpectNonNull)
 	{
 		PRE_TEST;
 		ASSERT_THAT(IsNotNull(m_voxtaClient));
 	}
 
-	TEST_METHOD(GetVoxtaSubsystem_ExpectDisconnectedState)
+	TEST_METHOD(Validate_GetVoxtaSubsystem_ExpectDisconnectedState)
 	{
 		PRE_TEST;
 		ASSERT_THAT(AreEqual(m_voxtaClient->GetCurrentState(), VoxtaClientState::Disconnected));
 	}
+
+	TEST_METHOD(Validate_ExpectVoxtaDefaultAssistantToExist)
+	{
+		PRE_TEST;
+		/** Setup */
+		PreconfigureClient(PreconfigureClientState::CharacterListLoaded);
+
+		TEST_DELAY;
+		TestCommandBuilder.Do([this] ()
+		{
+			/** Assert */
+			GLog->Flush();
+
+			int indexVoxtaName = -1;
+			int indexVoxtaId = -1;
+			for (int i = 0; i < m_characters.Num(); i++)
+			{
+				if (m_characters[i].GetName() == m_voxtaName)
+				{
+					indexVoxtaName = i;
+				}
+				if (m_characters[i].GetId() == m_voxtaId)
+				{
+					indexVoxtaId = i;
+				}
+			}
+
+			ASSERT_THAT(IsTrue(indexVoxtaName >= 0));
+			ASSERT_THAT(IsTrue(indexVoxtaId >= 0));
+			ASSERT_THAT(AreEqual(indexVoxtaName, indexVoxtaId));
+		});
+	}
+
+	TEST_METHOD(Validate_ExpectAllCharactersHaveUniqueIDs)
+	{
+		PRE_TEST;
+		/** Setup */
+		PreconfigureClient(PreconfigureClientState::CharacterListLoaded);
+
+		TEST_DELAY;
+		TestCommandBuilder.Do([this] ()
+		{
+			/** Assert */
+			GLog->Flush();
+
+			TSet<FString> idSet;
+			bool alreadyExists = false;
+			for (int i = 0; i < m_characters.Num(); i++)
+			{
+				idSet.Add(m_characters[i].GetId(), &alreadyExists);
+				ASSERT_THAT(IsFalse(alreadyExists));
+			}
+		});
+	}
+#pragma endregion
 
 #pragma region StartConnection
 	TEST_METHOD(StartConnection_WithValidHost_NewStateAndBroadCast)
@@ -248,60 +304,6 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			}
 		});
 	}
-
-	TEST_METHOD(Validate_ExpectVoxtaDefaultAssistantToExist)
-	{
-		PRE_TEST;
-		/** Setup */
-		PreconfigureClient(PreconfigureClientState::CharacterListLoaded);
-
-		TEST_DELAY;
-		TestCommandBuilder.Do([this] ()
-		{
-			/** Assert */
-			GLog->Flush();
-
-			int indexVoxtaName = -1;
-			int indexVoxtaId = -1;
-			for (int i = 0; i < m_characters.Num(); i++)
-			{
-				if (m_characters[i].GetName() == m_voxtaName)
-				{
-					indexVoxtaName = i;
-				}
-				if (m_characters[i].GetId() == m_voxtaId)
-				{
-					indexVoxtaId = i;
-				}
-			}
-
-			ASSERT_THAT(IsTrue(indexVoxtaName >= 0));
-			ASSERT_THAT(IsTrue(indexVoxtaId >= 0));
-			ASSERT_THAT(AreEqual(indexVoxtaName, indexVoxtaId));
-		});
-	}
-
-	TEST_METHOD(Validate_ExpectAllCharactersHaveUniqueIDs)
-	{
-		PRE_TEST;
-		/** Setup */
-		PreconfigureClient(PreconfigureClientState::CharacterListLoaded);
-
-		TEST_DELAY;
-		TestCommandBuilder.Do([this] ()
-		{
-			/** Assert */
-			GLog->Flush();
-
-			TSet<FString> idSet;
-			bool alreadyExists = false;
-			for (int i = 0; i < m_characters.Num(); i++)
-			{
-				idSet.Add(m_characters[i].GetId(), &alreadyExists);
-				ASSERT_THAT(IsFalse(alreadyExists));
-			}
-		});
-	}
 #pragma endregion
 
 #pragma region Disconnect
@@ -316,7 +318,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			m_voxtaClient->Disconnect();
 		});
 
-		AddCommand(WaitForDuration(0.5));
+		TEST_DELAY;
 		TestCommandBuilder.Do([this] ()
 		{
 			/** Assert */
@@ -338,7 +340,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			m_voxtaClient->Disconnect();
 		});
 
-		AddCommand(WaitForDuration(0.5));
+		TEST_DELAY;
 		TestCommandBuilder.Do([this] ()
 		{
 			/** Assert */
@@ -360,7 +362,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			m_voxtaClient->Disconnect(true);
 		});
 
-		AddCommand(WaitForDuration(0.5));
+		TEST_DELAY;
 		TestCommandBuilder.Do([this] ()
 		{
 			/** Assert */
@@ -394,6 +396,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			ASSERT_THAT(AreEqual(m_newStateResponse, m_cache_state));
 			ASSERT_THAT(AreEqual(m_voxtaClient->GetCurrentState(), m_cache_state));
 			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(characterId, ELogVerbosity::Type::Error)));
+			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring("Disconnected", ELogVerbosity::Type::Error)));
 		});
 	}
 
@@ -419,6 +422,32 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			ASSERT_THAT(AreEqual(m_newStateResponse, m_cache_state));
 			ASSERT_THAT(AreEqual(m_voxtaClient->GetCurrentState(), m_cache_state));
 			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(TEXT("empty"), ELogVerbosity::Type::Error)));
+		});
+	}
+
+	TEST_METHOD(StartChatWithCharacter_WithInvalidCharacterId_ExpectErrorAndStateRemainsUnchanged)
+	{
+		PRE_TEST;
+		/** Setup */
+		FString characterId = FGuid::NewGuid().ToString();
+		PreconfigureClient(PreconfigureClientState::CharacterListLoaded);
+		TestCommandBuilder.Do([this, characterId] ()
+		{
+			m_cache_state = m_voxtaClient->GetCurrentState();
+			TestRunner->SetSuppressLogErrors();
+
+			/** Test */
+			m_voxtaClient->StartChatWithCharacter(characterId);
+		});
+
+		TEST_DELAY;
+		TestCommandBuilder.Do([this, characterId] ()
+		{
+			/** Assert */
+			GLog->Flush();
+			ASSERT_THAT(AreEqual(m_newStateResponse, m_cache_state));
+			ASSERT_THAT(AreEqual(m_voxtaClient->GetCurrentState(), m_cache_state));
+			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(characterId, ELogVerbosity::Type::Error)));
 		});
 	}
 
@@ -515,7 +544,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			m_voxtaClient->SendUserInput(text);
 		});
 
-		AddCommand(WaitForDuration(0.5));
+		TEST_DELAY;
 		TestCommandBuilder.Do([this, text] ()
 		{
 			/** Assert */
@@ -537,7 +566,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			m_voxtaClient->SendUserInput(TEXT("some user text"));
 		});
 
-		AddCommand(WaitForDuration(0.5));
+		TEST_DELAY;
 		TestCommandBuilder.Do([this] ()
 		{
 			/** Assert */
@@ -562,16 +591,131 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		/** Test */
 		AddCommand(new FWaitUntil(*TestRunner, [&] () { return m_voxtaClient->GetCurrentState() == VoxtaClientState::WaitingForUserReponse; }, timeout));
 
-		AddCommand(WaitForDuration(0.5));
+		TEST_DELAY;
 		TestCommandBuilder.Do([this, text] ()
 		{
 			/** Assert */
 			GLog->Flush();
-			ASSERT_THAT(AreEqual(m_messages.Num(), 3)); // ai greeting, user, ai reply
+			ASSERT_THAT(AreEqual(m_messages.Num(), 3)); // 1: ai greeting, 2: user message, 3: ai reply
 			ASSERT_THAT(AreEqual(m_messages[1].Value.GetTextContent(), text));
 			ASSERT_THAT(AreEqual(m_messages[1].Key.GetId(), m_voxtaClient->GetUserId()));
 		});
 	}
+#pragma endregion
+
+#pragma region NotifyAudioPlaybackComplete
+	TEST_METHOD(NotifyAudioPlaybackComplete_WithInvalidStartingState_ExpectErrorAndStateRemainsUnchanged)
+	{
+		PRE_TEST;
+		FString messageId = FGuid::NewGuid().ToString();
+		TestCommandBuilder.Do([this, messageId] ()
+		{
+			/** Setup */
+			m_cache_state = m_voxtaClient->GetCurrentState();
+			TestRunner->SetSuppressLogErrors();
+
+			/** Test */
+			m_voxtaClient->SendUserInput(messageId);
+		});
+
+		TEST_DELAY;
+		TestCommandBuilder.Do([this, messageId] ()
+		{
+			/** Assert */
+			GLog->Flush();
+			ASSERT_THAT(AreEqual(m_newStateResponse, m_cache_state));
+			ASSERT_THAT(AreEqual(m_voxtaClient->GetCurrentState(), m_cache_state));
+			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(messageId, ELogVerbosity::Type::Error)));
+		});
+	}
+
+	TEST_METHOD(NotifyAudioPlaybackComplete_ExpectStateChange)
+	{
+		PRE_TEST;
+		/** Setup */
+		PreconfigureClient(PreconfigureClientState::CharacterListLoaded);
+		TestCommandBuilder.Do([this] ()
+		{
+			m_cache_playbackActor = &m_actorTestSpawner->SpawnActor<ATestPlaybackActor>();
+			m_cache_playbackActor->Initialize(m_voxtaId, false);
+			m_cache_playbackActor->m_audioPlaybackComponent->VoxtaMessageAudioPlaybackFinishedEventNative.AddLambda(
+			[this] (const FString& messageId)
+			{
+				/** Test */
+				VoxtaClientState oldState = m_cache_state;
+				m_voxtaClient->NotifyAudioPlaybackComplete(messageId);
+
+				/** Assert */
+				GLog->Flush();
+				ASSERT_THAT(AreEqual(VoxtaClientState::AudioPlayback, oldState));
+				ASSERT_THAT(AreEqual(VoxtaClientState::WaitingForUserReponse, m_cache_state));
+			});
+		});
+	}
+
+	TEST_METHOD(NotifyAudioPlaybackComplete_CorrectStateButWrongMessageId_ExpectErrorAndStateRemains)
+	{
+		PRE_TEST;
+		/** Setup */
+		PreconfigureClient(PreconfigureClientState::CharacterListLoaded);
+		TestCommandBuilder.Do([this] ()
+		{
+			m_cache_playbackActor = &m_actorTestSpawner->SpawnActor<ATestPlaybackActor>();
+			m_cache_playbackActor->Initialize(m_voxtaId, false);
+			m_cache_playbackActor->m_audioPlaybackComponent->VoxtaMessageAudioPlaybackFinishedEventNative.AddLambda(
+			[this] (const FString& messageId)
+			{
+				/** Test */
+				VoxtaClientState oldState = m_cache_state;
+				m_voxtaClient->NotifyAudioPlaybackComplete(messageId);
+
+				/** Assert */
+				GLog->Flush();
+				ASSERT_THAT(AreEqual(VoxtaClientState::AudioPlayback, oldState));
+				ASSERT_THAT(AreEqual(VoxtaClientState::WaitingForUserReponse, m_cache_state));
+			});
+		});
+	}
+#pragma endregion
+
+#pragma region GetServerAddress
+
+#pragma endregion
+
+#pragma region GetServerPort
+
+#pragma endregion
+
+#pragma region GetVoiceInputHandler
+
+#pragma endregion
+
+#pragma region GetCurrentState
+
+#pragma endregion
+
+#pragma region GetUserId
+
+#pragma endregion
+
+#pragma region GetRegisteredAudioPlaybackHandlerForID
+
+#pragma endregion
+
+#pragma region GetChatSession
+
+#pragma endregion
+
+#pragma region GetA2FHandler
+
+#pragma endregion
+
+#pragma region TryRegisterPlaybackHandler
+
+#pragma endregion
+
+#pragma region UnregisterPlaybackHandler
+
 #pragma endregion
 
 #pragma region utility

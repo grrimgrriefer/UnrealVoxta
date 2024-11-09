@@ -113,6 +113,12 @@ void UVoxtaClient::StartChatWithCharacter(const FString& charId)
 		UE_LOGFMT(VoxtaLog, Error, "Cannot start a chat as the provided characterId was empty.");
 		return;
 	}
+	if (m_currentState != VoxtaClientState::Idle)
+	{
+		UE_LOGFMT(VoxtaLog, Error, "Cannot start a chat as the current state: {0}, is not Idle. (requested character {1})",
+			UEnum::GetValueAsString(m_currentState), charId);
+		return;
+	}
 	if (GetAiCharacterDataById(charId) != nullptr)
 	{
 		SendMessageToServer(m_voxtaRequestApi->GetLoadCharacterRequestData(charId));
@@ -141,6 +147,13 @@ void UVoxtaClient::SendUserInput(const FString& inputText)
 
 void UVoxtaClient::NotifyAudioPlaybackComplete(const FString& messageId)
 {
+	if (m_currentState != VoxtaClientState::AudioPlayback)
+	{
+		UE_LOGFMT(VoxtaLog, Error, "Tried to mark AudioPlayback as complete, but we weren't in the audioPlayback state,"
+			" actual state: {0}, message tried to mark as complete: {1}", UEnum::GetValueAsString(m_currentState), messageId);
+		return;
+	}
+
 	UE_LOGFMT(VoxtaLog, Log, "Marking audio playback of message {0} complete.", messageId);
 
 	SendMessageToServer(m_voxtaRequestApi->GetNotifyAudioPlaybackCompleteData(m_chatSession->GetSessionId(), messageId));
@@ -564,6 +577,7 @@ bool UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessageBase
 								"handler was found. You might want to disable TTS service if you don't want audio playback. "
 								"Or add a VoxtaAudioPlayback component if you desire audioplayback. Contents: {2}",
 								character->Get()->GetId(), character->Get()->GetName(), chatMessage->GetTextContent());
+							SetState(VoxtaClientState::AudioPlayback);
 							NotifyAudioPlaybackComplete(chatMessage->GetMessageId());
 						}
 						else
