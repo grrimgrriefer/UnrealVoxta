@@ -12,8 +12,10 @@
 #include "TestGameInstance.h"
 #include "TestPlaybackActor.h"
 
+#define TEST_DELAY AddCommand(WaitForDuration(2.0));
+
 #define PRE_TEST TestCommandBuilder.Do([this] () { TestRunner->SetSuppressLogWarnings(); TestRunner->SetSuppressLogErrors(); }); \
-AddCommand(WaitForDuration(0.5)); \
+TEST_DELAY \
 TestCommandBuilder.Do([this] () { TestRunner->SetSuppressLogWarnings(ECQTestSuppressLogBehavior::False); TestRunner->SetSuppressLogErrors(ECQTestSuppressLogBehavior::False); });
 
 /**
@@ -24,6 +26,9 @@ TestCommandBuilder.Do([this] () { TestRunner->SetSuppressLogWarnings(ECQTestSupp
  */
 TEST_CLASS(VoxtaClientTests, "Voxta")
 {
+	const FString m_voxtaId = TEXT("35c74d75-e3e4-44af-9389-faade99cc419");
+	const FString m_voxtaName = TEXT("Voxta");
+
 	UVoxtaClient* m_voxtaClient;
 	TestLogSink* m_testLogSink;
 	FActorTestSpawner* m_actorTestSpawner;
@@ -122,7 +127,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			m_voxtaClient->StartConnection(FString("127.0.0.1"), 5384);
 		});
 
-		AddCommand(WaitForDuration(0.5));
+		TEST_DELAY;
 		TestCommandBuilder.Do([this] ()
 		{
 			/** Assert */
@@ -144,7 +149,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			m_voxtaClient->StartConnection(FString(), 5384);
 		});
 
-		AddCommand(WaitForDuration(0.5));
+		TEST_DELAY;
 		TestCommandBuilder.Do([this] ()
 		{
 			/** Assert */
@@ -166,7 +171,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			m_voxtaClient->StartConnection(FString("1.2.3.4.5"), 5384);
 		});
 
-		AddCommand(WaitForDuration(0.5));
+		TEST_DELAY;
 		TestCommandBuilder.Do([this] ()
 		{
 			/** Assert */
@@ -189,7 +194,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			m_voxtaClient->StartConnection(FString("127.0.0.1"), port);
 		});
 
-		AddCommand(WaitForDuration(0.5));
+		TEST_DELAY;
 		TestCommandBuilder.Do([this, port] ()
 		{
 			/** Assert */
@@ -212,7 +217,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			m_voxtaClient->StartConnection(FString("127.0.0.1"), 5384);
 		});
 
-		AddCommand(WaitForDuration(0.5));
+		TEST_DELAY;
 		TestCommandBuilder.Do([this] ()
 		{
 			/** Assert */
@@ -231,7 +236,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		/** Test */
 		AddCommand(new FWaitUntil(*TestRunner, [&] () { return m_voxtaClient->GetCurrentState() == VoxtaClientState::Idle; }, timeout));
 
-		AddCommand(WaitForDuration(0.5));
+		TEST_DELAY;
 		TestCommandBuilder.Do([this] ()
 		{
 			/** Assert */
@@ -240,6 +245,60 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			for (int i = 0; i < m_characters.Num(); i++)
 			{
 				ASSERT_THAT(IsNotNull(m_characters[i].GetName()));
+			}
+		});
+	}
+
+	TEST_METHOD(Validate_ExpectVoxtaDefaultAssistantToExist)
+	{
+		PRE_TEST;
+		/** Setup */
+		PreconfigureClient(PreconfigureClientState::CharacterListLoaded);
+
+		TEST_DELAY;
+		TestCommandBuilder.Do([this] ()
+		{
+			/** Assert */
+			GLog->Flush();
+
+			int indexVoxtaName = -1;
+			int indexVoxtaId = -1;
+			for (int i = 0; i < m_characters.Num(); i++)
+			{
+				if (m_characters[i].GetName() == m_voxtaName)
+				{
+					indexVoxtaName = i;
+				}
+				if (m_characters[i].GetId() == m_voxtaId)
+				{
+					indexVoxtaId = i;
+				}
+			}
+
+			ASSERT_THAT(IsTrue(indexVoxtaName >= 0));
+			ASSERT_THAT(IsTrue(indexVoxtaId >= 0));
+			ASSERT_THAT(AreEqual(indexVoxtaName, indexVoxtaId));
+		});
+	}
+
+	TEST_METHOD(Validate_ExpectAllCharactersHaveUniqueIDs)
+	{
+		PRE_TEST;
+		/** Setup */
+		PreconfigureClient(PreconfigureClientState::CharacterListLoaded);
+
+		TEST_DELAY;
+		TestCommandBuilder.Do([this] ()
+		{
+			/** Assert */
+			GLog->Flush();
+
+			TSet<FString> idSet;
+			bool alreadyExists = false;
+			for (int i = 0; i < m_characters.Num(); i++)
+			{
+				idSet.Add(m_characters[i].GetId(), &alreadyExists);
+				ASSERT_THAT(IsFalse(alreadyExists));
 			}
 		});
 	}
@@ -327,7 +386,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			m_voxtaClient->StartChatWithCharacter(characterId);
 		});
 
-		AddCommand(WaitForDuration(0.5));
+		TEST_DELAY;
 		TestCommandBuilder.Do([this, characterId] ()
 		{
 			/** Assert */
@@ -345,15 +404,14 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		PreconfigureClient(PreconfigureClientState::CharacterListLoaded);
 		TestCommandBuilder.Do([this] ()
 		{
-			FString characterId = FString();
 			m_cache_state = m_voxtaClient->GetCurrentState();
 			TestRunner->SetSuppressLogErrors();
 
 			/** Test */
-			m_voxtaClient->StartChatWithCharacter(characterId);
+			m_voxtaClient->StartChatWithCharacter(FString());
 		});
 
-		AddCommand(WaitForDuration(0.5));
+		TEST_DELAY;
 		TestCommandBuilder.Do([this] ()
 		{
 			/** Assert */
@@ -372,10 +430,10 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		TestCommandBuilder.Do([this] ()
 		{
 			/** Test */
-			m_voxtaClient->StartChatWithCharacter(m_characters[0].GetId());
+			m_voxtaClient->StartChatWithCharacter(m_voxtaId);
 		});
 
-		AddCommand(WaitForDuration(0.5));
+		TEST_DELAY;
 		TestCommandBuilder.Do([this] ()
 		{
 			/** Assert */
@@ -394,21 +452,21 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		TestCommandBuilder.Do([this] ()
 		{
 			TestRunner->SetSuppressLogWarnings();
-			m_voxtaClient->StartChatWithCharacter(m_characters[0].GetId());
+			m_voxtaClient->StartChatWithCharacter(m_voxtaId);
 		});
 
 		/** Test */
 		AddCommand(new FWaitUntil(*TestRunner, [&] () { return m_voxtaClient->GetCurrentState() == VoxtaClientState::WaitingForUserReponse; }, timeout));
 
-		AddCommand(WaitForDuration(0.5));
+		TEST_DELAY;
 		TestCommandBuilder.Do([this] ()
 		{
 			/** Assert */
 			GLog->Flush();
 			ASSERT_THAT(AreEqual(m_messages.Num(), 1));
-			ASSERT_THAT(AreEqual(m_messages[0].Value.GetCharId(), m_characters[0].GetId()));
-			ASSERT_THAT(AreEqual(m_messages[0].Key.GetId(), m_characters[0].GetId()));
-			ASSERT_THAT(AreEqual(m_messages[0].Key.GetName(), m_characters[0].GetName()));
+			ASSERT_THAT(AreEqual(m_messages[0].Value.GetCharId(), m_voxtaId));
+			ASSERT_THAT(AreEqual(m_messages[0].Key.GetId(), m_voxtaId));
+			ASSERT_THAT(AreEqual(m_messages[0].Key.GetName(), m_voxtaName));
 			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring("Audio data was generated", ELogVerbosity::Type::Warning)));
 		});
 	}
@@ -422,22 +480,22 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		TestCommandBuilder.Do([this] ()
 		{
 			m_cache_playbackActor = &m_actorTestSpawner->SpawnActor<ATestPlaybackActor>();
-			m_cache_playbackActor->Initialize(m_characters[0].GetId());
-			m_voxtaClient->StartChatWithCharacter(m_characters[0].GetId());
+			m_cache_playbackActor->Initialize(m_voxtaId);
+			m_voxtaClient->StartChatWithCharacter(m_voxtaId);
 		});
 
 		/** Test */
 		AddCommand(new FWaitUntil(*TestRunner, [&] () { return m_voxtaClient->GetCurrentState() == VoxtaClientState::AudioPlayback; }, timeout));
 
-		AddCommand(WaitForDuration(0.5));
+		TEST_DELAY;
 		TestCommandBuilder.Do([this] ()
 		{
 			/** Assert */
 			GLog->Flush();
 			ASSERT_THAT(AreEqual(m_messages.Num(), 1));
-			ASSERT_THAT(AreEqual(m_messages[0].Value.GetCharId(), m_characters[0].GetId()));
-			ASSERT_THAT(AreEqual(m_messages[0].Key.GetId(), m_characters[0].GetId()));
-			ASSERT_THAT(AreEqual(m_messages[0].Key.GetName(), m_characters[0].GetName()));
+			ASSERT_THAT(AreEqual(m_messages[0].Value.GetCharId(), m_voxtaId));
+			ASSERT_THAT(AreEqual(m_messages[0].Key.GetId(), m_voxtaId));
+			ASSERT_THAT(AreEqual(m_messages[0].Key.GetName(), m_voxtaName));
 		});
 	}
 #pragma endregion
@@ -543,8 +601,8 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		TestCommandBuilder.Do([this] ()
 		{
 			m_cache_playbackActor = &m_actorTestSpawner->SpawnActor<ATestPlaybackActor>();
-			m_cache_playbackActor->Initialize(m_characters[0].GetId());
-			m_voxtaClient->StartChatWithCharacter(m_characters[0].GetId());
+			m_cache_playbackActor->Initialize(m_voxtaId);
+			m_voxtaClient->StartChatWithCharacter(m_voxtaId);
 		});
 		AddCommand(new FWaitUntil(*TestRunner, [&] () { return m_voxtaClient->GetCurrentState() == VoxtaClientState::AudioPlayback; }));
 		if (state == PreconfigureClientState::AudioPlaybackStarted)
