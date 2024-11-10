@@ -76,7 +76,7 @@ void UVoxtaClient::StartConnection(const FString& ipv4Address, int port)
 		return;
 	}
 
-	m_hostAddress = ipv4Address;
+	m_hostAddress = (ipv4Address.ToLower() == LOCALHOST) ? TEXT("127.0.0.1") : ipv4Address;
 	m_hostPort = port;
 
 	m_hub = GEngine->GetEngineSubsystem<USignalRSubsystem>()->CreateHubConnection(
@@ -167,7 +167,7 @@ const FString& UVoxtaClient::GetServerAddress() const
 
 int UVoxtaClient::GetServerPort() const
 {
-	return m_hostPort;
+	return m_hostAddress != FString() ? m_hostPort : -1;
 }
 
 UVoxtaAudioInput* UVoxtaClient::GetVoiceInputHandler() const
@@ -342,9 +342,10 @@ void UVoxtaClient::OnClosed()
 	FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda(
 		[Self = TWeakObjectPtr<UVoxtaClient>(this)] (float deltatime)
 		{
-			if (Self != nullptr)
+			if (Self != nullptr && (Self->GetCurrentState() != VoxtaClientState::Terminated &&
+				Self->GetCurrentState() != VoxtaClientState::Disconnected))
 			{
-				UE_LOGFMT(VoxtaLog, Warning, "VoxtaClient connection has been closed.");
+				UE_LOGFMT(VoxtaLog, Log, "VoxtaClient connection has been closed.");
 				Self->Disconnect();
 			}
 			// We don't care about else, as that means the 'playmode' is over.
