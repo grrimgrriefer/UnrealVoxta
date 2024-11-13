@@ -39,11 +39,13 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 	FDelegateHandle m_stateChangedEventHandle;
 	FDelegateHandle m_characterRegisteredEventHandle;
 	FDelegateHandle m_charMessageAddedEventHandle;
+	FDelegateHandle m_audioPlaybackRegisteredEventHandle;
 
 	VoxtaClientState m_latestNewStateResponse;
 	TArray<VoxtaClientState> m_orderedListOfNewStateResponses;
 	TArray<FAiCharData> m_characters;
 	TArray<TTuple<FBaseCharData, FChatMessage>> m_messages;
+	TArray<TTuple<const UVoxtaAudioPlayback*, FString>> m_playbackHandlers;
 
 	VoxtaClientState m_cache_state;
 	TWeakObjectPtr<ATestPlaybackActor> m_cache_playbackActor;
@@ -53,11 +55,12 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 	/** Create a new clean m_gameInstance and voxtaclient for ever test, to avoid inter-test false positives. */
 	BEFORE_EACH()
 	{
+		TestRunner->SuppressedLogCategories.Add(m_signalRLogCategory);
+
 		m_testLogSink = new TestLogSink();
 		GLog->AddOutputDevice(m_testLogSink);
 		TestRunner->SetSuppressLogErrors(ECQTestSuppressLogBehavior::False);
 		TestRunner->SetSuppressLogWarnings(ECQTestSuppressLogBehavior::False);
-		TestRunner->SuppressedLogCategories.Add(m_signalRLogCategory);
 
 		m_actorTestSpawner = new FActorTestSpawner();
 		m_actorTestSpawner->InitializeGameSubsystems();
@@ -90,6 +93,12 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			});
 			m_messages.RemoveAt(index);
 		});
+
+		m_playbackHandlers.Empty();
+		m_audioPlaybackRegisteredEventHandle = m_voxtaClient->VoxtaClientAudioPlaybackRegisteredEventNative.AddLambda([this] (const UVoxtaAudioPlayback* playbackHandler, const FString& characterId)
+		{
+			m_playbackHandlers.Add(MakeTuple(playbackHandler, characterId));
+		});
 	}
 
 	AFTER_EACH()
@@ -101,6 +110,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		m_voxtaClient->VoxtaClientStateChangedEventNative.Remove(m_stateChangedEventHandle);
 		m_voxtaClient->VoxtaClientCharacterRegisteredEventNative.Remove(m_characterRegisteredEventHandle);
 		m_voxtaClient->VoxtaClientCharMessageAddedEventNative.Remove(m_charMessageAddedEventHandle);
+		m_voxtaClient->VoxtaClientAudioPlaybackRegisteredEventNative.Remove(m_charMessageAddedEventHandle);
 		delete m_actorTestSpawner;
 		m_voxtaClient = nullptr;
 		m_actorTestSpawner = nullptr;
@@ -109,11 +119,13 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		m_orderedListOfNewStateResponses.Empty();
 		m_characters.Empty();
 		m_messages.Empty();
+		m_playbackHandlers.Empty();
 
 		GLog->Flush();
 		GLog->RemoveOutputDevice(m_testLogSink);
-		TestRunner->SuppressedLogCategories.Remove(m_signalRLogCategory);
 		delete m_testLogSink;
+
+		TestRunner->SuppressedLogCategories.Remove(m_signalRLogCategory);
 	}
 
 #pragma region Validations
@@ -966,23 +978,273 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 #pragma endregion
 
 #pragma region GetRegisteredAudioPlaybackHandlerForID
+	TEST_METHOD(GetRegisteredAudioPlaybackHandlerForID_WithInvalidStartingState_EmptyString_ExpectNullptr)
+	{
+		PRE_TEST;
+		TestCommandBuilder.Do([this] ()
+		{
+			/** Setup */
+			const UVoxtaAudioPlayback* playbackHandler;
 
+			/** Test */
+			playbackHandler = m_voxtaClient->GetRegisteredAudioPlaybackHandlerForID(FString());
+
+			/** Assert */
+			GLog->Flush();
+			ASSERT_THAT(IsNull(playbackHandler));
+		});
+	}
+
+	TEST_METHOD(GetRegisteredAudioPlaybackHandlerForID_WithInvalidStartingState_RandomGuid_ExpectNullptr)
+	{
+		PRE_TEST;
+		TestCommandBuilder.Do([this] ()
+		{
+			/** Setup */
+			const UVoxtaAudioPlayback* playbackHandler;
+
+			/** Test */
+			playbackHandler = m_voxtaClient->GetRegisteredAudioPlaybackHandlerForID(FGuid::NewGuid().ToString());
+
+			/** Assert */
+			GLog->Flush();
+			ASSERT_THAT(IsNull(playbackHandler));
+		});
+	}
+
+	TEST_METHOD(GetRegisteredAudioPlaybackHandlerForID_ValidStartingStateWithoutListener_VoxtaGuid_ExpectNullptr)
+	{
+		PRE_TEST;
+		/** Setup */
+		PreconfigureClient(PreconfigureClientState::CharacterListLoaded);
+
+		TEST_DELAY;
+		TestCommandBuilder.Do([this] ()
+		{
+			const UVoxtaAudioPlayback* playbackHandler;
+
+			/** Test */
+			playbackHandler = m_voxtaClient->GetRegisteredAudioPlaybackHandlerForID(m_voxtaId);
+
+			/** Assert */
+			GLog->Flush();
+			ASSERT_THAT(IsNull(playbackHandler));
+		});
+	}
+
+	TEST_METHOD(GetRegisteredAudioPlaybackHandlerForID_ValidStartingState_VoxtaGuid_ExpectListenerPtr)
+	{
+		PRE_TEST;
+		/** Setup */
+		PreconfigureClient(PreconfigureClientState::CharacterListLoaded);
+
+		TEST_DELAY;
+		TestCommandBuilder.Do([this] ()
+		{
+			m_cache_playbackActor = &m_actorTestSpawner->SpawnActor<ATestPlaybackActor>();
+			m_cache_playbackActor->Initialize(m_voxtaId);
+			const UVoxtaAudioPlayback* playbackHandler;
+
+			/** Test */
+			playbackHandler = m_voxtaClient->GetRegisteredAudioPlaybackHandlerForID(m_voxtaId);
+
+			/** Assert */
+			GLog->Flush();
+			ASSERT_THAT(IsNotNull(playbackHandler));
+		});
+	}
 #pragma endregion
 
 #pragma region GetChatSession
+	TEST_METHOD(GetChatSession_WithInvalidStartingState_ExpectNullptr)
+	{
+		PRE_TEST;
+		TestCommandBuilder.Do([this] ()
+		{
+			/** Setup */
+			const FChatSession* chatSession;
 
+			/** Test */
+			chatSession = m_voxtaClient->GetChatSession();
+
+			/** Assert */
+			GLog->Flush();
+			ASSERT_THAT(IsNull(chatSession));
+		});
+	}
+
+	TEST_METHOD(GetChatSession_AfterStartingChat_ExpectNullptr)
+	{
+		PRE_TEST;
+		/** Setup */
+		PreconfigureClient(PreconfigureClientState::ChatStarted);
+
+		PRE_TEST;
+		TestCommandBuilder.Do([this] ()
+		{
+			/** Setup */
+			const FChatSession* chatSession;
+
+			/** Test */
+			chatSession = m_voxtaClient->GetChatSession();
+
+			/** Assert */
+			GLog->Flush();
+			ASSERT_THAT(IsNotNull(chatSession));
+		});
+	}
 #pragma endregion
 
 #pragma region GetA2FHandler
+	TEST_METHOD(GetA2FHandler_WithInvalidStartingState_ExpectValidPtr)
+	{
+		PRE_TEST;
+		TestCommandBuilder.Do([this] ()
+		{
+			/** Setup */
+			const Audio2FaceRESTHandler* chatSession;
 
+			/** Test */
+			chatSession = m_voxtaClient->GetA2FHandler();
+
+			/** Assert */
+			GLog->Flush();
+			ASSERT_THAT(IsNotNull(chatSession));
+		});
+	}
 #pragma endregion
 
 #pragma region TryRegisterPlaybackHandler
+	TEST_METHOD(TryRegisterPlaybackHandler_WithNullptr_ExpectFalseAndErrorLog)
+	{
+		PRE_TEST;
+		TestCommandBuilder.Do([this] ()
+		{
+			/** Setup */
+			TestRunner->SetSuppressLogErrors();
+			FString characterId = FGuid::NewGuid().ToString();
+			bool result = false;
 
+			/** Test */
+			result = m_voxtaClient->TryRegisterPlaybackHandler(characterId, nullptr);
+
+			/** Assert */
+			GLog->Flush();
+			ASSERT_THAT(IsFalse(result));
+			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(characterId, ELogVerbosity::Type::Error)));
+		});
+	}
+
+	TEST_METHOD(TryRegisterPlaybackHandler_WithDuplicateGuid_ExpectFalseAndWarning)
+	{
+		PRE_TEST;
+		TestCommandBuilder.Do([this] ()
+		{
+			/** Setup */
+			TestRunner->SetSuppressLogWarnings();
+			FString characterId = FGuid::NewGuid().ToString();
+			m_cache_playbackActor = &m_actorTestSpawner->SpawnActor<ATestPlaybackActor>();
+			m_voxtaClient->TryRegisterPlaybackHandler(characterId,
+				m_cache_playbackActor->m_audioPlaybackComponent);
+			bool result = false;
+
+			/** Test */
+			result = m_voxtaClient->TryRegisterPlaybackHandler(characterId,
+				m_cache_playbackActor->m_audioPlaybackComponent);
+
+			/** Assert */
+			GLog->Flush();
+			ASSERT_THAT(IsFalse(result));
+			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(characterId, ELogVerbosity::Type::Warning)));
+		});
+	}
+
+	TEST_METHOD(TryRegisterPlaybackHandler_WithRandomGuid_ExpectTrueAndBroadcast)
+	{
+		PRE_TEST;
+		TestCommandBuilder.Do([this] ()
+		{
+			/** Setup */
+			FString characterId = FGuid::NewGuid().ToString();
+			m_cache_playbackActor = &m_actorTestSpawner->SpawnActor<ATestPlaybackActor>();
+			bool result = false;
+
+			/** Test */
+			result = m_voxtaClient->TryRegisterPlaybackHandler(characterId,
+				m_cache_playbackActor->m_audioPlaybackComponent);
+
+			/** Assert */
+			GLog->Flush();
+			ASSERT_THAT(IsTrue(result));
+			ASSERT_THAT(AreEqual(1, m_playbackHandlers.Num()));
+			ASSERT_THAT(AreEqual(characterId, m_playbackHandlers[0].Value));
+			ASSERT_THAT(IsNotNull(m_playbackHandlers[0].Key));
+		});
+	}
+
+	TEST_METHOD(TryRegisterPlaybackHandler_WithRandomGuid_ExpectTrue)
+	{
+		PRE_TEST;
+		TestCommandBuilder.Do([this] ()
+		{
+			/** Setup */
+			FString characterId = FGuid::NewGuid().ToString();
+			m_cache_playbackActor = &m_actorTestSpawner->SpawnActor<ATestPlaybackActor>();
+			bool result = false;
+
+			/** Test */
+			result = m_voxtaClient->TryRegisterPlaybackHandler(characterId,
+				m_cache_playbackActor->m_audioPlaybackComponent);
+
+			/** Assert */
+			GLog->Flush();
+			ASSERT_THAT(IsTrue(result));
+		});
+	}
 #pragma endregion
 
-#pragma region UnregisterPlaybackHandler
+#pragma region TryUnregisterPlaybackHandler
+	TEST_METHOD(TryUnregisterPlaybackHandler_WithInvalidState_ExpectFalseAndWarning)
+	{
+		PRE_TEST;
+		TestCommandBuilder.Do([this] ()
+		{
+			/** Setup */
+			TestRunner->SetSuppressLogWarnings();
+			FString characterId = FGuid::NewGuid().ToString();
+			bool result = false;
 
+			/** Test */
+			result = m_voxtaClient->TryUnregisterPlaybackHandler(characterId);
+
+			/** Assert */
+			GLog->Flush();
+			ASSERT_THAT(IsFalse(result));
+			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(characterId, ELogVerbosity::Type::Warning)));
+		});
+	}
+
+	TEST_METHOD(UnregisterPlaybackHandler_ExpectTrue)
+	{
+		PRE_TEST;
+		TestCommandBuilder.Do([this] ()
+		{
+			/** Setup */
+			TestRunner->SetSuppressLogWarnings();
+			FString characterId = FGuid::NewGuid().ToString();
+			m_cache_playbackActor = &m_actorTestSpawner->SpawnActor<ATestPlaybackActor>();
+			m_voxtaClient->TryRegisterPlaybackHandler(characterId,
+				m_cache_playbackActor->m_audioPlaybackComponent);
+			bool result = false;
+
+			/** Test */
+			result = m_voxtaClient->TryUnregisterPlaybackHandler(characterId);
+
+			/** Assert */
+			GLog->Flush();
+			ASSERT_THAT(IsTrue(result));
+		});
+	}
 #pragma endregion
 
 #pragma region utility

@@ -141,7 +141,7 @@ void UVoxtaAudioPlayback::EndPlay(const EEndPlayReason::Type endPlayReason)
 
 	if (m_clientReference != nullptr)
 	{
-		m_clientReference->UnregisterPlaybackHandler(m_characterId);
+		m_clientReference->TryUnregisterPlaybackHandler(m_characterId);
 		UE_LOGFMT(VoxtaLog, Error, "Removing Voxta AudioPlayback handler for character: {0}", m_characterId);
 	}
 	OnAudioFinishedNative.Remove(m_playbackFinishedHandle);

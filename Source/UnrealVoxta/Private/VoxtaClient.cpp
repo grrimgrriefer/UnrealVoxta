@@ -160,6 +160,67 @@ void UVoxtaClient::NotifyAudioPlaybackComplete(const FString& messageId)
 	SetState(VoxtaClientState::WaitingForUserReponse);
 }
 
+bool UVoxtaClient::TryRegisterPlaybackHandler(const FString& characterId,
+	TWeakObjectPtr<UVoxtaAudioPlayback> playbackHandler)
+{
+	if (playbackHandler == nullptr)
+	{
+		UE_LOGFMT(VoxtaLog, Error, "You tried to register a Voxta AudioPlayback handler that was null, for the "
+			"character with id {0}.", characterId);
+		return false;
+	}
+
+	if (m_chatSession != nullptr && !m_chatSession->GetActiveServices().Contains(
+		VoxtaServiceData::ServiceType::SpeechToText))
+	{
+		UE_LOGFMT(VoxtaLog, Warning, "You tried to register a Voxta AudioPlayback handler for character {0}, but no "
+			"STT service is active on VoxtaServer. (make sure to have it enabled at start, runtime activation not yet "
+			"supported...)", characterId);
+		return false;
+	}
+
+	auto currentHandler = m_registeredCharacterPlaybackHandlers.Find(characterId);
+	if (currentHandler == nullptr)
+	{
+		m_registeredCharacterPlaybackHandlers.Emplace(characterId, playbackHandler);
+		UE_LOGFMT(VoxtaLog, Log, "Voxta Audioplayback handler for character: {0} registered successfully.", characterId);
+
+		if (playbackHandler->GetLipSyncType() == LipSyncType::Audio2Face)
+		{
+			UE_LOGFMT(VoxtaLog, Log, "Voxta Audioplayback handler of character: {0} requires A2F, trying to establish "
+				"connection... hold on.", characterId);
+			m_A2FHandler->TryInitialize();
+		}
+
+		VoxtaClientAudioPlaybackRegisteredEventNative.Broadcast(playbackHandler.Get(), characterId);
+		VoxtaClientAudioPlaybackRegisteredEvent.Broadcast(playbackHandler.Get(), characterId);
+		return true;
+	}
+	else
+	{
+		UE_LOGFMT(VoxtaLog, Warning, "A Voxta Audioplayback handler for character: {0} already exists. "
+			"Multiple audio playback handlers for the same character is not supported... skipping registration.",
+			characterId);
+		return false;
+	}
+}
+
+bool UVoxtaClient::TryUnregisterPlaybackHandler(const FString& characterId)
+{
+	int removedValues = m_registeredCharacterPlaybackHandlers.Remove(characterId);
+	if (removedValues > 0)
+	{
+		UE_LOGFMT(VoxtaLog, Log, "Voxta Audioplayback handler for character: {0} unregistered successfully.", characterId);
+		return true;
+	}
+	else
+	{
+		UE_LOGFMT(VoxtaLog, Warning, "Tried to remove Audioplayback handler for character: {0}, but none was registered",
+			characterId);
+		return false;
+	}
+}
+
 const FString& UVoxtaClient::GetServerAddress() const
 {
 	return m_hostAddress;
@@ -192,7 +253,7 @@ FString UVoxtaClient::GetUserId() const
 const UVoxtaAudioPlayback* UVoxtaClient::GetRegisteredAudioPlaybackHandlerForID(const FString& characterId) const
 {
 	auto currentHandler = m_registeredCharacterPlaybackHandlers.Find(characterId);
-	if (currentHandler == nullptr)
+	if (currentHandler != nullptr)
 	{
 		return currentHandler->Get();
 	}
@@ -210,50 +271,6 @@ const FChatSession* UVoxtaClient::GetChatSession() const
 Audio2FaceRESTHandler* UVoxtaClient::GetA2FHandler() const
 {
 	return m_A2FHandler.Get();
-}
-
-bool UVoxtaClient::TryRegisterPlaybackHandler(const FString& characterId,
-	TWeakObjectPtr<UVoxtaAudioPlayback> playbackHandler)
-{
-	if (m_chatSession != nullptr && !m_chatSession->GetActiveServices().Contains(
-		VoxtaServiceData::ServiceType::SpeechToText))
-	{
-		UE_LOGFMT(VoxtaLog, Warning, "You tried to register a Voxta AudioPlayback handler for character {0}, but no "
-			"STT service is active on VoxtaServer. (make sure to have it enabled at start, runtime activation not yet "
-			"supported...)", characterId);
-		return false;
-	}
-
-	auto currentHandler = m_registeredCharacterPlaybackHandlers.Find(characterId);
-	if (currentHandler == nullptr)
-	{
-		m_registeredCharacterPlaybackHandlers.Emplace(characterId, playbackHandler);
-		UE_LOGFMT(VoxtaLog, Log, "Voxta Audioplayback handler for character: {0} registered successfully.", characterId);
-
-		if (playbackHandler->GetLipSyncType() == LipSyncType::Audio2Face)
-		{
-			UE_LOGFMT(VoxtaLog, Log, "Voxta Audioplayback handler of character: {0} requires A2F, trying to establish "
-				"connection... hold on.", characterId);
-			m_A2FHandler->TryInitialize();
-		}
-
-		FVoxtaClientAudioPlaybackRegisteredEventNative.Broadcast(playbackHandler.Get(), characterId);
-		FVoxtaClientAudioPlaybackRegisteredEvent.Broadcast(playbackHandler.Get(), characterId);
-		return true;
-	}
-	else
-	{
-		UE_LOGFMT(VoxtaLog, Warning, "A Voxta Audioplayback handler for character: {0} already exists. "
-			"Multiple audio playback handlers for the same character is not supported... skipping registration.",
-			characterId);
-		return false;
-	}
-}
-
-void UVoxtaClient::UnregisterPlaybackHandler(const FString& characterId)
-{
-	m_registeredCharacterPlaybackHandlers.Remove(characterId);
-	UE_LOGFMT(VoxtaLog, Log, "Voxta Audioplayback handler for character: {0} unregistered successfully.", characterId);
 }
 
 void UVoxtaClient::StartListeningToServer()
