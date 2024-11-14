@@ -9,7 +9,7 @@ class FSignalRValue;
 struct ServerResponseBase;
 struct ServerResponseWelcome;
 struct ServerResponseCharacterList;
-struct ServerResponseCharacterLoaded;
+//struct ServerResponseCharacterLoaded;
 struct ServerResponseChatStarted;
 struct ServerResponseChatMessageStart;
 struct ServerResponseChatMessageChunk;
@@ -65,11 +65,11 @@ private:
 	TUniquePtr<ServerResponseCharacterList> GetCharacterListLoadedResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
 
-	/** ServerResponseCharacterLoaded override of the generic GetResponseData */
-	TUniquePtr<ServerResponseCharacterLoaded> GetCharacterLoadedResponse(
-		const TMap<FString, FSignalRValue>& serverResponseData) const;
+	//	/** ServerResponseCharacterLoaded override of the generic GetResponseData */
+	//	TUniquePtr<ServerResponseCharacterLoaded> GetCharacterLoadedResponse(
+	//		const TMap<FString, FSignalRValue>& serverResponseData) const;
 
-	/** ServerResponseChatStarted override of the generic GetResponseData */
+		/** ServerResponseChatStarted override of the generic GetResponseData */
 	TUniquePtr<ServerResponseChatStarted> GetChatStartedResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
 

@@ -6,7 +6,7 @@
 #include "VoxtaData/Public/ServerResponses/ServerResponseBase.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseWelcome.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseCharacterList.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseCharacterLoaded.h"
+//#include "VoxtaData/Public/ServerResponses/ServerResponseCharacterLoaded.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseChatStarted.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseChatMessageStart.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseChatMessageChunk.h"
@@ -30,10 +30,10 @@ TUniquePtr<ServerResponseBase> VoxtaApiResponseHandler::GetResponseData(
 	{
 		return GetCharacterListLoadedResponse(serverResponseData);
 	}
-	else if (type == TEXT("characterLoaded"))
-	{
-		return GetCharacterLoadedResponse(serverResponseData);
-	}
+	//	else if (type == TEXT("characterLoaded"))
+	//	{
+	//		return GetCharacterLoadedResponse(serverResponseData);
+	//	}
 	else if (type == TEXT("chatStarted"))
 	{
 		return GetChatStartedResponse(serverResponseData);
@@ -107,15 +107,15 @@ TUniquePtr<ServerResponseCharacterList> VoxtaApiResponseHandler::GetCharacterLis
 	return MakeUnique<ServerResponseCharacterList>(chars);
 }
 
-TUniquePtr<ServerResponseCharacterLoaded> VoxtaApiResponseHandler::GetCharacterLoadedResponse(
-	const TMap<FString, FSignalRValue>& serverResponseData) const
-{
-	TMap<FString, FSignalRValue> characterData = serverResponseData[EASY_STRING("character")].AsObject();
-	const TArray<FSignalRValue>& ttsConfig = characterData[EASY_STRING("textToSpeech")].AsArray();
+//TUniquePtr<ServerResponseCharacterLoaded> VoxtaApiResponseHandler::GetCharacterLoadedResponse(
+//	const TMap<FString, FSignalRValue>& serverResponseData) const
+//{
+//	TMap<FString, FSignalRValue> characterData = serverResponseData[EASY_STRING("character")].AsObject();
+//	const TArray<FSignalRValue>& ttsConfig = characterData[EASY_STRING("textToSpeech")].AsArray();
 
-	return MakeUnique<ServerResponseCharacterLoaded>(characterData[EASY_STRING("id")].AsString(),
-		characterData[EASY_STRING("enableThinkingSpeech")].AsBool());
-}
+//	return MakeUnique<ServerResponseCharacterLoaded>(characterData[EASY_STRING("id")].AsString(),
+//		characterData[EASY_STRING("enableThinkingSpeech")].AsBool());
+//}
 
 TUniquePtr<ServerResponseChatStarted> VoxtaApiResponseHandler::GetChatStartedResponse(
 	const TMap<FString, FSignalRValue>& serverResponseData) const

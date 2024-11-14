@@ -31,24 +31,24 @@ public:
 	 */
 	FSignalRValue GetLoadCharactersListData() const;
 
-	/**
-	 * Retrieve a SignalR formatted message to request the loading of a specific character and mark it as 'active'.
-	 *
-	 * Note: Requesting the start of a chat is a seperate request, this only loads the character.
-	 *
-	 * @param characterId The FBaseCharData::m_id of the character that you want to load.
-	 *
-	 * @return The SignalR formatted message containing the request.
-	 */
-	FSignalRValue GetLoadCharacterRequestData(const FString& characterId) const;
+	//	/**
+	//	 * Retrieve a SignalR formatted message to request the loading of a specific character and mark it as 'active'.
+	//	 *
+	//	 * Note: Requesting the start of a chat is a seperate request, this only loads the character.
+	//	 *
+	//	 * @param characterId The FBaseCharData::m_id of the character that you want to load.
+	//	 *
+	//	 * @return The SignalR formatted message containing the request.
+	//	 */
+	//	FSignalRValue GetLoadCharacterRequestData(const FString& characterId) const;
 
-	/**
-	 * Retrieve a SignalR formatted message to request a new chat session to be started with a specific character.
-	 *
-	 * @param charData The full metadata of the character that you want to start a chat with.
-	 *
-	 * @return The SignalR formatted message containing the request.
-	 */
+		/**
+		 * Retrieve a SignalR formatted message to request a new chat session to be started with a specific character.
+		 *
+		 * @param charData The full metadata of the character that you want to start a chat with.
+		 *
+		 * @return The SignalR formatted message containing the request.
+		 */
 	FSignalRValue GetStartChatRequestData(const FAiCharData* charData) const;
 
 	/**
