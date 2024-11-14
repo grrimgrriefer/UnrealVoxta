@@ -16,7 +16,6 @@
 #include "VoxtaData/Public/ServerResponses/ServerResponseBase.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseWelcome.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseCharacterList.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseCharacterLoaded.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseChatStarted.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseChatMessageStart.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseChatMessageChunk.h"
@@ -122,12 +121,7 @@ void UVoxtaClient::StartChatWithCharacter(const FString& charId)
 	const TUniquePtr<const FAiCharData>* character = GetAiCharacterDataById(charId);
 	if (character != nullptr)
 	{
-		//TODO fix the api for startchat request
-		UE_LOGFMT(VoxtaLog, Error, "TODO fix the api for startchat request");
-
 		SendMessageToServer(m_voxtaRequestApi->GetStartChatRequestData(character->Get()));
-
-		//SendMessageToServer(m_voxtaRequestApi->GetLoadCharacterRequestData(charId));
 		SetState(VoxtaClientState::StartingChat);
 	}
 	else
@@ -427,9 +421,6 @@ bool UVoxtaClient::HandleResponse(const TMap<FString, FSignalRValue>& responseDa
 		case CharacterList:
 			return HandleResponseHelper<ServerResponseCharacterList>(response.Get(),
 				TEXT("Fetched characters successfully"), &UVoxtaClient::HandleCharacterListResponse);
-			//		case CharacterLoaded:
-			//			return HandleResponseHelper<ServerResponseCharacterLoaded>(response.Get(),
-			//				TEXT("Loaded character successfully"), &UVoxtaClient::HandleCharacterLoadedResponse);
 		case ChatStarted:
 			return HandleResponseHelper<ServerResponseChatStarted>(response.Get(),
 				TEXT("Chat started successfully"), &UVoxtaClient::HandleChatStartedResponse);
@@ -476,23 +467,6 @@ bool UVoxtaClient::HandleCharacterListResponse(const ServerResponseCharacterList
 	SetState(VoxtaClientState::Idle);
 	return true;
 }
-
-//bool UVoxtaClient::HandleCharacterLoadedResponse(const ServerResponseCharacterLoaded& response)
-//{
-//	const TUniquePtr<const FAiCharData>* character = GetAiCharacterDataById(response.CHARACTER_ID);
-//
-//	if (character)
-//	{
-//		SendMessageToServer(m_voxtaRequestApi->GetStartChatRequestData(character->Get()));
-//		return true;
-//	}
-//	else
-//	{
-//		UE_LOGFMT(VoxtaLog, Error, "Loaded a character with id: {0} that doesn't exist in the list? "
-//			"This should never happen..", response.CHARACTER_ID);
-//		return false;
-//	}
-//}
 
 bool UVoxtaClient::HandleChatStartedResponse(const ServerResponseChatStarted& response)
 {

@@ -20,7 +20,6 @@ struct ServerResponseError;
 struct ServerResponseChatMessageBase;
 struct ServerResponseWelcome;
 struct ServerResponseCharacterList;
-//struct ServerResponseCharacterLoaded;
 struct ServerResponseChatStarted;
 struct ServerResponseChatUpdate;
 struct ServerResponseSpeechTranscription;
@@ -324,9 +323,7 @@ private:
 	bool HandleWelcomeResponse(const ServerResponseWelcome& response);
 	/** Takes care of ServerResponseCharacterList responses. */
 	bool HandleCharacterListResponse(const ServerResponseCharacterList& response);
-	//	/** Takes care of ServerResponseCharacterLoaded responses. */
-	//	bool HandleCharacterLoadedResponse(const ServerResponseCharacterLoaded& response);
-		/** Takes care of ServerResponseChatStarted responses. */
+	/** Takes care of ServerResponseChatStarted responses. */
 	bool HandleChatStartedResponse(const ServerResponseChatStarted& response);
 	/** Takes care of ServerResponseChatMessageBase responses. */
 	bool HandleChatMessageResponse(const ServerResponseChatMessageBase& response);
