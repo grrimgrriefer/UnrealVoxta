@@ -8,6 +8,6 @@ public class VoxtaUtility_OVR : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "VoxtaData", "OVRLipSync", "VoxtaUtility_OVR" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "VoxtaData", "OVRLipSync" });
 	}
 }

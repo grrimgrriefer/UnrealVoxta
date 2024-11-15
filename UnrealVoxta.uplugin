@@ -10,6 +10,7 @@
   "DocsURL": "",
   "MarketplaceURL": "",
   "SupportURL": "",
+  "EngineVersion": "5.5.0",
   "CanContainContent": true,
   "IsBetaVersion": true,
   "IsExperimentalVersion": false,
@@ -19,12 +20,12 @@
       "Name": "UnrealVoxta",
       "Type": "Runtime",
       "LoadingPhase": "Default"
-    },	
-	{
-		"Name": "UnrealVoxtaEditor",
-		"Type": "UncookedOnly",
-		"LoadingPhase": "PreDefault"
-	}
+    },
+    {
+      "Name": "UnrealVoxtaEditor",
+      "Type": "UncookedOnly",
+      "LoadingPhase": "PreDefault"
+    }
   ],
   "Plugins": [
     {
