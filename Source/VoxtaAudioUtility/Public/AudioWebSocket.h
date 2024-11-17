@@ -38,9 +38,11 @@ public:
 	 * Create the websocket through FWebSocketsModule and start up the connection.
 	 * Call this after setting up event handlers or to reconnect after connection errors.
 	 *
+	 * @param sessionId The sessionId that we want to forward our audio to.
+	 *
 	 * @return False if we failed to create the websocket instance.
 	 */
-	bool Connect();
+	bool Connect(const FString& sessionId);
 
 	/**
 	 * Manually close the websocket connection.
@@ -72,5 +74,6 @@ private:
 	TSharedPtr<IWebSocket> m_socketConnection;
 	FString m_serverIP;
 	uint16 m_serverPort;
+	FString m_sessionId;
 #pragma endregion
 };

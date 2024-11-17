@@ -35,7 +35,14 @@ void UVoxtaAudioInput::InitializeSocket(int bufferMs, int sampleRate, int inputC
 	m_audioWebSocket->OnConnectedEvent.AddUObject(this, &UVoxtaAudioInput::OnSocketConnected);
 	m_audioWebSocket->OnConnectionErrorEvent.AddUObject(this, &UVoxtaAudioInput::OnSocketConnectionError);
 	m_audioWebSocket->OnClosedEvent.AddUObject(this, &UVoxtaAudioInput::OnSocketClosed);
-	m_audioWebSocket->Connect();
+
+	const FChatSession* chat = m_voxtaClient->GetChatSession();
+	if (chat == nullptr)
+	{
+		UE_LOGFMT(VoxtaLog, Error, "You cannot initialize the streaming audio input without an active session... aborting");
+		return;
+	}
+	m_audioWebSocket->Connect(chat->GetSessionId());
 }
 
 void UVoxtaAudioInput::CloseSocket()
