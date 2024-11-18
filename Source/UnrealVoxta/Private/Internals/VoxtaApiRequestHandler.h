@@ -31,14 +31,19 @@ public:
 	 */
 	FSignalRValue GetLoadCharactersListData() const;
 
+	FSignalRValue GetLoadScenariosListData() const;
+
+	FSignalRValue GetLoadChatsListData(const FString& characterId, const FString& scenarioId = FString()) const;
+
 	/**
 	 * Retrieve a SignalR formatted message to request a new chat session to be started with a specific character.
 	 *
 	 * @param charData The full metadata of the character that you want to start a chat with.
+	 * @param context Context that will be used for the chat (json value, I think?) TODO
 	 *
 	 * @return The SignalR formatted message containing the request.
 	 */
-	FSignalRValue GetStartChatRequestData(const FAiCharData* charData) const;
+	FSignalRValue GetStartChatRequestData(const FAiCharData* charData, const FString& context = FString()) const;
 
 	/**
 	 * Retrieve a SignalR formatted message to request the registration of a user-message to the chat.
@@ -47,10 +52,16 @@ public:
 	 *
 	 * @param sessionId The ChatSession::CHAT_ID of the currently active chat.
 	 * @param userInputText The text that the server should consider as what the user said.
+	 * @param generateReply Should VoxtaServer generate a reply from the AI character(s) after receiving this message.
+	 * @param characterActionInference TODO
 	 *
 	 * @return The SignalR formatted message containing the request.
 	 */
-	FSignalRValue GetSendUserMessageData(const FString& sessionId, const FString& userInputText) const;
+	FSignalRValue GetSendUserMessageData(const FString& sessionId, const FString& userInputText, bool generateReply,
+		bool characterActionInference) const;
+
+	FSignalRValue GetNotifyAudioPlaybackStartedData(const FString& sessionId, const FString& messageId, int startIndex,
+	int endIndex, double duration) const;
 
 	/**
 	 * Retrieve a SignalR formatted message to inform the VoxtaServer that the playback is completed on the client.
@@ -61,6 +72,7 @@ public:
 	 *
 	 * @return The SignalR formatted message containing the request.
 	 */
-	FSignalRValue GetNotifyAudioPlaybackCompleteData(const FString& sessionId, const FString& messageId) const;
+	FSignalRValue GetNotifyAudioPlaybackCompletedData(const FString& sessionId, const FString& messageId) const;
+
 #pragma endregion
 };
