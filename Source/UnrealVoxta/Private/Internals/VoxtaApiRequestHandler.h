@@ -45,6 +45,8 @@ public:
 	 */
 	FSignalRValue GetStartChatRequestData(const FAiCharData* charData, const FString& context = FString()) const;
 
+	FSignalRValue GetStopChatRequestData() const;
+
 	/**
 	 * Retrieve a SignalR formatted message to request the registration of a user-message to the chat.
 	 *
@@ -74,5 +76,34 @@ public:
 	 */
 	FSignalRValue GetNotifyAudioPlaybackCompletedData(const FString& sessionId, const FString& messageId) const;
 
+	FSignalRValue GetUpdateContextRequestData(const TArray<FString>& actions, const FString& sessionId,
+		const FString& context, const FString& contextKey) const;
+
+	FSignalRValue GetRequestCharacterSpeechRequestData(const FString& sessionId, const FString& text) const;
+
+	FSignalRValue SendRevertLastSentMessage(const FString& sessionId) const;
+
+	FSignalRValue SendDeleteChat(const FString& chatId) const;
+
+	FSignalRValue SetFlags(const FString& sessionId, const TArray<FString>& flags) const;
+
+	/// TODO no clue what this does, need to figure it out before implementing it
+	// SendDeployResource(MissingResource resource, string name, byte[] bytes)
+	/*
+	{
+		var json = new JObject
+		{
+			["$type"] = "deployResource",
+			["id"] = resource.Id,
+			["data"] = new JObject
+			{
+				["$type"] = "base64",
+				["name"] = name,
+				["base64Data"] = Convert.ToBase64String(bytes),
+			},
+		};
+		Send(json.ToString());
+	}
+	*/
 #pragma endregion
 };

@@ -63,33 +63,36 @@ FSignalRValue VoxtaApiRequestHandler::GetStartChatRequestData(const FAiCharData*
 
 	if (!context.IsEmpty())
 	{
-		requestData.Add(
-		{
-			EASY_STRING("contexts"),
-			FSignalRValue(TArray<FSignalRValue> {
-				FSignalRValue(TMap<FString, FSignalRValue> {
-					{ EASY_STRING("text"), context }
-				})
+		requestData.Add({ EASY_STRING("contexts"), FSignalRValue(TArray<FSignalRValue> {
+			FSignalRValue(TMap<FString, FSignalRValue> {
+				{ EASY_STRING("text"), context }
 			})
-		});
+		}) });
 	}
 
-	// Req for action inference
+	// Req for action inference TODO
 	// { EASY_STRING("actions"), ... }
 
-	// Req for scenario support
+	// Req for scenario support TODO
 	// { EASY_STRING("scenarioId"), ... }
 
-	// Req for multi-character support (possibly also scenarios with multiple characters?)
+	// Req for multi-character support (possibly also scenarios with multiple characters?) TODO
 	// { EASY_STRING("roles"), ... }
 
-	// Not sure why starting a chat would require a chat id? maybe to continue? Need to be figured out
+	// Not sure why starting a chat would require a chat id? maybe to continue? Need to be figured out TODO
 	// { EASY_STRING("chatId"), ... }
 
-	// Not sure what chat dependencies are, need to figure it out
+	// Not sure what chat dependencies are, need to figure it out TODO
 	// { EASY_STRING("dependencies"), ... }
 
 	return FSignalRValue(requestData);
+}
+
+FSignalRValue VoxtaApiRequestHandler::GetStopChatRequestData() const
+{
+	return FSignalRValue(TMap<FString, FSignalRValue> {
+		{ EASY_STRING("$type"), SIGNALR_STRING("stopChat") }
+	});
 }
 
 FSignalRValue VoxtaApiRequestHandler::GetSendUserMessageData(const FString& sessionId,
@@ -124,5 +127,74 @@ FSignalRValue VoxtaApiRequestHandler::GetNotifyAudioPlaybackStartedData(const FS
 		{ EASY_STRING("startIndex"), FSignalRValue(startIndex) },
 		{ EASY_STRING("endIndex"), FSignalRValue(endIndex) },
 		{ EASY_STRING("duration"), FSignalRValue(FString::Printf(TEXT("%.3f"), duration)) }
+	});
+}
+
+FSignalRValue VoxtaApiRequestHandler::GetUpdateContextRequestData(const TArray<FString>& actions,
+	const FString& sessionId, const FString& context, const FString& contextKey) const
+{
+	TMap<FString, FSignalRValue> requestData = TMap<FString, FSignalRValue>{
+		{ EASY_STRING("$type"), SIGNALR_STRING("updateContext") },
+		{ EASY_STRING("sessionId"), FSignalRValue(sessionId) },
+		{ EASY_STRING("contextKey"), FSignalRValue(contextKey) }
+	};
+
+	if (!context.IsEmpty())
+	{
+		requestData.Add({ EASY_STRING("contexts"), FSignalRValue(TArray<FSignalRValue> {
+			FSignalRValue(TMap<FString, FSignalRValue> {
+				{ EASY_STRING("text"), context }
+			})
+		}) });
+	}
+	else
+	{
+		requestData.Add({ EASY_STRING("contexts"), FSignalRValue(TArray<FSignalRValue>()) });
+	}
+
+	// Req for action inference TODO
+	// { EASY_STRING("actions"), ... }
+
+	return FSignalRValue(requestData);
+}
+
+FSignalRValue VoxtaApiRequestHandler::GetRequestCharacterSpeechRequestData(const FString& sessionId,
+	const FString& text) const
+{
+	return FSignalRValue(TMap<FString, FSignalRValue> {
+		{ EASY_STRING("$type"), SIGNALR_STRING("characterSpeechRequest") },
+		{ EASY_STRING("sessionId"), FSignalRValue(sessionId) },
+		{ EASY_STRING("text"), FSignalRValue(text) }
+	});
+}
+
+FSignalRValue VoxtaApiRequestHandler::SendRevertLastSentMessage(const FString& sessionId) const
+{
+	return FSignalRValue(TMap<FString, FSignalRValue> {
+		{ EASY_STRING("$type"), SIGNALR_STRING("revert") },
+		{ EASY_STRING("sessionId"), FSignalRValue(sessionId) }
+	});
+}
+
+FSignalRValue VoxtaApiRequestHandler::SendDeleteChat(const FString& chatId) const
+{
+	return FSignalRValue(TMap<FString, FSignalRValue> {
+		{ EASY_STRING("$type"), SIGNALR_STRING("deleteChat") },
+		{ EASY_STRING("chatId"), FSignalRValue(chatId) }
+	});
+}
+
+FSignalRValue VoxtaApiRequestHandler::SetFlags(const FString& sessionId, const TArray<FString>& flags) const
+{
+	TArray<FSignalRValue> serializedFlags = TArray<FSignalRValue>();
+	for (int i = 0; i < flags.Num(); i++)
+	{
+		serializedFlags.Add(FSignalRValue(flags[i]));
+	}
+
+	return FSignalRValue(TMap<FString, FSignalRValue> {
+		{ EASY_STRING("$type"), SIGNALR_STRING("updateContext") },
+		{ EASY_STRING("sessionId"), FSignalRValue(sessionId) },
+		{ EASY_STRING("setFlags"), FSignalRValue(serializedFlags) }
 	});
 }

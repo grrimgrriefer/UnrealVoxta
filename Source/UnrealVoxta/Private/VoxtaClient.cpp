@@ -156,7 +156,7 @@ void UVoxtaClient::NotifyAudioPlaybackComplete(const FString& messageId)
 
 	UE_LOGFMT(VoxtaLog, Log, "Marking audio playback of message {0} complete.", messageId);
 
-	SendMessageToServer(m_voxtaRequestApi->GetNotifyAudioPlaybackCompleteData(m_chatSession->GetSessionId(), messageId));
+	SendMessageToServer(m_voxtaRequestApi->GetNotifyAudioPlaybackCompletedData(m_chatSession->GetSessionId(), messageId));
 	SetState(VoxtaClientState::WaitingForUserReponse);
 }
 
