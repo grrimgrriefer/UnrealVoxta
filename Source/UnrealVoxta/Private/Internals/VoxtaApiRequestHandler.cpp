@@ -57,7 +57,7 @@ FSignalRValue VoxtaApiRequestHandler::GetStartChatRequestData(const FAiCharData*
 {
 	TMap<FString, FSignalRValue> requestData = TMap<FString, FSignalRValue>{
 		{ EASY_STRING("$type"), SIGNALR_STRING("startChat") },
-		{ EASY_STRING("contextKey"), SIGNALR_STRING("UnrealVoxta - SimpleChat") }, // still not sure what this does
+		{ EASY_STRING("contextKey"), FSignalRValue(VOXTA_CONTEXT_KEY) },
 		{ EASY_STRING("characterIds"), FSignalRValue(TArray<FSignalRValue> { FSignalRValue(charData->GetId()) }) }
 	};
 

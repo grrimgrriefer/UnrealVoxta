@@ -161,7 +161,7 @@ public:
 	 * @param charId The charID of the character that you want to load.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
-	void StartChatWithCharacter(const FString& charId);
+	void StartChatWithCharacter(const FString& charId, const FString& context = TEXT(""));
 
 	/**
 	 * Inform the server that the user has said something.
@@ -171,7 +171,7 @@ public:
 	 * @param inputText The text that should be considered user input in the conversation.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
-	void SendUserInput(const FString& inputText);
+	void SendUserInput(const FString& inputText, bool generateReply = true, bool characterActionInference = false);
 
 	/**
 	 * Inform the server that the audioplayback is complete.

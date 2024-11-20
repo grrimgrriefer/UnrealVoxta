@@ -25,3 +25,5 @@ FSignalRValue ConvertToSignalRValue(T&& value)
 }
 
 DECLARE_LOG_CATEGORY_EXTERN(VoxtaLog, Log, All);
+
+const FString VOXTA_CONTEXT_KEY = FString("UnrealVoxta - SimpleChat");

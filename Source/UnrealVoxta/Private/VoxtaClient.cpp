@@ -105,7 +105,7 @@ void UVoxtaClient::Disconnect(bool silent)
 	m_hub->Stop();
 }
 
-void UVoxtaClient::StartChatWithCharacter(const FString& charId)
+void UVoxtaClient::StartChatWithCharacter(const FString& charId, const FString& context)
 {
 	if (charId.IsEmpty())
 	{
@@ -121,7 +121,7 @@ void UVoxtaClient::StartChatWithCharacter(const FString& charId)
 	const TUniquePtr<const FAiCharData>* character = GetAiCharacterDataById(charId);
 	if (character != nullptr)
 	{
-		SendMessageToServer(m_voxtaRequestApi->GetStartChatRequestData(character->Get()));
+		SendMessageToServer(m_voxtaRequestApi->GetStartChatRequestData(character->Get(), context));
 		SetState(VoxtaClientState::StartingChat);
 	}
 	else
@@ -131,11 +131,12 @@ void UVoxtaClient::StartChatWithCharacter(const FString& charId)
 	}
 }
 
-void UVoxtaClient::SendUserInput(const FString& inputText)
+void UVoxtaClient::SendUserInput(const FString& inputText, bool generateReply, bool characterActionInference)
 {
 	if (m_currentState == VoxtaClientState::WaitingForUserReponse)
 	{
-		SendMessageToServer(m_voxtaRequestApi->GetSendUserMessageData(m_chatSession->GetSessionId(), inputText));
+		SendMessageToServer(m_voxtaRequestApi->GetSendUserMessageData(m_chatSession->GetSessionId(),
+			inputText, generateReply, characterActionInference));
 		SetState(VoxtaClientState::GeneratingReply);
 	}
 	else

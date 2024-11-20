@@ -102,6 +102,19 @@ TUniquePtr<ServerResponseCharacterList> VoxtaApiResponseHandler::GetCharacterLis
 	return MakeUnique<ServerResponseCharacterList>(chars);
 }
 
+TUniquePtr<ServerResponseContextUpdated> VoxtaApiResponseHandler::GetContextUpdatedResponse(
+	const TMap<FString, FSignalRValue>& serverResponseData) const
+{
+	TArray<FSignalRValue> flagsArray = serverResponseData[EASY_STRING("flags")].AsArray();
+	TArray<FSignalRValue> contextsArray = serverResponseData[EASY_STRING("contexts")].AsArray();
+	TArray<FSignalRValue> contextsArray = serverResponseData[EASY_STRING("actions")].AsArray();
+	TArray<FSignalRValue> contextsArray = serverResponseData[EASY_STRING("characters")].AsArray();
+	TArray<FSignalRValue> contextsArray = serverResponseData[EASY_STRING("roles")].AsArray();
+
+	return MakeUnique<ServerResponseContextUpdated>(
+		serverResponseData[EASY_STRING("sessionId")].AsString());
+}
+
 TUniquePtr<ServerResponseChatStarted> VoxtaApiResponseHandler::GetChatStartedResponse(
 	const TMap<FString, FSignalRValue>& serverResponseData) const
 {

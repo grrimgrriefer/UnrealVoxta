@@ -9,6 +9,7 @@ class FSignalRValue;
 struct ServerResponseBase;
 struct ServerResponseWelcome;
 struct ServerResponseCharacterList;
+struct ServerResponseContextUpdated;
 struct ServerResponseChatStarted;
 struct ServerResponseChatMessageStart;
 struct ServerResponseChatMessageChunk;
@@ -33,7 +34,6 @@ public:
 		EASY_STRING("chatStarting"),
 		EASY_STRING("chatLoadingMessage"),
 		EASY_STRING("chatsSessionsUpdated"),
-		EASY_STRING("contextUpdated"),
 		EASY_STRING("replyGenerating"),
 		EASY_STRING("chatFlow"),
 		EASY_STRING("speechRecognitionStart"),
@@ -62,6 +62,10 @@ private:
 
 	/** ServerResponseCharacterList override of the generic GetResponseData */
 	TUniquePtr<ServerResponseCharacterList> GetCharacterListLoadedResponse(
+		const TMap<FString, FSignalRValue>& serverResponseData) const;
+
+	/** ServerResponseContextUpdated override of the generic GetResponseData */
+	TUniquePtr<ServerResponseContextUpdated> GetContextUpdatedResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
 
 	/** ServerResponseChatStarted override of the generic GetResponseData */

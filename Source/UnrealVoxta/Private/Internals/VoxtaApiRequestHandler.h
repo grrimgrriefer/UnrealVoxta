@@ -31,8 +31,10 @@ public:
 	 */
 	FSignalRValue GetLoadCharactersListData() const;
 
+	// TODO
 	FSignalRValue GetLoadScenariosListData() const;
 
+	// TODO
 	FSignalRValue GetLoadChatsListData(const FString& characterId, const FString& scenarioId = FString()) const;
 
 	/**
@@ -45,6 +47,7 @@ public:
 	 */
 	FSignalRValue GetStartChatRequestData(const FAiCharData* charData, const FString& context = FString()) const;
 
+	// TODO
 	FSignalRValue GetStopChatRequestData() const;
 
 	/**
@@ -62,8 +65,9 @@ public:
 	FSignalRValue GetSendUserMessageData(const FString& sessionId, const FString& userInputText, bool generateReply,
 		bool characterActionInference) const;
 
+	// TODO
 	FSignalRValue GetNotifyAudioPlaybackStartedData(const FString& sessionId, const FString& messageId, int startIndex,
-	int endIndex, double duration) const;
+		int endIndex, double duration) const;
 
 	/**
 	 * Retrieve a SignalR formatted message to inform the VoxtaServer that the playback is completed on the client.
@@ -76,34 +80,20 @@ public:
 	 */
 	FSignalRValue GetNotifyAudioPlaybackCompletedData(const FString& sessionId, const FString& messageId) const;
 
+	// TODO
 	FSignalRValue GetUpdateContextRequestData(const TArray<FString>& actions, const FString& sessionId,
 		const FString& context, const FString& contextKey) const;
 
+	// TODO
 	FSignalRValue GetRequestCharacterSpeechRequestData(const FString& sessionId, const FString& text) const;
 
+	// TODO
 	FSignalRValue SendRevertLastSentMessage(const FString& sessionId) const;
 
+	// TODO
 	FSignalRValue SendDeleteChat(const FString& chatId) const;
 
+	// TODO
 	FSignalRValue SetFlags(const FString& sessionId, const TArray<FString>& flags) const;
-
-	/// TODO no clue what this does, need to figure it out before implementing it
-	// SendDeployResource(MissingResource resource, string name, byte[] bytes)
-	/*
-	{
-		var json = new JObject
-		{
-			["$type"] = "deployResource",
-			["id"] = resource.Id,
-			["data"] = new JObject
-			{
-				["$type"] = "base64",
-				["name"] = name,
-				["base64Data"] = Convert.ToBase64String(bytes),
-			},
-		};
-		Send(json.ToString());
-	}
-	*/
 #pragma endregion
 };
