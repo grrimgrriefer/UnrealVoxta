@@ -24,6 +24,7 @@
 #include "VoxtaData/Public/ServerResponses/ServerResponseChatUpdate.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseSpeechTranscription.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseError.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseContextUpdated.h"
 
 void UVoxtaClient::Initialize(FSubsystemCollectionBase& collection)
 {
@@ -439,6 +440,10 @@ bool UVoxtaClient::HandleResponse(const TMap<FString, FSignalRValue>& responseDa
 			return HandleResponseHelper<ServerResponseError>(response.Get(),
 				TEXT("Error message received successfully"),
 				&UVoxtaClient::HandleErrorResponse);
+		case ContextUpdated:
+			return HandleResponseHelper<ServerResponseContextUpdated>(response.Get(),
+				TEXT("Context Updated message received successfully"),
+				&UVoxtaClient::HandleContextUpdateResponse);
 		default:
 			UE_LOGFMT(VoxtaLog, Error, "No handler available for type a message of type: {0}", responseType);
 			return false;
@@ -698,6 +703,21 @@ bool UVoxtaClient::HandleErrorResponse(const ServerResponseError& response)
 	UE_LOGFMT(VoxtaLog, Error, "Recieved error from the VoxtaServer, please check the logs for additional details. "
 		"There might be a misconfiguration on the VoxtaServer side, or you found an edge case (please report it to me). "
 		"ErrorMessage: {0}, ErrorDetails: {1}", response.ERROR_MESSAGE, response.ERROR_DETAILS);
+	return true;
+}
+
+bool UVoxtaClient::HandleContextUpdateResponse(const ServerResponseContextUpdated& response)
+{
+	if (!m_chatSession.IsValid())
+	{
+		UE_LOGFMT(VoxtaLog, Warning, "Recieved a context update but there's no active chat session? This should not happen, "
+			"skipping processing of response... Context: {0}, Session: {1}", response.CONTEXT_TEXT, response.SESSION_ID);
+		return true;
+	}
+
+	m_chatSession->UpdateContext(response.CONTEXT_TEXT);
+	UE_LOGFMT(VoxtaLog, Log, "Updated context of the chat session to: {0}", response.CONTEXT_TEXT);
+
 	return true;
 }
 

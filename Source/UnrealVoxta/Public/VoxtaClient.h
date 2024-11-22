@@ -23,6 +23,7 @@ struct ServerResponseCharacterList;
 struct ServerResponseChatStarted;
 struct ServerResponseChatUpdate;
 struct ServerResponseSpeechTranscription;
+struct ServerResponseContextUpdated;
 struct FAiCharData;
 struct FUserCharData;
 struct FBaseCharData;
@@ -333,6 +334,8 @@ private:
 	bool HandleSpeechTranscriptionResponse(const ServerResponseSpeechTranscription& response);
 	/** Takes care of ServerResponseError responses. */
 	bool HandleErrorResponse(const ServerResponseError& response);
+	/** Takes care of ServerResponseContextUpdated responses. */
+	bool HandleContextUpdateResponse(const ServerResponseContextUpdated& response);
 #pragma endregion
 
 	/**

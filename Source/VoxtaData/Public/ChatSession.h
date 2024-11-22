@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "ChatMessage.h"
 #include "VoxtaServiceData.h"
+#include "AiCharData.h"
 #include "ChatSession.generated.h"
 
 /**
@@ -42,11 +43,21 @@ public:
 	/**
 	 * Used by VoxtaClient to know if it should notify audioplayback handlers, mic input, etc...
 	 *
-	 * @return The currently enabled services on VoxtaServer (not really, just what was active when starting chat) TODO
+	 * @return The services that were enabled when the chatsession was started.
 	 */
 	const TMap<const VoxtaServiceData::ServiceType, const VoxtaServiceData>& GetActiveServices() const
 	{
 		return m_services;
+	}
+
+	/**
+	 * Update the context of the ongoing chat session.
+	 *
+	 * @param newContext The new context for the ongoing chat session.
+	 */
+	void UpdateContext(const FString& newContext)
+	{
+		m_chatContext = newContext;
 	}
 
 	/**
@@ -88,9 +99,11 @@ private:
 	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Character IDs"))
 	TArray<FString> m_characterIds;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Context"))
+	FString m_chatContext;
+
 	TArray<FChatMessage> m_chatMessages;
 	TArray<const FAiCharData*> m_characters;
-	// TODO: Add functionality for runtime disabling / enabling of services.
 	TMap<const VoxtaServiceData::ServiceType, const VoxtaServiceData> m_services;
 #pragma endregion
 };

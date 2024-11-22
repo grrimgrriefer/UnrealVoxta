@@ -14,6 +14,7 @@
 #include "VoxtaData/Public/ServerResponses/ServerResponseChatUpdate.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseSpeechTranscription.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseError.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseContextUpdated.h"
 #include "VoxtaData/Public/VoxtaServiceData.h"
 
 TUniquePtr<ServerResponseBase> VoxtaApiResponseHandler::GetResponseData(
@@ -65,6 +66,10 @@ TUniquePtr<ServerResponseBase> VoxtaApiResponseHandler::GetResponseData(
 	{
 		return GetErrorResponse(serverResponseData);
 	}
+	else if (type == TEXT("contextUpdated"))
+	{
+		return GetContextUpdatedResponse(serverResponseData);
+	}
 	else
 	{
 		UE_LOGFMT(VoxtaLog, Error, "Failed to process VoxtaApiResponse of type: {0}.", type);
@@ -105,13 +110,25 @@ TUniquePtr<ServerResponseCharacterList> VoxtaApiResponseHandler::GetCharacterLis
 TUniquePtr<ServerResponseContextUpdated> VoxtaApiResponseHandler::GetContextUpdatedResponse(
 	const TMap<FString, FSignalRValue>& serverResponseData) const
 {
-	TArray<FSignalRValue> flagsArray = serverResponseData[EASY_STRING("flags")].AsArray();
+	//TArray<FSignalRValue> flagsArray = serverResponseData[EASY_STRING("flags")].AsArray();
 	TArray<FSignalRValue> contextsArray = serverResponseData[EASY_STRING("contexts")].AsArray();
-	TArray<FSignalRValue> contextsArray = serverResponseData[EASY_STRING("actions")].AsArray();
-	TArray<FSignalRValue> contextsArray = serverResponseData[EASY_STRING("characters")].AsArray();
-	TArray<FSignalRValue> contextsArray = serverResponseData[EASY_STRING("roles")].AsArray();
+	//TArray<FSignalRValue> actionsArray = serverResponseData[EASY_STRING("actions")].AsArray();
+	//TArray<FSignalRValue> charactersArray = serverResponseData[EASY_STRING("characters")].AsArray();
+	//TArray<FSignalRValue> rolesArray = serverResponseData[EASY_STRING("roles")].AsArray();
+
+	FString contextValue = FString();
+
+	for (const FSignalRValue& context : contextsArray)
+	{
+		const TMap<FString, FSignalRValue>& contextData = context.AsObject();
+		if (contextData[EASY_STRING("contextKey")].AsString() == VOXTA_CONTEXT_KEY)
+		{
+			contextValue = contextData[EASY_STRING("text")].AsString();
+		}
+	}
 
 	return MakeUnique<ServerResponseContextUpdated>(
+		contextValue,
 		serverResponseData[EASY_STRING("sessionId")].AsString());
 }
 
