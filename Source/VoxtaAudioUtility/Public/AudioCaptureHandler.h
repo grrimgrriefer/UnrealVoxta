@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Misc/ScopeLock.h"
 #include "VoiceRunnerThread.h"
+#include "VoxtaDefines.h"
 
 class AudioWebSocket;
 class IVoiceCapture;
@@ -80,7 +81,7 @@ private:
 	/** The background thread needs access to our private functions. */
 	friend class FVoiceRunnerThread;
 
-	FString m_deviceName = TEXT("");
+	FString m_deviceName = EMPTY_STRING;
 	bool m_isCapturing;
 	int m_bufferMillisecondSize;
 	float m_decibels = DEFAULT_SILENCE_DECIBELS;

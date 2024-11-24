@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "BaseCharData.h"
+#include "VoxtaDefines.h"
 #include "AiCharData.generated.h"
 
 /**
@@ -34,13 +35,18 @@ public:
 		FStringView name,
 		FStringView creatorNotes,
 		bool isExplicitContent,
-		bool isFavorite) :
+		bool isFavorite,
+		FStringView thumbnailUrl,
+		FStringView packageId,
+		FStringView packageName) :
 		FBaseCharData(id, name),
 		m_creatorNotes(creatorNotes),
 		m_allowedExplicitContent(isExplicitContent),
-		m_isFavorite(isFavorite)
-	{
-	}
+		m_isFavorite(isFavorite),
+		m_thumbnailUrl(thumbnailUrl),
+		m_packageId(packageId),
+		m_packageName(packageId)
+	{}
 
 	/** Default constructor, should not be used manually, but is enforced by Unreal */
 	explicit FAiCharData() : FBaseCharData() {}
@@ -48,9 +54,11 @@ public:
 
 #pragma region data
 private:
-	// TODO: none of these are used atm, consider removal of the fields
-	FString m_creatorNotes = "";
+	FString m_creatorNotes = EMPTY_STRING;
 	bool m_allowedExplicitContent = false;
 	bool m_isFavorite = false;
+	FString m_thumbnailUrl = EMPTY_STRING;
+	FString m_packageId = EMPTY_STRING;
+	FString m_packageName = EMPTY_STRING;
 #pragma endregion
 };

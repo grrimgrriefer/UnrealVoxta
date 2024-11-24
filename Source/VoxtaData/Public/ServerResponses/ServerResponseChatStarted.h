@@ -18,14 +18,15 @@ public:
 			const TArray<FString>& characterIds,
 			const TMap<const VoxtaServiceData::ServiceType, const VoxtaServiceData>& services,
 			FStringView chatId,
-			FStringView sessionId) : ServerResponseBase(ServerResponseType::ChatStarted),
+			FStringView sessionId,
+			FStringView contextText) : ServerResponseBase(ServerResponseType::ChatStarted),
 		CHARACTER_IDS(characterIds),
 		SERVICES(services),
 		USER_ID(userId),
 		CHAT_ID(chatId),
-		SESSION_ID(sessionId)
-	{
-	}
+		SESSION_ID(sessionId),
+		CONTEXT_TEXT(contextText)
+	{}
 #pragma endregion
 
 #pragma region data
@@ -35,5 +36,6 @@ public:
 	const FString USER_ID;
 	const FString CHAT_ID;
 	const FString SESSION_ID;
+	const FString CONTEXT_TEXT;
 #pragma endregion
 };

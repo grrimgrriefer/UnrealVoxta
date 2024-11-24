@@ -71,11 +71,13 @@ public:
 	explicit FChatSession(const TArray<const FAiCharData*>& characters,
 			FStringView chatId,
 			FStringView sessionId,
-			const TMap<const VoxtaServiceData::ServiceType, const VoxtaServiceData>& services) :
+			const TMap<const VoxtaServiceData::ServiceType, const VoxtaServiceData>& services,
+			FStringView chatContext) :
 		m_chatId(chatId),
 		m_sessionId(sessionId),
 		m_characters(characters),
-		m_services(services)
+		m_services(services),
+		m_chatContext(chatContext)
 	{
 		m_characterIds.Reserve(characters.Num());
 		for (const FAiCharData* character : characters)

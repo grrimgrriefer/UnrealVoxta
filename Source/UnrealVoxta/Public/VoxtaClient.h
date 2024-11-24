@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "VoxtaData/Public/VoxtaClientState.h"
+#include "VoxtaDefines.h"
 #include "VoxtaClient.generated.h"
 
 class FSignalRValue;

@@ -19,15 +19,16 @@ public:
 			int startIndex,
 			int endIndex,
 			FStringView messageText,
-			FStringView audioUrlPath) :
+			FStringView audioUrlPath,
+			bool isNarration) :
 		ServerResponseChatMessageBase(ChatMessageType::MessageChunk, messageId, sessionId),
 		SENDER_ID(senderId),
 		START_INDEX(startIndex),
 		END_INDEX(endIndex),
 		MESSAGE_TEXT(messageText),
-		AUDIO_URL_PATH(audioUrlPath)
-	{
-	}
+		AUDIO_URL_PATH(audioUrlPath),
+		IS_NARRATION(isNarration)
+	{}
 #pragma endregion
 
 #pragma region data
@@ -37,5 +38,6 @@ public:
 	const int END_INDEX;
 	const FString MESSAGE_TEXT;
 	const FString AUDIO_URL_PATH;
+	const bool IS_NARRATION;
 #pragma endregion
 };

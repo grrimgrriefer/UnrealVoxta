@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "AudioCaptureDeviceInterface.h"
 #include "Logging/LogMacros.h"
+#include "VoxtaDefines.h"
 
 #include "AudioStructs.generated.h"
 
@@ -47,8 +48,7 @@ struct FEditableSubtitleCue
 
 	FEditableSubtitleCue()
 		: Time(0)
-	{
-	}
+	{}
 
 	/** The text to appear in the subtitle */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Runtime Audio Importer")
@@ -173,8 +173,7 @@ public:
 
 	FRuntimeBulkDataBuffer(DataType* InBuffer, int64 InNumberOfElements)
 		: View(InBuffer, InNumberOfElements)
-	{
-	}
+	{}
 
 	template <typename Allocator>
 	explicit FRuntimeBulkDataBuffer(const TArray<DataType, Allocator>& Other)
@@ -266,21 +265,18 @@ struct FEncodedAudioStruct
 {
 	FEncodedAudioStruct()
 		: AudioFormat(ERuntimeAudioFormat::Invalid)
-	{
-	}
+	{}
 
 	template <typename Allocator>
 	FEncodedAudioStruct(const TArray<uint8, Allocator>& AudioDataArray, ERuntimeAudioFormat AudioFormat)
 		: AudioData(AudioDataArray)
 		, AudioFormat(AudioFormat)
-	{
-	}
+	{}
 
 	FEncodedAudioStruct(FRuntimeBulkDataBuffer<uint8> AudioDataBulk, ERuntimeAudioFormat AudioFormat)
 		: AudioData(MoveTemp(AudioDataBulk))
 		, AudioFormat(AudioFormat)
-	{
-	}
+	{}
 
 	/**
 	 * Converts Encoded Audio Struct to a readable format
@@ -309,8 +305,7 @@ struct FSoundWaveBasicStruct
 		, SampleRate(0)
 		, Duration(0)
 		, AudioFormat(ERuntimeAudioFormat::Invalid)
-	{
-	}
+	{}
 
 	/** Number of channels */
 	uint32 NumOfChannels;
@@ -348,8 +343,7 @@ struct FPCMStruct
 {
 	FPCMStruct()
 		: PCMNumOfFrames(0)
-	{
-	}
+	{}
 
 	/**
 	 * Whether the PCM data appear to be valid or not
@@ -412,21 +406,19 @@ struct FRuntimeAudioInputDeviceInfo
 	GENERATED_BODY()
 
 	FRuntimeAudioInputDeviceInfo()
-		: DeviceName("")
-		, DeviceId("")
+		: DeviceName(EMPTY_STRING)
+		, DeviceId(EMPTY_STRING)
 		, InputChannels(0)
 		, PreferredSampleRate(0)
 		, bSupportsHardwareAEC(true)
-	{
-	}
+	{}
 
 	FRuntimeAudioInputDeviceInfo(const Audio::FCaptureDeviceInfo& DeviceInfo)
 		: DeviceName(DeviceInfo.DeviceName)
 		, InputChannels(DeviceInfo.InputChannels)
 		, PreferredSampleRate(DeviceInfo.PreferredSampleRate)
 		, bSupportsHardwareAEC(DeviceInfo.bSupportsHardwareAEC)
-	{
-	}
+	{}
 
 	/** The name of the audio device */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Runtime Audio Importer")
@@ -461,8 +453,7 @@ struct FRuntimeAudioHeaderInfo
 		, SampleRate(0)
 		, PCMDataSize(0)
 		, AudioFormat(ERuntimeAudioFormat::Invalid)
-	{
-	}
+	{}
 
 	/**
 	 * Converts Audio Header Info to a readable format

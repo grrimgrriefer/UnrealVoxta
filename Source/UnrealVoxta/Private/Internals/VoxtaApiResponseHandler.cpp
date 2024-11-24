@@ -81,6 +81,9 @@ TUniquePtr<ServerResponseWelcome> VoxtaApiResponseHandler::GetWelcomeResponse(
 	const TMap<FString, FSignalRValue>& serverResponseData) const
 {
 	TMap<FString, FSignalRValue> user = serverResponseData[EASY_STRING("user")].AsObject();
+	//FString voxtaServerVersion = serverResponseData[EASY_STRING("voxtaServerVersion")].AsString();
+	//FString apiVersion = serverResponseData[EASY_STRING("apiVersion")].AsString();
+
 	return MakeUnique<ServerResponseWelcome>(FUserCharData(user[EASY_STRING("id")].AsString(),
 		user[EASY_STRING("name")].AsString()));
 }
@@ -98,11 +101,17 @@ TUniquePtr<ServerResponseCharacterList> VoxtaApiResponseHandler::GetCharacterLis
 			characterData[EASY_STRING("id")].AsString(),
 			characterData[EASY_STRING("name")].AsString(),
 			characterData.Contains(EASY_STRING("creatorNotes"))
-			? characterData[EASY_STRING("creatorNotes")].AsString() : "",
+			? characterData[EASY_STRING("creatorNotes")].AsString() : EMPTY_STRING,
 			characterData.Contains(EASY_STRING("explicitContent"))
 			? characterData[EASY_STRING("explicitContent")].AsBool() : false,
 			characterData.Contains(EASY_STRING("favorite"))
-			? characterData[EASY_STRING("favorite")].AsBool() : false));
+			? characterData[EASY_STRING("favorite")].AsBool() : false,
+			characterData.Contains(EASY_STRING("thumbnailUrl"))
+			? characterData[EASY_STRING("thumbnailUrl")].AsString() : EMPTY_STRING,
+			characterData.Contains(EASY_STRING("packageId"))
+			? characterData[EASY_STRING("packageId")].AsString() : EMPTY_STRING,
+			characterData.Contains(EASY_STRING("packageName"))
+			? characterData[EASY_STRING("packageName")].AsString() : EMPTY_STRING));
 	}
 	return MakeUnique<ServerResponseCharacterList>(chars);
 }
@@ -110,22 +119,8 @@ TUniquePtr<ServerResponseCharacterList> VoxtaApiResponseHandler::GetCharacterLis
 TUniquePtr<ServerResponseContextUpdated> VoxtaApiResponseHandler::GetContextUpdatedResponse(
 	const TMap<FString, FSignalRValue>& serverResponseData) const
 {
-	//TArray<FSignalRValue> flagsArray = serverResponseData[EASY_STRING("flags")].AsArray();
-	TArray<FSignalRValue> contextsArray = serverResponseData[EASY_STRING("contexts")].AsArray();
-	//TArray<FSignalRValue> actionsArray = serverResponseData[EASY_STRING("actions")].AsArray();
-	//TArray<FSignalRValue> charactersArray = serverResponseData[EASY_STRING("characters")].AsArray();
-	//TArray<FSignalRValue> rolesArray = serverResponseData[EASY_STRING("roles")].AsArray();
-
 	FString contextValue = FString();
-
-	for (const FSignalRValue& context : contextsArray)
-	{
-		const TMap<FString, FSignalRValue>& contextData = context.AsObject();
-		if (contextData[EASY_STRING("contextKey")].AsString() == VOXTA_CONTEXT_KEY)
-		{
-			contextValue = contextData[EASY_STRING("text")].AsString();
-		}
-	}
+	ProcessContextData(serverResponseData, contextValue);
 
 	return MakeUnique<ServerResponseContextUpdated>(
 		contextValue,
@@ -135,6 +130,7 @@ TUniquePtr<ServerResponseContextUpdated> VoxtaApiResponseHandler::GetContextUpda
 TUniquePtr<ServerResponseChatStarted> VoxtaApiResponseHandler::GetChatStartedResponse(
 	const TMap<FString, FSignalRValue>& serverResponseData) const
 {
+	// Participants
 	TMap<FString, FSignalRValue> user = serverResponseData[EASY_STRING("user")].AsObject();
 	TArray<FSignalRValue> charIdArray = serverResponseData[EASY_STRING("characters")].AsArray();
 	TArray<FString> chars;
@@ -145,6 +141,7 @@ TUniquePtr<ServerResponseChatStarted> VoxtaApiResponseHandler::GetChatStartedRes
 		chars.Emplace(characterData[EASY_STRING("id")].AsString());
 	}
 
+	// Services
 	TMap<FString, FSignalRValue> servicesMap = serverResponseData[EASY_STRING("services")].AsObject();
 	using enum VoxtaServiceData::ServiceType;
 	TMap<const VoxtaServiceData::ServiceType, const VoxtaServiceData> services;
@@ -153,7 +150,6 @@ TUniquePtr<ServerResponseChatStarted> VoxtaApiResponseHandler::GetChatStartedRes
 		{ SpeechToText, TEXT("speechToText") },
 		{ TextToSpeech, TEXT("textToSpeech") }
 	};
-
 	for (const auto& [enumType, stringValue] : serviceTypes)
 	{
 		if (servicesMap.Contains(stringValue))
@@ -163,9 +159,16 @@ TUniquePtr<ServerResponseChatStarted> VoxtaApiResponseHandler::GetChatStartedRes
 				serviceData[EASY_STRING("serviceId")].AsString()));
 		}
 	}
+
+	// Context
+	TMap<FString, FSignalRValue> context = serverResponseData[EASY_STRING("context")].AsObject();
+	FString contextValue = FString();
+	ProcessContextData(context, contextValue);
+
 	return MakeUnique<ServerResponseChatStarted>(user[EASY_STRING("id")].AsString(),
 		chars, services, serverResponseData[EASY_STRING("chatId")].AsString(),
-		serverResponseData[EASY_STRING("sessionId")].AsString());
+		serverResponseData[EASY_STRING("sessionId")].AsString(),
+		contextValue);
 }
 
 TUniquePtr<ServerResponseChatMessageStart> VoxtaApiResponseHandler::GetReplyStartReponseResponse(
@@ -187,7 +190,8 @@ TUniquePtr<ServerResponseChatMessageChunk> VoxtaApiResponseHandler::GetReplyChun
 		static_cast<int>(serverResponseData[EASY_STRING("startIndex")].AsDouble()),
 		static_cast<int>(serverResponseData[EASY_STRING("endIndex")].AsDouble()),
 		serverResponseData[EASY_STRING("text")].AsString(),
-		serverResponseData[EASY_STRING("audioUrl")].AsString());
+		serverResponseData[EASY_STRING("audioUrl")].AsString(),
+		serverResponseData[EASY_STRING("isNarration")].AsBool());
 }
 
 TUniquePtr<ServerResponseChatMessageEnd> VoxtaApiResponseHandler::GetReplyEndReponseResponse(
@@ -242,4 +246,25 @@ TUniquePtr<ServerResponseError> VoxtaApiResponseHandler::GetErrorResponse(
 	return MakeUnique<ServerResponseError>(
 		serverResponseData[EASY_STRING("message")].AsString(),
 		serverResponseData[EASY_STRING("details")].AsString());
+}
+
+void VoxtaApiResponseHandler::ProcessContextData(TMap<FString, FSignalRValue> contextMainObject,
+	FString& outContextValue) const
+{
+	//TArray<FSignalRValue> flagsArray = serverResponseData[EASY_STRING("flags")].AsArray();
+	TArray<FSignalRValue> contextsArray = contextMainObject[EASY_STRING("contexts")].AsArray();
+	//TArray<FSignalRValue> actionsArray = serverResponseData[EASY_STRING("actions")].AsArray();
+	//TArray<FSignalRValue> charactersArray = serverResponseData[EASY_STRING("characters")].AsArray();
+	//TArray<FSignalRValue> rolesArray = serverResponseData[EASY_STRING("roles")].AsArray();
+
+	outContextValue = FString();
+
+	for (const FSignalRValue& context : contextsArray)
+	{
+		const TMap<FString, FSignalRValue>& contextData = context.AsObject();
+		if (contextData[EASY_STRING("contextKey")].AsString() == VOXTA_CONTEXT_KEY)
+		{
+			outContextValue = contextData[EASY_STRING("text")].AsString();
+		}
+	}
 }

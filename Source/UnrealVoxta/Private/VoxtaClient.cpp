@@ -501,7 +501,7 @@ bool UVoxtaClient::HandleChatStartedResponse(const ServerResponseChatStarted& re
 	}
 
 	m_chatSession = MakeUnique<FChatSession>(chatCharacters, response.CHAT_ID,
-		response.SESSION_ID, response.SERVICES);
+		response.SESSION_ID, response.SERVICES, response.CONTEXT_TEXT);
 	VoxtaClientChatSessionStartedEventNative.Broadcast(*m_chatSession.Get());
 	VoxtaClientChatSessionStartedEvent.Broadcast(*m_chatSession.Get());
 	SetState(VoxtaClientState::GeneratingReply);

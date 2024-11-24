@@ -103,5 +103,8 @@ private:
 	/** ServerResponseError override of the generic GetResponseData */
 	TUniquePtr<ServerResponseError> GetErrorResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
+
+	/** Helper function to parse Context data */
+	void ProcessContextData(TMap<FString, FSignalRValue> contextMainObject, FString& outContextValue) const;
 #pragma endregion
 };
