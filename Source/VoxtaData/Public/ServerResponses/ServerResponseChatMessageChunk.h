@@ -13,9 +13,9 @@ struct ServerResponseChatMessageChunk : public ServerResponseChatMessageBase
 #pragma region public API
 public:
 	/** Create a deserialized version of the VoxtaServer response represents the 'MessageChunk' data. */
-	explicit ServerResponseChatMessageChunk(FStringView messageId,
-			FStringView senderId,
-			FStringView sessionId,
+	explicit ServerResponseChatMessageChunk(FGuid messageId,
+			FGuid senderId,
+			FGuid sessionId,
 			int startIndex,
 			int endIndex,
 			FStringView messageText,
@@ -33,7 +33,7 @@ public:
 
 #pragma region data
 public:
-	const FString SENDER_ID;
+	const FGuid SENDER_ID;
 	const int START_INDEX;
 	const int END_INDEX;
 	const FString MESSAGE_TEXT;

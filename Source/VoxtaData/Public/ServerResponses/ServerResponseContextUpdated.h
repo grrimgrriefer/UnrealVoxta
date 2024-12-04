@@ -14,7 +14,7 @@ struct ServerResponseContextUpdated : public ServerResponseBase
 public:
 	/** Create a deserialized version of the VoxtaServer response represents the 'contextUpdated' data. */
 	explicit ServerResponseContextUpdated(FStringView contextText,
-			FStringView sessionId) : ServerResponseBase(ServerResponseType::ContextUpdated),
+			FGuid sessionId) : ServerResponseBase(ServerResponseType::ContextUpdated),
 		CONTEXT_TEXT(contextText),
 		SESSION_ID(sessionId)
 	{}
@@ -23,6 +23,6 @@ public:
 #pragma region data
 public:
 	const FString CONTEXT_TEXT;
-	const FString SESSION_ID;
+	const FGuid SESSION_ID;
 #pragma endregion
 };

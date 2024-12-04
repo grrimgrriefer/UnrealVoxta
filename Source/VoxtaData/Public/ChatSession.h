@@ -38,7 +38,7 @@ public:
 	 *
 	 * @return The VoxtaServer assigned ID of this session.
 	 */
-	FString GetSessionId() const { return m_sessionId; }
+	FGuid GetSessionId() const { return m_sessionId; }
 
 	/**
 	 * Used by VoxtaClient to know if it should notify audioplayback handlers, mic input, etc...
@@ -69,15 +69,15 @@ public:
 	 * @param services The VoxtaServer services that are enabled for this chat session.
 	 */
 	explicit FChatSession(const TArray<const FAiCharData*>& characters,
-			FStringView chatId,
-			FStringView sessionId,
+			FGuid chatId,
+			FGuid sessionId,
 			const TMap<const VoxtaServiceData::ServiceType, const VoxtaServiceData>& services,
 			FStringView chatContext) :
 		m_chatId(chatId),
 		m_sessionId(sessionId),
+		m_chatContext(chatContext),
 		m_characters(characters),
-		m_services(services),
-		m_chatContext(chatContext)
+		m_services(services)
 	{
 		m_characterIds.Reserve(characters.Num());
 		for (const FAiCharData* character : characters)
@@ -93,13 +93,13 @@ public:
 #pragma region data
 private:
 	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Chat ID"))
-	FString m_chatId;
+	FGuid m_chatId;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Session ID"))
-	FString m_sessionId;
+	FGuid m_sessionId;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Character IDs"))
-	TArray<FString> m_characterIds;
+	TArray<FGuid> m_characterIds;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Context"))
 	FString m_chatContext;

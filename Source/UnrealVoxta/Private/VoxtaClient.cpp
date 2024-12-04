@@ -106,9 +106,9 @@ void UVoxtaClient::Disconnect(bool silent)
 	m_hub->Stop();
 }
 
-void UVoxtaClient::StartChatWithCharacter(const FString& charId, const FString& context)
+void UVoxtaClient::StartChatWithCharacter(const FGuid& charId, const FString& context)
 {
-	if (charId.IsEmpty())
+	if (!charId.IsValid())
 	{
 		UE_LOGFMT(VoxtaLog, Error, "Cannot start a chat as the provided characterId was empty.");
 		return;
@@ -147,7 +147,7 @@ void UVoxtaClient::SendUserInput(const FString& inputText, bool generateReply, b
 	}
 }
 
-void UVoxtaClient::NotifyAudioPlaybackComplete(const FString& messageId)
+void UVoxtaClient::NotifyAudioPlaybackComplete(const FGuid& messageId)
 {
 	if (m_currentState != VoxtaClientState::AudioPlayback)
 	{
@@ -162,7 +162,7 @@ void UVoxtaClient::NotifyAudioPlaybackComplete(const FString& messageId)
 	SetState(VoxtaClientState::WaitingForUserReponse);
 }
 
-bool UVoxtaClient::TryRegisterPlaybackHandler(const FString& characterId,
+bool UVoxtaClient::TryRegisterPlaybackHandler(const FGuid& characterId,
 	TWeakObjectPtr<UVoxtaAudioPlayback> playbackHandler)
 {
 	if (playbackHandler == nullptr)
@@ -207,7 +207,7 @@ bool UVoxtaClient::TryRegisterPlaybackHandler(const FString& characterId,
 	}
 }
 
-bool UVoxtaClient::TryUnregisterPlaybackHandler(const FString& characterId)
+bool UVoxtaClient::TryUnregisterPlaybackHandler(const FGuid& characterId)
 {
 	int removedValues = m_registeredCharacterPlaybackHandlers.Remove(characterId);
 	if (removedValues > 0)
@@ -243,16 +243,16 @@ VoxtaClientState UVoxtaClient::GetCurrentState() const
 	return m_currentState;
 }
 
-FString UVoxtaClient::GetUserId() const
+FGuid UVoxtaClient::GetUserId() const
 {
 	if (m_userData.IsValid())
 	{
 		return m_userData->GetId();
 	}
-	return FString();
+	return FGuid();
 }
 
-const UVoxtaAudioPlayback* UVoxtaClient::GetRegisteredAudioPlaybackHandlerForID(const FString& characterId) const
+const UVoxtaAudioPlayback* UVoxtaClient::GetRegisteredAudioPlaybackHandlerForID(const FGuid& characterId) const
 {
 	auto currentHandler = m_registeredCharacterPlaybackHandlers.Find(characterId);
 	if (currentHandler != nullptr)
@@ -274,6 +274,21 @@ Audio2FaceRESTHandler* UVoxtaClient::GetA2FHandler() const
 {
 	return m_A2FHandler.Get();
 }
+
+/*TArray<TTuple<FString, FString>> UVoxtaClient::GetAllCharacterNames() const
+{
+	TArray<TTuple<FString, FString>> characterIds;
+	characterIds.Reserve(m_characterList.Num());
+
+	for (const TUniquePtr<const FAiCharData>& character : m_characterList)
+	{
+		if (character)
+		{
+			characterIds.Add(TTuple<FString, FString>(character->GetId(), character->GetName()));
+		}
+	}
+	return characterIds;
+}*/
 
 void UVoxtaClient::StartListeningToServer()
 {
@@ -721,7 +736,7 @@ bool UVoxtaClient::HandleContextUpdateResponse(const ServerResponseContextUpdate
 	return true;
 }
 
-const TUniquePtr<const FAiCharData>* UVoxtaClient::GetAiCharacterDataById(const FString& charId) const
+const TUniquePtr<const FAiCharData>* UVoxtaClient::GetAiCharacterDataById(const FGuid& charId) const
 {
 	return m_characterList.FindByPredicate([&charId] (const TUniquePtr<const FAiCharData>& inItem)
 		{
@@ -729,7 +744,7 @@ const TUniquePtr<const FAiCharData>* UVoxtaClient::GetAiCharacterDataById(const 
 		});
 }
 
-FChatMessage* UVoxtaClient::GetChatMessageById(const FString& messageId) const
+FChatMessage* UVoxtaClient::GetChatMessageById(const FGuid& messageId) const
 {
 	return m_chatSession->GetChatMessages().FindByPredicate([&messageId] (const FChatMessage& inItem)
 		{

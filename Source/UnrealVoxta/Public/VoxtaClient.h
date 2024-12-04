@@ -1,7 +1,6 @@
 // Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
 
 #pragma once
-
 #include "CoreMinimal.h"
 #include "VoxtaData/Public/VoxtaClientState.h"
 #include "VoxtaDefines.h"
@@ -48,7 +47,7 @@ public:
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientCharMessageRemoved, const FChatMessage&, message);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientSpeechTranscribed, const FString&, message);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientChatSessionStarted, const FChatSession&, chatSession);
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FVoxtaClientAudioPlaybackRegistered, const UVoxtaAudioPlayback*, playbackHandler, const FString&, characterId);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FVoxtaClientAudioPlaybackRegistered, const UVoxtaAudioPlayback*, playbackHandler, const FGuid&, characterId);
 
 	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaClientStateChangedNative, VoxtaClientState);
 	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaClientCharacterRegisteredNative, const FAiCharData&);
@@ -56,7 +55,7 @@ public:
 	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaClientCharMessageRemovedNative, const FChatMessage&);
 	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaClientSpeechTranscribedNative, const FString&);
 	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaClientChatSessionStartedNative, const FChatSession&);
-	DECLARE_MULTICAST_DELEGATE_TwoParams(FVoxtaClientAudioPlaybackRegisteredNative, const UVoxtaAudioPlayback*, const FString&);
+	DECLARE_MULTICAST_DELEGATE_TwoParams(FVoxtaClientAudioPlaybackRegisteredNative, const UVoxtaAudioPlayback*, const FGuid&);
 
 #pragma endregion
 
@@ -163,7 +162,7 @@ public:
 	 * @param charId The charID of the character that you want to load.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
-	void StartChatWithCharacter(const FString& charId, const FString& context = TEXT(""));
+	void StartChatWithCharacter(const FGuid& charId, const FString& context = TEXT(""));
 
 	/**
 	 * Inform the server that the user has said something.
@@ -184,26 +183,7 @@ public:
 	 * @param messageId The ID of the message that has completed the playback on the client.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
-	void NotifyAudioPlaybackComplete(const FString& messageId);
-
-	/**
-	 * Register the playback handler for this specific character, this is needed as we need to know if we want to wait
-	 * for the audio playback to be completed, or if there's no audio playback and we can just skip it.
-	 *
-	 * @param characterId The VoxtaServer assigned id of the character that is being registered for.
-	 * @param UVoxtaAudioPlayback The audioPlayback component for the specified characterId.
-	 *
-	 * @return True if the character was registered successfully (no duplicate playback for the same id)
-	 */
-	bool TryRegisterPlaybackHandler(const FString& characterId, TWeakObjectPtr<UVoxtaAudioPlayback> UVoxtaAudioPlayback);
-
-	/**
-	 * Remove the weakPointer to the audioPlayback that was registered for the specified characterId.
-	 *
-	 * @param characterId The character for which we will remove the weakPointer to whatever audioplayback was
-	 * registered for it
-	 */
-	bool TryUnregisterPlaybackHandler(const FString& characterId);
+	void NotifyAudioPlaybackComplete(const FGuid& messageId);
 
 	/** @return The ipv4 address where this client expects the Voxta server to be hosted. */
 	UFUNCTION(BlueprintPure, Category = "Voxta")
@@ -221,9 +201,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Voxta")
 	VoxtaClientState GetCurrentState() const;
 
-	/** @return The current user's ID, assuming we have an authenticated session. */
+	/** @return The current user's ID, returns an invalid Guid if there's no authenticated session. */
 	UFUNCTION(BlueprintPure, Category = "Voxta")
-	FString GetUserId() const;
+	FGuid GetUserId() const;
 
 	/**
 	 * Try to retrieve a pointer to the UVoxtaAudioPlayback that has claimed playback for the provided characterId.
@@ -233,7 +213,39 @@ public:
 	 * @return An immutable pointer to the UVoxtaAudioPlayback component, nullptr if it doesn't exist.
 	 */
 	UFUNCTION(BlueprintPure, Category = "Voxta")
-	const UVoxtaAudioPlayback* GetRegisteredAudioPlaybackHandlerForID(const FString& characterId) const;
+	const UVoxtaAudioPlayback* GetRegisteredAudioPlaybackHandlerForID(const FGuid& characterId) const;
+
+	/** @return An immutable array with a copy of every AIcharacter data. */
+	//UFUNCTION(BlueprintPure, Category = "Voxta")
+	//TArray<FGuid> GetAllCharacterIDs() const;
+
+	/**
+	 * Fetch the immutable UniquePtr to the Ai Character data struct that matches the given charId.
+	 *
+	 * @param charId The Id of the Ai Character that you want to retrieve.
+	 *
+	 * @return An immutable UniquePtr to the immutable Ai Character data struct, or nullptr if it was not found.
+	 */
+	const TUniquePtr<const FAiCharData>* GetAiCharacterDataById(const FGuid& charId) const;
+
+	/**
+	 * Register the playback handler for this specific character, this is needed as we need to know if we want to wait
+	 * for the audio playback to be completed, or if there's no audio playback and we can just skip it.
+	 *
+	 * @param characterId The VoxtaServer assigned id of the character that is being registered for.
+	 * @param UVoxtaAudioPlayback The audioPlayback component for the specified characterId.
+	 *
+	 * @return True if the character was registered successfully (no duplicate playback for the same id)
+	 */
+	bool TryRegisterPlaybackHandler(const FGuid& characterId, TWeakObjectPtr<UVoxtaAudioPlayback> UVoxtaAudioPlayback);
+
+	/**
+	 * Remove the weakPointer to the audioPlayback that was registered for the specified characterId.
+	 *
+	 * @param characterId The character for which we will remove the weakPointer to whatever audioplayback was
+	 * registered for it
+	 */
+	bool TryUnregisterPlaybackHandler(const FGuid& characterId);
 
 	/** @return An immutable pointer to the ChatSession. */
 	const FChatSession* GetChatSession() const;
@@ -259,7 +271,7 @@ private:
 
 	TUniquePtr<FUserCharData> m_userData;
 	TArray<TUniquePtr<const FAiCharData>> m_characterList;
-	TMap<FString, TWeakObjectPtr<UVoxtaAudioPlayback>> m_registeredCharacterPlaybackHandlers;
+	TMap<FGuid, TWeakObjectPtr<UVoxtaAudioPlayback>> m_registeredCharacterPlaybackHandlers;
 	TUniquePtr<FChatSession> m_chatSession;
 	FString m_hostAddress;
 	uint16 m_hostPort;
@@ -340,15 +352,6 @@ private:
 #pragma endregion
 
 	/**
-	 * Fetch the immutable UniquePtr to the Ai Character data struct that matches the given charId.
-	 *
-	 * @param charId The Id of the Ai Character that you want to retrieve.
-	 *
-	 * @return An immutable UniquePtr to the immutable Ai Character data struct, or nullptr if it was not found.
-	 */
-	const TUniquePtr<const FAiCharData>* GetAiCharacterDataById(const FString& charId) const;
-
-	/**
 	 * Fetches a raw pointer to the ChatMessage that maches the id given in the parameters.
 	 *
 	 * Note: The text & audio in this data is not guarenteed to be complete. Be aware that only after the
@@ -358,7 +361,7 @@ private:
 	 *
 	 * @return A raw pointer to the chatmessage, or nullptr if it was not found.
 	 */
-	FChatMessage* GetChatMessageById(const FString& messageId) const;
+	FChatMessage* GetChatMessageById(const FGuid& messageId) const;
 
 	/**
 	 * Update the internal 'current state' to a new state.

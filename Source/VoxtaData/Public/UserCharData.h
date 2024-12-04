@@ -24,13 +24,12 @@ public:
 	/**
 	 * Create an instance of the datacontainer for the User.
 	 *
-	 * @param id The id (guid in string version) that the VoxtaServer has assigned to the User.
+	 * @param id The id that the VoxtaServer has assigned to the User.
 	 * @param name The name of the User, as reported by VoxtaServer
 	 */
-	explicit FUserCharData(FStringView id, FStringView name) :
+	explicit FUserCharData(FGuid id, FStringView name) :
 		FBaseCharData(id, name)
-	{
-	}
+	{}
 
 	/** Default constructor, should not be used manually, but is enforced by Unreal */
 	explicit FUserCharData() : FBaseCharData() {}

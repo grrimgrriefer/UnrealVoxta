@@ -18,10 +18,10 @@ struct FChatMessage
 #pragma region public API
 public:
 	/**  @return Immutable reference to the VoxtaServer assigned id of this message. */
-	const FString& GetMessageId() const { return m_messageId; };
+	const FGuid& GetMessageId() const { return m_messageId; };
 
 	/**  @return Immutable reference to the VoxtaServer assigned id of the character who said this message. */
-	FStringView GetCharId() const { return m_charId; };
+	const FGuid& GetCharId() const { return m_charId; };
 
 	/**  @return Immutable reference to the complete text (so far) of this message. */
 	FStringView GetTextContent() const { return m_text; };
@@ -54,11 +54,10 @@ public:
 	 * @param messageId The VoxtaServer assigned id of this message.
 	 * @param charId The VoxtasServer assigne id of the character that says this message.
 	 */
-	explicit FChatMessage(FStringView messageId, FStringView charId) :
+	explicit FChatMessage(FGuid messageId, FGuid charId) :
 		m_messageId(messageId),
 		m_charId(charId)
-	{
-	}
+	{}
 
 	/** Default constructor, should not be used manually, but is enforced by Unreal */
 	explicit FChatMessage() {};
@@ -70,10 +69,10 @@ private:
 	FString m_text;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Message ID"))
-	FString m_messageId;
+	FGuid m_messageId;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Character ID"))
-	FString m_charId;
+	FGuid m_charId;
 
 	TArray<FString> m_audioUrls;
 };

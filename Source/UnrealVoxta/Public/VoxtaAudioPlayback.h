@@ -27,10 +27,10 @@ class UNREALVOXTA_API UVoxtaAudioPlayback : public UAudioComponent, public IA2FW
 
 #pragma region delegate declarations
 public:
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaMessageAudioPlaybackCompleted, const FString&, messageId);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaMessageAudioPlaybackCompleted, const FGuid&, messageId);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FVoxtaMessageAudioChunkReadyForCustomPlayback, const TArray<uint8>&, rawBytes, const USoundWaveProcedural*, processedSoundWave, const FGuid&, audioChunkGuid);
 
-	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaMessageAudioPlaybackCompletedNative, const FString&);
+	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaMessageAudioPlaybackCompletedNative, const FGuid&);
 	DECLARE_MULTICAST_DELEGATE_ThreeParams(FVoxtaMessageAudioChunkReadyForCustomPlaybackNative, const TArray<uint8>&, const USoundWaveProcedural*, const FGuid&);
 #pragma endregion
 
@@ -63,7 +63,7 @@ public:
 	 * @param characterId The ID of the character for which this component will be playing the audio.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
-	void Initialize(const FString& characterId);
+	void Initialize(const FGuid& characterId);
 
 	/**
 	 * Configures the component so it only will playback messages for the specific character.
@@ -72,7 +72,7 @@ public:
 	 * @param characterId The ID of the character for which this component will be playing the audio.
 	 * @param lipSyncType The type of lipsync this character should have.
 	 */
-	void Initialize(const FString& characterId, LipSyncType lipSyncType);
+	void Initialize(const FGuid& characterId, LipSyncType lipSyncType);
 
 	/**
 	 * Notify that the Audio is done with playback. Due to the unpredictable nature of the blueprint, we rely on
@@ -145,8 +145,8 @@ private:
 	UObject* m_lipSyncHandler;
 
 	UVoxtaClient* m_clientReference;
-	FString m_characterId;
-	FString m_currentlyPlayingMessageId;
+	FGuid m_characterId;
+	FGuid m_currentlyPlayingMessageId;
 	TArray<TSharedPtr<MessageChunkAudioContainer>> m_orderedAudio;
 
 	FDelegateHandle m_playbackFinishedHandle;

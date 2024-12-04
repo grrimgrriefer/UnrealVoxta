@@ -83,8 +83,7 @@ TUniquePtr<ServerResponseWelcome> VoxtaApiResponseHandler::GetWelcomeResponse(
 	TMap<FString, FSignalRValue> user = serverResponseData[EASY_STRING("user")].AsObject();
 	//FString voxtaServerVersion = serverResponseData[EASY_STRING("voxtaServerVersion")].AsString();
 	//FString apiVersion = serverResponseData[EASY_STRING("apiVersion")].AsString();
-
-	return MakeUnique<ServerResponseWelcome>(FUserCharData(user[EASY_STRING("id")].AsString(),
+	return MakeUnique<ServerResponseWelcome>(FUserCharData(GetStringAsGuid(user[EASY_STRING("id")]),
 		user[EASY_STRING("name")].AsString()));
 }
 
@@ -98,7 +97,7 @@ TUniquePtr<ServerResponseCharacterList> VoxtaApiResponseHandler::GetCharacterLis
 	{
 		const TMap<FString, FSignalRValue>& characterData = charElement.AsObject();
 		chars.Emplace(FAiCharData(
-			characterData[EASY_STRING("id")].AsString(),
+			GetStringAsGuid(characterData[EASY_STRING("id")]),
 			characterData[EASY_STRING("name")].AsString(),
 			characterData.Contains(EASY_STRING("creatorNotes"))
 			? characterData[EASY_STRING("creatorNotes")].AsString() : EMPTY_STRING,
@@ -109,7 +108,7 @@ TUniquePtr<ServerResponseCharacterList> VoxtaApiResponseHandler::GetCharacterLis
 			characterData.Contains(EASY_STRING("thumbnailUrl"))
 			? characterData[EASY_STRING("thumbnailUrl")].AsString() : EMPTY_STRING,
 			characterData.Contains(EASY_STRING("packageId"))
-			? characterData[EASY_STRING("packageId")].AsString() : EMPTY_STRING,
+			? GetStringAsGuid(characterData[EASY_STRING("packageId")]) : FGuid(),
 			characterData.Contains(EASY_STRING("packageName"))
 			? characterData[EASY_STRING("packageName")].AsString() : EMPTY_STRING));
 	}
@@ -124,7 +123,7 @@ TUniquePtr<ServerResponseContextUpdated> VoxtaApiResponseHandler::GetContextUpda
 
 	return MakeUnique<ServerResponseContextUpdated>(
 		contextValue,
-		serverResponseData[EASY_STRING("sessionId")].AsString());
+		GetStringAsGuid(serverResponseData[EASY_STRING("sessionId")]));
 }
 
 TUniquePtr<ServerResponseChatStarted> VoxtaApiResponseHandler::GetChatStartedResponse(
@@ -133,12 +132,12 @@ TUniquePtr<ServerResponseChatStarted> VoxtaApiResponseHandler::GetChatStartedRes
 	// Participants
 	TMap<FString, FSignalRValue> user = serverResponseData[EASY_STRING("user")].AsObject();
 	TArray<FSignalRValue> charIdArray = serverResponseData[EASY_STRING("characters")].AsArray();
-	TArray<FString> chars;
+	TArray<FGuid> chars;
 	chars.Reserve(charIdArray.Num());
 	for (const FSignalRValue& charElement : charIdArray)
 	{
 		const TMap<FString, FSignalRValue>& characterData = charElement.AsObject();
-		chars.Emplace(characterData[EASY_STRING("id")].AsString());
+		chars.Emplace(GetStringAsGuid(characterData[EASY_STRING("id")]));
 	}
 
 	// Services
@@ -156,7 +155,7 @@ TUniquePtr<ServerResponseChatStarted> VoxtaApiResponseHandler::GetChatStartedRes
 		{
 			const TMap<FString, FSignalRValue>& serviceData = servicesMap[stringValue].AsObject();
 			services.Emplace(enumType, VoxtaServiceData(enumType, serviceData[EASY_STRING("serviceName")].AsString(),
-				serviceData[EASY_STRING("serviceId")].AsString()));
+				GetStringAsGuid(serviceData[EASY_STRING("serviceId")])));
 		}
 	}
 
@@ -165,9 +164,9 @@ TUniquePtr<ServerResponseChatStarted> VoxtaApiResponseHandler::GetChatStartedRes
 	FString contextValue = FString();
 	ProcessContextData(context, contextValue);
 
-	return MakeUnique<ServerResponseChatStarted>(user[EASY_STRING("id")].AsString(),
-		chars, services, serverResponseData[EASY_STRING("chatId")].AsString(),
-		serverResponseData[EASY_STRING("sessionId")].AsString(),
+	return MakeUnique<ServerResponseChatStarted>(GetStringAsGuid(user[EASY_STRING("id")]),
+		chars, services, GetStringAsGuid(serverResponseData[EASY_STRING("chatId")]),
+		GetStringAsGuid(serverResponseData[EASY_STRING("sessionId")]),
 		contextValue);
 }
 
@@ -175,18 +174,18 @@ TUniquePtr<ServerResponseChatMessageStart> VoxtaApiResponseHandler::GetReplyStar
 	const TMap<FString, FSignalRValue>& serverResponseData) const
 {
 	return MakeUnique<ServerResponseChatMessageStart>(
-		serverResponseData[EASY_STRING("messageId")].AsString(),
-		serverResponseData[EASY_STRING("senderId")].AsString(),
-		serverResponseData[EASY_STRING("sessionId")].AsString());
+		GetStringAsGuid(serverResponseData[EASY_STRING("messageId")]),
+		GetStringAsGuid(serverResponseData[EASY_STRING("senderId")]),
+		GetStringAsGuid(serverResponseData[EASY_STRING("sessionId")]));
 }
 
 TUniquePtr<ServerResponseChatMessageChunk> VoxtaApiResponseHandler::GetReplyChunkReponseResponse(
 	const TMap<FString, FSignalRValue>& serverResponseData) const
 {
 	return MakeUnique<ServerResponseChatMessageChunk>(
-		serverResponseData[EASY_STRING("messageId")].AsString(),
-		serverResponseData[EASY_STRING("senderId")].AsString(),
-		serverResponseData[EASY_STRING("sessionId")].AsString(),
+		GetStringAsGuid(serverResponseData[EASY_STRING("messageId")]),
+		GetStringAsGuid(serverResponseData[EASY_STRING("senderId")]),
+		GetStringAsGuid(serverResponseData[EASY_STRING("sessionId")]),
 		static_cast<int>(serverResponseData[EASY_STRING("startIndex")].AsDouble()),
 		static_cast<int>(serverResponseData[EASY_STRING("endIndex")].AsDouble()),
 		serverResponseData[EASY_STRING("text")].AsString(),
@@ -198,27 +197,27 @@ TUniquePtr<ServerResponseChatMessageEnd> VoxtaApiResponseHandler::GetReplyEndRep
 	const TMap<FString, FSignalRValue>& serverResponseData) const
 {
 	return MakeUnique<ServerResponseChatMessageEnd>(
-		serverResponseData[EASY_STRING("messageId")].AsString(),
-		serverResponseData[EASY_STRING("senderId")].AsString(),
-		serverResponseData[EASY_STRING("sessionId")].AsString());
+		GetStringAsGuid(serverResponseData[EASY_STRING("messageId")]),
+		GetStringAsGuid(serverResponseData[EASY_STRING("senderId")]),
+		GetStringAsGuid(serverResponseData[EASY_STRING("sessionId")]));
 }
 
 TUniquePtr<ServerResponseChatMessageCancelled> VoxtaApiResponseHandler::GetReplyCancelledResponse(
 	const TMap<FString, FSignalRValue>& serverResponseData) const
 {
 	return MakeUnique<ServerResponseChatMessageCancelled>(
-		serverResponseData[EASY_STRING("messageId")].AsString(),
-		serverResponseData[EASY_STRING("sessionId")].AsString());
+		GetStringAsGuid(serverResponseData[EASY_STRING("messageId")]),
+		GetStringAsGuid(serverResponseData[EASY_STRING("sessionId")]));
 }
 
 TUniquePtr<ServerResponseChatUpdate> VoxtaApiResponseHandler::GetChatUpdateResponse(
 	const TMap<FString, FSignalRValue>& serverResponseData) const
 {
 	return MakeUnique<ServerResponseChatUpdate>(
-		serverResponseData[EASY_STRING("messageId")].AsString(),
-		serverResponseData[EASY_STRING("senderId")].AsString(),
+		GetStringAsGuid(serverResponseData[EASY_STRING("messageId")]),
+		GetStringAsGuid(serverResponseData[EASY_STRING("senderId")]),
 		serverResponseData[EASY_STRING("text")].AsString(),
-		serverResponseData[EASY_STRING("sessionId")].AsString());
+		GetStringAsGuid(serverResponseData[EASY_STRING("sessionId")]));
 }
 
 TUniquePtr<ServerResponseSpeechTranscription> VoxtaApiResponseHandler::GetSpeechRecognitionPartial(
@@ -267,4 +266,16 @@ void VoxtaApiResponseHandler::ProcessContextData(TMap<FString, FSignalRValue> co
 			outContextValue = contextData[EASY_STRING("text")].AsString();
 		}
 	}
+}
+
+FGuid VoxtaApiResponseHandler::GetStringAsGuid(const FSignalRValue& input) const
+{
+	return GetStringAsGuid(input.AsString());
+}
+
+FGuid VoxtaApiResponseHandler::GetStringAsGuid(const FString& input) const
+{
+	FGuid userID;
+	bool success = FGuid::Parse(input, userID);
+	return userID;
 }

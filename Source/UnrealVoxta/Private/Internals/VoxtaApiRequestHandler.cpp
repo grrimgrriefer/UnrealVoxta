@@ -35,18 +35,18 @@ FSignalRValue VoxtaApiRequestHandler::GetLoadScenariosListData() const
 	});
 }
 
-FSignalRValue VoxtaApiRequestHandler::GetLoadChatsListData(const FString& characterId, const FString& scenarioId) const
+FSignalRValue VoxtaApiRequestHandler::GetLoadChatsListData(const FGuid& characterId, const FGuid& scenarioId) const
 {
 	TMap<FString, FSignalRValue> requestData = TMap<FString, FSignalRValue>{
 		{ EASY_STRING("$type"), SIGNALR_STRING("loadChatsList") },
-		{ EASY_STRING("characterId"), FSignalRValue(characterId) }
+		{ EASY_STRING("characterId"), FSignalRValue(GuidToString(characterId)) }
 	};
 
-	if (!scenarioId.IsEmpty())
+	if (scenarioId.IsValid())
 	{
 		requestData.Add(
 		{
-			EASY_STRING("scenarioId"), FSignalRValue(scenarioId)
+			EASY_STRING("scenarioId"), FSignalRValue(GuidToString(scenarioId))
 		});
 	}
 
@@ -58,7 +58,7 @@ FSignalRValue VoxtaApiRequestHandler::GetStartChatRequestData(const FAiCharData*
 	TMap<FString, FSignalRValue> requestData = TMap<FString, FSignalRValue>{
 		{ EASY_STRING("$type"), SIGNALR_STRING("startChat") },
 		{ EASY_STRING("contextKey"), FSignalRValue(VOXTA_CONTEXT_KEY) },
-		{ EASY_STRING("characterIds"), FSignalRValue(TArray<FSignalRValue> { FSignalRValue(charData->GetId()) }) }
+		{ EASY_STRING("characterIds"), FSignalRValue(TArray<FSignalRValue> { FSignalRValue(GuidToString(charData->GetId())) }) }
 	};
 
 	if (!context.IsEmpty())
@@ -95,35 +95,35 @@ FSignalRValue VoxtaApiRequestHandler::GetStopChatRequestData() const
 	});
 }
 
-FSignalRValue VoxtaApiRequestHandler::GetSendUserMessageData(const FString& sessionId,
+FSignalRValue VoxtaApiRequestHandler::GetSendUserMessageData(const FGuid& sessionId,
 	const FString& userInputText, bool generateReply, bool characterActionInference) const
 {
 	return FSignalRValue(TMap<FString, FSignalRValue> {
 		{ EASY_STRING("$type"), SIGNALR_STRING("send") },
-		{ EASY_STRING("sessionId"), FSignalRValue(sessionId) },
+		{ EASY_STRING("sessionId"), FSignalRValue(GuidToString(sessionId)) },
 		{ EASY_STRING("text"), FSignalRValue(userInputText) },
 		{ EASY_STRING("doReply"), generateReply ? SIGNALR_STRING("true") : SIGNALR_STRING("false") },
 		{ EASY_STRING("doCharacterActionInference"), characterActionInference ? SIGNALR_STRING("true") : SIGNALR_STRING("false") }
 	});
 }
 
-FSignalRValue VoxtaApiRequestHandler::GetNotifyAudioPlaybackCompletedData(const FString& sessionId,
-	const FString& messageId) const
+FSignalRValue VoxtaApiRequestHandler::GetNotifyAudioPlaybackCompletedData(const FGuid& sessionId,
+	const FGuid& messageId) const
 {
 	return FSignalRValue(TMap<FString, FSignalRValue> {
 		{ EASY_STRING("$type"), SIGNALR_STRING("speechPlaybackComplete") },
-		{ EASY_STRING("sessionId"), FSignalRValue(sessionId) },
-		{ EASY_STRING("messageId"), FSignalRValue(messageId) }
+		{ EASY_STRING("sessionId"), FSignalRValue(GuidToString(sessionId)) },
+		{ EASY_STRING("messageId"), FSignalRValue(GuidToString(messageId)) }
 	});
 }
 
-FSignalRValue VoxtaApiRequestHandler::GetNotifyAudioPlaybackStartedData(const FString& sessionId,
-	const FString& messageId, int startIndex, int endIndex, double duration) const
+FSignalRValue VoxtaApiRequestHandler::GetNotifyAudioPlaybackStartedData(const FGuid& sessionId,
+	const FGuid& messageId, int startIndex, int endIndex, double duration) const
 {
 	return FSignalRValue(TMap<FString, FSignalRValue> {
 		{ EASY_STRING("$type"), SIGNALR_STRING("speechPlaybackStart") },
-		{ EASY_STRING("sessionId"), FSignalRValue(sessionId) },
-		{ EASY_STRING("messageId"), FSignalRValue(messageId) },
+		{ EASY_STRING("sessionId"), FSignalRValue(GuidToString(sessionId)) },
+		{ EASY_STRING("messageId"), FSignalRValue(GuidToString(messageId)) },
 		{ EASY_STRING("startIndex"), FSignalRValue(startIndex) },
 		{ EASY_STRING("endIndex"), FSignalRValue(endIndex) },
 		{ EASY_STRING("duration"), FSignalRValue(FString::Printf(TEXT("%.3f"), duration)) }
@@ -131,11 +131,11 @@ FSignalRValue VoxtaApiRequestHandler::GetNotifyAudioPlaybackStartedData(const FS
 }
 
 FSignalRValue VoxtaApiRequestHandler::GetUpdateContextRequestData(const TArray<FString>& actions,
-	const FString& sessionId, const FString& context, const FString& contextKey) const
+	const FGuid& sessionId, const FString& context, const FString& contextKey) const
 {
 	TMap<FString, FSignalRValue> requestData = TMap<FString, FSignalRValue>{
 		{ EASY_STRING("$type"), SIGNALR_STRING("updateContext") },
-		{ EASY_STRING("sessionId"), FSignalRValue(sessionId) },
+		{ EASY_STRING("sessionId"), FSignalRValue(GuidToString(sessionId)) },
 		{ EASY_STRING("contextKey"), FSignalRValue(contextKey) }
 	};
 
@@ -158,33 +158,33 @@ FSignalRValue VoxtaApiRequestHandler::GetUpdateContextRequestData(const TArray<F
 	return FSignalRValue(requestData);
 }
 
-FSignalRValue VoxtaApiRequestHandler::GetRequestCharacterSpeechRequestData(const FString& sessionId,
+FSignalRValue VoxtaApiRequestHandler::GetRequestCharacterSpeechRequestData(const FGuid& sessionId,
 	const FString& text) const
 {
 	return FSignalRValue(TMap<FString, FSignalRValue> {
 		{ EASY_STRING("$type"), SIGNALR_STRING("characterSpeechRequest") },
-		{ EASY_STRING("sessionId"), FSignalRValue(sessionId) },
+		{ EASY_STRING("sessionId"), FSignalRValue(GuidToString(sessionId)) },
 		{ EASY_STRING("text"), FSignalRValue(text) }
 	});
 }
 
-FSignalRValue VoxtaApiRequestHandler::SendRevertLastSentMessage(const FString& sessionId) const
+FSignalRValue VoxtaApiRequestHandler::SendRevertLastSentMessage(const FGuid& sessionId) const
 {
 	return FSignalRValue(TMap<FString, FSignalRValue> {
 		{ EASY_STRING("$type"), SIGNALR_STRING("revert") },
-		{ EASY_STRING("sessionId"), FSignalRValue(sessionId) }
+		{ EASY_STRING("sessionId"), FSignalRValue(GuidToString(sessionId)) }
 	});
 }
 
-FSignalRValue VoxtaApiRequestHandler::SendDeleteChat(const FString& chatId) const
+FSignalRValue VoxtaApiRequestHandler::SendDeleteChat(const FGuid& chatId) const
 {
 	return FSignalRValue(TMap<FString, FSignalRValue> {
 		{ EASY_STRING("$type"), SIGNALR_STRING("deleteChat") },
-		{ EASY_STRING("chatId"), FSignalRValue(chatId) }
+		{ EASY_STRING("chatId"), FSignalRValue(GuidToString(chatId)) }
 	});
 }
 
-FSignalRValue VoxtaApiRequestHandler::SetFlags(const FString& sessionId, const TArray<FString>& flags) const
+FSignalRValue VoxtaApiRequestHandler::SetFlags(const FGuid& sessionId, const TArray<FString>& flags) const
 {
 	TArray<FSignalRValue> serializedFlags = TArray<FSignalRValue>();
 	for (int i = 0; i < flags.Num(); i++)
@@ -194,7 +194,7 @@ FSignalRValue VoxtaApiRequestHandler::SetFlags(const FString& sessionId, const T
 
 	return FSignalRValue(TMap<FString, FSignalRValue> {
 		{ EASY_STRING("$type"), SIGNALR_STRING("updateContext") },
-		{ EASY_STRING("sessionId"), FSignalRValue(sessionId) },
+		{ EASY_STRING("sessionId"), FSignalRValue(GuidToString(sessionId)) },
 		{ EASY_STRING("setFlags"), FSignalRValue(serializedFlags) }
 	});
 }

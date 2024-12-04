@@ -17,14 +17,11 @@ class FSignalRValue;
 
 /** Helper function for SIGNALR_STRINGVIEW macro */
 template <typename T>
-FSignalRValue ConvertToSignalRValue(T&& value)
-{
-	static_assert(std::is_same<std::decay_t<T>, FStringView>::value, "SIGNALR_STRINGVIEW macro can only be used with "
-		"FStringView. Please use SIGNALR_STRING for regular string literals");
-	return FSignalRValue(FString(value));
-}
+FSignalRValue ConvertToSignalRValue(T&& value);
 
 DECLARE_LOG_CATEGORY_EXTERN(VoxtaLog, Log, All);
 
 const FString VOXTA_CONTEXT_KEY = FString("UnrealVoxta - SimpleChat");
 const FString EMPTY_STRING = FString(TEXT(""));
+
+VOXTADATA_API FString GuidToString(const FGuid& input);

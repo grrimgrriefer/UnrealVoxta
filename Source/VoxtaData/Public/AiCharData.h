@@ -31,13 +31,13 @@ public:
 	 * @param isExplicitContent If VoxtaServer has this character marked for explicit content or not.
 	 * @param isFavorite If the user has favorited this specific character in Voxta.
 	 */
-	explicit FAiCharData(FStringView id,
+	explicit FAiCharData(FGuid id,
 		FStringView name,
 		FStringView creatorNotes,
 		bool isExplicitContent,
 		bool isFavorite,
 		FStringView thumbnailUrl,
-		FStringView packageId,
+		FGuid packageId,
 		FStringView packageName) :
 		FBaseCharData(id, name),
 		m_creatorNotes(creatorNotes),
@@ -45,7 +45,7 @@ public:
 		m_isFavorite(isFavorite),
 		m_thumbnailUrl(thumbnailUrl),
 		m_packageId(packageId),
-		m_packageName(packageId)
+		m_packageName(packageName)
 	{}
 
 	/** Default constructor, should not be used manually, but is enforced by Unreal */
@@ -58,7 +58,7 @@ private:
 	bool m_allowedExplicitContent = false;
 	bool m_isFavorite = false;
 	FString m_thumbnailUrl = EMPTY_STRING;
-	FString m_packageId = EMPTY_STRING;
+	FGuid m_packageId = FGuid();
 	FString m_packageName = EMPTY_STRING;
 #pragma endregion
 };

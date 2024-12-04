@@ -14,11 +14,11 @@ struct ServerResponseChatStarted : public ServerResponseBase
 #pragma region public API
 public:
 	/** Create a deserialized version of the VoxtaServer response represents the 'ChatStarted' data. */
-	explicit ServerResponseChatStarted(FStringView userId,
-			const TArray<FString>& characterIds,
+	explicit ServerResponseChatStarted(FGuid userId,
+			const TArray<FGuid>& characterIds,
 			const TMap<const VoxtaServiceData::ServiceType, const VoxtaServiceData>& services,
-			FStringView chatId,
-			FStringView sessionId,
+			FGuid chatId,
+			FGuid sessionId,
 			FStringView contextText) : ServerResponseBase(ServerResponseType::ChatStarted),
 		CHARACTER_IDS(characterIds),
 		SERVICES(services),
@@ -31,11 +31,11 @@ public:
 
 #pragma region data
 public:
-	const TArray<FString> CHARACTER_IDS;
+	const TArray<FGuid> CHARACTER_IDS;
 	const TMap<const VoxtaServiceData::ServiceType, const VoxtaServiceData> SERVICES;
-	const FString USER_ID;
-	const FString CHAT_ID;
-	const FString SESSION_ID;
+	const FGuid USER_ID;
+	const FGuid CHAT_ID;
+	const FGuid SESSION_ID;
 	const FString CONTEXT_TEXT;
 #pragma endregion
 };

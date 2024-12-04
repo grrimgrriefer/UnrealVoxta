@@ -13,17 +13,16 @@ struct ServerResponseChatMessageStart : public ServerResponseChatMessageBase
 #pragma region public API
 public:
 	/** Create a deserialized version of the VoxtaServer response represents the 'MessageStart' data. */
-	explicit ServerResponseChatMessageStart(FStringView messageId,
-			FStringView senderId,
-			FStringView sessionId) :
+	explicit ServerResponseChatMessageStart(FGuid messageId,
+			FGuid senderId,
+			FGuid sessionId) :
 		ServerResponseChatMessageBase(ChatMessageType::MessageStart, messageId, sessionId),
 		SENDER_ID(senderId)
-	{
-	}
+	{}
 #pragma endregion
 
 #pragma region data
 public:
-	const FString SENDER_ID;
+	const FGuid SENDER_ID;
 #pragma endregion
 };

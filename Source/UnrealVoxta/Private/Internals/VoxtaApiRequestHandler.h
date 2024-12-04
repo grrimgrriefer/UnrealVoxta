@@ -35,7 +35,7 @@ public:
 	FSignalRValue GetLoadScenariosListData() const;
 
 	// TODO
-	FSignalRValue GetLoadChatsListData(const FString& characterId, const FString& scenarioId = FString()) const;
+	FSignalRValue GetLoadChatsListData(const FGuid& characterId, const FGuid& scenarioId = FGuid()) const;
 
 	/**
 	 * Retrieve a SignalR formatted message to request a new chat session to be started with a specific character.
@@ -62,11 +62,11 @@ public:
 	 *
 	 * @return The SignalR formatted message containing the request.
 	 */
-	FSignalRValue GetSendUserMessageData(const FString& sessionId, const FString& userInputText, bool generateReply,
+	FSignalRValue GetSendUserMessageData(const FGuid& sessionId, const FString& userInputText, bool generateReply,
 		bool characterActionInference) const;
 
 	// TODO
-	FSignalRValue GetNotifyAudioPlaybackStartedData(const FString& sessionId, const FString& messageId, int startIndex,
+	FSignalRValue GetNotifyAudioPlaybackStartedData(const FGuid& sessionId, const FGuid& messageId, int startIndex,
 		int endIndex, double duration) const;
 
 	/**
@@ -78,22 +78,22 @@ public:
 	 *
 	 * @return The SignalR formatted message containing the request.
 	 */
-	FSignalRValue GetNotifyAudioPlaybackCompletedData(const FString& sessionId, const FString& messageId) const;
+	FSignalRValue GetNotifyAudioPlaybackCompletedData(const FGuid& sessionId, const FGuid& messageId) const;
 
 	// TODO
-	FSignalRValue GetUpdateContextRequestData(const TArray<FString>& actions, const FString& sessionId,
+	FSignalRValue GetUpdateContextRequestData(const TArray<FString>& actions, const FGuid& sessionId,
 		const FString& context, const FString& contextKey) const;
 
 	// TODO
-	FSignalRValue GetRequestCharacterSpeechRequestData(const FString& sessionId, const FString& text) const;
+	FSignalRValue GetRequestCharacterSpeechRequestData(const FGuid& sessionId, const FString& text) const;
 
 	// TODO
-	FSignalRValue SendRevertLastSentMessage(const FString& sessionId) const;
+	FSignalRValue SendRevertLastSentMessage(const FGuid& sessionId) const;
 
 	// TODO
-	FSignalRValue SendDeleteChat(const FString& chatId) const;
+	FSignalRValue SendDeleteChat(const FGuid& chatId) const;
 
 	// TODO
-	FSignalRValue SetFlags(const FString& sessionId, const TArray<FString>& flags) const;
+	FSignalRValue SetFlags(const FGuid& sessionId, const TArray<FString>& flags) const;
 #pragma endregion
 };

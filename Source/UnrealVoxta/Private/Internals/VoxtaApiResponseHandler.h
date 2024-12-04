@@ -107,4 +107,8 @@ private:
 	/** Helper function to parse Context data */
 	void ProcessContextData(TMap<FString, FSignalRValue> contextMainObject, FString& outContextValue) const;
 #pragma endregion
+
+private:
+	FGuid GetStringAsGuid(const FSignalRValue& input) const;
+	FGuid GetStringAsGuid(const FString& input) const;
 };

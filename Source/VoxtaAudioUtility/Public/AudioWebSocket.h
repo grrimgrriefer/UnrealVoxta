@@ -42,7 +42,7 @@ public:
 	 *
 	 * @return False if we failed to create the websocket instance.
 	 */
-	bool Connect(const FString& sessionId);
+	bool Connect(const FGuid& sessionId);
 
 	/**
 	 * Manually close the websocket connection.
@@ -74,6 +74,6 @@ private:
 	TSharedPtr<IWebSocket> m_socketConnection;
 	FString m_serverIP;
 	uint16 m_serverPort;
-	FString m_sessionId;
+	FGuid m_sessionId;
 #pragma endregion
 };

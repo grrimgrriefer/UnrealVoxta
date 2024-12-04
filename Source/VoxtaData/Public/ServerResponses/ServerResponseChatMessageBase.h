@@ -27,19 +27,18 @@ public:
 public:
 	explicit ServerResponseChatMessageBase(
 		ChatMessageType messageType,
-		FStringView messageId,
-		FStringView sessionId) : ServerResponseBase(ServerResponseType::ChatMessage),
+		FGuid messageId,
+		FGuid sessionId) : ServerResponseBase(ServerResponseType::ChatMessage),
 		MESSAGE_TYPE(messageType),
 		MESSAGE_ID(messageId),
 		SESSION_ID(sessionId)
-	{
-	}
+	{}
 #pragma endregion
 
 #pragma region data
 public:
 	const ChatMessageType MESSAGE_TYPE;
-	const FString MESSAGE_ID;
-	const FString SESSION_ID;
+	const FGuid MESSAGE_ID;
+	const FGuid SESSION_ID;
 #pragma endregion
 };

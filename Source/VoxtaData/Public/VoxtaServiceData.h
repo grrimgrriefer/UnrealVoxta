@@ -40,18 +40,17 @@ public:
 	 */
 	explicit VoxtaServiceData(ServiceType type,
 			FStringView name,
-			FStringView id) :
+			FGuid id) :
 		SERVICE_TYPE(type),
 		SERVICE_NAME(name),
 		SERVICE_ID(id)
-	{
-	}
+	{}
 #pragma endregion
 
 #pragma region data
 public:
 	const ServiceType SERVICE_TYPE;
 	const FString SERVICE_NAME;
-	const FString SERVICE_ID;
+	const FGuid SERVICE_ID;
 #pragma endregion
 };

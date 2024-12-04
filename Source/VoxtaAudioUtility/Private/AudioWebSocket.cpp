@@ -10,12 +10,12 @@ AudioWebSocket::AudioWebSocket(const FString& serverIP, uint16 serverPort) :
 	m_serverPort(serverPort)
 {}
 
-bool AudioWebSocket::Connect(const FString& sessionId)
+bool AudioWebSocket::Connect(const FGuid& sessionId)
 {
 	// websocket url might change in future versions, this is still correct as of beta.v132
 	m_sessionId = sessionId;
 	const FString uri = FString::Format(*FString(TEXT("ws://{0}:{1}/ws/audio/input/stream?sessionId={2}")),
-		{ m_serverIP, m_serverPort, m_sessionId });
+		{ m_serverIP, m_serverPort, GuidToString(m_sessionId) });
 	m_socketConnection = FWebSocketsModule::Get().CreateWebSocket(uri, FString(), TMap<FString, FString>());
 
 	if (m_socketConnection.IsValid())

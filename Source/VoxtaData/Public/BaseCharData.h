@@ -22,7 +22,7 @@ struct VOXTADATA_API FBaseCharData
 #pragma region public API
 public:
 	/**  @return Immutable reference to the VoxtaServer assigned id of this character. */
-	const FString& GetId() const { return m_id; }
+	const FGuid& GetId() const { return m_id; }
 
 	/**  @return Immutable reference to the name of the character who said this message. */
 	FStringView GetName() const { return m_name; }
@@ -33,11 +33,10 @@ public:
 	 * @param id The id (guid in string version) that the VoxtaServer has assigned to this character.
 	 * @param name The name of this character, as reported by VoxtaServer
 	 */
-	explicit FBaseCharData(FStringView id, FStringView name) :
+	explicit FBaseCharData(FGuid id, FStringView name) :
 		m_id(id),
 		m_name(name)
-	{
-	}
+	{}
 
 	/** Default constructor, should not be used manually, but is enforced by Unreal */
 	explicit FBaseCharData() {};
@@ -46,7 +45,7 @@ public:
 #pragma region data
 private:
 	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Character ID"))
-	FString m_id;
+	FGuid m_id;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Name"))
 	FString m_name;

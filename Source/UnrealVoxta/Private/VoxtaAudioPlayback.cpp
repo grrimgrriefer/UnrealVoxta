@@ -13,7 +13,7 @@
 #include "Sound/SoundWaveProcedural.h"
 #include "Logging/StructuredLog.h"
 
-void UVoxtaAudioPlayback::Initialize(const FString& characterId)
+void UVoxtaAudioPlayback::Initialize(const FGuid& characterId)
 {
 	m_characterId = characterId;
 	m_clientReference = GetWorld()->GetGameInstance()->GetSubsystem<UVoxtaClient>();
@@ -36,7 +36,7 @@ void UVoxtaAudioPlayback::Initialize(const FString& characterId)
 		characterId, FString::Format(*FString(TEXT("http://{0}:{1}/")), { m_hostAddress, m_hostPort }));
 }
 
-void UVoxtaAudioPlayback::Initialize(const FString& characterId, LipSyncType lipSyncType)
+void UVoxtaAudioPlayback::Initialize(const FGuid& characterId, LipSyncType lipSyncType)
 {
 	m_lipSyncType = lipSyncType;
 	Initialize(characterId);
@@ -302,7 +302,7 @@ void UVoxtaAudioPlayback::Cleanup()
 	UE_LOGFMT(VoxtaLog, Log, "Cleaning up all memory usage for audio related to audio for message with id: {0}.",
 		m_currentlyPlayingMessageId);
 
-	m_currentlyPlayingMessageId = FString(TEXT("NULL"));
+	m_currentlyPlayingMessageId = FGuid();
 	m_currentAudioClipIndex = 0;
 	m_internalState = AudioPlaybackInternalState::Done;
 	for (TSharedPtr<MessageChunkAudioContainer> audioChunk : m_orderedAudio)
