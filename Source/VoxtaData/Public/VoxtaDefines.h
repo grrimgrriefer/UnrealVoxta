@@ -17,7 +17,7 @@ class FSignalRValue;
 
 /** Helper function for SIGNALR_STRINGVIEW macro */
 template <typename T>
-FSignalRValue ConvertToSignalRValue(T&& value);
+FSignalRValue ConvertToSignalRValue(const T& value);
 
 DECLARE_LOG_CATEGORY_EXTERN(VoxtaLog, Log, All);
 

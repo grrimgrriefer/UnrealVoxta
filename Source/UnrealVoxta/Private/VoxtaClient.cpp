@@ -116,7 +116,7 @@ void UVoxtaClient::StartChatWithCharacter(const FGuid& charId, const FString& co
 	if (m_currentState != VoxtaClientState::Idle)
 	{
 		UE_LOGFMT(VoxtaLog, Error, "Cannot start a chat as the current state: {0}, is not Idle. (requested character {1})",
-			UEnum::GetValueAsString(m_currentState), charId);
+			UEnum::GetValueAsString(m_currentState), GuidToString(charId));
 		return;
 	}
 	const TUniquePtr<const FAiCharData>* character = GetAiCharacterDataById(charId);
@@ -128,7 +128,7 @@ void UVoxtaClient::StartChatWithCharacter(const FGuid& charId, const FString& co
 	else
 	{
 		UE_LOGFMT(VoxtaLog, Error, "Cannot start a chat with characterId {0} as it's not in the current character list.",
-			charId);
+			GuidToString(charId));
 	}
 }
 
@@ -152,11 +152,11 @@ void UVoxtaClient::NotifyAudioPlaybackComplete(const FGuid& messageId)
 	if (m_currentState != VoxtaClientState::AudioPlayback)
 	{
 		UE_LOGFMT(VoxtaLog, Error, "Tried to mark AudioPlayback as complete, but we weren't in the audioPlayback state,"
-			" actual state: {0}, message tried to mark as complete: {1}", UEnum::GetValueAsString(m_currentState), messageId);
+			" actual state: {0}, message tried to mark as complete: {1}", UEnum::GetValueAsString(m_currentState), GuidToString(messageId));
 		return;
 	}
 
-	UE_LOGFMT(VoxtaLog, Log, "Marking audio playback of message {0} complete.", messageId);
+	UE_LOGFMT(VoxtaLog, Log, "Marking audio playback of message {0} complete.", GuidToString(messageId));
 
 	SendMessageToServer(m_voxtaRequestApi->GetNotifyAudioPlaybackCompletedData(m_chatSession->GetSessionId(), messageId));
 	SetState(VoxtaClientState::WaitingForUserReponse);
@@ -168,7 +168,7 @@ bool UVoxtaClient::TryRegisterPlaybackHandler(const FGuid& characterId,
 	if (playbackHandler == nullptr)
 	{
 		UE_LOGFMT(VoxtaLog, Error, "You tried to register a Voxta AudioPlayback handler that was null, for the "
-			"character with id {0}.", characterId);
+			"character with id {0}.", GuidToString(characterId));
 		return false;
 	}
 
@@ -177,7 +177,7 @@ bool UVoxtaClient::TryRegisterPlaybackHandler(const FGuid& characterId,
 	{
 		UE_LOGFMT(VoxtaLog, Warning, "You tried to register a Voxta AudioPlayback handler for character {0}, but no "
 			"STT service is active on VoxtaServer. (make sure to have it enabled at start, runtime activation not yet "
-			"supported...)", characterId);
+			"supported...)", GuidToString(characterId));
 		return false;
 	}
 
@@ -185,12 +185,12 @@ bool UVoxtaClient::TryRegisterPlaybackHandler(const FGuid& characterId,
 	if (currentHandler == nullptr)
 	{
 		m_registeredCharacterPlaybackHandlers.Emplace(characterId, playbackHandler);
-		UE_LOGFMT(VoxtaLog, Log, "Voxta Audioplayback handler for character: {0} registered successfully.", characterId);
+		UE_LOGFMT(VoxtaLog, Log, "Voxta Audioplayback handler for character: {0} registered successfully.", GuidToString(characterId));
 
 		if (playbackHandler->GetLipSyncType() == LipSyncType::Audio2Face)
 		{
 			UE_LOGFMT(VoxtaLog, Log, "Voxta Audioplayback handler of character: {0} requires A2F, trying to establish "
-				"connection... hold on.", characterId);
+				"connection... hold on.", GuidToString(characterId));
 			m_A2FHandler->TryInitialize();
 		}
 
@@ -202,7 +202,7 @@ bool UVoxtaClient::TryRegisterPlaybackHandler(const FGuid& characterId,
 	{
 		UE_LOGFMT(VoxtaLog, Warning, "A Voxta Audioplayback handler for character: {0} already exists. "
 			"Multiple audio playback handlers for the same character is not supported... skipping registration.",
-			characterId);
+			GuidToString(characterId));
 		return false;
 	}
 }
@@ -212,13 +212,13 @@ bool UVoxtaClient::TryUnregisterPlaybackHandler(const FGuid& characterId)
 	int removedValues = m_registeredCharacterPlaybackHandlers.Remove(characterId);
 	if (removedValues > 0)
 	{
-		UE_LOGFMT(VoxtaLog, Log, "Voxta Audioplayback handler for character: {0} unregistered successfully.", characterId);
+		UE_LOGFMT(VoxtaLog, Log, "Voxta Audioplayback handler for character: {0} unregistered successfully.", GuidToString(characterId));
 		return true;
 	}
 	else
 	{
 		UE_LOGFMT(VoxtaLog, Warning, "Tried to remove Audioplayback handler for character: {0}, but none was registered",
-			characterId);
+			GuidToString(characterId));
 		return false;
 	}
 }

@@ -4,7 +4,7 @@
 
 /** Helper function for SIGNALR_STRINGVIEW macro */
 template <typename T>
-FSignalRValue ConvertToSignalRValue(T&& value)
+FSignalRValue ConvertToSignalRValue(const T& value)
 {
 	static_assert(std::is_same<std::decay_t<T>, FStringView>::value, "SIGNALR_STRINGVIEW macro can only be used with "
 		"FStringView. Please use SIGNALR_STRING for regular string literals");

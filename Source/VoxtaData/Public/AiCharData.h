@@ -31,13 +31,13 @@ public:
 	 * @param isExplicitContent If VoxtaServer has this character marked for explicit content or not.
 	 * @param isFavorite If the user has favorited this specific character in Voxta.
 	 */
-	explicit FAiCharData(FGuid id,
+	explicit FAiCharData(const FGuid& id,
 		FStringView name,
 		FStringView creatorNotes,
 		bool isExplicitContent,
 		bool isFavorite,
 		FStringView thumbnailUrl,
-		FGuid packageId,
+		const FGuid& packageId,
 		FStringView packageName) :
 		FBaseCharData(id, name),
 		m_creatorNotes(creatorNotes),

@@ -19,7 +19,7 @@ void UVoxtaAudioPlayback::Initialize(const FGuid& characterId)
 	m_clientReference = GetWorld()->GetGameInstance()->GetSubsystem<UVoxtaClient>();
 	if (!m_clientReference->TryRegisterPlaybackHandler(characterId, TWeakObjectPtr<UVoxtaAudioPlayback>(this)))
 	{
-		UE_LOGFMT(VoxtaLog, Error, "Failed to register a VoxtaPlayback handler for character: {0}", characterId);
+		UE_LOGFMT(VoxtaLog, Error, "Failed to register a VoxtaPlayback handler for character: {0}", GuidToString(characterId));
 		return;
 	}
 
@@ -33,7 +33,7 @@ void UVoxtaAudioPlayback::Initialize(const FGuid& characterId)
 	m_hostAddress = m_clientReference->GetServerAddress();
 	m_hostPort = m_clientReference->GetServerPort();
 	UE_LOGFMT(VoxtaLog, Log, "Initialized audioplayback for characterId {0}. Audio will be downloaded from: {1}",
-		characterId, FString::Format(*FString(TEXT("http://{0}:{1}/")), { m_hostAddress, m_hostPort }));
+		GuidToString(characterId), FString::Format(*FString(TEXT("http://{0}:{1}/")), { m_hostAddress, m_hostPort }));
 }
 
 void UVoxtaAudioPlayback::Initialize(const FGuid& characterId, LipSyncType lipSyncType)
@@ -54,13 +54,13 @@ void UVoxtaAudioPlayback::MarkCustomPlaybackComplete(const FGuid& guid)
 	if (expectedGuid != guid)
 	{
 		UE_LOGFMT(VoxtaLog, Error, "Custom LipSync does not support playing audiochunks out of order. "
-			"Was expecting id: {0} received id: {1}", expectedGuid.ToString(), guid.ToString());
+			"Was expecting id: {0} received id: {1}", GuidToString(expectedGuid), GuidToString(guid));
 		return;
 	}
 
 	m_internalState = AudioPlaybackInternalState::Idle;
 	UE_LOGFMT(VoxtaLog, Log, "Playback of audioClip with guid: {0} is markd as complete, continueing Voxta logic.",
-		guid.ToString());
+		GuidToString(guid));
 
 	MarkAudioChunkPlaybackCompleteInternal();
 }
@@ -208,7 +208,7 @@ void UVoxtaAudioPlayback::PlayCurrentAudioChunkIfAvailable()
 
 				UE_LOGFMT(VoxtaLog, Log, "Broadcasting that audio chunk with guid: {0} is ready for playback with "
 					"custom lipsync. Voxta logic will wait to continue until it is marked as finished "
-					"via MarkCustomPlaybackComplete", guid);
+					"via MarkCustomPlaybackComplete", GuidToString(guid));
 
 				VoxtaMessageAudioChunkReadyForCustomPlaybackEventNative.Broadcast(rawData, soundWave, guid);
 				VoxtaMessageAudioChunkReadyForCustomPlaybackEvent.Broadcast(rawData, soundWave, guid);
