@@ -22,6 +22,9 @@ struct VOXTADATA_API FAiCharData : public FBaseCharData
 
 #pragma region public API
 public:
+	/**  @return Immutable reference of the URL that points to where the image for this character can be retrieved from. */
+	FStringView GetThumnailUrl() const { return m_thumbnailUrl; }
+
 	/**
 	 * Create an instance of the datacontainer for a specific AI character.
 	 *
@@ -54,9 +57,15 @@ public:
 
 #pragma region data
 private:
+	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Creator notes"))
 	FString m_creatorNotes = EMPTY_STRING;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Allowed explicit content"))
 	bool m_allowedExplicitContent = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Is Favorited"))
 	bool m_isFavorite = false;
+
 	FString m_thumbnailUrl = EMPTY_STRING;
 	FGuid m_packageId = FGuid();
 	FString m_packageName = EMPTY_STRING;

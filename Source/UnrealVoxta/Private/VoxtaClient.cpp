@@ -25,6 +25,7 @@
 #include "VoxtaData/Public/ServerResponses/ServerResponseSpeechTranscription.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseError.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseContextUpdated.h"
+#include <Blueprint/AsyncTaskDownloadImage.h>
 
 void UVoxtaClient::Initialize(FSubsystemCollectionBase& collection)
 {
@@ -104,6 +105,7 @@ void UVoxtaClient::Disconnect(bool silent)
 		SetState(VoxtaClientState::Terminated);
 	}
 	m_hub->Stop();
+	//Cleanup();
 }
 
 void UVoxtaClient::StartChatWithCharacter(const FGuid& charId, const FString& context)
@@ -120,7 +122,7 @@ void UVoxtaClient::StartChatWithCharacter(const FGuid& charId, const FString& co
 		return;
 	}
 	const TUniquePtr<const FAiCharData>* character = GetAiCharacterDataById(charId);
-	if (character != nullptr)
+	if (character != nullptr && character->IsValid())
 	{
 		SendMessageToServer(m_voxtaRequestApi->GetStartChatRequestData(character->Get(), context));
 		SetState(VoxtaClientState::StartingChat);
@@ -160,6 +162,28 @@ void UVoxtaClient::NotifyAudioPlaybackComplete(const FGuid& messageId)
 
 	SendMessageToServer(m_voxtaRequestApi->GetNotifyAudioPlaybackCompletedData(m_chatSession->GetSessionId(), messageId));
 	SetState(VoxtaClientState::WaitingForUserReponse);
+}
+
+void UVoxtaClient::FetchAndCacheCharacterThumbnail(const FGuid& aiCharacterId)
+{
+	if (!aiCharacterId.IsValid())
+	{
+		UE_LOGFMT(VoxtaLog, Error, "Cannot fetch the thumbnail for character due to invalid id: {0}.",
+			GuidToString(aiCharacterId));
+	}
+	const TUniquePtr<const FAiCharData>* character = GetAiCharacterDataById(aiCharacterId);
+	if (character != nullptr && character->IsValid())
+	{
+		FString url = character->Get()->GetThumnailUrl().GetData();
+		auto task = UAsyncTaskDownloadImage::DownloadImage(url);
+		task->AddToRoot();
+		task->OnSuccess.Add()
+	}
+	else
+	{
+		UE_LOGFMT(VoxtaLog, Error, "Cannot fetch the thumbnail for character with id: {0}, as it isn't present in the "
+			"current character list. Are you using an invalidated cache value?", GuidToString(aiCharacterId));
+	}
 }
 
 bool UVoxtaClient::TryRegisterPlaybackHandler(const FGuid& characterId,
@@ -275,20 +299,21 @@ Audio2FaceRESTHandler* UVoxtaClient::GetA2FHandler() const
 	return m_A2FHandler.Get();
 }
 
-/*TArray<TTuple<FString, FString>> UVoxtaClient::GetAllCharacterNames() const
+TArray<FAiCharData> UVoxtaClient::GetAvailableAiCharacters() const
 {
-	TArray<TTuple<FString, FString>> characterIds;
-	characterIds.Reserve(m_characterList.Num());
+	TArray<FAiCharData> returnArray;
+	returnArray.Reserve(m_characterList.Num());
 
 	for (const TUniquePtr<const FAiCharData>& character : m_characterList)
 	{
-		if (character)
+		if (character.IsValid())
 		{
-			characterIds.Add(TTuple<FString, FString>(character->GetId(), character->GetName()));
+			returnArray.Add(*character);
 		}
 	}
-	return characterIds;
-}*/
+
+	return returnArray;
+}
 
 void UVoxtaClient::StartListeningToServer()
 {
@@ -577,7 +602,7 @@ bool UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessageBase
 			{
 				const TUniquePtr<const FAiCharData>* character = GetAiCharacterDataById(derivedResponse->SENDER_ID);
 
-				if (character->IsValid())
+				if (character != nullptr && character->IsValid())
 				{
 					UE_LOGFMT(VoxtaLog, Log, "Message with id: {0} marked as complete. Speaker: {1} Contents: {2}",
 						derivedResponse->MESSAGE_ID, character->Get()->GetName(), chatMessage->GetTextContent());

@@ -185,6 +185,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
 	void NotifyAudioPlaybackComplete(const FGuid& messageId);
 
+	UFUNCTION(BlueprintCallable, Category = "Voxta")
+	void FetchAndCacheCharacterThumbnail(const FGuid& aiCharacterId);
+
 	/** @return The ipv4 address where this client expects the Voxta server to be hosted. */
 	UFUNCTION(BlueprintPure, Category = "Voxta")
 	const FString& GetServerAddress() const;
@@ -215,18 +218,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Voxta")
 	const UVoxtaAudioPlayback* GetRegisteredAudioPlaybackHandlerForID(const FGuid& characterId) const;
 
-	/** @return An immutable array with a copy of every AIcharacter data. */
-	//UFUNCTION(BlueprintPure, Category = "Voxta")
-	//TArray<FGuid> GetAllCharacterIDs() const;
-
-	/**
-	 * Fetch the immutable UniquePtr to the Ai Character data struct that matches the given charId.
-	 *
-	 * @param charId The Id of the Ai Character that you want to retrieve.
-	 *
-	 * @return An immutable UniquePtr to the immutable Ai Character data struct, or nullptr if it was not found.
-	 */
-	const TUniquePtr<const FAiCharData>* GetAiCharacterDataById(const FGuid& charId) const;
+	/** @return An copy of every available AIcharacter data. */
+	UFUNCTION(BlueprintPure, Category = "Voxta")
+	TArray<FAiCharData> GetAvailableAiCharacters() const;
 
 	/**
 	 * Register the playback handler for this specific character, this is needed as we need to know if we want to wait
@@ -371,5 +365,14 @@ private:
 	 * @param newState The new state that can be considered to be active in the client.
 	 */
 	void SetState(VoxtaClientState newState);
+
+	/**
+	 * Fetch the immutable UniquePtr to the Ai Character data struct that matches the given charId.
+	 *
+	 * @param charId The Id of the Ai Character that you want to retrieve.
+	 *
+	 * @return An immutable pointer to the UniquePtr to the immutable Ai Character data struct; or nullptr if it was not found.
+	 */
+	const TUniquePtr<const FAiCharData>* GetAiCharacterDataById(const FGuid& charId) const;
 #pragma endregion
 };
