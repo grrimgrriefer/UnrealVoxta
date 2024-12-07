@@ -13,6 +13,7 @@
 #include "Internals/VoxtaLogger.h"
 #include "Internals/VoxtaApiRequestHandler.h"
 #include "Internals/VoxtaApiResponseHandler.h"
+#include "Internals/TexturesCacheHandler.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseBase.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseWelcome.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseCharacterList.h"
@@ -25,7 +26,6 @@
 #include "VoxtaData/Public/ServerResponses/ServerResponseSpeechTranscription.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseError.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseContextUpdated.h"
-#include <Blueprint/AsyncTaskDownloadImage.h>
 
 void UVoxtaClient::Initialize(FSubsystemCollectionBase& collection)
 {
@@ -164,7 +164,7 @@ void UVoxtaClient::NotifyAudioPlaybackComplete(const FGuid& messageId)
 	SetState(VoxtaClientState::WaitingForUserReponse);
 }
 
-void UVoxtaClient::FetchAndCacheCharacterThumbnail(const FGuid& aiCharacterId)
+void UVoxtaClient::FetchAndCacheCharacterThumbnail(const FGuid& aiCharacterId, FDownloadImageDelegate onThumbnailFetched)
 {
 	if (!aiCharacterId.IsValid())
 	{
@@ -174,10 +174,8 @@ void UVoxtaClient::FetchAndCacheCharacterThumbnail(const FGuid& aiCharacterId)
 	const TUniquePtr<const FAiCharData>* character = GetAiCharacterDataById(aiCharacterId);
 	if (character != nullptr && character->IsValid())
 	{
-		FString url = character->Get()->GetThumnailUrl().GetData();
-		auto task = UAsyncTaskDownloadImage::DownloadImage(url);
-		task->AddToRoot();
-		task->OnSuccess.Add()
+		FString url = FString::Format(*FString(TEXT("http://{0}:{1}{2}")), { m_hostAddress, m_hostPort, character->Get()->GetThumnailUrl().GetData() });
+		m_textureCacheHandler->FetchTextureFromUrl(url, onThumbnailFetched);
 	}
 	else
 	{

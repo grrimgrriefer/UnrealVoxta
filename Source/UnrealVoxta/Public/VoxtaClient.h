@@ -4,6 +4,7 @@
 #include "CoreMinimal.h"
 #include "VoxtaData/Public/VoxtaClientState.h"
 #include "VoxtaDefines.h"
+#include "Blueprint/AsyncTaskDownloadImage.h"
 #include "VoxtaClient.generated.h"
 
 class FSignalRValue;
@@ -15,6 +16,7 @@ class UVoxtaAudioPlayback;
 class VoxtaLogger;
 class VoxtaApiRequestHandler;
 class VoxtaApiResponseHandler;
+class TexturesCacheHandler;
 struct ServerResponseBase;
 struct ServerResponseError;
 struct ServerResponseChatMessageBase;
@@ -41,6 +43,7 @@ class UNREALVOXTA_API UVoxtaClient : public UGameInstanceSubsystem
 
 #pragma region delegate declarations
 public:
+
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientStateChanged, VoxtaClientState, newState);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientCharacterRegistered, const FAiCharData&, charData);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FVoxtaClientCharMessageAdded, const FBaseCharData&, sender, const FChatMessage&, message);
@@ -186,7 +189,7 @@ public:
 	void NotifyAudioPlaybackComplete(const FGuid& messageId);
 
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
-	void FetchAndCacheCharacterThumbnail(const FGuid& aiCharacterId);
+	void FetchAndCacheCharacterThumbnail(const FGuid& aiCharacterId, FDownloadImageDelegate onThumbnailFetched);
 
 	/** @return The ipv4 address where this client expects the Voxta server to be hosted. */
 	UFUNCTION(BlueprintPure, Category = "Voxta")
@@ -256,6 +259,9 @@ private:
 
 	UPROPERTY()
 	UVoxtaAudioInput* m_voiceInput;
+
+	UPROPERTY()
+	TexturesCacheHandler* m_textureCacheHandler;
 
 	TSharedPtr<VoxtaLogger> m_logUtility;
 	TSharedPtr<VoxtaApiRequestHandler> m_voxtaRequestApi;

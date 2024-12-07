@@ -23,8 +23,7 @@ MessageChunkAudioContainer::MessageChunkAudioContainer(const FString& fullUrl,
 	FULL_DOWNLOAD_URL(fullUrl),
 	ON_STATE_CHANGED(callback),
 	m_A2FRestHandler(A2FRestHandler)
-{
-}
+{}
 
 void MessageChunkAudioContainer::Continue()
 {
@@ -101,12 +100,13 @@ void MessageChunkAudioContainer::DownloadData()
 	UpdateState(MessageChunkState::Busy);
 
 	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> httpRequest = FHttpModule::Get().CreateRequest();
-	httpRequest->SetVerb("GET");
+	httpRequest->SetVerb(TEXT("GET"));
 	httpRequest->SetURL(FULL_DOWNLOAD_URL);
 	httpRequest->OnProcessRequestComplete().BindLambda([Self = TWeakPtr<MessageChunkAudioContainer>(AsShared())]
 	(FHttpRequestPtr request, FHttpResponsePtr response, bool bWasSuccessful)
 		{
-			if (bWasSuccessful)
+			if (bWasSuccessful && response.IsValid() && EHttpResponseCodes::IsOk(response->GetResponseCode()) &&
+							response->GetContentLength() > 0 && response->GetContent().Num() > 0)
 			{
 				if (TSharedPtr<MessageChunkAudioContainer> sharedSelf = Self.Pin())
 				{
