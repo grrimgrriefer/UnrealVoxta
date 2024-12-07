@@ -3,9 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Blueprint/AsyncTaskDownloadImage.h"
 
+class UTexture2DDynamic;
 class IImageWrapper;
+
+DECLARE_DELEGATE_OneParam(FDownloadedTextureDelegateNative, UTexture2DDynamic*);
 
 /**
  * TexturesCacheHandler
@@ -19,12 +21,12 @@ class TexturesCacheHandler : public TSharedFromThis<TexturesCacheHandler>
 #pragma region public API
 public:
 	TexturesCacheHandler();
-	void FetchTextureFromUrl(const FString& url, FDownloadImageDelegate onThumbnailFetched);
+	void FetchTextureFromUrl(const FString& url, FDownloadedTextureDelegateNative onThumbnailFetched);
 #pragma endregion
 
 #pragma region data
 private:
-	TMap<FString, TArray<FDownloadImageDelegate>> m_pendingCallbacks;
+	TMap<FString, TArray<FDownloadedTextureDelegateNative>> m_pendingCallbacks;
 	TMap<FString, UTexture2DDynamic*> m_texturesCache;
 	TArray<TSharedPtr<IImageWrapper>> m_imageWrappers;
 #pragma endregion

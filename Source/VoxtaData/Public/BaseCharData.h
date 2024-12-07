@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "VoxtaDefines.h"
 #include "BaseCharData.generated.h"
 
 /**
@@ -35,7 +36,8 @@ public:
 	 */
 	explicit FBaseCharData(FGuid id, FStringView name) :
 		m_id(id),
-		m_name(name)
+		m_name(name),
+		m_idAsString(GuidToString(id))
 	{}
 
 	/** Default constructor, should not be used manually, but is enforced by Unreal */
@@ -49,5 +51,8 @@ private:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Name"))
 	FString m_name;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Character ID as formatted string"))
+	FString m_idAsString;
 #pragma endregion
 };

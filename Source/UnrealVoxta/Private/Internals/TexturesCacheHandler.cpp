@@ -25,11 +25,11 @@ TexturesCacheHandler::TexturesCacheHandler()
 	};
 }
 
-void TexturesCacheHandler::FetchTextureFromUrl(const FString& url, FDownloadImageDelegate onThumbnailFetched)
+void TexturesCacheHandler::FetchTextureFromUrl(const FString& url, FDownloadedTextureDelegateNative onThumbnailFetched)
 {
 	if (m_texturesCache.Contains(url))
 	{
-		onThumbnailFetched.Broadcast(m_texturesCache[url]);
+		onThumbnailFetched.ExecuteIfBound(m_texturesCache[url]);
 		return;
 	}
 	else if (m_pendingCallbacks.Contains(url))
@@ -38,10 +38,11 @@ void TexturesCacheHandler::FetchTextureFromUrl(const FString& url, FDownloadImag
 		return;
 	}
 
-	m_pendingCallbacks.Emplace(url, onThumbnailFetched);
+	TArray<FDownloadedTextureDelegateNative> callbackArray;
+	callbackArray.Add(onThumbnailFetched);
+	m_pendingCallbacks.Add(url, callbackArray);
 
 	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> httpRequest = FHttpModule::Get().CreateRequest();
-
 	httpRequest->SetURL(url);
 	httpRequest->SetVerb(TEXT("GET"));
 	httpRequest->OnProcessRequestComplete().BindLambda([Self = TWeakPtr<TexturesCacheHandler>(AsShared()), URL = url]
@@ -82,7 +83,7 @@ void TexturesCacheHandler::FetchTextureFromUrl(const FString& url, FDownloadImag
 									sharedSelf->m_texturesCache.Emplace(URL, texture);
 									for (auto& var : sharedSelf->m_pendingCallbacks[URL])
 									{
-										var.Broadcast(sharedSelf->m_texturesCache[URL]);
+										var.ExecuteIfBound(sharedSelf->m_texturesCache[URL]);
 									}
 									sharedSelf->m_pendingCallbacks.Remove(URL);
 									return;

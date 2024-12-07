@@ -4,7 +4,6 @@
 #include "CoreMinimal.h"
 #include "VoxtaData/Public/VoxtaClientState.h"
 #include "VoxtaDefines.h"
-#include "Blueprint/AsyncTaskDownloadImage.h"
 #include "VoxtaClient.generated.h"
 
 class FSignalRValue;
@@ -16,6 +15,7 @@ class UVoxtaAudioPlayback;
 class VoxtaLogger;
 class VoxtaApiRequestHandler;
 class VoxtaApiResponseHandler;
+class TexturesCacheHandler;
 class TexturesCacheHandler;
 struct ServerResponseBase;
 struct ServerResponseError;
@@ -43,6 +43,7 @@ class UNREALVOXTA_API UVoxtaClient : public UGameInstanceSubsystem
 
 #pragma region delegate declarations
 public:
+	DECLARE_DYNAMIC_DELEGATE_OneParam(FDownloadedTextureDelegate, UTexture2DDynamic*, texture);
 
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientStateChanged, VoxtaClientState, newState);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientCharacterRegistered, const FAiCharData&, charData);
@@ -189,7 +190,7 @@ public:
 	void NotifyAudioPlaybackComplete(const FGuid& messageId);
 
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
-	void FetchAndCacheCharacterThumbnail(const FGuid& aiCharacterId, FDownloadImageDelegate onThumbnailFetched);
+	void FetchAndCacheCharacterThumbnail(const FGuid& aiCharacterId, FDownloadedTextureDelegate onThumbnailFetched);
 
 	/** @return The ipv4 address where this client expects the Voxta server to be hosted. */
 	UFUNCTION(BlueprintPure, Category = "Voxta")
@@ -210,6 +211,9 @@ public:
 	/** @return The current user's ID, returns an invalid Guid if there's no authenticated session. */
 	UFUNCTION(BlueprintPure, Category = "Voxta")
 	FGuid GetUserId() const;
+
+	UFUNCTION(BlueprintPure, Category = "Voxta")
+	FString GetBrowserUrlForCharacter(const FGuid& aiCharacterId) const;
 
 	/**
 	 * Try to retrieve a pointer to the UVoxtaAudioPlayback that has claimed playback for the provided characterId.
@@ -260,14 +264,12 @@ private:
 	UPROPERTY()
 	UVoxtaAudioInput* m_voiceInput;
 
-	UPROPERTY()
-	TexturesCacheHandler* m_textureCacheHandler;
-
 	TSharedPtr<VoxtaLogger> m_logUtility;
 	TSharedPtr<VoxtaApiRequestHandler> m_voxtaRequestApi;
 	TSharedPtr<VoxtaApiResponseHandler> m_voxtaResponseApi;
 	TSharedPtr<IHubConnection> m_hub;
 	TSharedPtr<Audio2FaceRESTHandler> m_A2FHandler;
+	TSharedPtr<TexturesCacheHandler> m_texturesCacheHandler;
 
 	TUniquePtr<FUserCharData> m_userData;
 	TArray<TUniquePtr<const FAiCharData>> m_characterList;

@@ -35,6 +35,7 @@ void UVoxtaClient::Initialize(FSubsystemCollectionBase& collection)
 	m_logUtility->RegisterVoxtaLogger();
 	m_voiceInput = NewObject<UVoxtaAudioInput>(this);
 	m_A2FHandler = MakeShared<Audio2FaceRESTHandler>();
+	m_texturesCacheHandler = MakeShared<TexturesCacheHandler>();
 	Super::Initialize(collection);
 }
 
@@ -164,7 +165,7 @@ void UVoxtaClient::NotifyAudioPlaybackComplete(const FGuid& messageId)
 	SetState(VoxtaClientState::WaitingForUserReponse);
 }
 
-void UVoxtaClient::FetchAndCacheCharacterThumbnail(const FGuid& aiCharacterId, FDownloadImageDelegate onThumbnailFetched)
+void UVoxtaClient::FetchAndCacheCharacterThumbnail(const FGuid& aiCharacterId, FDownloadedTextureDelegate onThumbnailFetched)
 {
 	if (!aiCharacterId.IsValid())
 	{
@@ -174,8 +175,25 @@ void UVoxtaClient::FetchAndCacheCharacterThumbnail(const FGuid& aiCharacterId, F
 	const TUniquePtr<const FAiCharData>* character = GetAiCharacterDataById(aiCharacterId);
 	if (character != nullptr && character->IsValid())
 	{
-		FString url = FString::Format(*FString(TEXT("http://{0}:{1}{2}")), { m_hostAddress, m_hostPort, character->Get()->GetThumnailUrl().GetData() });
-		m_textureCacheHandler->FetchTextureFromUrl(url, onThumbnailFetched);
+		FStringView charUrl = character->Get()->GetThumnailUrl();
+		if (charUrl != nullptr && !charUrl.IsEmpty())
+		{
+			FString url = FString::Format(*FString(TEXT("http://{0}:{1}{2}")),
+				{ m_hostAddress, m_hostPort, character->Get()->GetThumnailUrl().GetData() });
+			FDownloadedTextureDelegateNative nativeDelegate = FDownloadedTextureDelegateNative::CreateLambda(
+			[onThumbnailFetched] (UTexture2DDynamic* downloadedTexture)
+			{
+				onThumbnailFetched.ExecuteIfBound(downloadedTexture);
+			});
+
+			UE_LOGFMT(VoxtaLog, Log, "Loading from URL:  {0}", url);
+
+			m_texturesCacheHandler->FetchTextureFromUrl(url, nativeDelegate);
+		}
+		else
+		{
+			UE_LOGFMT(VoxtaLog, Warning, "TODO: load placeholder image for characters without image: {0}", GuidToString(aiCharacterId));
+		}
 	}
 	else
 	{
@@ -272,6 +290,16 @@ FGuid UVoxtaClient::GetUserId() const
 		return m_userData->GetId();
 	}
 	return FGuid();
+}
+
+FString UVoxtaClient::GetBrowserUrlForCharacter(const FGuid& aiCharacterId) const
+{
+	if (GetAiCharacterDataById(aiCharacterId) != nullptr)
+	{
+		return FString::Format(*FString(TEXT("http://{0}:{1}/characters/{2}")),
+			{ m_hostAddress, m_hostPort, GuidToString(aiCharacterId) });
+	}
+	return FString();
 }
 
 const UVoxtaAudioPlayback* UVoxtaClient::GetRegisteredAudioPlaybackHandlerForID(const FGuid& characterId) const
