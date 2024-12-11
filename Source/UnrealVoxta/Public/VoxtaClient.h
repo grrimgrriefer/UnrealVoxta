@@ -43,7 +43,7 @@ class UNREALVOXTA_API UVoxtaClient : public UGameInstanceSubsystem
 
 #pragma region delegate declarations
 public:
-	DECLARE_DYNAMIC_DELEGATE_OneParam(FDownloadedTextureDelegate, UTexture2DDynamic*, texture);
+	DECLARE_DYNAMIC_DELEGATE_ThreeParams(FDownloadedTextureDelegate, const UTexture2DDynamic*, texture, int, width, int, height);
 
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientStateChanged, VoxtaClientState, newState);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientCharacterRegistered, const FAiCharData&, charData);

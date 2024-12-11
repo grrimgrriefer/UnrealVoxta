@@ -181,9 +181,9 @@ void UVoxtaClient::FetchAndCacheCharacterThumbnail(const FGuid& aiCharacterId, F
 			FString url = FString::Format(*FString(TEXT("http://{0}:{1}{2}")),
 				{ m_hostAddress, m_hostPort, character->Get()->GetThumnailUrl().GetData() });
 			FDownloadedTextureDelegateNative nativeDelegate = FDownloadedTextureDelegateNative::CreateLambda(
-			[onThumbnailFetched] (UTexture2DDynamic* downloadedTexture)
+			[onThumbnailFetched] (const UTexture2DDynamic* downloadedTexture, const FIntVector2& textureSize)
 			{
-				onThumbnailFetched.ExecuteIfBound(downloadedTexture);
+				onThumbnailFetched.ExecuteIfBound(downloadedTexture, textureSize.X, textureSize.Y);
 			});
 
 			UE_LOGFMT(VoxtaLog, Log, "Loading from URL:  {0}", url);

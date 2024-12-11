@@ -16,7 +16,7 @@
 
 TexturesCacheHandler::TexturesCacheHandler()
 {
-	IImageWrapperModule& imageWrapperModule = FModuleManager::LoadModuleChecked<IImageWrapperModule>(FName("imageWrapper"));
+	IImageWrapperModule& imageWrapperModule = FModuleManager::LoadModuleChecked<IImageWrapperModule>(FName(TEXT("imageWrapper")));
 	m_imageWrappers =
 	{
 		imageWrapperModule.CreateImageWrapper(EImageFormat::PNG),
@@ -29,7 +29,7 @@ void TexturesCacheHandler::FetchTextureFromUrl(const FString& url, FDownloadedTe
 {
 	if (m_texturesCache.Contains(url))
 	{
-		onThumbnailFetched.ExecuteIfBound(m_texturesCache[url]);
+		onThumbnailFetched.ExecuteIfBound(m_texturesCache[url].TEXTURE, m_texturesCache[url].TEXTURE_SIZE);
 		return;
 	}
 	else if (m_pendingCallbacks.Contains(url))
@@ -56,34 +56,38 @@ void TexturesCacheHandler::FetchTextureFromUrl(const FString& url, FDownloadedTe
 					for (auto& imageWrapper : sharedSelf->m_imageWrappers)
 					{
 						if (imageWrapper.IsValid() &&
-							 imageWrapper->SetCompressed(response->GetContent().GetData(), response->GetContent().Num()) &&
-							 imageWrapper->GetWidth() <= TNumericLimits<int32>::Max() &&
-							 imageWrapper->GetHeight() <= TNumericLimits<int32>::Max())
+							imageWrapper->SetCompressed(response->GetContent().GetData(),
+							response->GetContent().Num()) &&
+							imageWrapper->GetWidth() <= TNumericLimits<int32>::Max() &&
+							imageWrapper->GetHeight() <= TNumericLimits<int32>::Max())
 						{
 							TArray64<uint8> rawData;
 							const ERGBFormat inFormat = ERGBFormat::BGRA;
 							if (imageWrapper->GetRaw(inFormat, 8, rawData))
 							{
-								if (UTexture2DDynamic* texture = UTexture2DDynamic::Create(
-									static_cast<int32>(imageWrapper->GetWidth()),
-									static_cast<int32>(imageWrapper->GetHeight())))
+								int32 width = static_cast<int32>(imageWrapper->GetWidth());
+								int32 height = static_cast<int32>(imageWrapper->GetHeight());
+								if (UTexture2DDynamic* texture = UTexture2DDynamic::Create(width, height))
 								{
 									texture->SRGB = true;
 									texture->UpdateResource();
 
-									FTexture2DDynamicResource* textureResource = static_cast<FTexture2DDynamicResource*>(texture->GetResource());
+									FTexture2DDynamicResource* textureResource =
+										static_cast<FTexture2DDynamicResource*>(texture->GetResource());
 									if (textureResource)
 									{
 										ENQUEUE_RENDER_COMMAND(FWriteRawDataToTexture)(
-											[textureResource, RawData = MoveTemp(rawData)] (FRHICommandListImmediate& RHICmdList)
+											[textureResource, RawData = MoveTemp(rawData)]
+											(FRHICommandListImmediate& RHICmdList)
 											{
 												textureResource->WriteRawToTexture_RenderThread(RawData);
 											});
 									}
-									sharedSelf->m_texturesCache.Emplace(URL, texture);
+									sharedSelf->m_texturesCache.Emplace(URL, TextureInfo(texture, width, height));
 									for (auto& var : sharedSelf->m_pendingCallbacks[URL])
 									{
-										var.ExecuteIfBound(sharedSelf->m_texturesCache[URL]);
+										var.ExecuteIfBound(sharedSelf->m_texturesCache[URL].TEXTURE,
+											sharedSelf->m_texturesCache[URL].TEXTURE_SIZE);
 									}
 									sharedSelf->m_pendingCallbacks.Remove(URL);
 									return;

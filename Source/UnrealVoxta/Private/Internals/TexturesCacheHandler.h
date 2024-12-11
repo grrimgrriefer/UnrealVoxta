@@ -7,7 +7,7 @@
 class UTexture2DDynamic;
 class IImageWrapper;
 
-DECLARE_DELEGATE_OneParam(FDownloadedTextureDelegateNative, UTexture2DDynamic*);
+DECLARE_DELEGATE_TwoParams(FDownloadedTextureDelegateNative, const UTexture2DDynamic*, const FIntVector2&);
 
 /**
  * TexturesCacheHandler
@@ -18,6 +18,19 @@ DECLARE_DELEGATE_OneParam(FDownloadedTextureDelegateNative, UTexture2DDynamic*);
  */
 class TexturesCacheHandler : public TSharedFromThis<TexturesCacheHandler>
 {
+#pragma region helper classes
+private:
+	class TextureInfo
+	{
+	public:
+		TextureInfo(const UTexture2DDynamic* texture, int width, int height) :
+			TEXTURE(texture), TEXTURE_SIZE(width, height)
+		{}
+		const UTexture2DDynamic* TEXTURE;
+		const FIntVector2 TEXTURE_SIZE;
+	};
+#pragma endregion
+
 #pragma region public API
 public:
 	TexturesCacheHandler();
@@ -27,7 +40,7 @@ public:
 #pragma region data
 private:
 	TMap<FString, TArray<FDownloadedTextureDelegateNative>> m_pendingCallbacks;
-	TMap<FString, UTexture2DDynamic*> m_texturesCache;
+	TMap<FString, TextureInfo> m_texturesCache;
 	TArray<TSharedPtr<IImageWrapper>> m_imageWrappers;
 #pragma endregion
 };
