@@ -165,14 +165,22 @@ void UVoxtaClient::NotifyAudioPlaybackComplete(const FGuid& messageId)
 	SetState(VoxtaClientState::WaitingForUserReponse);
 }
 
-void UVoxtaClient::FetchAndCacheCharacterThumbnail(const FGuid& aiCharacterId, FDownloadedTextureDelegate onThumbnailFetched)
+void UVoxtaClient::FetchAndCacheCharacterThumbnail(const FGuid& baseCharacterId, FDownloadedTextureDelegate onThumbnailFetched)
 {
-	if (!aiCharacterId.IsValid())
+	if (!baseCharacterId.IsValid())
 	{
 		UE_LOGFMT(VoxtaLog, Error, "Cannot fetch the thumbnail for character due to invalid id: {0}.",
-			GuidToString(aiCharacterId));
+			GuidToString(baseCharacterId));
+		return;
 	}
-	const TUniquePtr<const FAiCharData>* character = GetAiCharacterDataById(aiCharacterId);
+	if (baseCharacterId == m_userData->GetId())
+	{
+		UE_LOGFMT(VoxtaLog, Warning, "Todo: add support for fetching user image. user id: {0}",
+			GuidToString(baseCharacterId));
+		return;
+	}
+
+	const TUniquePtr<const FAiCharData>* character = GetAiCharacterDataById(baseCharacterId);
 	if (character != nullptr && character->IsValid())
 	{
 		FStringView charUrl = character->Get()->GetThumnailUrl();
@@ -192,13 +200,13 @@ void UVoxtaClient::FetchAndCacheCharacterThumbnail(const FGuid& aiCharacterId, F
 		}
 		else
 		{
-			UE_LOGFMT(VoxtaLog, Warning, "TODO: load placeholder image for characters without image: {0}", GuidToString(aiCharacterId));
+			UE_LOGFMT(VoxtaLog, Warning, "TODO: load placeholder image for characters without image: {0}", GuidToString(baseCharacterId));
 		}
 	}
 	else
 	{
 		UE_LOGFMT(VoxtaLog, Error, "Cannot fetch the thumbnail for character with id: {0}, as it isn't present in the "
-			"current character list. Are you using an invalidated cache value?", GuidToString(aiCharacterId));
+			"current character list. Are you using an invalidated cache value?", GuidToString(baseCharacterId));
 	}
 }
 

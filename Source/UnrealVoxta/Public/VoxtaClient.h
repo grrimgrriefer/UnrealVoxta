@@ -190,7 +190,7 @@ public:
 	void NotifyAudioPlaybackComplete(const FGuid& messageId);
 
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
-	void FetchAndCacheCharacterThumbnail(const FGuid& aiCharacterId, FDownloadedTextureDelegate onThumbnailFetched);
+	void FetchAndCacheCharacterThumbnail(const FGuid& baseCharacterId, FDownloadedTextureDelegate onThumbnailFetched);
 
 	/** @return The ipv4 address where this client expects the Voxta server to be hosted. */
 	UFUNCTION(BlueprintPure, Category = "Voxta")
