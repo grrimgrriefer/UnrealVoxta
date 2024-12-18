@@ -74,7 +74,7 @@ void UVoxtaAudioInput::StartStreaming()
 		return;
 	}
 
-	if (chat->GetActiveServices().Contains(VoxtaServiceData::ServiceType::SpeechToText))
+	if (chat->GetActiveServices().Contains(VoxtaServiceType::SpeechToText))
 	{
 		if (m_audioCaptureDevice.TryStartVoiceCapture())
 		{

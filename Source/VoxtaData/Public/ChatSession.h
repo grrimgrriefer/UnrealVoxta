@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "ChatMessage.h"
+#include "VoxtaServiceType.h"
 #include "VoxtaServiceData.h"
 #include "AiCharData.h"
 #include "ChatSession.generated.h"
@@ -45,7 +46,7 @@ public:
 	 *
 	 * @return The services that were enabled when the chatsession was started.
 	 */
-	const TMap<const VoxtaServiceData::ServiceType, const VoxtaServiceData>& GetActiveServices() const
+	const TMap<VoxtaServiceType, FVoxtaServiceData>& GetActiveServices() const
 	{
 		return m_services;
 	}
@@ -71,7 +72,7 @@ public:
 	explicit FChatSession(const TArray<const FAiCharData*>& characters,
 			FGuid chatId,
 			FGuid sessionId,
-			const TMap<const VoxtaServiceData::ServiceType, const VoxtaServiceData>& services,
+			const TMap<VoxtaServiceType, FVoxtaServiceData>& services,
 			FStringView chatContext) :
 		m_chatId(chatId),
 		m_sessionId(sessionId),
@@ -104,8 +105,11 @@ private:
 	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Context"))
 	FString m_chatContext;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Messages so far"))
 	TArray<FChatMessage> m_chatMessages;
 	TArray<const FAiCharData*> m_characters;
-	TMap<const VoxtaServiceData::ServiceType, const VoxtaServiceData> m_services;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Enabled services"))
+	TMap<VoxtaServiceType, FVoxtaServiceData> m_services;
 #pragma endregion
 };

@@ -68,7 +68,7 @@ void UVoxtaClient::StartConnection(const FString& ipv4Address, int port)
 	if (ipv4Address.IsEmpty())
 	{
 		UE_LOGFMT(VoxtaLog, Error, "The provided address: {0} for the VoxtaClient to connect to was empty. "
-					"Ignoring connection attempt.", ipv4Address);
+			"Ignoring connection attempt.", ipv4Address);
 		return;
 	}
 	else if (ipv4Address.ToLower() != LOCALHOST && !FIPv4Address::Parse(ipv4Address, address))
@@ -189,10 +189,10 @@ void UVoxtaClient::FetchAndCacheCharacterThumbnail(const FGuid& baseCharacterId,
 			FString url = FString::Format(*FString(TEXT("http://{0}:{1}{2}")),
 				{ m_hostAddress, m_hostPort, character->Get()->GetThumnailUrl().GetData() });
 			FDownloadedTextureDelegateNative nativeDelegate = FDownloadedTextureDelegateNative::CreateLambda(
-			[onThumbnailFetched] (const UTexture2DDynamic* downloadedTexture, const FIntVector2& textureSize)
-			{
-				onThumbnailFetched.ExecuteIfBound(downloadedTexture, textureSize.X, textureSize.Y);
-			});
+				[onThumbnailFetched] (const UTexture2DDynamic* downloadedTexture, const FIntVector2& textureSize)
+				{
+					onThumbnailFetched.ExecuteIfBound(downloadedTexture, textureSize.X, textureSize.Y);
+				});
 
 			UE_LOGFMT(VoxtaLog, Log, "Loading from URL:  {0}", url);
 
@@ -220,8 +220,7 @@ bool UVoxtaClient::TryRegisterPlaybackHandler(const FGuid& characterId,
 		return false;
 	}
 
-	if (m_chatSession != nullptr && !m_chatSession->GetActiveServices().Contains(
-		VoxtaServiceData::ServiceType::SpeechToText))
+	if (m_chatSession != nullptr && !m_chatSession->GetActiveServices().Contains(VoxtaServiceType::SpeechToText))
 	{
 		UE_LOGFMT(VoxtaLog, Warning, "You tried to register a Voxta AudioPlayback handler for character {0}, but no "
 			"STT service is active on VoxtaServer. (make sure to have it enabled at start, runtime activation not yet "
@@ -323,6 +322,11 @@ const UVoxtaAudioPlayback* UVoxtaClient::GetRegisteredAudioPlaybackHandlerForID(
 	}
 }
 
+FChatSession UVoxtaClient::GetChatSessionCopy() const
+{
+	return *m_chatSession;
+}
+
 const FChatSession* UVoxtaClient::GetChatSession() const
 {
 	return m_chatSession.Get();
@@ -333,7 +337,7 @@ Audio2FaceRESTHandler* UVoxtaClient::GetA2FHandler() const
 	return m_A2FHandler.Get();
 }
 
-TArray<FAiCharData> UVoxtaClient::GetAvailableAiCharacters() const
+TArray<FAiCharData> UVoxtaClient::GetAvailableAiCharactersCopy() const
 {
 	TArray<FAiCharData> returnArray;
 	returnArray.Reserve(m_characterList.Num());
@@ -559,15 +563,15 @@ bool UVoxtaClient::HandleChatStartedResponse(const ServerResponseChatStarted& re
 		}
 	}
 
-	if (!response.SERVICES.Contains(VoxtaServiceData::ServiceType::SpeechToText))
+	if (!response.SERVICES.Contains(VoxtaServiceType::SpeechToText))
 	{
 		UE_LOGFMT(VoxtaLog, Log, "No valid SpeechToText service is active on the server.");
 	}
-	if (!response.SERVICES.Contains(VoxtaServiceData::ServiceType::TextToSpeech))
+	if (!response.SERVICES.Contains(VoxtaServiceType::TextToSpeech))
 	{
 		UE_LOGFMT(VoxtaLog, Log, "No valid TextToSpeech service is active on the server.");
 	}
-	if (!response.SERVICES.Contains(VoxtaServiceData::ServiceType::TextGen))
+	if (!response.SERVICES.Contains(VoxtaServiceType::TextGen))
 	{
 		UE_LOGFMT(VoxtaLog, Error, "No valid TextGen service is active on the server. We cannot really do anything "
 			"without this... aborting creation of chat session.");

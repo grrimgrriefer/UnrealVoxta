@@ -227,7 +227,7 @@ public:
 
 	/** @return An copy of every available AIcharacter data. */
 	UFUNCTION(BlueprintPure, Category = "Voxta")
-	TArray<FAiCharData> GetAvailableAiCharacters() const;
+	TArray<FAiCharData> GetAvailableAiCharactersCopy() const;
 
 	/**
 	 * Register the playback handler for this specific character, this is needed as we need to know if we want to wait
@@ -247,6 +247,9 @@ public:
 	 * registered for it
 	 */
 	bool TryUnregisterPlaybackHandler(const FGuid& characterId);
+
+	UFUNCTION(BlueprintPure, Category = "Voxta")
+	FChatSession GetChatSessionCopy() const;
 
 	/** @return An immutable pointer to the ChatSession. */
 	const FChatSession* GetChatSession() const;

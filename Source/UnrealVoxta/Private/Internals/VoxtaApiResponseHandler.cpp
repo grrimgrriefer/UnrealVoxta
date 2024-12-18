@@ -142,9 +142,9 @@ TUniquePtr<ServerResponseChatStarted> VoxtaApiResponseHandler::GetChatStartedRes
 
 	// Services
 	TMap<FString, FSignalRValue> servicesMap = serverResponseData[EASY_STRING("services")].AsObject();
-	using enum VoxtaServiceData::ServiceType;
-	TMap<const VoxtaServiceData::ServiceType, const VoxtaServiceData> services;
-	TMap<VoxtaServiceData::ServiceType, FString> serviceTypes = {
+	using enum VoxtaServiceType;
+	TMap<VoxtaServiceType, FVoxtaServiceData> services;
+	TMap<VoxtaServiceType, FString> serviceTypes = {
 		{ TextGen, TEXT("textGen") },
 		{ SpeechToText, TEXT("speechToText") },
 		{ TextToSpeech, TEXT("textToSpeech") }
@@ -154,7 +154,7 @@ TUniquePtr<ServerResponseChatStarted> VoxtaApiResponseHandler::GetChatStartedRes
 		if (servicesMap.Contains(stringValue))
 		{
 			const TMap<FString, FSignalRValue>& serviceData = servicesMap[stringValue].AsObject();
-			services.Emplace(enumType, VoxtaServiceData(enumType, serviceData[EASY_STRING("serviceName")].AsString(),
+			services.Emplace(enumType, FVoxtaServiceData(enumType, serviceData[EASY_STRING("serviceName")].AsString(),
 				GetStringAsGuid(serviceData[EASY_STRING("serviceId")])));
 		}
 	}
@@ -234,9 +234,9 @@ TUniquePtr<ServerResponseSpeechTranscription> VoxtaApiResponseHandler::GetSpeech
 	bool isValid = serverResponseData.Contains(EASY_STRING("text"));
 	return MakeUnique<ServerResponseSpeechTranscription>(
 		isValid ? serverResponseData[EASY_STRING("text")].AsString()
-			: FString(),
+		: FString(),
 		isValid ? ServerResponseSpeechTranscription::TranscriptionState::END
-			: ServerResponseSpeechTranscription::TranscriptionState::CANCELLED);
+		: ServerResponseSpeechTranscription::TranscriptionState::CANCELLED);
 }
 
 TUniquePtr<ServerResponseError> VoxtaApiResponseHandler::GetErrorResponse(

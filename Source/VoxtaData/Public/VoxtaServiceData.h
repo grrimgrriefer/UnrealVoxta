@@ -3,6 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "VoxtaServiceType.h"
+#include "VoxtaServiceData.generated.h"
 
 /**
  * VoxtaServiceData
@@ -12,22 +14,10 @@
  * Cannot be fetched by anything yet, as it serves no use at the moment. (TODO: support for runtime enabling/disabling
  * of VoxtaServer Services)
   */
-struct VoxtaServiceData
+USTRUCT(BlueprintType)
+struct VOXTADATA_API FVoxtaServiceData
 {
-#pragma region public helper classes
-public:
-	/**
-	 * ServiceType
-	 * All the possible VoxtaServer Services that the UnrealVoxta client currently supports.
-	 * Used to fetch the correct version of the service from the FChatSession data container.
-	 */
-	enum class ServiceType : uint8
-	{
-		TextGen,
-		SpeechToText,
-		TextToSpeech
-	};
-#pragma endregion
+	GENERATED_BODY()
 
 #pragma region public API
 public:
@@ -38,19 +28,26 @@ public:
 	 * @param name The name of this service. (hard-coded, NOT from VoxtaServer)
 	 * @param id The VoxtaServer assigned id (guid in string format) tied to this service.
 	 */
-	explicit VoxtaServiceData(ServiceType type,
+	explicit FVoxtaServiceData(VoxtaServiceType type,
 			FStringView name,
 			FGuid id) :
-		SERVICE_TYPE(type),
-		SERVICE_NAME(name),
-		SERVICE_ID(id)
+		m_serviceType(type),
+		m_serviceName(name),
+		m_serviceId(id)
+	{}
+
+	explicit FVoxtaServiceData()
 	{}
 #pragma endregion
 
 #pragma region data
-public:
-	const ServiceType SERVICE_TYPE;
-	const FString SERVICE_NAME;
-	const FGuid SERVICE_ID;
+private:
+	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Service type"))
+	VoxtaServiceType m_serviceType;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Service name"))
+	FString m_serviceName;
+
+	FGuid m_serviceId;
 #pragma endregion
 };
