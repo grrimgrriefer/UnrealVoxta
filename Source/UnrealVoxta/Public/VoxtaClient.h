@@ -26,6 +26,7 @@ struct ServerResponseChatStarted;
 struct ServerResponseChatUpdate;
 struct ServerResponseSpeechTranscription;
 struct ServerResponseContextUpdated;
+struct ServerResponseChatClosed;
 struct FAiCharData;
 struct FUserCharData;
 struct FBaseCharData;
@@ -167,6 +168,18 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
 	void StartChatWithCharacter(const FGuid& charId, const FString& context = TEXT(""));
+
+	/**
+	 * Tell the server to stop the ongoing chat session and clean up the relevant dependencies.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Voxta")
+	void StopActiveChat();
+
+	/**
+	 * Tell the server to stop the ongoing chat session and clean up the relevant dependencies.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Voxta")
+	void UpdateChatContext(const FString& newContext);
 
 	/**
 	 * Inform the server that the user has said something.
@@ -354,6 +367,9 @@ private:
 	bool HandleErrorResponse(const ServerResponseError& response);
 	/** Takes care of ServerResponseContextUpdated responses. */
 	bool HandleContextUpdateResponse(const ServerResponseContextUpdated& response);
+	/** Takes care of ServerResponseChatClosed responses. */
+	bool HandleChatClosedResponse(const ServerResponseChatClosed& response);
+
 #pragma endregion
 
 	/**

@@ -21,5 +21,6 @@ enum class ServerResponseType : uint8
 	ChatUpdate				UMETA(DisplayName = "ChatUpdate"),
 	SpeechTranscription		UMETA(DisplayName = "SpeechTranscription"),
 	Error					UMETA(DisplayName = "Error"),
-	ContextUpdated			UMETA(DisplayName = "ContextUpdated")
+	ContextUpdated			UMETA(DisplayName = "ContextUpdated"),
+	ChatClosed				UMETA(DisplayName = "ChatClosed")
 };

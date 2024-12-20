@@ -15,6 +15,7 @@
 #include "VoxtaData/Public/ServerResponses/ServerResponseSpeechTranscription.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseError.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseContextUpdated.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseChatClosed.h"
 #include "VoxtaData/Public/VoxtaServiceData.h"
 
 TUniquePtr<ServerResponseBase> VoxtaApiResponseHandler::GetResponseData(
@@ -69,6 +70,10 @@ TUniquePtr<ServerResponseBase> VoxtaApiResponseHandler::GetResponseData(
 	else if (type == TEXT("contextUpdated"))
 	{
 		return GetContextUpdatedResponse(serverResponseData);
+	}
+	else if (type == TEXT("chatClosed"))
+	{
+		return GetChatClosedResponse(serverResponseData);
 	}
 	else
 	{
@@ -217,6 +222,14 @@ TUniquePtr<ServerResponseChatUpdate> VoxtaApiResponseHandler::GetChatUpdateRespo
 		GetStringAsGuid(serverResponseData[EASY_STRING("messageId")]),
 		GetStringAsGuid(serverResponseData[EASY_STRING("senderId")]),
 		serverResponseData[EASY_STRING("text")].AsString(),
+		GetStringAsGuid(serverResponseData[EASY_STRING("sessionId")]));
+}
+
+TUniquePtr<ServerResponseChatClosed> VoxtaApiResponseHandler::GetChatClosedResponse(
+		const TMap<FString, FSignalRValue>& serverResponseData) const
+{
+	return MakeUnique<ServerResponseChatClosed>(
+		GetStringAsGuid(serverResponseData[EASY_STRING("chatId")]),
 		GetStringAsGuid(serverResponseData[EASY_STRING("sessionId")]));
 }
 

@@ -130,13 +130,13 @@ FSignalRValue VoxtaApiRequestHandler::GetNotifyAudioPlaybackStartedData(const FG
 	});
 }
 
-FSignalRValue VoxtaApiRequestHandler::GetUpdateContextRequestData(const TArray<FString>& actions,
-	const FGuid& sessionId, const FString& context, const FString& contextKey) const
+FSignalRValue VoxtaApiRequestHandler::GetUpdateContextRequestData(/*const TArray<FString>& actions, */
+	const FGuid& sessionId, const FString& context) const
 {
 	TMap<FString, FSignalRValue> requestData = TMap<FString, FSignalRValue>{
 		{ EASY_STRING("$type"), SIGNALR_STRING("updateContext") },
 		{ EASY_STRING("sessionId"), FSignalRValue(GuidToString(sessionId)) },
-		{ EASY_STRING("contextKey"), FSignalRValue(contextKey) }
+		{ EASY_STRING("contextKey"), FSignalRValue(VOXTA_CONTEXT_KEY) }
 	};
 
 	if (!context.IsEmpty())

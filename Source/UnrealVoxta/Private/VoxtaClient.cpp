@@ -26,6 +26,7 @@
 #include "VoxtaData/Public/ServerResponses/ServerResponseSpeechTranscription.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseError.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseContextUpdated.h"
+#include "VoxtaData/Public/ServerResponses/ServerResponseChatClosed.h"
 
 void UVoxtaClient::Initialize(FSubsystemCollectionBase& collection)
 {
@@ -132,6 +133,24 @@ void UVoxtaClient::StartChatWithCharacter(const FGuid& charId, const FString& co
 	{
 		UE_LOGFMT(VoxtaLog, Error, "Cannot start a chat with characterId {0} as it's not in the current character list.",
 			GuidToString(charId));
+	}
+}
+
+void UVoxtaClient::StopActiveChat()
+{
+	SendMessageToServer(m_voxtaRequestApi->GetStopChatRequestData());
+}
+
+void UVoxtaClient::UpdateChatContext(const FString& newContext)
+{
+	if (m_chatSession.IsValid())
+	{
+		SendMessageToServer(m_voxtaRequestApi->GetUpdateContextRequestData(m_chatSession->GetSessionId(), newContext));
+	}
+	else
+	{
+		UE_LOGFMT(VoxtaLog, Error, "Cannot update context of chatSession, chat was not valid? Current state: {0}",
+			UEnum::GetValueAsString(m_currentState));
 	}
 }
 
@@ -522,6 +541,9 @@ bool UVoxtaClient::HandleResponse(const TMap<FString, FSignalRValue>& responseDa
 			return HandleResponseHelper<ServerResponseContextUpdated>(response.Get(),
 				TEXT("Context Updated message received successfully"),
 				&UVoxtaClient::HandleContextUpdateResponse);
+		case ChatClosed:
+			return HandleResponseHelper<ServerResponseChatClosed>(response.Get(),
+				TEXT("Chat closed successfully"), &UVoxtaClient::HandleChatClosedResponse);
 		default:
 			UE_LOGFMT(VoxtaLog, Error, "No handler available for type a message of type: {0}", responseType);
 			return false;
@@ -795,6 +817,23 @@ bool UVoxtaClient::HandleContextUpdateResponse(const ServerResponseContextUpdate
 
 	m_chatSession->UpdateContext(response.CONTEXT_TEXT);
 	UE_LOGFMT(VoxtaLog, Log, "Updated context of the chat session to: {0}", response.CONTEXT_TEXT);
+
+	return true;
+}
+
+bool UVoxtaClient::HandleChatClosedResponse(const ServerResponseChatClosed& response)
+{
+	if (!m_chatSession.IsValid())
+	{
+		UE_LOGFMT(VoxtaLog, Warning, "Recieved a chat closed response, but there's no active chat session? This should not happen, "
+			"skipping processing of response... Chat: {0}, Session: {1}", response.CHAT_ID, response.SESSION_ID);
+		return true;
+	}
+
+	SetState(VoxtaClientState::Idle);
+	m_chatSession.Release();
+
+	UE_LOGFMT(VoxtaLog, Log, "Released ongoing chat, VoxtaClient returning back to idle");
 
 	return true;
 }

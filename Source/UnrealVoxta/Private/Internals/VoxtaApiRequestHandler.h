@@ -81,8 +81,8 @@ public:
 	FSignalRValue GetNotifyAudioPlaybackCompletedData(const FGuid& sessionId, const FGuid& messageId) const;
 
 	// TODO
-	FSignalRValue GetUpdateContextRequestData(const TArray<FString>& actions, const FGuid& sessionId,
-		const FString& context, const FString& contextKey) const;
+	FSignalRValue GetUpdateContextRequestData(/*const TArray<FString>& actions,*/ const FGuid& sessionId,
+		const FString& context) const;
 
 	// TODO
 	FSignalRValue GetRequestCharacterSpeechRequestData(const FGuid& sessionId, const FString& text) const;

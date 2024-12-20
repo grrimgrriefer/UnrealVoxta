@@ -16,6 +16,7 @@ struct ServerResponseChatMessageChunk;
 struct ServerResponseChatMessageEnd;
 struct ServerResponseChatMessageCancelled;
 struct ServerResponseChatUpdate;
+struct ServerResponseChatClosed;
 struct ServerResponseSpeechTranscription;
 struct ServerResponseError;
 
@@ -90,6 +91,10 @@ private:
 
 	/** ServerResponseChatUpdate override of the generic GetResponseData */
 	TUniquePtr<ServerResponseChatUpdate> GetChatUpdateResponse(
+		const TMap<FString, FSignalRValue>& serverResponseData) const;
+
+	/** ServerResponseChatClosed override of the generic GetResponseData */
+	TUniquePtr<ServerResponseChatClosed> GetChatClosedResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData) const;
 
 	/** ServerResponseSpeechTranscription (partial) override of the generic GetResponseData */
