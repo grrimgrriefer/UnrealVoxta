@@ -15,8 +15,8 @@ public:
 	/** Create a deserialized version of the VoxtaServer response represents the 'ChatClosed' data. */
 	explicit ServerResponseChatClosed(FGuid chatId,
 			FGuid sessionId) : ServerResponseBase(ServerResponseType::ChatClosed),
-		SESSION_ID(sessionId),
-		CHAT_ID(chatId)
+		CHAT_ID(chatId),
+		SESSION_ID(sessionId)
 	{}
 #pragma endregion
 

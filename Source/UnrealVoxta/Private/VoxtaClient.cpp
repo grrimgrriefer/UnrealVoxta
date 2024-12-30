@@ -156,6 +156,12 @@ void UVoxtaClient::UpdateChatContext(const FString& newContext)
 
 void UVoxtaClient::SendUserInput(const FString& inputText, bool generateReply, bool characterActionInference)
 {
+	if (!m_chatSession.IsValid())
+	{
+		UE_LOGFMT(VoxtaLog, Warning, "Cannot send user input as there's no active chat session.");
+		return;
+	}
+
 	if (m_currentState == VoxtaClientState::WaitingForUserReponse)
 	{
 		SendMessageToServer(m_voxtaRequestApi->GetSendUserMessageData(m_chatSession->GetSessionId(),
@@ -171,6 +177,12 @@ void UVoxtaClient::SendUserInput(const FString& inputText, bool generateReply, b
 
 void UVoxtaClient::NotifyAudioPlaybackComplete(const FGuid& messageId)
 {
+	if (!m_chatSession.IsValid())
+	{
+		UE_LOGFMT(VoxtaLog, Warning, "Cannot notify AudioPlayback completion as there's no active chat session.");
+		return;
+	}
+
 	if (m_currentState != VoxtaClientState::AudioPlayback)
 	{
 		UE_LOGFMT(VoxtaLog, Error, "Tried to mark AudioPlayback as complete, but we weren't in the audioPlayback state,"
@@ -239,7 +251,7 @@ bool UVoxtaClient::TryRegisterPlaybackHandler(const FGuid& characterId,
 		return false;
 	}
 
-	if (m_chatSession != nullptr && !m_chatSession->GetActiveServices().Contains(VoxtaServiceType::SpeechToText))
+	if (m_chatSession.IsValid() && !m_chatSession->GetActiveServices().Contains(VoxtaServiceType::SpeechToText))
 	{
 		UE_LOGFMT(VoxtaLog, Warning, "You tried to register a Voxta AudioPlayback handler for character {0}, but no "
 			"STT service is active on VoxtaServer. (make sure to have it enabled at start, runtime activation not yet "
@@ -610,7 +622,7 @@ bool UVoxtaClient::HandleChatStartedResponse(const ServerResponseChatStarted& re
 
 bool UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessageBase& response)
 {
-	if (m_chatSession == nullptr)
+	if (!m_chatSession.IsValid())
 	{
 		UE_LOGFMT(VoxtaLog, Error, "Received a chat message, but there's no ongoing chat, "
 			"a critical service was likely not available.");
@@ -727,6 +739,12 @@ bool UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessageBase
 
 bool UVoxtaClient::HandleChatUpdateResponse(const ServerResponseChatUpdate& response)
 {
+	if (!m_chatSession.IsValid())
+	{
+		UE_LOGFMT(VoxtaLog, Error, "Received a chat update, but there's no ongoing chat, this should never happen.");
+		return false;
+	}
+
 	if (response.SESSION_ID == m_chatSession->GetSessionId())
 	{
 		if (GetChatMessageById(response.MESSAGE_ID) != nullptr)
@@ -831,7 +849,7 @@ bool UVoxtaClient::HandleChatClosedResponse(const ServerResponseChatClosed& resp
 	}
 
 	SetState(VoxtaClientState::Idle);
-	m_chatSession.Release();
+	delete m_chatSession.Release();
 
 	UE_LOGFMT(VoxtaLog, Log, "Released ongoing chat, VoxtaClient returning back to idle");
 
@@ -848,6 +866,11 @@ const TUniquePtr<const FAiCharData>* UVoxtaClient::GetAiCharacterDataById(const 
 
 FChatMessage* UVoxtaClient::GetChatMessageById(const FGuid& messageId) const
 {
+	if (!m_chatSession.IsValid())
+	{
+		UE_LOGFMT(VoxtaLog, Warning, "Cannot fetch chat message as there is no active chat session.");
+		return nullptr;
+	}
 	return m_chatSession->GetChatMessages().FindByPredicate([&messageId] (const FChatMessage& inItem)
 		{
 			return inItem.GetMessageId() == messageId;
