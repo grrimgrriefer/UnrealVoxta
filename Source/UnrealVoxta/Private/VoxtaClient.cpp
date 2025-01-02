@@ -849,8 +849,9 @@ bool UVoxtaClient::HandleChatClosedResponse(const ServerResponseChatClosed& resp
 	}
 
 	SetState(VoxtaClientState::Idle);
+	VoxtaClientChatSessionStoppedEventNative.Broadcast(*m_chatSession.Get());
+	VoxtaClientChatSessionStoppedEvent.Broadcast(*m_chatSession.Get());
 	delete m_chatSession.Release();
-
 	UE_LOGFMT(VoxtaLog, Log, "Released ongoing chat, VoxtaClient returning back to idle");
 
 	return true;

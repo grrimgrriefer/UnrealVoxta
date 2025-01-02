@@ -52,6 +52,7 @@ public:
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientCharMessageRemoved, const FChatMessage&, message);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientSpeechTranscribed, const FString&, message);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientChatSessionStarted, const FChatSession&, chatSession);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientChatSessionStopped, const FChatSession&, chatSession);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FVoxtaClientAudioPlaybackRegistered, const UVoxtaAudioPlayback*, playbackHandler, const FGuid&, characterId);
 
 	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaClientStateChangedNative, VoxtaClientState);
@@ -60,6 +61,7 @@ public:
 	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaClientCharMessageRemovedNative, const FChatMessage&);
 	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaClientSpeechTranscribedNative, const FString&);
 	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaClientChatSessionStartedNative, const FChatSession&);
+	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaClientChatSessionStoppedNative, const FChatSession&);
 	DECLARE_MULTICAST_DELEGATE_TwoParams(FVoxtaClientAudioPlaybackRegisteredNative, const UVoxtaAudioPlayback*, const FGuid&);
 
 #pragma endregion
@@ -116,10 +118,20 @@ public:
 	/** Static Event variation of VoxtaClientChatSessionStartedEvent */
 	FVoxtaClientChatSessionStartedNative VoxtaClientChatSessionStartedEventNative;
 
+	/**
+	 * Event fired when the chat session has ended.
+	 *
+	 * Note: The chat object provided in the parameters will be destroyed immediatly after this call.
+	 */
+	UPROPERTY(BlueprintAssignable, Category = "Voxta", meta = (IsBindableEvent = "True"))
+	FVoxtaClientChatSessionStopped VoxtaClientChatSessionStoppedEvent;
+	/** Static Event variation of VoxtaClientChatSessionStoppedEvent */
+	FVoxtaClientChatSessionStoppedNative VoxtaClientChatSessionStoppedEventNative;
+
 	/**  Event fired when a playbackHandler has registered itself & claimed audioplayback for that character. */
 	UPROPERTY(BlueprintAssignable, Category = "Voxta", meta = (IsBindableEvent = "True"))
 	FVoxtaClientAudioPlaybackRegistered VoxtaClientAudioPlaybackRegisteredEvent;
-	/** Static Event variation of VoxtaClientChatSessionStartedEvent */
+	/** Static Event variation of VoxtaClientAudioPlaybackRegisteredEvent */
 	FVoxtaClientAudioPlaybackRegisteredNative VoxtaClientAudioPlaybackRegisteredEventNative;
 
 #pragma endregion
