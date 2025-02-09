@@ -86,10 +86,12 @@ TUniquePtr<ServerResponseWelcome> VoxtaApiResponseHandler::GetWelcomeResponse(
 	const TMap<FString, FSignalRValue>& serverResponseData) const
 {
 	TMap<FString, FSignalRValue> user = serverResponseData[EASY_STRING("user")].AsObject();
-	//FString voxtaServerVersion = serverResponseData[EASY_STRING("voxtaServerVersion")].AsString();
-	//FString apiVersion = serverResponseData[EASY_STRING("apiVersion")].AsString();
+	TMap<FString, FSignalRValue> assistant = serverResponseData[EASY_STRING("assistant")].AsObject();
+	FString voxtaServerVersion = serverResponseData[EASY_STRING("voxtaServerVersion")].AsString();
+	FString apiVersion = serverResponseData[EASY_STRING("apiVersion")].AsString();
 	return MakeUnique<ServerResponseWelcome>(FUserCharData(GetStringAsGuid(user[EASY_STRING("id")]),
-		user[EASY_STRING("name")].AsString()));
+		user[EASY_STRING("name")].AsString()), GetStringAsGuid(assistant[EASY_STRING("id")]),
+		voxtaServerVersion, apiVersion);
 }
 
 TUniquePtr<ServerResponseCharacterList> VoxtaApiResponseHandler::GetCharacterListLoadedResponse(

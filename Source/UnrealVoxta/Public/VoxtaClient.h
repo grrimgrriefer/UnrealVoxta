@@ -240,6 +240,15 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Voxta")
 	FString GetBrowserUrlForCharacter(const FGuid& aiCharacterId) const;
 
+	UFUNCTION(BlueprintPure, Category = "Voxta")
+	FGuid GetMainAssistantId() const;
+
+	UFUNCTION(BlueprintPure, Category = "Voxta")
+	FString GetServerVersion() const;
+
+	UFUNCTION(BlueprintPure, Category = "Voxta")
+	FString GetApiVersion() const;
+
 	/**
 	 * Try to retrieve a pointer to the UVoxtaAudioPlayback that has claimed playback for the provided characterId.
 	 *
@@ -299,13 +308,17 @@ private:
 	TSharedPtr<Audio2FaceRESTHandler> m_A2FHandler;
 	TSharedPtr<TexturesCacheHandler> m_texturesCacheHandler;
 
+	VoxtaClientState m_currentState = VoxtaClientState::Disconnected;
 	TUniquePtr<FUserCharData> m_userData;
-	TArray<TUniquePtr<const FAiCharData>> m_characterList;
-	TMap<FGuid, TWeakObjectPtr<UVoxtaAudioPlayback>> m_registeredCharacterPlaybackHandlers;
-	TUniquePtr<FChatSession> m_chatSession;
+	FGuid m_mainAssistantId;
+	FString m_serverVersion;
+	FString m_apiVersion;
 	FString m_hostAddress;
 	uint16 m_hostPort;
-	VoxtaClientState m_currentState = VoxtaClientState::Disconnected;
+
+	TUniquePtr<FChatSession> m_chatSession;
+	TArray<TUniquePtr<const FAiCharData>> m_characterList;
+	TMap<FGuid, TWeakObjectPtr<UVoxtaAudioPlayback>> m_registeredCharacterPlaybackHandlers;
 #pragma endregion
 
 #pragma region private API

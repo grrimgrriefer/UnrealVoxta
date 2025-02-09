@@ -340,6 +340,21 @@ FString UVoxtaClient::GetBrowserUrlForCharacter(const FGuid& aiCharacterId) cons
 	return FString();
 }
 
+FGuid UVoxtaClient::GetMainAssistantId() const
+{
+	return m_mainAssistantId;
+}
+
+FString UVoxtaClient::GetServerVersion() const
+{
+	return m_serverVersion;
+}
+
+FString UVoxtaClient::GetApiVersion() const
+{
+	return m_apiVersion;
+}
+
 const UVoxtaAudioPlayback* UVoxtaClient::GetRegisteredAudioPlaybackHandlerForID(const FGuid& characterId) const
 {
 	auto currentHandler = m_registeredCharacterPlaybackHandlers.Find(characterId);
@@ -565,6 +580,9 @@ bool UVoxtaClient::HandleResponse(const TMap<FString, FSignalRValue>& responseDa
 bool UVoxtaClient::HandleWelcomeResponse(const ServerResponseWelcome& response)
 {
 	m_userData = MakeUnique<FUserCharData>(response.USER_DATA);
+	m_mainAssistantId = response.ASSISTANT_ID;
+	m_apiVersion = response.API_VERSION;
+	m_serverVersion = response.SERVER_VERSION;
 
 	UE_LOGFMT(VoxtaLog, Log, "Authenticated with Voxta Server. Welcome {0}! :D", m_userData->GetName());
 
