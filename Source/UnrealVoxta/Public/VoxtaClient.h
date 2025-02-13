@@ -394,8 +394,9 @@ private:
 	bool HandleContextUpdateResponse(const ServerResponseContextUpdated& response);
 	/** Takes care of ServerResponseChatClosed responses. */
 	bool HandleChatClosedResponse(const ServerResponseChatClosed& response);
-
 #pragma endregion
+
+	void StopChatInternal();
 
 	/**
 	 * Fetches a raw pointer to the ChatMessage that maches the id given in the parameters.

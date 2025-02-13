@@ -106,6 +106,7 @@ void UVoxtaClient::Disconnect(bool silent)
 	{
 		SetState(VoxtaClientState::Terminated);
 	}
+	StopChatInternal();
 	m_hub->Stop();
 	//Cleanup();
 }
@@ -867,12 +868,17 @@ bool UVoxtaClient::HandleChatClosedResponse(const ServerResponseChatClosed& resp
 	}
 
 	SetState(VoxtaClientState::Idle);
-	VoxtaClientChatSessionStoppedEventNative.Broadcast(*m_chatSession.Get());
-	VoxtaClientChatSessionStoppedEvent.Broadcast(*m_chatSession.Get());
-	delete m_chatSession.Release();
+	StopChatInternal();
 	UE_LOGFMT(VoxtaLog, Log, "Released ongoing chat, VoxtaClient returning back to idle");
 
 	return true;
+}
+
+void UVoxtaClient::StopChatInternal()
+{
+	VoxtaClientChatSessionStoppedEventNative.Broadcast(*m_chatSession.Get());
+	VoxtaClientChatSessionStoppedEvent.Broadcast(*m_chatSession.Get());
+	delete m_chatSession.Release();
 }
 
 const TUniquePtr<const FAiCharData>* UVoxtaClient::GetAiCharacterDataById(const FGuid& charId) const
