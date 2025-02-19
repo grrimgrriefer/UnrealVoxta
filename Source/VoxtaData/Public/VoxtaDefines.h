@@ -5,6 +5,7 @@
 #include "type_traits"
 
 class FSignalRValue;
+class UTexture2DDynamic;
 
 /** Macro to make a FName from a literal without the extra overhead. */
 #define EASY_NAME(x) FName(TEXT(x))
@@ -23,5 +24,7 @@ DECLARE_LOG_CATEGORY_EXTERN(VoxtaLog, Log, All);
 
 const FString VOXTA_CONTEXT_KEY = FString("UnrealVoxta - SimpleChat");
 const FString EMPTY_STRING = FString(TEXT(""));
+
+DECLARE_DELEGATE_TwoParams(FDownloadedTextureDelegateNative, const UTexture2DDynamic*, const FIntVector2&);
 
 VOXTADATA_API FString GuidToString(const FGuid& input);

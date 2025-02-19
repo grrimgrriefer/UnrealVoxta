@@ -3,11 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "VoxtaDefines.h"
 
 class UTexture2DDynamic;
 class IImageWrapper;
-
-DECLARE_DELEGATE_TwoParams(FDownloadedTextureDelegateNative, const UTexture2DDynamic*, const FIntVector2&);
 
 /**
  * TexturesCacheHandler

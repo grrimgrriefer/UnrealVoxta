@@ -197,7 +197,8 @@ void UVoxtaClient::NotifyAudioPlaybackComplete(const FGuid& messageId)
 	SetState(VoxtaClientState::WaitingForUserReponse);
 }
 
-void UVoxtaClient::FetchAndCacheCharacterThumbnail(const FGuid& baseCharacterId, FDownloadedTextureDelegate onThumbnailFetched)
+void UVoxtaClient::TryFetchAndCacheCharacterThumbnail(const FGuid& baseCharacterId, FVoxtaCharacterHasNoThumbnailNative noThumbnailAvailable,
+	FDownloadedTextureDelegateNative onThumbnailFetched)
 {
 	if (!baseCharacterId.IsValid())
 	{
@@ -220,19 +221,17 @@ void UVoxtaClient::FetchAndCacheCharacterThumbnail(const FGuid& baseCharacterId,
 		{
 			FString url = FString::Format(*FString(TEXT("http://{0}:{1}{2}")),
 				{ m_hostAddress, m_hostPort, character->Get()->GetThumnailUrl().GetData() });
-			FDownloadedTextureDelegateNative nativeDelegate = FDownloadedTextureDelegateNative::CreateLambda(
-				[onThumbnailFetched] (const UTexture2DDynamic* downloadedTexture, const FIntVector2& textureSize)
-				{
-					onThumbnailFetched.ExecuteIfBound(downloadedTexture, textureSize.X, textureSize.Y);
-				});
-
 			UE_LOGFMT(VoxtaLog, Log, "Loading from URL:  {0}", url);
 
-			m_texturesCacheHandler->FetchTextureFromUrl(url, nativeDelegate);
+			m_texturesCacheHandler->FetchTextureFromUrl(url, onThumbnailFetched);
 		}
 		else
 		{
-			UE_LOGFMT(VoxtaLog, Warning, "TODO: load placeholder image for characters without image: {0}", GuidToString(baseCharacterId));
+			UE_LOGFMT(VoxtaLog, Log, "Character has no custom thumbnail: {0}", GuidToString(baseCharacterId));
+			if (noThumbnailAvailable.IsBound())
+			{
+				noThumbnailAvailable.Execute();
+			}
 		}
 	}
 	else
