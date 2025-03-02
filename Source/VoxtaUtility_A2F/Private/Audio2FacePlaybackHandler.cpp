@@ -7,8 +7,10 @@
 #include "LipSyncDataA2F.h"
 
 #ifndef VOXTA_LOG_DEFINED
+#if WITH_EDITOR
 DEFINE_LOG_CATEGORY(VoxtaLog);
 #define VOXTA_LOG_DEFINED
+#endif
 #endif
 
 // ArkitNames https://developer.apple.com/documentation/arkit/arfaceanchor/blendshapelocation

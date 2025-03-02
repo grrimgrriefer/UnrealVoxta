@@ -5,6 +5,7 @@
 #include "SignalR/Private/HubConnection.h"
 #include "Interfaces/IPv4/IPv4Address.h"
 #include "VoxtaData/Public/ChatSession.h"
+#include "VoxtaData/Public/VoxtaVersionData.h"
 #include "Audio2FaceRESTHandler.h"
 #include "VoxtaDefines.h"
 #include "Logging/StructuredLog.h"
@@ -345,16 +346,6 @@ FGuid UVoxtaClient::GetMainAssistantId() const
 	return m_mainAssistantId;
 }
 
-FString UVoxtaClient::GetServerVersion() const
-{
-	return m_serverVersion;
-}
-
-FString UVoxtaClient::GetApiVersion() const
-{
-	return m_apiVersion;
-}
-
 const UVoxtaAudioPlayback* UVoxtaClient::GetRegisteredAudioPlaybackHandlerForID(const FGuid& characterId) const
 {
 	auto currentHandler = m_registeredCharacterPlaybackHandlers.Find(characterId);
@@ -371,6 +362,11 @@ const UVoxtaAudioPlayback* UVoxtaClient::GetRegisteredAudioPlaybackHandlerForID(
 FChatSession UVoxtaClient::GetChatSessionCopy() const
 {
 	return *m_chatSession;
+}
+
+FVoxtaVersionData UVoxtaClient::GetServerVersionCopy() const
+{
+	return *m_voxtaVersionData;
 }
 
 const FChatSession* UVoxtaClient::GetChatSession() const
@@ -581,8 +577,7 @@ bool UVoxtaClient::HandleWelcomeResponse(const ServerResponseWelcome& response)
 {
 	m_userData = MakeUnique<FUserCharData>(response.USER_DATA);
 	m_mainAssistantId = response.ASSISTANT_ID;
-	m_apiVersion = response.API_VERSION;
-	m_serverVersion = response.SERVER_VERSION;
+	m_voxtaVersionData = MakeUnique<FVoxtaVersionData>(response.SERVER_VERSION, response.API_VERSION);
 
 	UE_LOGFMT(VoxtaLog, Log, "Authenticated with Voxta Server. Welcome {0}! :D", m_userData->GetName());
 

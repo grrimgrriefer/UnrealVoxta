@@ -30,6 +30,7 @@ struct FAiCharData;
 struct FUserCharData;
 struct FBaseCharData;
 struct FChatSession;
+struct FVoxtaVersionData;
 
 /**
  * UVoxtaClient
@@ -239,12 +240,6 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Voxta")
 	FGuid GetMainAssistantId() const;
 
-	UFUNCTION(BlueprintPure, Category = "Voxta")
-	FString GetServerVersion() const;
-
-	UFUNCTION(BlueprintPure, Category = "Voxta")
-	FString GetApiVersion() const;
-
 	void TryFetchAndCacheCharacterThumbnail(const FGuid& baseCharacterId, 
 		FVoxtaCharacterHasNoThumbnailNative noThumbnailAvailable, 
 		FDownloadedTextureDelegateNative onThumbnailFetched);
@@ -285,6 +280,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Voxta")
 	FChatSession GetChatSessionCopy() const;
 
+	UFUNCTION(BlueprintPure, Category = "Voxta")
+	FVoxtaVersionData GetServerVersionCopy() const;
+
 	/** @return An immutable pointer to the ChatSession. */
 	const FChatSession* GetChatSession() const;
 
@@ -311,11 +309,10 @@ private:
 	VoxtaClientState m_currentState = VoxtaClientState::Disconnected;
 	TUniquePtr<FUserCharData> m_userData;
 	FGuid m_mainAssistantId;
-	FString m_serverVersion;
-	FString m_apiVersion;
 	FString m_hostAddress;
 	uint16 m_hostPort;
 
+	TUniquePtr<FVoxtaVersionData> m_voxtaVersionData;
 	TUniquePtr<FChatSession> m_chatSession;
 	TArray<TUniquePtr<const FAiCharData>> m_characterList;
 	TMap<FGuid, TWeakObjectPtr<UVoxtaAudioPlayback>> m_registeredCharacterPlaybackHandlers;

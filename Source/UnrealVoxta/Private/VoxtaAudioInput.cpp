@@ -80,6 +80,9 @@ void UVoxtaAudioInput::StartStreaming()
 		{
 			UE_LOGFMT(VoxtaLog, Log, "Started voice capture via AudioInput.");
 			m_connectionState = VoxtaMicrophoneState::InUse;
+
+			UE_LOGFMT(VoxtaLog, Log, "Using predefined silence tresholds.");
+			ConfigureSilenceTresholds(m_micNoiseGateThreshold, m_silenceDetectionThreshold, m_micInputGain);
 		}
 		else
 		{
@@ -112,14 +115,27 @@ bool UVoxtaAudioInput::IsRecording() const
 	return m_connectionState == VoxtaMicrophoneState::InUse;
 }
 
-float UVoxtaAudioInput::GetInputDecibels() const
+float UVoxtaAudioInput::GetInputTrueDecibels() const
 {
-	return m_audioCaptureDevice.GetDecibels();
+	return m_audioCaptureDevice.GetTrueDecibels();
+}
+
+float UVoxtaAudioInput::GetRealtimeDecibels() const
+{
+	return m_audioCaptureDevice.GetRealtimeDecibels();
 }
 
 const FString& UVoxtaAudioInput::GetInputDeviceName() const
 {
 	return m_audioCaptureDevice.GetDeviceName();
+}
+
+void UVoxtaAudioInput::ConfigureSilenceTresholds(float micNoiseGateThreshold, float silenceDetectionThreshold, float micInputGain)
+{
+	m_micNoiseGateThreshold = micNoiseGateThreshold;
+	m_silenceDetectionThreshold = silenceDetectionThreshold;
+	m_micInputGain = micInputGain;
+	return m_audioCaptureDevice.ConfigureSilenceTresholds(m_micNoiseGateThreshold, m_silenceDetectionThreshold, m_micInputGain);
 }
 
 void UVoxtaAudioInput::InitializeVoiceCapture()

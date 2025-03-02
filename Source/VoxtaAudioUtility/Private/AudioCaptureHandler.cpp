@@ -7,6 +7,7 @@
 #include "AudioWebSocket.h"
 #include "Voice.h"
 #include "AudioCaptureCore.h"
+#include "Math/UnrealMathUtility.h"
 
 #ifndef VOXTA_LOG_DEFINED
 DEFINE_LOG_CATEGORY(VoxtaLog);
@@ -30,8 +31,6 @@ bool AudioCaptureHandler::TryInitializeVoiceCapture(int sampleRate, int numChann
 	FVoiceModule& VoiceModule = FVoiceModule::Get();
 	if (VoiceModule.IsVoiceEnabled())
 	{
-		ConfigureSilenceTresholds();
-
 		Audio::FAudioCapture AudioCapture;
 		Audio::FCaptureDeviceInfo OutInfo;
 		if (!AudioCapture.GetCaptureDeviceInfo(OutInfo, INDEX_NONE))
@@ -58,13 +57,13 @@ bool AudioCaptureHandler::TryInitializeVoiceCapture(int sampleRate, int numChann
 
 void AudioCaptureHandler::ConfigureSilenceTresholds(float micNoiseGateThreshold, float silenceDetectionThreshold, float micInputGain)
 {
-	static IConsoleVariable* SilenceDetectionReleaseCVar = IConsoleManager::Get().FindConsoleVariable(TEXT("voice.MicNoiseGateThreshold"));
-	static IConsoleVariable* SilenceDetectionThresholdCVar = IConsoleManager::Get().FindConsoleVariable(TEXT("voice.SilenceDetectionThreshold"));
-	static IConsoleVariable* MicInputGain = IConsoleManager::Get().FindConsoleVariable(TEXT("voice.MicInputGain"));
+	static IConsoleVariable* silenceDetectionReleaseCVar = IConsoleManager::Get().FindConsoleVariable(TEXT("voice.MicNoiseGateThreshold"));
+	static IConsoleVariable* silenceDetectionThresholdCVar = IConsoleManager::Get().FindConsoleVariable(TEXT("voice.SilenceDetectionThreshold"));
+	static IConsoleVariable* micInputGainCVar = IConsoleManager::Get().FindConsoleVariable(TEXT("voice.MicInputGain"));
 
-	SilenceDetectionReleaseCVar->Set(micNoiseGateThreshold);
-	SilenceDetectionThresholdCVar->Set(silenceDetectionThreshold);
-	MicInputGain->Set(micInputGain);
+	silenceDetectionReleaseCVar->Set(micNoiseGateThreshold);
+	silenceDetectionThresholdCVar->Set(silenceDetectionThreshold);
+	micInputGainCVar->Set(micInputGain);
 }
 
 bool AudioCaptureHandler::TryStartVoiceCapture()
@@ -83,7 +82,7 @@ bool AudioCaptureHandler::TryStartVoiceCapture()
 		return false;
 	}
 
-	m_decibels = DEFAULT_SILENCE_DECIBELS;
+	m_trueDecibels = DEFAULT_SILENCE_DECIBELS;
 	// we let the thread notify us at 75% of the buffer, in case we encounter minor lag / delay,
 	// so no audio data is lost. (within reason)
 	m_voiceRunnerThread = MakeUnique<FVoiceRunnerThread>(this, (m_bufferMillisecondSize / 1000.f * 0.75f));
@@ -111,7 +110,7 @@ void AudioCaptureHandler::StopCapture()
 	UE_LOGFMT(VoxtaLog, Log, "Stopping voice capture.");
 
 	FScopeLock Lock(&m_captureGuard);
-	m_decibels = DEFAULT_SILENCE_DECIBELS;
+	m_trueDecibels = DEFAULT_SILENCE_DECIBELS;
 	if (m_voiceRunnerThread.IsValid())
 	{
 		m_voiceRunnerThread->Stop();
@@ -184,7 +183,7 @@ void AudioCaptureHandler::SendInternal(const TArray<uint8> rawData) const
 void AudioCaptureHandler::CaptureAndSendVoiceData()
 {
 	FScopeLock Lock(&m_captureGuard);
-	CaptureVoiceInternal(m_socketDataBuffer, m_decibels);
+	CaptureVoiceInternal(m_socketDataBuffer, m_trueDecibels);
 
 	if (m_socketDataBuffer.Num() > 0)
 	{
@@ -194,10 +193,20 @@ void AudioCaptureHandler::CaptureAndSendVoiceData()
 	}
 }
 
-float AudioCaptureHandler::GetDecibels() const
+float AudioCaptureHandler::GetTrueDecibels() const
 {
 	FScopeLock Lock(&m_captureGuard);
-	return m_decibels;
+	return m_trueDecibels;
+}
+
+float AudioCaptureHandler::GetRealtimeDecibels() const
+{
+	if (!m_voiceCaptureDevice)
+	{
+		return DEFAULT_SILENCE_DECIBELS;
+	}
+
+	return 20.0f * FMath::LogX(10.0, FMath::Max(m_voiceCaptureDevice->GetCurrentAmplitude(), 0.0001f));
 }
 
 const FString& AudioCaptureHandler::GetDeviceName() const

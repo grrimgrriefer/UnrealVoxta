@@ -75,11 +75,24 @@ public:
 	 * Note: These values are roughly in the range of -100db (silence) and 0db (max loudness)
 	*/
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
-	float GetInputDecibels() const;
+	float GetInputTrueDecibels() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Voxta")
+	float GetRealtimeDecibels() const;
 
 	/** @return The an immutable reference to the name reported by the hardware device. */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
 	const FString& GetInputDeviceName() const;
+
+	/**
+	 * Configure values to help the microphone to pick up voice without background noise.
+	 *
+	 * @param micNoiseGateThreshold The linear amplitude, anything below this will output silent audio data.
+	 * @param silenceDetectionThreshold The linear amplitude, anything below this will not generate any audio data.
+	 * @param micInputGain The linear amplitude muliplier applied to the input.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Voxta")
+	void ConfigureSilenceTresholds(float micNoiseGateThreshold, float silenceDetectionThreshold, float micInputGain);
 #pragma endregion
 
 #pragma region private helper classes
@@ -97,6 +110,15 @@ private:
 
 #pragma region data
 private:
+	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Current Mic Noise Gate Threshold"))
+	float m_micNoiseGateThreshold = 0.001f;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Current Silence Detection Threshold"))
+	float m_silenceDetectionThreshold = 0.001f;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Current Mic Input Gain"))
+	float m_micInputGain = 6.f;
+
 	int m_bufferMs;
 	int m_sampleRate;
 	int m_inputChannels;

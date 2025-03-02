@@ -46,9 +46,7 @@ public:
 	 * @param silenceDetectionThreshold The linear amplitude, anything below this will not generate any audio data.
 	 * @param micInputGain The linear amplitude muliplier applied to the input.
 	 */
-	void ConfigureSilenceTresholds(float micNoiseGateThreshold = 0.001f,
-		float silenceDetectionThreshold = 0.001f,
-		float micInputGain = 6.0f);
+	void ConfigureSilenceTresholds(float micNoiseGateThreshold, float silenceDetectionThreshold, float micInputGain);
 
 	/**
 	 * Tries to start that IVoiceCapture and also start the background thread that will forward any
@@ -65,7 +63,10 @@ public:
 	void ShutDown();
 
 	/** @return The volume in decibels, of the last audioChunk (~30ms delay) */
-	float GetDecibels() const;
+	float GetTrueDecibels() const;
+
+	/** @return The volume in decibels, more responsive but less accurate (amplitude based) */
+	float GetRealtimeDecibels() const;
 
 	/** @return Returns the name of the device used by the VoiceModule, if initialized. */
 	const FString& GetDeviceName() const;
@@ -84,7 +85,7 @@ private:
 	FString m_deviceName = EMPTY_STRING;
 	bool m_isCapturing;
 	int m_bufferMillisecondSize;
-	float m_decibels = DEFAULT_SILENCE_DECIBELS;
+	float m_trueDecibels = DEFAULT_SILENCE_DECIBELS;
 
 	mutable FCriticalSection m_captureGuard;
 	TUniquePtr<FVoiceRunnerThread> m_voiceRunnerThread;

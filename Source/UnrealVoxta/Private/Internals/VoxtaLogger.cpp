@@ -49,6 +49,6 @@ void VoxtaLogger::Serialize(const TCHAR* Message, ELogVerbosity::Type Verbosity,
 			ToString(Verbosity),
 			FDateTime::Now().ToString(TEXT("%Y-%m-%d %H:%M:%S")),
 			Message }));
-#endif
 	}
+#endif
 }
