@@ -369,6 +369,15 @@ FVoxtaVersionData UVoxtaClient::GetServerVersionCopy() const
 	return *m_voxtaVersionData;
 }
 
+bool UVoxtaClient::IsMatchingAPIVersion() const 
+{ 
+	if (m_voxtaVersionData.IsValid())
+	{
+		return m_voxtaVersionData->IsMatchingAPIVersion();
+	}
+	return false;
+}
+
 const FChatSession* UVoxtaClient::GetChatSession() const
 {
 	return m_chatSession.Get();
@@ -579,10 +588,21 @@ bool UVoxtaClient::HandleWelcomeResponse(const ServerResponseWelcome& response)
 	m_mainAssistantId = response.ASSISTANT_ID;
 	m_voxtaVersionData = MakeUnique<FVoxtaVersionData>(response.SERVER_VERSION, response.API_VERSION);
 
-	UE_LOGFMT(VoxtaLog, Log, "Authenticated with Voxta Server. Welcome {0}! :D", m_userData->GetName());
+	if (m_voxtaVersionData->IsMatchingAPIVersion())
+	{
+		UE_LOGFMT(VoxtaLog, Log, "API version is matching, Authenticated with Voxta Server. Welcome {0}! :D", 
+			m_userData->GetName());
 
-	SetState(VoxtaClientState::Authenticated);
-	SendMessageToServer(m_voxtaRequestApi->GetLoadCharactersListData());
+		SetState(VoxtaClientState::Authenticated);
+		SendMessageToServer(m_voxtaRequestApi->GetLoadCharactersListData());
+	}
+	else
+	{
+		UE_LOGFMT(VoxtaLog, Error, "API version is not matching, please use a VoxtaServer with API version {0}.", 
+			m_voxtaVersionData->GetCompatibleAPIVersion());
+		Disconnect();
+	}
+	
 	return true;
 }
 

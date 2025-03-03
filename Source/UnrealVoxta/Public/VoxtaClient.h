@@ -283,6 +283,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Voxta")
 	FVoxtaVersionData GetServerVersionCopy() const;
 
+	UFUNCTION(BlueprintPure, Category = "Voxta")
+	bool IsMatchingAPIVersion() const;
+
 	/** @return An immutable pointer to the ChatSession. */
 	const FChatSession* GetChatSession() const;
 
