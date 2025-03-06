@@ -41,8 +41,8 @@ private:
 	FString m_compatibleAPIVersion = TEXT("2024-11");
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Current VoxtaServer version"))
-	FString m_serverVersion;
+	FString m_serverVersion = TEXT("not connected");
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Current VoxtaServer API version"))
-	FString m_apiVersion;
+	FString m_apiVersion = TEXT("not connected");
 };
