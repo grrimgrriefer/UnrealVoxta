@@ -366,6 +366,10 @@ FChatSession UVoxtaClient::GetChatSessionCopy() const
 
 FVoxtaVersionData UVoxtaClient::GetServerVersionCopy() const
 {
+	if (!m_voxtaVersionData.IsValid())
+	{
+		return FVoxtaVersionData();
+	}
 	return *m_voxtaVersionData;
 }
 
@@ -890,6 +894,10 @@ bool UVoxtaClient::HandleChatClosedResponse(const ServerResponseChatClosed& resp
 
 void UVoxtaClient::StopChatInternal()
 {
+	if (!m_chatSession.IsValid())
+	{
+		return;
+	}
 	VoxtaClientChatSessionStoppedEventNative.Broadcast(*m_chatSession.Get());
 	VoxtaClientChatSessionStoppedEvent.Broadcast(*m_chatSession.Get());
 	delete m_chatSession.Release();
