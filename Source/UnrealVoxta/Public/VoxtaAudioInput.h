@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "VoxtaData/Public/VoxtaMicrophoneState.h"
 #include "VoxtaAudioUtility/Public/AudioCaptureHandler.h"
 #include "VoxtaAudioInput.generated.h"
 
@@ -47,11 +48,10 @@ public:
 	 * @param sampleRate The samplerate used for microphone, 16000 is preferred due to serverside conversion.
 	 * @param inputChannels The input channels for the microphone, 1 is preferred.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Voxta")
 	void InitializeSocket(int bufferMs = 200, int sampleRate = 16000, int inputChannels = 1);
 
-	/** Shuts down the Microphone audio stream and closes the websocket gracefully. */
-	void CloseSocket();
+	void ConnectToCurrentChat();
+	void DisconnectFromChat();
 
 	/** Starts the voice capture, sending captured audiodata to the server in fixed timesteps (bufferMs). */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
@@ -64,6 +64,9 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
 	void StopStreaming();
+
+	UFUNCTION(BlueprintCallable, Category = "Voxta")
+	VoxtaMicrophoneState GetCurrentState() const;
 
 	/** @return True if VoiceInput is actively being captured at this moment. */
 	UFUNCTION(BlueprintPure, Category = "Voxta")
@@ -93,19 +96,6 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
 	void ConfigureSilenceTresholds(float micNoiseGateThreshold, float silenceDetectionThreshold, float micInputGain);
-#pragma endregion
-
-#pragma region private helper classes
-private:
-	/** Internal helper class, easier to keep track of what's going on, as well as user-friendly logging. */
-	enum class VoxtaMicrophoneState : uint8
-	{
-		NotConnected,
-		Initializing,
-		Ready,
-		InUse,
-		Closed
-	};
 #pragma endregion
 
 #pragma region data
@@ -139,7 +129,7 @@ private:
 	 * Note: This activates the mic, but it does NOT start capturing voice data. You must call StartStreaming to
 	 * begin capturing the actual audiodata.
 	 */
-	void InitializeVoiceCapture();
+	void ChatSessionHandshake();
 
 #pragma region IWebSocket listeners
 private:

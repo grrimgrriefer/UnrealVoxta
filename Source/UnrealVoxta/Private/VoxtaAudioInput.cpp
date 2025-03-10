@@ -9,7 +9,7 @@
 
 void UVoxtaAudioInput::InitializeSocket(int bufferMs, int sampleRate, int inputChannels)
 {
-	if (m_connectionState != VoxtaMicrophoneState::NotConnected)
+	if (m_connectionState != VoxtaMicrophoneState::Uninitialized)
 	{
 		UE_LOGFMT(VoxtaLog, Warning, "Audio socket was already initialized, skipping new initialize attempt.");
 		return;
@@ -28,33 +28,51 @@ void UVoxtaAudioInput::InitializeSocket(int bufferMs, int sampleRate, int inputC
 	m_bufferMs = bufferMs;
 	m_sampleRate = sampleRate;
 	m_inputChannels = inputChannels;
-	m_connectionState = VoxtaMicrophoneState::Initializing;
+	m_connectionState = VoxtaMicrophoneState::NotConnected;
 	m_audioWebSocket = MakeShared<AudioWebSocket>(m_voxtaClient->GetServerAddress(),
 		m_voxtaClient->GetServerPort());
 
 	m_audioWebSocket->OnConnectedEvent.AddUObject(this, &UVoxtaAudioInput::OnSocketConnected);
 	m_audioWebSocket->OnConnectionErrorEvent.AddUObject(this, &UVoxtaAudioInput::OnSocketConnectionError);
-	m_audioWebSocket->OnClosedEvent.AddUObject(this, &UVoxtaAudioInput::OnSocketClosed);
-
-	const FChatSession* chat = m_voxtaClient->GetChatSession();
-	if (chat == nullptr)
-	{
-		UE_LOGFMT(VoxtaLog, Error, "You cannot initialize the streaming audio input without an active session... aborting");
-		return;
-	}
-	m_audioWebSocket->Connect(chat->GetSessionId());
+	m_audioWebSocket->OnClosedEvent.AddUObject(this, &UVoxtaAudioInput::OnSocketClosed);	
 }
 
-void UVoxtaAudioInput::CloseSocket()
+void UVoxtaAudioInput::DisconnectFromChat()
 {
-	UE_LOGFMT(VoxtaLog, Warning, "Closing socket & shutting down voice capture gracefully.");
+	UE_LOGFMT(VoxtaLog, Warning, "Disconnecting socket & shutting down voice capture gracefully.");
 
 	m_audioCaptureDevice.ShutDown();
 	if (m_audioWebSocket != nullptr)
 	{
 		m_audioWebSocket->Close();
 	}
-	m_connectionState = VoxtaMicrophoneState::Closed;
+	m_connectionState = VoxtaMicrophoneState::Uninitialized;
+}
+
+void UVoxtaAudioInput::ConnectToCurrentChat()
+{
+	const FChatSession* chat = m_voxtaClient->GetChatSession();
+	if (chat == nullptr)
+	{
+		UE_LOGFMT(VoxtaLog, Error, "Tried to connect Voice input to chat but there's no active chat, this should be impossible");
+		return;
+	}
+
+	if (!chat->GetActiveServices().Contains(VoxtaServiceType::SpeechToText))
+	{
+		UE_LOGFMT(VoxtaLog, Error, "Tried to connect Voice input to chat but it doesn't support STT, this should be impossible");
+		return;
+	}
+	else
+	{
+		m_connectionState = VoxtaMicrophoneState::Connecting;
+		m_audioWebSocket->Connect(chat->GetSessionId());
+	}
+}
+
+VoxtaMicrophoneState UVoxtaAudioInput::GetCurrentState() const
+{
+	return m_connectionState;
 }
 
 void UVoxtaAudioInput::StartStreaming()
@@ -65,34 +83,18 @@ void UVoxtaAudioInput::StartStreaming()
 			" ready, aborting attempt.");
 		return;
 	}
-
-	const FChatSession* chat = m_voxtaClient->GetChatSession();
-	if (chat == nullptr)
+	
+	if (m_audioCaptureDevice.TryStartVoiceCapture())
 	{
-		UE_LOGFMT(VoxtaLog, Error, "You tried to start streaming audio input, but no chat is currently "
-			"on-going... aborting");
-		return;
-	}
+		UE_LOGFMT(VoxtaLog, Log, "Started voice capture via AudioInput.");
+		m_connectionState = VoxtaMicrophoneState::InUse;
 
-	if (chat->GetActiveServices().Contains(VoxtaServiceType::SpeechToText))
-	{
-		if (m_audioCaptureDevice.TryStartVoiceCapture())
-		{
-			UE_LOGFMT(VoxtaLog, Log, "Started voice capture via AudioInput.");
-			m_connectionState = VoxtaMicrophoneState::InUse;
-
-			UE_LOGFMT(VoxtaLog, Log, "Using predefined silence tresholds.");
-			ConfigureSilenceTresholds(m_micNoiseGateThreshold, m_silenceDetectionThreshold, m_micInputGain);
-		}
-		else
-		{
-			UE_LOGFMT(VoxtaLog, Error, "Failed to start the audio capture. Socket will not stream data :(");
-		}
+		UE_LOGFMT(VoxtaLog, Log, "Using predefined silence tresholds.");
+		ConfigureSilenceTresholds(m_micNoiseGateThreshold, m_silenceDetectionThreshold, m_micInputGain);
 	}
 	else
 	{
-		UE_LOGFMT(VoxtaLog, Error, "You tried to start streaming audio input, but there is no STT service running. "
-			"Please make sure to have it enabled before starting. (runtime change support coming soon...)");
+		UE_LOGFMT(VoxtaLog, Error, "Failed to start the audio capture. Socket will not stream data :(");
 	}
 }
 
@@ -135,10 +137,11 @@ void UVoxtaAudioInput::ConfigureSilenceTresholds(float micNoiseGateThreshold, fl
 	m_micNoiseGateThreshold = micNoiseGateThreshold;
 	m_silenceDetectionThreshold = silenceDetectionThreshold;
 	m_micInputGain = micInputGain;
-	return m_audioCaptureDevice.ConfigureSilenceTresholds(m_micNoiseGateThreshold, m_silenceDetectionThreshold, m_micInputGain);
+	m_audioCaptureDevice.ConfigureSilenceTresholds(m_micNoiseGateThreshold, m_silenceDetectionThreshold, m_micInputGain);
+	return;
 }
 
-void UVoxtaAudioInput::InitializeVoiceCapture()
+void UVoxtaAudioInput::ChatSessionHandshake()
 {
 	const FString socketInitialHeader = FString::Format(*FString(TEXT("{\"contentType\":\"audio/wav\","
 		"\"sampleRate\":{0},\"channels\":{1},\"bitsPerSample\": 16,\"bufferMilliseconds\":{2}}")),
@@ -161,7 +164,7 @@ void UVoxtaAudioInput::InitializeVoiceCapture()
 	else
 	{
 		UE_LOGFMT(VoxtaLog, Error, "VoiceCapture failed to initialize. Closing websocket.");
-		CloseSocket();
+		DisconnectFromChat();
 	}
 }
 
@@ -169,13 +172,13 @@ void UVoxtaAudioInput::OnSocketConnected()
 {
 	UE_LOGFMT(VoxtaLog, Log, "Succesfully connected Audiosocket (microphone input) to VoxtaServer.");
 
-	InitializeVoiceCapture();
+	ChatSessionHandshake();
 }
 
 void UVoxtaAudioInput::OnSocketConnectionError(const FString& error)
 {
 	UE_LOGFMT(VoxtaLog, Error, "AudioInput socket error: {0}. Closing socket.", error);
-	CloseSocket();
+	DisconnectFromChat();
 }
 
 void UVoxtaAudioInput::OnSocketClosed(int statusCode, const FString& reason, bool wasClean)
@@ -189,5 +192,5 @@ void UVoxtaAudioInput::OnSocketClosed(int statusCode, const FString& reason, boo
 		UE_LOGFMT(VoxtaLog, Warning, "Audio socket was improperly closed because of reason: {0} Code: {1}",
 			reason, statusCode);
 	}
-	m_connectionState = VoxtaMicrophoneState::Closed;
+	m_connectionState = VoxtaMicrophoneState::NotConnected;
 }

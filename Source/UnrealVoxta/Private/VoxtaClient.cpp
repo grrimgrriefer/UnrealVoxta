@@ -634,14 +634,6 @@ bool UVoxtaClient::HandleChatStartedResponse(const ServerResponseChatStarted& re
 		}
 	}
 
-	if (!response.SERVICES.Contains(VoxtaServiceType::SpeechToText))
-	{
-		UE_LOGFMT(VoxtaLog, Log, "No valid SpeechToText service is active on the server.");
-	}
-	if (!response.SERVICES.Contains(VoxtaServiceType::TextToSpeech))
-	{
-		UE_LOGFMT(VoxtaLog, Log, "No valid TextToSpeech service is active on the server.");
-	}
 	if (!response.SERVICES.Contains(VoxtaServiceType::TextGen))
 	{
 		UE_LOGFMT(VoxtaLog, Error, "No valid TextGen service is active on the server. We cannot really do anything "
@@ -651,6 +643,22 @@ bool UVoxtaClient::HandleChatStartedResponse(const ServerResponseChatStarted& re
 
 	m_chatSession = MakeUnique<FChatSession>(chatCharacters, response.CHAT_ID,
 		response.SESSION_ID, response.SERVICES, response.CONTEXT_TEXT);
+
+	if (!response.SERVICES.Contains(VoxtaServiceType::TextToSpeech))
+	{
+		UE_LOGFMT(VoxtaLog, Log, "No valid TextToSpeech service is active on the server.");
+	}
+
+	if (!response.SERVICES.Contains(VoxtaServiceType::SpeechToText))
+	{
+		UE_LOGFMT(VoxtaLog, Log, "No valid SpeechToText service is active on the server.");
+	}
+	else
+	{
+		m_voiceInput->InitializeSocket();
+		m_voiceInput->ConnectToCurrentChat();
+	}
+
 	VoxtaClientChatSessionStartedEventNative.Broadcast(*m_chatSession.Get());
 	VoxtaClientChatSessionStartedEvent.Broadcast(*m_chatSession.Get());
 	SetState(VoxtaClientState::GeneratingReply);
@@ -898,6 +906,7 @@ void UVoxtaClient::StopChatInternal()
 	{
 		return;
 	}
+	m_voiceInput->DisconnectFromChat();
 	VoxtaClientChatSessionStoppedEventNative.Broadcast(*m_chatSession.Get());
 	VoxtaClientChatSessionStoppedEvent.Broadcast(*m_chatSession.Get());
 	delete m_chatSession.Release();

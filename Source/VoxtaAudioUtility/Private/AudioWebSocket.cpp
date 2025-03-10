@@ -83,7 +83,7 @@ void AudioWebSocket::Close(int code, const FString& reason)
 	}
 	else
 	{
-		UE_LOGFMT(VoxtaLog, Warning, "Cannot close the socket, audioWebSocket is already destroyed.");
+		UE_LOGFMT(VoxtaLog, Log, "Tried to close audio socket, but it was already null.");
 	}
 }
 
