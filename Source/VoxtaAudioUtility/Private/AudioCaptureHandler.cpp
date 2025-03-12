@@ -43,6 +43,10 @@ bool AudioCaptureHandler::TryInitializeVoiceCapture(int sampleRate, int numChann
 
 		m_voiceCaptureDevice = VoiceModule.CreateVoiceCapture(m_deviceName, sampleRate, numChannels);
 	}
+	else
+	{
+		UE_LOGFMT(VoxtaLog, Error, "Voice module is not enabled, cannot start Microphone input.");
+	}
 	if (m_voiceCaptureDevice.IsValid())
 	{
 		UE_LOGFMT(VoxtaLog, Log, "Created voice capture");

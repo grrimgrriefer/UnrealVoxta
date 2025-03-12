@@ -1,13 +1,8 @@
-// Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
+// Copyright(c) 2025 grrimgrriefer & DZnnah, see LICENSE for details.
 
-#include "AsyncVoxtaFetchThumbnail.h"
+#include "UtilityNodes/AsyncVoxtaFetchThumbnail.h"
 #include "VoxtaClient.h"
-#include "Internals/TexturesCacheHandler.h"
 #include "Kismet/GameplayStatics.h"
-
-UAsyncVoxtaFetchThumbnail::UAsyncVoxtaFetchThumbnail(const FObjectInitializer& objectInitializer) :
-	Super(objectInitializer), m_worldContextObject(nullptr), m_isActive(false)
-{}
 
 UAsyncVoxtaFetchThumbnail* UAsyncVoxtaFetchThumbnail::AsyncVoxtaFetchThumbnail(const UObject* worldContextObject, const FGuid& baseCharacterId)
 {

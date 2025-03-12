@@ -297,7 +297,6 @@ public:
 private:
 	const FString SEND_MESSAGE_EVENT_NAME = TEXT("SendMessage");
 	const FString RECEIVE_MESSAGE_EVENT_NAME = TEXT("ReceiveMessage");
-	const FString LOCALHOST = TEXT("localhost");
 
 	UPROPERTY()
 	UVoxtaAudioInput* m_voiceInput;

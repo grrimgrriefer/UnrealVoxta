@@ -28,7 +28,7 @@ void UVoxtaAudioInput::InitializeSocket(int bufferMs, int sampleRate, int inputC
 	m_bufferMs = bufferMs;
 	m_sampleRate = sampleRate;
 	m_inputChannels = inputChannels;
-	m_connectionState = VoxtaMicrophoneState::NotConnected;
+	UpdateConnectionState(VoxtaMicrophoneState::NotConnected);
 	m_audioWebSocket = MakeShared<AudioWebSocket>(m_voxtaClient->GetServerAddress(),
 		m_voxtaClient->GetServerPort());
 
@@ -46,7 +46,7 @@ void UVoxtaAudioInput::DisconnectFromChat()
 	{
 		m_audioWebSocket->Close();
 	}
-	m_connectionState = VoxtaMicrophoneState::Uninitialized;
+	UpdateConnectionState(VoxtaMicrophoneState::Uninitialized);
 }
 
 void UVoxtaAudioInput::ConnectToCurrentChat()
@@ -65,7 +65,7 @@ void UVoxtaAudioInput::ConnectToCurrentChat()
 	}
 	else
 	{
-		m_connectionState = VoxtaMicrophoneState::Connecting;
+		UpdateConnectionState(VoxtaMicrophoneState::Connecting);
 		m_audioWebSocket->Connect(chat->GetSessionId());
 	}
 }
@@ -77,7 +77,7 @@ VoxtaMicrophoneState UVoxtaAudioInput::GetCurrentState() const
 
 void UVoxtaAudioInput::StartStreaming()
 {
-	if (m_connectionState != VoxtaMicrophoneState::Ready)
+	if (m_connectionState != VoxtaMicrophoneState::IdleAndReady)
 	{
 		UE_LOGFMT(VoxtaLog, Warning, "Attempting to start streaming AudioInput to VoxtaServer, but the socket was not "
 			" ready, aborting attempt.");
@@ -87,10 +87,13 @@ void UVoxtaAudioInput::StartStreaming()
 	if (m_audioCaptureDevice.TryStartVoiceCapture())
 	{
 		UE_LOGFMT(VoxtaLog, Log, "Started voice capture via AudioInput.");
-		m_connectionState = VoxtaMicrophoneState::InUse;
+		UpdateConnectionState(VoxtaMicrophoneState::ActivelyStreaming);
 
 		UE_LOGFMT(VoxtaLog, Log, "Using predefined silence tresholds.");
 		ConfigureSilenceTresholds(m_micNoiseGateThreshold, m_silenceDetectionThreshold, m_micInputGain);
+
+		VoxtaAudioInputStateChangedEventNative.Broadcast(m_connectionState);
+		VoxtaAudioInputStateChangedEvent.Broadcast(m_connectionState);
 	}
 	else
 	{
@@ -100,7 +103,7 @@ void UVoxtaAudioInput::StartStreaming()
 
 void UVoxtaAudioInput::StopStreaming()
 {
-	if (m_connectionState == VoxtaMicrophoneState::InUse)
+	if (m_connectionState == VoxtaMicrophoneState::ActivelyStreaming)
 	{
 		UE_LOGFMT(VoxtaLog, Log, "Stopping voice capture via AudioInput.");
 	}
@@ -109,12 +112,12 @@ void UVoxtaAudioInput::StopStreaming()
 		UE_LOGFMT(VoxtaLog, Warning, "Attempted to stop streaming AudioInput via the socket, but it is not in use. ");
 	}
 	m_audioCaptureDevice.StopCapture();
-	m_connectionState = VoxtaMicrophoneState::Ready;
+	UpdateConnectionState(VoxtaMicrophoneState::IdleAndReady);
 }
 
 bool UVoxtaAudioInput::IsRecording() const
 {
-	return m_connectionState == VoxtaMicrophoneState::InUse;
+	return m_connectionState == VoxtaMicrophoneState::ActivelyStreaming;
 }
 
 float UVoxtaAudioInput::GetInputTrueDecibels() const
@@ -157,9 +160,7 @@ void UVoxtaAudioInput::ChatSessionHandshake()
 	{
 		UE_LOGFMT(VoxtaLog, Log, "VoiceCapture ready & hooked up to the VoxtaServer audio socket.");
 
-		m_connectionState = VoxtaMicrophoneState::Ready;
-		VoxtaAudioInputInitializedEventNative.Broadcast();
-		VoxtaAudioInputInitializedEvent.Broadcast();
+		UpdateConnectionState(VoxtaMicrophoneState::IdleAndReady);
 	}
 	else
 	{
@@ -167,6 +168,19 @@ void UVoxtaAudioInput::ChatSessionHandshake()
 		DisconnectFromChat();
 	}
 }
+
+void UVoxtaAudioInput::UpdateConnectionState(VoxtaMicrophoneState newState)
+{
+	if (newState == m_connectionState)
+	{
+		return;
+	}
+
+	m_connectionState = newState;
+	VoxtaAudioInputStateChangedEventNative.Broadcast(m_connectionState);
+	VoxtaAudioInputStateChangedEvent.Broadcast(m_connectionState);
+}
+
 
 void UVoxtaAudioInput::OnSocketConnected()
 {
@@ -192,5 +206,5 @@ void UVoxtaAudioInput::OnSocketClosed(int statusCode, const FString& reason, boo
 		UE_LOGFMT(VoxtaLog, Warning, "Audio socket was improperly closed because of reason: {0} Code: {1}",
 			reason, statusCode);
 	}
-	m_connectionState = VoxtaMicrophoneState::NotConnected;
+	UpdateConnectionState(VoxtaMicrophoneState::NotConnected);
 }

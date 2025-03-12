@@ -1,4 +1,4 @@
-// Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
+// Copyright(c) 2025 grrimgrriefer & DZnnah, see LICENSE for details.
 
 #pragma once
 #include "Kismet/BlueprintAsyncActionBase.h"
@@ -11,7 +11,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FVoxtaThumbnailFetched, bool, Thum
 UCLASS(BlueprintType, Category = "Voxta", meta = (ExposedAsyncProxy = AsyncAction))
 class UNREALVOXTA_API UAsyncVoxtaFetchThumbnail : public UBlueprintAsyncActionBase
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
 
 public:
 	UPROPERTY(BlueprintAssignable)

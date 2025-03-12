@@ -25,16 +25,16 @@ class UNREALVOXTA_API UVoxtaAudioInput : public UObject
 
 #pragma region delegate declarations
 public:
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FVoxtaAudioInputInitialized);
-	DECLARE_MULTICAST_DELEGATE(FVoxtaAudioInputInitializedNative);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaAudioInputStateChanged, VoxtaMicrophoneState, newState);
+	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaAudioInputStateChangedNative, VoxtaMicrophoneState);
 #pragma endregion
 
 #pragma region events
 public:
 	/** Event fired after both the audiosocket and the capturedevice are initialized. */
 	UPROPERTY(BlueprintAssignable, Category = "Voxta", meta = (IsBindableEvent = "True"))
-	FVoxtaAudioInputInitialized VoxtaAudioInputInitializedEvent;
-	FVoxtaAudioInputInitializedNative VoxtaAudioInputInitializedEventNative;
+	FVoxtaAudioInputStateChanged VoxtaAudioInputStateChangedEvent;
+	FVoxtaAudioInputStateChangedNative VoxtaAudioInputStateChangedEventNative;
 #pragma endregion
 
 #pragma region public API
@@ -130,6 +130,8 @@ private:
 	 * begin capturing the actual audiodata.
 	 */
 	void ChatSessionHandshake();
+
+	void UpdateConnectionState(VoxtaMicrophoneState newState);
 
 #pragma region IWebSocket listeners
 private:

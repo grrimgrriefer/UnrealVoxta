@@ -3,7 +3,6 @@
 #include "VoxtaClient.h"
 #include "SignalR/Public/SignalRSubsystem.h"
 #include "SignalR/Private/HubConnection.h"
-#include "Interfaces/IPv4/IPv4Address.h"
 #include "VoxtaData/Public/ChatSession.h"
 #include "VoxtaData/Public/VoxtaVersionData.h"
 #include "Audio2FaceRESTHandler.h"
@@ -15,6 +14,7 @@
 #include "Internals/VoxtaApiRequestHandler.h"
 #include "Internals/VoxtaApiResponseHandler.h"
 #include "Internals/TexturesCacheHandler.h"
+#include "UtilityNodes/VoxtaHelperFunctionLibrary.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseBase.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseWelcome.h"
 #include "VoxtaData/Public/ServerResponses/ServerResponseCharacterList.h"
@@ -66,21 +66,13 @@ void UVoxtaClient::StartConnection(const FString& ipv4Address, int port)
 		return;
 	}
 
-	FIPv4Address address;
-	if (ipv4Address.IsEmpty())
+	if (!UVoxtaHelperFunctionLibrary::IsIpv4Valid(ipv4Address))
 	{
-		UE_LOGFMT(VoxtaLog, Error, "The provided address: {0} for the VoxtaClient to connect to was empty. "
-			"Ignoring connection attempt.", ipv4Address);
-		return;
-	}
-	else if (ipv4Address.ToLower() != LOCALHOST && !FIPv4Address::Parse(ipv4Address, address))
-	{
-		UE_LOGFMT(VoxtaLog, Error, "Address: {0} is not a valid address. "
-			"Ignoring connection attempt.", ipv4Address);
+		UE_LOGFMT(VoxtaLog, Error, "Address: {0} is not a valid address. Ignoring connection attempt.", ipv4Address);
 		return;
 	}
 
-	m_hostAddress = (ipv4Address.ToLower() == LOCALHOST) ? TEXT("127.0.0.1") : ipv4Address;
+	m_hostAddress = (ipv4Address.ToLower() == UVoxtaHelperFunctionLibrary::LOCALHOST) ? TEXT("127.0.0.1") : ipv4Address;
 	m_hostPort = port;
 
 	m_hub = GEngine->GetEngineSubsystem<USignalRSubsystem>()->CreateHubConnection(
@@ -361,6 +353,10 @@ const UVoxtaAudioPlayback* UVoxtaClient::GetRegisteredAudioPlaybackHandlerForID(
 
 FChatSession UVoxtaClient::GetChatSessionCopy() const
 {
+	if (!m_chatSession.IsValid())
+	{
+		return FChatSession();
+	}
 	return *m_chatSession;
 }
 

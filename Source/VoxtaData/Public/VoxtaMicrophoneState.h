@@ -14,6 +14,6 @@ enum class VoxtaMicrophoneState : uint8
 	Uninitialized,
 	NotConnected,
 	Connecting,
-	Ready,
-	InUse
+	IdleAndReady,
+	ActivelyStreaming
 };
