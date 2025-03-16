@@ -29,7 +29,7 @@ void TexturesCacheHandler::FetchTextureFromUrl(const FString& url, FDownloadedTe
 {
 	if (m_texturesCache.Contains(url))
 	{
-		onThumbnailFetched.ExecuteIfBound(m_texturesCache[url].TEXTURE, m_texturesCache[url].TEXTURE_SIZE);
+		onThumbnailFetched.ExecuteIfBound(true, m_texturesCache[url].TEXTURE, m_texturesCache[url].TEXTURE_SIZE);
 		return;
 	}
 	else if (m_pendingCallbacks.Contains(url))
@@ -48,11 +48,11 @@ void TexturesCacheHandler::FetchTextureFromUrl(const FString& url, FDownloadedTe
 	httpRequest->OnProcessRequestComplete().BindLambda([Self = TWeakPtr<TexturesCacheHandler>(AsShared()), URL = url]
 	(FHttpRequestPtr request, FHttpResponsePtr response, bool bWasSuccessful)
 		{
-			if (bWasSuccessful && response.IsValid() && EHttpResponseCodes::IsOk(response->GetResponseCode()) &&
-				response->GetContentLength() > 0 && response->GetContent().Num() > 0)
+			if (TSharedPtr<TexturesCacheHandler> sharedSelf = Self.Pin())
 			{
-				if (TSharedPtr<TexturesCacheHandler> sharedSelf = Self.Pin())
-				{
+				if (bWasSuccessful && response.IsValid() && EHttpResponseCodes::IsOk(response->GetResponseCode()) &&
+					response->GetContentLength() > 0 && response->GetContent().Num() > 0)
+				{				
 					for (auto& imageWrapper : sharedSelf->m_imageWrappers)
 					{
 						if (imageWrapper.IsValid() &&
@@ -86,7 +86,7 @@ void TexturesCacheHandler::FetchTextureFromUrl(const FString& url, FDownloadedTe
 									sharedSelf->m_texturesCache.Emplace(URL, TextureInfo(texture, width, height));
 									for (auto& var : sharedSelf->m_pendingCallbacks[URL])
 									{
-										var.ExecuteIfBound(sharedSelf->m_texturesCache[URL].TEXTURE,
+										var.ExecuteIfBound(true, sharedSelf->m_texturesCache[URL].TEXTURE,
 											sharedSelf->m_texturesCache[URL].TEXTURE_SIZE);
 									}
 									sharedSelf->m_pendingCallbacks.Remove(URL);
@@ -96,12 +96,19 @@ void TexturesCacheHandler::FetchTextureFromUrl(const FString& url, FDownloadedTe
 						}
 					}
 				}
-				else
+				// Failed to process / fetch image
+				UE_LOGFMT(VoxtaLog, Warning, "Failed to fetch thumbnail from: {0}", URL);
+				for (auto& var : sharedSelf->m_pendingCallbacks[URL])
 				{
-					UE_LOGFMT(VoxtaLog, Error, "Downloaded audio data from: {0} "
-						"But the messageChunkContainer was destroyed?", request->GetURL());
+					var.ExecuteIfBound(false, nullptr, FIntVector2());
 				}
+				sharedSelf->m_pendingCallbacks.Remove(URL);
 			}
+			else
+			{
+				UE_LOGFMT(VoxtaLog, Error, "Downloaded data from: {0} "
+					"But the TexturesCacheHandler was destroyed?", request->GetURL());
+			}			
 		});
 
 	httpRequest->ProcessRequest();

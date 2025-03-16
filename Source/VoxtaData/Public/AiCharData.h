@@ -23,7 +23,7 @@ struct VOXTADATA_API FAiCharData : public FBaseCharData
 #pragma region public API
 public:
 	/**  @return Immutable reference of the URL that points to where the image for this character can be retrieved from. */
-	FStringView GetThumnailUrl() const { return m_thumbnailUrl; }
+	virtual FString GetThumnailUrl() const override { return m_thumbnailUrl; }
 
 	/**
 	 * Create an instance of the datacontainer for a specific AI character.
@@ -53,6 +53,8 @@ public:
 
 	/** Default constructor, should not be used manually, but is enforced by Unreal */
 	explicit FAiCharData() : FBaseCharData() {}
+
+	virtual ~FAiCharData() override = default;
 #pragma endregion
 
 #pragma region data

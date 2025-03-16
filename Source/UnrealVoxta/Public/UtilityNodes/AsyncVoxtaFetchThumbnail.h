@@ -24,13 +24,7 @@ public:
 
 private:
 	UFUNCTION()
-	void OnThumbnailFetched(const UTexture2DDynamic* texture, const FIntVector2& textureSize);
-
-	UFUNCTION()
-	void OnCharacterHasNoThumbnail();
-
-	UFUNCTION()
-	void OnFetchFailed();
+	void OnThumbnailFetched(bool success, const UTexture2DDynamic* texture, const FIntVector2& textureSize);
 
 	const UObject* m_worldContextObject;
 	FGuid m_baseCharacterId;

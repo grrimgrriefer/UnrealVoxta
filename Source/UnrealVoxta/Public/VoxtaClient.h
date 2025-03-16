@@ -44,8 +44,6 @@ class UNREALVOXTA_API UVoxtaClient : public UGameInstanceSubsystem
 
 #pragma region delegate declarations
 public:
-	DECLARE_DELEGATE(FVoxtaCharacterHasNoThumbnailNative);
-
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientStateChanged, VoxtaClientState, newState);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientCharacterRegistered, const FAiCharData&, charData);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FVoxtaClientCharMessageAdded, const FBaseCharData&, sender, const FChatMessage&, message);
@@ -240,9 +238,7 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Voxta")
 	FGuid GetMainAssistantId() const;
 
-	void TryFetchAndCacheCharacterThumbnail(const FGuid& baseCharacterId, 
-		FVoxtaCharacterHasNoThumbnailNative noThumbnailAvailable, 
-		FDownloadedTextureDelegateNative onThumbnailFetched);
+	void TryFetchAndCacheCharacterThumbnail(const FGuid& baseCharacterId, FDownloadedTextureDelegateNative onThumbnailFetched);
 
 	/**
 	 * Try to retrieve a pointer to the UVoxtaAudioPlayback that has claimed playback for the provided characterId.

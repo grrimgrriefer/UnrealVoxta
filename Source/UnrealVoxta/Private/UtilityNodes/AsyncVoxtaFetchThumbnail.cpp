@@ -47,35 +47,14 @@ void UAsyncVoxtaFetchThumbnail::Activate()
 	m_isActive = true;
 
 	FDownloadedTextureDelegateNative fetchedTexture = FDownloadedTextureDelegateNative::CreateUObject(this, &UAsyncVoxtaFetchThumbnail::OnThumbnailFetched);
-	UVoxtaClient::FVoxtaCharacterHasNoThumbnailNative noTexture = UVoxtaClient::FVoxtaCharacterHasNoThumbnailNative::CreateUObject(this, &UAsyncVoxtaFetchThumbnail::OnCharacterHasNoThumbnail);
-	m_voxtaClient->TryFetchAndCacheCharacterThumbnail(m_baseCharacterId, noTexture, fetchedTexture);
+	m_voxtaClient->TryFetchAndCacheCharacterThumbnail(m_baseCharacterId, fetchedTexture);
 }
 
-void UAsyncVoxtaFetchThumbnail::OnThumbnailFetched(const UTexture2DDynamic* texture, const FIntVector2& textureSize)
+void UAsyncVoxtaFetchThumbnail::OnThumbnailFetched(bool success, const UTexture2DDynamic* texture, const FIntVector2& textureSize)
 {
 	if (m_isActive)
 	{
-		ThumbnailFetched.Broadcast(true, texture, textureSize.X, textureSize.Y);
-		m_isActive = false;
-		SetReadyToDestroy();
-	}
-}
-
-void UAsyncVoxtaFetchThumbnail::OnCharacterHasNoThumbnail()
-{
-	if (m_isActive)
-	{
-		ThumbnailFetched.Broadcast(false, nullptr, 0, 0);
-		m_isActive = false;
-		SetReadyToDestroy();
-	}
-}
-
-void UAsyncVoxtaFetchThumbnail::OnFetchFailed()
-{
-	if (m_isActive)
-	{
-		FFrame::KismetExecutionMessage(TEXT("Thumbnail fetch failed."), ELogVerbosity::Error);
+		ThumbnailFetched.Broadcast(success, texture, textureSize.X, textureSize.Y);
 		m_isActive = false;
 		SetReadyToDestroy();
 	}

@@ -25,8 +25,10 @@ public:
 	/**  @return Immutable reference to the VoxtaServer assigned id of this character. */
 	const FGuid& GetId() const { return m_id; }
 
-	/**  @return Immutable reference to the name of the character who said this message. */
+	/**  @return Immutable reference to the name of this character. */
 	FStringView GetName() const { return m_name; }
+
+	virtual FString GetThumnailUrl() const { return FString(); }
 
 	/**
 	 * Create an instance of the datacontainer for the CharData.
@@ -42,10 +44,12 @@ public:
 
 	/** Default constructor, should not be used manually, but is enforced by Unreal */
 	explicit FBaseCharData() {};
+
+	virtual ~FBaseCharData() = default;
 #pragma endregion
 
 #pragma region data
-private:
+protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Character ID"))
 	FGuid m_id;
 

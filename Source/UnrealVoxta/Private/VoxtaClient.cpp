@@ -190,8 +190,7 @@ void UVoxtaClient::NotifyAudioPlaybackComplete(const FGuid& messageId)
 	SetState(VoxtaClientState::WaitingForUserReponse);
 }
 
-void UVoxtaClient::TryFetchAndCacheCharacterThumbnail(const FGuid& baseCharacterId, FVoxtaCharacterHasNoThumbnailNative noThumbnailAvailable,
-	FDownloadedTextureDelegateNative onThumbnailFetched)
+void UVoxtaClient::TryFetchAndCacheCharacterThumbnail(const FGuid& baseCharacterId,	FDownloadedTextureDelegateNative onThumbnailFetched)
 {
 	if (!baseCharacterId.IsValid())
 	{
@@ -199,38 +198,38 @@ void UVoxtaClient::TryFetchAndCacheCharacterThumbnail(const FGuid& baseCharacter
 			GuidToString(baseCharacterId));
 		return;
 	}
+	const FBaseCharData* character = nullptr;
 	if (baseCharacterId == m_userData->GetId())
 	{
-		UE_LOGFMT(VoxtaLog, Warning, "Todo: add support for fetching user image. user id: {0}",
-			GuidToString(baseCharacterId));
-		return;
-	}
-
-	const TUniquePtr<const FAiCharData>* character = GetAiCharacterDataById(baseCharacterId);
-	if (character != nullptr && character->IsValid())
-	{
-		FStringView charUrl = character->Get()->GetThumnailUrl();
-		if (charUrl != nullptr && !charUrl.IsEmpty())
-		{
-			FString url = FString::Format(*FString(TEXT("http://{0}:{1}{2}")),
-				{ m_hostAddress, m_hostPort, character->Get()->GetThumnailUrl().GetData() });
-			UE_LOGFMT(VoxtaLog, Log, "Loading from URL:  {0}", url);
-
-			m_texturesCacheHandler->FetchTextureFromUrl(url, onThumbnailFetched);
-		}
-		else
-		{
-			UE_LOGFMT(VoxtaLog, Log, "Character has no custom thumbnail: {0}", GuidToString(baseCharacterId));
-			if (noThumbnailAvailable.IsBound())
-			{
-				noThumbnailAvailable.Execute();
-			}
-		}
+		character = m_userData.Get();
 	}
 	else
 	{
-		UE_LOGFMT(VoxtaLog, Error, "Cannot fetch the thumbnail for character with id: {0}, as it isn't present in the "
-			"current character list. Are you using an invalidated cache value?", GuidToString(baseCharacterId));
+		const TUniquePtr<const FAiCharData>* aiCharacter = GetAiCharacterDataById(baseCharacterId);
+		if (aiCharacter == nullptr)
+		{
+			UE_LOGFMT(VoxtaLog, Error, "Cannot fetch the thumbnail for character with id: {0}, as it isn't present in the "
+				"current character list and it isn't the current user", GuidToString(baseCharacterId));
+			return;
+		}
+		character = aiCharacter->Get();
+	}
+	FStringView charUrl = character->GetThumnailUrl();
+	if (charUrl != nullptr && !charUrl.IsEmpty())
+	{
+		FString url = FString::Format(*FString(TEXT("http://{0}:{1}{2}")),
+			{ m_hostAddress, m_hostPort, character->GetThumnailUrl() });
+		UE_LOGFMT(VoxtaLog, Log, "Loading from URL:  {0}", url);
+
+		m_texturesCacheHandler->FetchTextureFromUrl(url, onThumbnailFetched);
+	}
+	else
+	{
+		UE_LOGFMT(VoxtaLog, Log, "Character has no custom thumbnail: {0}", GuidToString(baseCharacterId));
+		if (onThumbnailFetched.IsBound())
+		{
+			onThumbnailFetched.Execute(false, nullptr, FIntVector2());
+		}
 	}
 }
 

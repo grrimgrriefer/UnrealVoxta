@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "BaseCharData.h"
+#include "Containers/UnrealString.h"
 #include "UserCharData.generated.h"
 
 /**
@@ -21,6 +22,8 @@ struct FUserCharData : public FBaseCharData
 
 #pragma region public API
 public:
+	virtual FString GetThumnailUrl() const override { return FString::Format(*FString(TEXT("/api/profile/{0}/thumbnail")), { m_idAsString }); }
+
 	/**
 	 * Create an instance of the datacontainer for the User.
 	 *
@@ -33,5 +36,7 @@ public:
 
 	/** Default constructor, should not be used manually, but is enforced by Unreal */
 	explicit FUserCharData() : FBaseCharData() {}
+
+	virtual ~FUserCharData() override = default;
 #pragma endregion
 };

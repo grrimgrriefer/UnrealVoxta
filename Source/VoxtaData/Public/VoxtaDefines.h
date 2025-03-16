@@ -25,6 +25,6 @@ DECLARE_LOG_CATEGORY_EXTERN(VoxtaLog, Log, All);
 const FString VOXTA_CONTEXT_KEY = FString("UnrealVoxta - SimpleChat");
 const FString EMPTY_STRING = FString(TEXT(""));
 
-DECLARE_DELEGATE_TwoParams(FDownloadedTextureDelegateNative, const UTexture2DDynamic*, const FIntVector2&);
+DECLARE_DELEGATE_ThreeParams(FDownloadedTextureDelegateNative, bool, const UTexture2DDynamic*, const FIntVector2&);
 
 VOXTADATA_API FString GuidToString(const FGuid& input);
