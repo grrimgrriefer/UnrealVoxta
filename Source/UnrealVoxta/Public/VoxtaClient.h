@@ -12,6 +12,7 @@ class FSignalRInvokeResult;
 class UVoxtaAudioInput;
 class Audio2FaceRESTHandler;
 class UVoxtaAudioPlayback;
+class AVoxtaGlobalAudioPlaybackHolder;
 class VoxtaLogger;
 class VoxtaApiRequestHandler;
 class VoxtaApiResponseHandler;
@@ -177,7 +178,7 @@ public:
 	 * @param charId The charID of the character that you want to load.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
-	void StartChatWithCharacter(const FGuid& charId, const FString& context = TEXT(""));
+	void StartChatWithCharacter(const FGuid& charId, const FString& context = TEXT(""), bool enableGlobalAudioFallback = true);
 
 	/**
 	 * Tell the server to stop the ongoing chat session and clean up the relevant dependencies.
@@ -296,6 +297,9 @@ private:
 
 	UPROPERTY()
 	UVoxtaAudioInput* m_voiceInput;
+
+	UPROPERTY()
+	AVoxtaGlobalAudioPlaybackHolder* m_globalAudioPlaybackHandler;
 
 	TSharedPtr<VoxtaLogger> m_logUtility;
 	TSharedPtr<VoxtaApiRequestHandler> m_voxtaRequestApi;

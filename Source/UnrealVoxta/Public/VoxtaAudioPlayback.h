@@ -89,7 +89,7 @@ public:
 	 * @param sender The characterID, will skip any messages not assigned to this character.
 	 * @param message The message of which the URLs will be used to fetch the wav audio data.
 	 */
-	void PlaybackMessage(const FBaseCharData& sender, const FChatMessage& message);
+	virtual void PlaybackMessage(const FBaseCharData& sender, const FChatMessage& message);
 
 	/** @return The LipSyncType that this playback handler will use. */
 	LipSyncType GetLipSyncType() const;
@@ -135,17 +135,18 @@ private:
 #pragma endregion
 
 #pragma region data
-private:
+protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Lipsync Type"))
 	LipSyncType m_lipSyncType = LipSyncType::None;
+	FGuid m_characterId;
+	UVoxtaClient* m_clientReference;
 
+private:
 	// TODO: use interface so we don't have to cast to cast to UAudio2FacePlaybackHandler or
 	// UOVRLipSyncPlaybackActorComponent everytime
 	UPROPERTY()
 	UObject* m_lipSyncHandler;
 
-	UVoxtaClient* m_clientReference;
-	FGuid m_characterId;
 	FGuid m_currentlyPlayingMessageId;
 	TArray<TSharedPtr<MessageChunkAudioContainer>> m_orderedAudio;
 
@@ -158,6 +159,9 @@ private:
 #pragma endregion
 
 #pragma region private API
+protected:
+	void InitializeInternal(bool autoRegisterHandler = true);
+
 private:
 	/** Begin playing the audioclip on the currently marked index, if it is available */
 	void PlayCurrentAudioChunkIfAvailable();

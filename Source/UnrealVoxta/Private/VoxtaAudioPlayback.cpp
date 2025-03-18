@@ -16,12 +16,26 @@
 void UVoxtaAudioPlayback::Initialize(const FGuid& characterId)
 {
 	m_characterId = characterId;
+	InitializeInternal();
+}
+
+void UVoxtaAudioPlayback::Initialize(const FGuid& characterId, LipSyncType lipSyncType)
+{
+	m_lipSyncType = lipSyncType;
+	Initialize(characterId);
+}
+
+void UVoxtaAudioPlayback::InitializeInternal(bool autoRegisterHandler)
+{
 	m_clientReference = GetWorld()->GetGameInstance()->GetSubsystem<UVoxtaClient>();
-	if (!m_clientReference->TryRegisterPlaybackHandler(characterId, TWeakObjectPtr<UVoxtaAudioPlayback>(this)))
+	if (autoRegisterHandler)
 	{
-		UE_LOGFMT(VoxtaLog, Error, "Failed to register a VoxtaPlayback handler for character: {0}", GuidToString(characterId));
-		return;
-	}
+		if (!m_clientReference->TryRegisterPlaybackHandler(m_characterId, TWeakObjectPtr<UVoxtaAudioPlayback>(this)))
+		{
+			UE_LOGFMT(VoxtaLog, Error, "Failed to register a VoxtaPlayback handler");
+			return;
+		}
+	}	
 
 #if WITH_OVRLIPSYNC
 	if (m_lipSyncType == LipSyncType::OVRLipSync)
@@ -32,14 +46,8 @@ void UVoxtaAudioPlayback::Initialize(const FGuid& characterId)
 
 	m_hostAddress = m_clientReference->GetServerAddress();
 	m_hostPort = m_clientReference->GetServerPort();
-	UE_LOGFMT(VoxtaLog, Log, "Initialized audioplayback for characterId {0}. Audio will be downloaded from: {1}",
-		GuidToString(characterId), FString::Format(*FString(TEXT("http://{0}:{1}/")), { m_hostAddress, m_hostPort }));
-}
-
-void UVoxtaAudioPlayback::Initialize(const FGuid& characterId, LipSyncType lipSyncType)
-{
-	m_lipSyncType = lipSyncType;
-	Initialize(characterId);
+	UE_LOGFMT(VoxtaLog, Log, "Initialized audioplayback. Audio will be downloaded from: {0}",
+		FString::Format(*FString(TEXT("http://{0}:{1}/")), { m_hostAddress, m_hostPort }));
 }
 
 void UVoxtaAudioPlayback::MarkCustomPlaybackComplete(const FGuid& guid)

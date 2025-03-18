@@ -10,6 +10,8 @@
 #include "Logging/StructuredLog.h"
 #include "VoxtaAudioInput.h"
 #include "VoxtaAudioPlayback.h"
+#include "Internals/VoxtaGlobalAudioPlaybackHolder.h"
+#include "Internals/VoxtaGlobalAudioPlayback.h"
 #include "Internals/VoxtaLogger.h"
 #include "Internals/VoxtaApiRequestHandler.h"
 #include "Internals/VoxtaApiResponseHandler.h"
@@ -38,6 +40,7 @@ void UVoxtaClient::Initialize(FSubsystemCollectionBase& collection)
 	m_voiceInput = NewObject<UVoxtaAudioInput>(this);
 	m_A2FHandler = MakeShared<Audio2FaceRESTHandler>();
 	m_texturesCacheHandler = MakeShared<TexturesCacheHandler>();
+	m_globalAudioPlaybackHandler = nullptr;
 	Super::Initialize(collection);
 }
 
@@ -104,7 +107,7 @@ void UVoxtaClient::Disconnect(bool silent)
 	//Cleanup();
 }
 
-void UVoxtaClient::StartChatWithCharacter(const FGuid& charId, const FString& context)
+void UVoxtaClient::StartChatWithCharacter(const FGuid& charId, const FString& context, bool enableGlobalAudioFallback)
 {
 	if (!charId.IsValid())
 	{
@@ -121,6 +124,13 @@ void UVoxtaClient::StartChatWithCharacter(const FGuid& charId, const FString& co
 	if (character != nullptr && character->IsValid())
 	{
 		SendMessageToServer(m_voxtaRequestApi->GetStartChatRequestData(character->Get(), context));
+
+		if (enableGlobalAudioFallback && m_globalAudioPlaybackHandler == nullptr)
+		{
+			m_globalAudioPlaybackHandler = GetWorld()->SpawnActor<AVoxtaGlobalAudioPlaybackHolder>();
+		}
+		m_globalAudioPlaybackHandler->GetGlobalPlaybackComponent()->SetEnabled(enableGlobalAudioFallback);
+
 		SetState(VoxtaClientState::StartingChat);
 	}
 	else
@@ -729,12 +739,8 @@ bool UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessageBase
 					{
 						if (chatMessage->GetAudioUrls().Num() > 0)
 						{
-							UE_LOGFMT(VoxtaLog, Warning, "Audio data was generated for characterId: {0}, Name: {1} but no playback "
-								"handler was found. You might want to disable TTS service if you don't want audio playback. "
-								"Or add a VoxtaAudioPlayback component if you desire audioplayback. Contents: {2}",
-								character->Get()->GetId(), character->Get()->GetName(), chatMessage->GetTextContent());
 							SetState(VoxtaClientState::AudioPlayback);
-							NotifyAudioPlaybackComplete(chatMessage->GetMessageId());
+							m_globalAudioPlaybackHandler->GetGlobalPlaybackComponent()->PlaybackMessage(*character->Get(), *chatMessage);
 						}
 						else
 						{

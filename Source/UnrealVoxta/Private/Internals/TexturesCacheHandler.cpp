@@ -83,7 +83,7 @@ void TexturesCacheHandler::FetchTextureFromUrl(const FString& url, FDownloadedTe
 												textureResource->WriteRawToTexture_RenderThread(RawData);
 											});
 									}
-									sharedSelf->m_texturesCache.Emplace(URL, TextureInfo(texture, width, height));
+									sharedSelf->m_texturesCache.Emplace(URL, TextureInfo(MoveTemp(texture), width, height));
 									for (auto& var : sharedSelf->m_pendingCallbacks[URL])
 									{
 										var.ExecuteIfBound(true, sharedSelf->m_texturesCache[URL].TEXTURE,
