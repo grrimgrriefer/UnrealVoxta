@@ -53,9 +53,15 @@ public:
 	void ConnectToCurrentChat();
 	void DisconnectFromChat();
 
+	UFUNCTION(BlueprintCallable, Category = "Voxta")
+	void StartAudioTesting(int sampleRate = 16000, int inputChannels = 1);
+
+	UFUNCTION(BlueprintCallable, Category = "Voxta")
+	void StopAudioTesting();
+
 	/** Starts the voice capture, sending captured audiodata to the server in fixed timesteps (bufferMs). */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
-	void StartStreaming();
+	void StartStreaming(bool isTestMode = false);
 
 	/**
 	 * Stops the voice capture.
@@ -72,16 +78,16 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Voxta")
 	bool IsRecording() const;
 
+	UFUNCTION(BlueprintPure, Category = "Voxta")
+	bool IsInputSilent() const;
+
 	/**
 	 * @return The decibels of the last recorded audiodata iteration (updated every ~30ms)
 	 *
 	 * Note: These values are roughly in the range of -100db (silence) and 0db (max loudness)
 	*/
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
-	float GetInputTrueDecibels() const;
-
-	UFUNCTION(BlueprintCallable, Category = "Voxta")
-	float GetRealtimeDecibels() const;
+	float GetInputDecibels() const;
 
 	/** @return The an immutable reference to the name reported by the hardware device. */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")

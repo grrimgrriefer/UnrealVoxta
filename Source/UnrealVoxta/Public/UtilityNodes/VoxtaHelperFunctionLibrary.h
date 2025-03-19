@@ -2,6 +2,7 @@
 
 #pragma once
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "VoxtaDefines.h"
 #include "VoxtaHelperFunctionLibrary.generated.h"
 
 class UVoxtaClient;
@@ -13,8 +14,11 @@ class UNREALVOXTA_API UVoxtaHelperFunctionLibrary final : public UBlueprintFunct
 
 #pragma region public API
 public:
-	UFUNCTION(BlueprintCallable, Category = "Voxta")
+	UFUNCTION(BlueprintPure, Category = "Voxta")
 	static bool IsIpv4Valid(const FString& address);
+
+	UFUNCTION(BlueprintPure, Category = "Voxta")
+	static FString FloatToStringPrecision(float input, int digitsAfterPoint = 2);
 #pragma endregion
 
 #pragma region data

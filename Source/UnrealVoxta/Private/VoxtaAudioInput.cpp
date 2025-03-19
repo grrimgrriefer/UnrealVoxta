@@ -75,7 +75,31 @@ VoxtaMicrophoneState UVoxtaAudioInput::GetCurrentState() const
 	return m_connectionState;
 }
 
-void UVoxtaAudioInput::StartStreaming()
+void UVoxtaAudioInput::StartAudioTesting(int sampleRate, int inputChannels)
+{
+	if (m_connectionState != VoxtaMicrophoneState::Uninitialized)
+	{
+		UE_LOGFMT(VoxtaLog, Error, "Please close VoiceCapture current session before starting the test.");
+		return;
+	}
+	if (m_audioCaptureDevice.TryInitializeVoiceCapture(sampleRate, inputChannels))
+	{
+		UE_LOGFMT(VoxtaLog, Log, "VoiceCapture ready & hooked up to the VoxtaServer audio socket.");
+
+		UpdateConnectionState(VoxtaMicrophoneState::IdleAndReady);
+		StartStreaming(true);
+	}
+}
+
+void UVoxtaAudioInput::StopAudioTesting()
+{
+	StopStreaming();
+	m_audioCaptureDevice.SetIsTestMode(false);
+	UpdateConnectionState(VoxtaMicrophoneState::Uninitialized);
+	m_audioCaptureDevice.ShutDown(true);
+}
+
+void UVoxtaAudioInput::StartStreaming(bool isTestMode)
 {
 	if (m_connectionState != VoxtaMicrophoneState::IdleAndReady)
 	{
@@ -86,14 +110,12 @@ void UVoxtaAudioInput::StartStreaming()
 	
 	if (m_audioCaptureDevice.TryStartVoiceCapture())
 	{
+		m_audioCaptureDevice.SetIsTestMode(isTestMode);
 		UE_LOGFMT(VoxtaLog, Log, "Started voice capture via AudioInput.");
 		UpdateConnectionState(VoxtaMicrophoneState::ActivelyStreaming);
 
 		UE_LOGFMT(VoxtaLog, Log, "Using predefined silence tresholds.");
 		ConfigureSilenceTresholds(m_micNoiseGateThreshold, m_silenceDetectionThreshold, m_micInputGain);
-
-		VoxtaAudioInputStateChangedEventNative.Broadcast(m_connectionState);
-		VoxtaAudioInputStateChangedEvent.Broadcast(m_connectionState);
 	}
 	else
 	{
@@ -103,14 +125,8 @@ void UVoxtaAudioInput::StartStreaming()
 
 void UVoxtaAudioInput::StopStreaming()
 {
-	if (m_connectionState == VoxtaMicrophoneState::ActivelyStreaming)
-	{
-		UE_LOGFMT(VoxtaLog, Log, "Stopping voice capture via AudioInput.");
-	}
-	else
-	{
-		UE_LOGFMT(VoxtaLog, Warning, "Attempted to stop streaming AudioInput via the socket, but it is not in use. ");
-	}
+	UE_LOGFMT(VoxtaLog, Log, "Stopping voice capture via AudioInput.");
+
 	m_audioCaptureDevice.StopCapture();
 	UpdateConnectionState(VoxtaMicrophoneState::IdleAndReady);
 }
@@ -120,14 +136,14 @@ bool UVoxtaAudioInput::IsRecording() const
 	return m_connectionState == VoxtaMicrophoneState::ActivelyStreaming;
 }
 
-float UVoxtaAudioInput::GetInputTrueDecibels() const
+bool UVoxtaAudioInput::IsInputSilent() const
 {
-	return m_audioCaptureDevice.GetTrueDecibels();
+	return m_audioCaptureDevice.IsInputSilent();
 }
 
-float UVoxtaAudioInput::GetRealtimeDecibels() const
+float UVoxtaAudioInput::GetInputDecibels() const
 {
-	return m_audioCaptureDevice.GetRealtimeDecibels();
+	return m_audioCaptureDevice.GetDecibels();
 }
 
 const FString& UVoxtaAudioInput::GetInputDeviceName() const

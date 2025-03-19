@@ -202,17 +202,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
 	void SendUserInput(const FString& inputText, bool generateReply = true, bool characterActionInference = false);
 
-	/**
-	 * Inform the server that the audioplayback is complete.
-	 * Is requird to enable speech recognition on the serverside, to whatever is sent via the audio socket.
-	 *
-	 * Note: You should only manually call this when you're using 'custom lipsync'.
-	 *
-	 * @param messageId The ID of the message that has completed the playback on the client.
-	 */
-	UFUNCTION(BlueprintCallable, Category = "Voxta")
-	void NotifyAudioPlaybackComplete(const FGuid& messageId);
-
 	/** @return The ipv4 address where this client expects the Voxta server to be hosted. */
 	UFUNCTION(BlueprintPure, Category = "Voxta")
 	const FString& GetServerAddress() const;
@@ -299,7 +288,8 @@ private:
 	UVoxtaAudioInput* m_voiceInput;
 
 	UPROPERTY()
-	AVoxtaGlobalAudioPlaybackHolder* m_globalAudioPlaybackHandler;
+	AVoxtaGlobalAudioPlaybackHolder* m_globalAudioPlaybackComp;
+	FDelegateHandle globalAudioPlaybackHandle;
 
 	TSharedPtr<VoxtaLogger> m_logUtility;
 	TSharedPtr<VoxtaApiRequestHandler> m_voxtaRequestApi;
@@ -317,7 +307,8 @@ private:
 	TUniquePtr<FVoxtaVersionData> m_voxtaVersionData;
 	TUniquePtr<FChatSession> m_chatSession;
 	TArray<TUniquePtr<const FAiCharData>> m_characterList;
-	TMap<FGuid, TWeakObjectPtr<UVoxtaAudioPlayback>> m_registeredCharacterPlaybackHandlers;
+	TMap<FGuid, TWeakObjectPtr<UVoxtaAudioPlayback>> m_registeredCharacterAudioPlaybackComps;
+	TMap<FGuid, FDelegateHandle> m_audioPlaybackHandles;
 #pragma endregion
 
 #pragma region private API
@@ -396,6 +387,14 @@ private:
 #pragma endregion
 
 	void StopChatInternal();
+
+	/**
+	 * Inform the server that the audioplayback is complete.
+	 * Is requird to enable speech recognition on the serverside, to whatever is sent via the audio socket.
+	 *
+	 * @param messageId The ID of the message that has completed the playback on the client.
+	 */
+	void NotifyAudioPlaybackComplete(const FGuid& messageId);
 
 	/**
 	 * Fetches a raw pointer to the ChatMessage that maches the id given in the parameters.

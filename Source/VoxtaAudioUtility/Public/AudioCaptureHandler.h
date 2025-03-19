@@ -60,16 +60,17 @@ public:
 	void StopCapture();
 
 	/** Stops the capture, permanently clearing the reserved memory for the background thread. */
-	void ShutDown();
+	void ShutDown(bool alsoDestroyCaptureDevice = false);
+
+	bool IsInputSilent() const;
 
 	/** @return The volume in decibels, of the last audioChunk (~30ms delay) */
-	float GetTrueDecibels() const;
-
-	/** @return The volume in decibels, more responsive but less accurate (amplitude based) */
-	float GetRealtimeDecibels() const;
+	float GetDecibels() const;
 
 	/** @return Returns the name of the device used by the VoiceModule, if initialized. */
 	const FString& GetDeviceName() const;
+
+	void SetIsTestMode(bool isTestMode);
 #pragma endregion
 
 #pragma region data
@@ -77,7 +78,7 @@ private:
 	UPROPERTY()
 	TArray<uint8> m_socketDataBuffer;
 
-	const float DEFAULT_SILENCE_DECIBELS = -100.f;
+	const float DEFAULT_SILENCE_DECIBELS = -144.f;
 
 	/** The background thread needs access to our private functions. */
 	friend class FVoiceRunnerThread;
@@ -85,7 +86,10 @@ private:
 	FString m_deviceName = EMPTY_STRING;
 	bool m_isCapturing;
 	int m_bufferMillisecondSize;
-	float m_trueDecibels = DEFAULT_SILENCE_DECIBELS;
+
+	float m_decibels = DEFAULT_SILENCE_DECIBELS;
+	bool m_isTestMode;
+	FDateTime m_lastVoiceTimestamp;
 
 	mutable FCriticalSection m_captureGuard;
 	TUniquePtr<FVoiceRunnerThread> m_voiceRunnerThread;
@@ -103,7 +107,7 @@ private:
 	 * @param voiceDataBuffer The array of raw bytes that will be filled with the most recent inverval's data.
 	 * @param decibels The volume in decibels that covers the most recent inverval's data.
 	 */
-	void CaptureVoiceInternal(TArray<uint8>& voiceDataBuffer, float& decibels) const;
+	bool CaptureVoiceInternal(TArray<uint8>& voiceDataBuffer, float& decibels) const;
 
 	/**
 	 * Send the provided raw audio data to VoxtaServer's microphone socket.
@@ -120,6 +124,6 @@ private:
 	 *
 	 * @return The decibel value in float format.
 	 */
-	float AnalyseDecibels(const TArray<uint8>& VoiceData, uint32 DataSize) const;
+	float AnalyseDecibels(const TArray<uint8>& voiceInputData, uint32 dataSize) const;
 #pragma endregion
 };

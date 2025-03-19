@@ -69,7 +69,6 @@ void AudioCaptureHandler::ConfigureSilenceTresholds(float micNoiseGateThreshold,
 	silenceDetectionThresholdCVar->Set(silenceDetectionThreshold);
 	micInputGainCVar->Set(micInputGain);
 }
-
 bool AudioCaptureHandler::TryStartVoiceCapture()
 {
 	UE_LOGFMT(VoxtaLog, Log, "Starting voice capture.");
@@ -86,7 +85,7 @@ bool AudioCaptureHandler::TryStartVoiceCapture()
 		return false;
 	}
 
-	m_trueDecibels = DEFAULT_SILENCE_DECIBELS;
+	m_decibels = DEFAULT_SILENCE_DECIBELS;
 	// we let the thread notify us at 75% of the buffer, in case we encounter minor lag / delay,
 	// so no audio data is lost. (within reason)
 	m_voiceRunnerThread = MakeUnique<FVoiceRunnerThread>(this, (m_bufferMillisecondSize / 1000.f * 0.75f));
@@ -95,6 +94,7 @@ bool AudioCaptureHandler::TryStartVoiceCapture()
 		UE_LOGFMT(VoxtaLog, Error, "VoiceRunnerThread has been destroyed.");
 		return false;
 	}
+	
 
 	if (!m_voiceCaptureDevice->Start())
 	{
@@ -114,7 +114,7 @@ void AudioCaptureHandler::StopCapture()
 	UE_LOGFMT(VoxtaLog, Log, "Stopping voice capture.");
 
 	FScopeLock Lock(&m_captureGuard);
-	m_trueDecibels = DEFAULT_SILENCE_DECIBELS;
+	m_decibels = DEFAULT_SILENCE_DECIBELS;
 	if (m_voiceRunnerThread.IsValid())
 	{
 		m_voiceRunnerThread->Stop();
@@ -128,19 +128,23 @@ void AudioCaptureHandler::StopCapture()
 	}
 }
 
-void AudioCaptureHandler::ShutDown()
+void AudioCaptureHandler::ShutDown(bool alsoDestroyCaptureDevice)
 {
 	StopCapture();
 	FScopeLock Lock(&m_captureGuard);
 	m_voiceRunnerThread = nullptr;
+	if (alsoDestroyCaptureDevice)
+	{
+		m_voiceCaptureDevice = nullptr;
+	}
 }
 
-void AudioCaptureHandler::CaptureVoiceInternal(TArray<uint8>& voiceDataBuffer, float& decibels) const
+bool AudioCaptureHandler::CaptureVoiceInternal(TArray<uint8>& voiceDataBuffer, float& decibels) const
 {
 	if (!m_voiceCaptureDevice.IsValid())
 	{
 		UE_LOGFMT(VoxtaLog, Warning, "VoiceCapture device has been destroyed, can't capture any more data.");
-		return;
+		return false;
 	}
 
 	uint32 AvailableBytes = 0;
@@ -149,7 +153,7 @@ void AudioCaptureHandler::CaptureVoiceInternal(TArray<uint8>& voiceDataBuffer, f
 	{
 		if (AvailableBytes < 1)
 		{
-			return;
+			return false;
 		}
 		voiceDataBuffer.Reset();
 
@@ -163,11 +167,25 @@ void AudioCaptureHandler::CaptureVoiceInternal(TArray<uint8>& voiceDataBuffer, f
 		);
 
 		decibels = AnalyseDecibels(voiceDataBuffer, VoiceCaptureReadBytes);
+		return true;
 	}
+	return false;
+}
+
+bool AudioCaptureHandler::IsInputSilent() const
+{
+	return !m_isCapturing ||
+		FMath::IsNearlyEqual(m_decibels, DEFAULT_SILENCE_DECIBELS) ||
+		(FDateTime::Now() - m_lastVoiceTimestamp).GetTotalSeconds() > 0.1f;
 }
 
 void AudioCaptureHandler::SendInternal(const TArray<uint8> rawData) const
 {
+	if (m_isTestMode)
+	{
+		return;
+	}
+
 	if (rawData.Num() > (m_bufferMillisecondSize * 32)) // 16 bits per sample
 	{
 		UE_LOGFMT(VoxtaLog, Warning, "VoiceCapture cannot send data, too big: {0}. Skipping.", rawData.Num());
@@ -187,7 +205,10 @@ void AudioCaptureHandler::SendInternal(const TArray<uint8> rawData) const
 void AudioCaptureHandler::CaptureAndSendVoiceData()
 {
 	FScopeLock Lock(&m_captureGuard);
-	CaptureVoiceInternal(m_socketDataBuffer, m_trueDecibels);
+	if (CaptureVoiceInternal(m_socketDataBuffer, m_decibels))
+	{
+		m_lastVoiceTimestamp = FDateTime::Now();
+	}
 
 	if (m_socketDataBuffer.Num() > 0)
 	{
@@ -197,20 +218,10 @@ void AudioCaptureHandler::CaptureAndSendVoiceData()
 	}
 }
 
-float AudioCaptureHandler::GetTrueDecibels() const
+float AudioCaptureHandler::GetDecibels() const
 {
 	FScopeLock Lock(&m_captureGuard);
-	return m_trueDecibels;
-}
-
-float AudioCaptureHandler::GetRealtimeDecibels() const
-{
-	if (!m_voiceCaptureDevice)
-	{
-		return DEFAULT_SILENCE_DECIBELS;
-	}
-
-	return 20.0f * FMath::LogX(10.0, FMath::Max(m_voiceCaptureDevice->GetCurrentAmplitude(), 0.0001f));
+	return IsInputSilent() ? DEFAULT_SILENCE_DECIBELS : m_decibels;
 }
 
 const FString& AudioCaptureHandler::GetDeviceName() const
@@ -218,20 +229,23 @@ const FString& AudioCaptureHandler::GetDeviceName() const
 	return m_deviceName;
 }
 
-float AudioCaptureHandler::AnalyseDecibels(const TArray<uint8>& VoiceData, uint32 DataSize) const
+void AudioCaptureHandler::SetIsTestMode(bool isTestMode)
 {
-	int16 Sample;
-	float SumSquared = 0.0f;
+	m_isTestMode = isTestMode;
+}
 
-	for (uint32 i = 0; i < DataSize / 2; ++i)
+float AudioCaptureHandler::AnalyseDecibels(const TArray<uint8>& voiceInputData, uint32 dataSize) const
+{
+	int16 sample;
+	float sumSquared = 0.f;
+
+	for (uint32 i = 0; i < dataSize / 2; ++i)
 	{
-		Sample = (VoiceData[i * 2 + 1] << 8) | VoiceData[i * 2];
-		SumSquared += static_cast<float>(Sample) * static_cast<float>(Sample);
+		sample = (voiceInputData[i * 2 + 1] << 8) | voiceInputData[i * 2];
+		sumSquared += static_cast<float>(sample) * static_cast<float>(sample);
 	}
 
-	float MeanSquared = SumSquared / (DataSize / 2.f);
-	float RootMeanSquare = FMath::Sqrt(MeanSquared);
-	float Decibels = 20.0f * FMath::LogX(10.0f, RootMeanSquare / 32768.0f);
-
-	return Decibels;
+	float rms = FMath::Sqrt(sumSquared / (dataSize / 2.f));
+	float decibels = 20.0f * FMath::LogX(10.f, FMath::Max(rms, 1.f) / 32768.f);
+	return FMath::Max(decibels, DEFAULT_SILENCE_DECIBELS);
 }

@@ -40,7 +40,7 @@ void UVoxtaClient::Initialize(FSubsystemCollectionBase& collection)
 	m_voiceInput = NewObject<UVoxtaAudioInput>(this);
 	m_A2FHandler = MakeShared<Audio2FaceRESTHandler>();
 	m_texturesCacheHandler = MakeShared<TexturesCacheHandler>();
-	m_globalAudioPlaybackHandler = nullptr;
+	m_globalAudioPlaybackComp = nullptr;
 	Super::Initialize(collection);
 }
 
@@ -125,11 +125,12 @@ void UVoxtaClient::StartChatWithCharacter(const FGuid& charId, const FString& co
 	{
 		SendMessageToServer(m_voxtaRequestApi->GetStartChatRequestData(character->Get(), context));
 
-		if (enableGlobalAudioFallback && m_globalAudioPlaybackHandler == nullptr)
+		if (enableGlobalAudioFallback && m_globalAudioPlaybackComp == nullptr)
 		{
-			m_globalAudioPlaybackHandler = GetWorld()->SpawnActor<AVoxtaGlobalAudioPlaybackHolder>();
+			m_globalAudioPlaybackComp = GetWorld()->SpawnActor<AVoxtaGlobalAudioPlaybackHolder>();
+			globalAudioPlaybackHandle = m_globalAudioPlaybackComp->GetGlobalPlaybackComponent()->VoxtaMessageAudioPlaybackFinishedEventNative.AddUObject(this, &UVoxtaClient::NotifyAudioPlaybackComplete);
 		}
-		m_globalAudioPlaybackHandler->GetGlobalPlaybackComponent()->SetEnabled(enableGlobalAudioFallback);
+		m_globalAudioPlaybackComp->GetGlobalPlaybackComponent()->SetEnabled(enableGlobalAudioFallback);
 
 		SetState(VoxtaClientState::StartingChat);
 	}
@@ -261,10 +262,10 @@ bool UVoxtaClient::TryRegisterPlaybackHandler(const FGuid& characterId,
 		return false;
 	}
 
-	auto currentHandler = m_registeredCharacterPlaybackHandlers.Find(characterId);
+	auto currentHandler = m_registeredCharacterAudioPlaybackComps.Find(characterId);
 	if (currentHandler == nullptr)
 	{
-		m_registeredCharacterPlaybackHandlers.Emplace(characterId, playbackHandler);
+		m_registeredCharacterAudioPlaybackComps.Emplace(characterId, playbackHandler);
 		UE_LOGFMT(VoxtaLog, Log, "Voxta Audioplayback handler for character: {0} registered successfully.", GuidToString(characterId));
 
 		if (playbackHandler->GetLipSyncType() == LipSyncType::Audio2Face)
@@ -274,6 +275,7 @@ bool UVoxtaClient::TryRegisterPlaybackHandler(const FGuid& characterId,
 			m_A2FHandler->TryInitialize();
 		}
 
+		m_audioPlaybackHandles.Emplace(characterId, playbackHandler->VoxtaMessageAudioPlaybackFinishedEventNative.AddUObject(this, &UVoxtaClient::NotifyAudioPlaybackComplete));
 		VoxtaClientAudioPlaybackRegisteredEventNative.Broadcast(playbackHandler.Get(), characterId);
 		VoxtaClientAudioPlaybackRegisteredEvent.Broadcast(playbackHandler.Get(), characterId);
 		return true;
@@ -289,15 +291,22 @@ bool UVoxtaClient::TryRegisterPlaybackHandler(const FGuid& characterId,
 
 bool UVoxtaClient::TryUnregisterPlaybackHandler(const FGuid& characterId)
 {
-	int removedValues = m_registeredCharacterPlaybackHandlers.Remove(characterId);
-	if (removedValues > 0)
-	{
+	TWeakObjectPtr<UVoxtaAudioPlayback>* audioPlaybackComp = m_registeredCharacterAudioPlaybackComps.Find(characterId);
+	FDelegateHandle* handle = m_audioPlaybackHandles.Find(characterId);
+	if (audioPlaybackComp != nullptr && audioPlaybackComp->Get() != nullptr)
+	{		
+		if (handle != nullptr)
+		{
+			audioPlaybackComp->Get()->VoxtaMessageAudioPlaybackFinishedEventNative.Remove(*handle);
+		}
+		m_registeredCharacterAudioPlaybackComps.Remove(characterId);
+		m_audioPlaybackHandles.Remove(characterId);
 		UE_LOGFMT(VoxtaLog, Log, "Voxta Audioplayback handler for character: {0} unregistered successfully.", GuidToString(characterId));
 		return true;
 	}
 	else
 	{
-		UE_LOGFMT(VoxtaLog, Warning, "Tried to remove Audioplayback handler for character: {0}, but none was registered",
+		UE_LOGFMT(VoxtaLog, Warning, "Tried to remove Audioplayback handler for character: {0}, but it was not valid or not registered",
 			GuidToString(characterId));
 		return false;
 	}
@@ -349,7 +358,7 @@ FGuid UVoxtaClient::GetMainAssistantId() const
 
 const UVoxtaAudioPlayback* UVoxtaClient::GetRegisteredAudioPlaybackHandlerForID(const FGuid& characterId) const
 {
-	auto currentHandler = m_registeredCharacterPlaybackHandlers.Find(characterId);
+	auto currentHandler = m_registeredCharacterAudioPlaybackComps.Find(characterId);
 	if (currentHandler != nullptr)
 	{
 		return currentHandler->Get();
@@ -729,7 +738,7 @@ bool UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessageBase
 					UE_LOGFMT(VoxtaLog, Log, "Message with id: {0} marked as complete. Speaker: {1} Contents: {2}",
 						derivedResponse->MESSAGE_ID, character->Get()->GetName(), chatMessage->GetTextContent());
 
-					auto playbackHandler = m_registeredCharacterPlaybackHandlers.Find(character->Get()->GetId());
+					auto playbackHandler = m_registeredCharacterAudioPlaybackComps.Find(character->Get()->GetId());
 					if (playbackHandler != nullptr)
 					{
 						SetState(VoxtaClientState::AudioPlayback);
@@ -740,7 +749,7 @@ bool UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessageBase
 						if (chatMessage->GetAudioUrls().Num() > 0)
 						{
 							SetState(VoxtaClientState::AudioPlayback);
-							m_globalAudioPlaybackHandler->GetGlobalPlaybackComponent()->PlaybackMessage(*character->Get(), *chatMessage);
+							m_globalAudioPlaybackComp->GetGlobalPlaybackComponent()->PlaybackMessage(*character->Get(), *chatMessage);
 						}
 						else
 						{
@@ -907,6 +916,14 @@ void UVoxtaClient::StopChatInternal()
 	{
 		return;
 	}
+
+	if (m_globalAudioPlaybackComp != nullptr &&
+		m_globalAudioPlaybackComp->GetGlobalPlaybackComponent() != nullptr &&
+		globalAudioPlaybackHandle.IsValid())
+	{
+		m_globalAudioPlaybackComp->GetGlobalPlaybackComponent()->VoxtaMessageAudioPlaybackFinishedEventNative.Remove(globalAudioPlaybackHandle);
+	}
+
 	m_voiceInput->DisconnectFromChat();
 	VoxtaClientChatSessionStoppedEventNative.Broadcast(*m_chatSession.Get());
 	VoxtaClientChatSessionStoppedEvent.Broadcast(*m_chatSession.Get());

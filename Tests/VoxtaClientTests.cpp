@@ -629,31 +629,6 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 #pragma endregion
 
 #pragma region NotifyAudioPlaybackComplete
-	TEST_METHOD(NotifyAudioPlaybackComplete_WithInvalidStartingState_ExpectErrorAndStateRemainsUnchanged)
-	{
-		PRE_TEST;
-		FGuid messageId = FGuid::NewGuid();
-		TestCommandBuilder.Do([this, messageId] ()
-		{
-			/** Setup */
-			m_cache_state = m_voxtaClient->GetCurrentState();
-			TestRunner->SetSuppressLogErrors();
-
-			/** Test */
-			m_voxtaClient->NotifyAudioPlaybackComplete(messageId);
-		});
-
-		TEST_DELAY;
-		TestCommandBuilder.Do([this, messageId] ()
-		{
-			/** Assert */
-			GLog->Flush();
-			ASSERT_THAT(AreEqual(m_latestNewStateResponse, m_cache_state));
-			ASSERT_THAT(AreEqual(m_voxtaClient->GetCurrentState(), m_cache_state));
-			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(messageId, ELogVerbosity::Type::Error)));
-		});
-	}
-
 	TEST_METHOD(NotifyAudioPlaybackComplete_ExpectStateChange)
 	{
 		PRE_TEST;
@@ -663,15 +638,13 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		TEST_DELAY;
 		TestCommandBuilder.Do([this] ()
 		{
-			m_cache_playbackActor = &m_actorTestSpawner->SpawnActor<ATestPlaybackActor>();
-			m_cache_playbackActor->Initialize(m_voxtaId, false);
-			m_cache_playbackActor->m_audioPlaybackComponent->VoxtaMessageAudioPlaybackFinishedEventNative.AddLambda(
-			[this] (const FGuid& messageId)
-			{
-				/** Test */
-				VoxtaClientState oldState = m_cache_state;
-				m_voxtaClient->NotifyAudioPlaybackComplete(messageId);
+			VoxtaClientState oldState = m_cache_state;
 
+			m_cache_playbackActor = &m_actorTestSpawner->SpawnActor<ATestPlaybackActor>();
+			m_cache_playbackActor->Initialize(m_voxtaId);
+			m_cache_playbackActor->m_audioPlaybackComponent->VoxtaMessageAudioPlaybackFinishedEventNative.AddLambda(
+			[this, oldState] (const FGuid& messageId)
+			{
 				/** Assert */
 				GLog->Flush();
 				ASSERT_THAT(AreEqual(VoxtaClientState::AudioPlayback, oldState));
@@ -691,13 +664,12 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		TestCommandBuilder.Do([this] ()
 		{
 			m_cache_playbackActor = &m_actorTestSpawner->SpawnActor<ATestPlaybackActor>();
-			m_cache_playbackActor->Initialize(m_voxtaId, false);
+			m_cache_playbackActor->Initialize(m_voxtaId);
 			m_cache_playbackActor->m_audioPlaybackComponent->VoxtaMessageAudioPlaybackFinishedEventNative.AddLambda(
 			[this] (const FGuid& messageId)
 			{
 				/** Test */
 				VoxtaClientState oldState = m_cache_state;
-				m_voxtaClient->NotifyAudioPlaybackComplete(messageId);
 
 				/** Assert */
 				GLog->Flush();
