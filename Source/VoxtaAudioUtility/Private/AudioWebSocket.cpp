@@ -4,6 +4,7 @@
 #include "VoxtaDefines.h"
 #include "Logging/StructuredLog.h"
 #include "WebSocketsModule.h"
+#include "LogUtility/Public/Defines.h"
 
 AudioWebSocket::AudioWebSocket(const FString& serverIP, uint16 serverPort) :
 	m_serverIP(serverIP),
@@ -64,7 +65,7 @@ bool AudioWebSocket::Connect(const FGuid& sessionId)
 				}
 			});
 
-		UE_LOGFMT(VoxtaLog, Log, "Connecting audio input websocket at: {0}", uri);
+		SENSITIVE_LOG1(VoxtaLog, Log, "Connecting audio input websocket at: {0}", uri);
 		m_socketConnection->Connect();
 		return true;
 	}

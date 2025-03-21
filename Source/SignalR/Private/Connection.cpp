@@ -32,6 +32,7 @@
 #include "Dom/JsonObject.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
+#include "LogUtility/Public/Defines.h"
 
 FConnection::FConnection(const FString& InHost, const TMap<FString, FString>& InHeaders):
     Host(InHost),
@@ -53,7 +54,7 @@ void FConnection::Send(const FString& Data)
 {
     if (Connection.IsValid())
     {
-		UE_LOG(LogSignalR, Log, TEXT("Sending: %s"), *Data);
+        SENSITIVE_LOG_BASIC(LogSignalR, Log, TEXT("Sending: %s"), *Data)
         Connection->Send(Data);
     }
     else
@@ -236,7 +237,7 @@ void FConnection::StartWebSocket()
         {
             if (TSharedPtr<FConnection> SharedSelf = Self.Pin())
             {
-				UE_LOG(LogSignalR, Log, TEXT("Received: %s"), *MessageString);
+                SENSITIVE_LOG_BASIC(LogSignalR, Log, TEXT("Received: %s"), *MessageString)
                 SharedSelf->OnMessageEvent.Broadcast(MessageString);
             }
         });

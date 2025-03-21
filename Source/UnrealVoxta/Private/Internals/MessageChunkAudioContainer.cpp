@@ -12,6 +12,7 @@
 #include "Sound/SoundWaveProcedural.h"
 #include "LipSyncBaseData.h"
 #include "Interfaces/IHttpResponse.h"
+#include "LogUtility/Public/Defines.h"
 
 MessageChunkAudioContainer::MessageChunkAudioContainer(const FString& fullUrl,
 	LipSyncType lipSyncType,
@@ -111,22 +112,22 @@ void MessageChunkAudioContainer::DownloadData()
 				if (TSharedPtr<MessageChunkAudioContainer> sharedSelf = Self.Pin())
 				{
 					sharedSelf->m_rawAudioData = response->GetContent();
-					UE_LOGFMT(VoxtaLog, Log, "Sucessfully downloaded audio data from: {0}", request->GetURL());
+					SENSITIVE_LOG1(VoxtaLog, Log, "Sucessfully downloaded audio data from: {0}", request->GetURL());
 					sharedSelf->UpdateState(MessageChunkState::Idle_Downloaded);
 				}
 				else
 				{
-					UE_LOGFMT(VoxtaLog, Error, "Downloaded audio data from: {0} "
+					SENSITIVE_LOG1(VoxtaLog, Error, "Downloaded audio data from: {0} "
 						"But the messageChunkContainer was destroyed?", request->GetURL());
 				}
 			}
 			else
 			{
-				UE_LOGFMT(VoxtaLog, Error, "Failed to download audio data from: {0}", request->GetURL());
+				SENSITIVE_LOG1(VoxtaLog, Error, "Failed to download audio data from: {0}", request->GetURL());
 			}
 		});
 
-	UE_LOGFMT(VoxtaLog, Log, "Attempting to request audio data for index {0}, from url: {1}", INDEX, FULL_DOWNLOAD_URL);
+	SENSITIVE_LOG2(VoxtaLog, Log, "Attempting to request audio data for index {0}, from url: {1}", INDEX, FULL_DOWNLOAD_URL);
 	httpRequest->ProcessRequest();
 }
 

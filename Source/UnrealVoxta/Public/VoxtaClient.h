@@ -277,6 +277,9 @@ public:
 
 	/** @return An reference to the A2F handler instance, should probably be moved elsewhere, idk yet. */
 	Audio2FaceRESTHandler* GetA2FHandler() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Voxta")
+	void SetLogFilter(bool isCensorActive);
 #pragma endregion
 
 #pragma region data
@@ -360,7 +363,7 @@ private:
 	 */
 	template<typename T>
 	bool HandleResponseHelper(const ServerResponseBase* response, const FString& logMessage,
-		bool (UVoxtaClient::* handler)(const T&));
+		bool (UVoxtaClient::* handler)(const T&), bool isSensitive);
 
 #pragma region VoxtaServer response handlers
 private:

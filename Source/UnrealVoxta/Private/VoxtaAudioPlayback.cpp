@@ -12,6 +12,7 @@
 #include "BaseCharData.h"
 #include "Sound/SoundWaveProcedural.h"
 #include "Logging/StructuredLog.h"
+#include "LogUtility/Public/Defines.h"
 
 void UVoxtaAudioPlayback::Initialize(const FGuid& characterId)
 {
@@ -46,7 +47,7 @@ void UVoxtaAudioPlayback::InitializeInternal(bool autoRegisterHandler)
 
 	m_hostAddress = m_clientReference->GetServerAddress();
 	m_hostPort = m_clientReference->GetServerPort();
-	UE_LOGFMT(VoxtaLog, Log, "Initialized audioplayback. Audio will be downloaded from: {0}",
+	SENSITIVE_LOG1(VoxtaLog, Log, "Initialized audioplayback. Audio will be downloaded from: {0}",
 		FString::Format(*FString(TEXT("http://{0}:{1}/")), { m_hostAddress, m_hostPort }));
 }
 

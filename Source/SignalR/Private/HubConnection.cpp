@@ -30,6 +30,7 @@
 #include "Connection.h"
 #include "HandshakeProtocol.h"
 #include "StringUtils.h"
+#include "LogUtility/Public/Defines.h"
 
 FHubConnection::FHubConnection(const FString& InUrl, const TMap<FString, FString>& InHeaders) :
 	FTickableGameObject(),
@@ -245,7 +246,7 @@ void FHubConnection::ProcessMessage(const FString& InMessageStr)
 
 void FHubConnection::OnConnectionStarted()
 {
-	UE_LOG(LogSignalR, Verbose, TEXT("Connected to %s."), *Host);
+	SENSITIVE_LOG_BASIC(LogSignalR, Verbose, TEXT("Connected to %s."), *Host);
 
 	UE_LOG(LogSignalR, Verbose, TEXT("Send handshake request"));
 
@@ -256,7 +257,7 @@ void FHubConnection::OnConnectionStarted()
 
 void FHubConnection::OnConnectionFailed()
 {
-	UE_LOG(LogSignalR, Verbose, TEXT("Connection to %s failed."), *Host)
+	SENSITIVE_LOG_BASIC(LogSignalR, Verbose, TEXT("Connection to %s failed."), *Host)
 
 		OnHubConnectionErrorEvent.Broadcast(TEXT("Could not connect to host"));
 }

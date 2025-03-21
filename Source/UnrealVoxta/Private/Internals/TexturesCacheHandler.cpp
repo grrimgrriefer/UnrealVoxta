@@ -13,6 +13,7 @@
 #include "TextureResource.h"
 #include "RenderingThread.h"
 #include "Logging/StructuredLog.h"
+#include "LogUtility/Public/Defines.h"
 
 TexturesCacheHandler::TexturesCacheHandler()
 {
@@ -97,7 +98,7 @@ void TexturesCacheHandler::FetchTextureFromUrl(const FString& url, FDownloadedTe
 					}
 				}
 				// Failed to process / fetch image
-				UE_LOGFMT(VoxtaLog, Warning, "Failed to fetch thumbnail from: {0}", URL);
+				SENSITIVE_LOG1(VoxtaLog, Warning, "Failed to fetch thumbnail from: {0}", URL);
 				for (auto& var : sharedSelf->m_pendingCallbacks[URL])
 				{
 					var.ExecuteIfBound(false, nullptr, FIntVector2());
@@ -106,7 +107,7 @@ void TexturesCacheHandler::FetchTextureFromUrl(const FString& url, FDownloadedTe
 			}
 			else
 			{
-				UE_LOGFMT(VoxtaLog, Error, "Downloaded data from: {0} "
+				SENSITIVE_LOG1(VoxtaLog, Error, "Downloaded data from: {0} "
 					"But the TexturesCacheHandler was destroyed?", request->GetURL());
 			}			
 		});
