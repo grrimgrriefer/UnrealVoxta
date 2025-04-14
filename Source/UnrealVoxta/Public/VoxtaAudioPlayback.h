@@ -28,10 +28,10 @@ class UNREALVOXTA_API UVoxtaAudioPlayback : public UAudioComponent, public IA2FW
 #pragma region delegate declarations
 public:
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaMessageAudioPlaybackCompleted, const FGuid&, messageId);
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FVoxtaMessageAudioChunkReadyForCustomPlayback, const TArray<uint8>&, rawBytes, const USoundWaveProcedural*, processedSoundWave, const FGuid&, audioChunkGuid);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FVoxtaMessageAudioChunkReadyForCustomPlayback, const TArray<uint8>&, rawBytes, const USoundWaveProcedural*, processedSoundWave, FGuid, audioChunkGuid);
 
 	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaMessageAudioPlaybackCompletedNative, const FGuid&);
-	DECLARE_MULTICAST_DELEGATE_ThreeParams(FVoxtaMessageAudioChunkReadyForCustomPlaybackNative, const TArray<uint8>&, const USoundWaveProcedural*, const FGuid&);
+	DECLARE_MULTICAST_DELEGATE_ThreeParams(FVoxtaMessageAudioChunkReadyForCustomPlaybackNative, const TArray<uint8>&, const USoundWaveProcedural*, FGuid);
 #pragma endregion
 
 #pragma region events
@@ -81,7 +81,7 @@ public:
 	 * @param guid The guid that was passed in the VoxtaMessageAudioChunkReadyForCustomPlaybackEvent.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
-	void MarkCustomPlaybackComplete(const FGuid& guid);
+	void MarkAudioChunkCustomPlaybackComplete(const FGuid& guid);
 
 	/**
 	 * The main entrypoint, hooked into the VoxtaClient and will trigger the download & playback of the audio.

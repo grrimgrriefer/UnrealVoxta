@@ -9,6 +9,7 @@ AVoxtaGlobalAudioPlaybackHolder::AVoxtaGlobalAudioPlaybackHolder()
 {
 	PrimaryActorTick.bCanEverTick = false;
 	m_globalAudioPlayback = CreateDefaultSubobject<UVoxtaGlobalAudioPlayback>(TEXT("GlobalAudioPlayback"));
+	SetRootComponent(m_globalAudioPlayback);
 }
 
 UVoxtaGlobalAudioPlayback* AVoxtaGlobalAudioPlaybackHolder::GetGlobalPlaybackComponent() const

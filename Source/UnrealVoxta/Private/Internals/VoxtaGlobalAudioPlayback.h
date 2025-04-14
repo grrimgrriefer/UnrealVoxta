@@ -14,13 +14,15 @@ class UVoxtaGlobalAudioPlayback : public UVoxtaAudioPlayback
 public:
 	void SetEnabled(bool newState);
 
+	bool IsEnabled();
+
 	virtual void PlaybackMessage(const FBaseCharData& sender, const FChatMessage& message) override;
 #pragma endregion
 
 #pragma region lipsync related API
 private:
 	using UVoxtaAudioPlayback::Initialize;
-	using UVoxtaAudioPlayback::MarkCustomPlaybackComplete;
+	using UVoxtaAudioPlayback::MarkAudioChunkCustomPlaybackComplete;
 	using UVoxtaAudioPlayback::GetLipSyncType;
 	using UVoxtaAudioPlayback::GetA2FCurveWeightsPreUpdate;
 #pragma endregion

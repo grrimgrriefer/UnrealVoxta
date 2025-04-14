@@ -178,7 +178,10 @@ public:
 	 * @param charId The charID of the character that you want to load.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
-	void StartChatWithCharacter(const FGuid& charId, const FString& context = TEXT(""), bool enableGlobalAudioFallback = true);
+	void StartChatWithCharacter(const FGuid& charId, const FString& context = TEXT(""));
+
+	UFUNCTION(BlueprintCallable, Category = "Voxta")
+	void SetGlobalAudioFallbackEnabled(bool newState);
 
 	/**
 	 * Tell the server to stop the ongoing chat session and clean up the relevant dependencies.
@@ -293,6 +296,7 @@ private:
 	UPROPERTY()
 	AVoxtaGlobalAudioPlaybackHolder* m_globalAudioPlaybackComp;
 	FDelegateHandle globalAudioPlaybackHandle;
+	bool m_enableGlobalAudioFallback = true;
 
 	TSharedPtr<VoxtaLogger> m_logUtility;
 	TSharedPtr<VoxtaApiRequestHandler> m_voxtaRequestApi;

@@ -39,7 +39,7 @@ void UVoxtaAudioInput::InitializeSocket(int bufferMs, int sampleRate, int inputC
 
 void UVoxtaAudioInput::DisconnectFromChat()
 {
-	UE_LOGFMT(VoxtaLog, Warning, "Disconnecting socket & shutting down voice capture gracefully.");
+	UE_LOGFMT(VoxtaLog, Log, "Disconnecting socket & shutting down voice capture gracefully.");
 
 	m_audioCaptureDevice.ShutDown();
 	if (m_audioWebSocket != nullptr)

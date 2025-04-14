@@ -13,8 +13,11 @@
 #include "TestGameInstance.h"
 #include "TestPlaybackActor.h"
 
+#define EMPTY_TEXT TEXT("")
+#define TEST_DELAY_SECONDS 1
+#define UNRESPONSIVE_TIMEOUT (10 + TEST_DELAY_SECONDS)
 #define TEST_DELAY TestCommandBuilder.Do([this] () { m_endTime = FDateTime::MaxValue(); }); \
-AddCommand(WaitForDuration(0.5));
+WaitForFixedDuration(TEST_DELAY_SECONDS);
 #define PRE_TEST TestCommandBuilder.Do([this] () { TestRunner->SetSuppressLogWarnings(ECQTestSuppressLogBehavior::True); TestRunner->SetSuppressLogErrors(ECQTestSuppressLogBehavior::True); }); \
 TEST_DELAY \
 TestCommandBuilder.Do([this] () { GLog->Flush(); }); \
@@ -29,8 +32,7 @@ TestCommandBuilder.Do([this] () { TestRunner->SetSuppressLogWarnings(ECQTestSupp
  */
 TEST_CLASS(VoxtaClientTests, "Voxta")
 {
-	const FGuid m_voxtaId = FGuid(TEXT("35c74d75-e3e4-44af-9389-faade99cc419"));
-	//FGuid::Parse(, m_voxtaId);
+	const FGuid m_voxtaId = FGuid(TEXT("35c74d75-e3e4-44af-9389-faade99cc419")); // Id of Voxta character
 	const FString m_voxtaName = TEXT("Voxta");
 	const FString m_signalRLogCategory = TEXT("LogSignalR");
 
@@ -50,7 +52,8 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 	TArray<TTuple<const UVoxtaAudioPlayback*, FGuid>> m_playbackHandlers;
 
 	VoxtaClientState m_cache_state;
-	TWeakObjectPtr<ATestPlaybackActor> m_cache_playbackActor;
+	ATestPlaybackActor* m_cache_playbackActor;
+	FGuid m_cache_guid;
 
 	FDateTime m_endTime = FDateTime::MaxValue();
 
@@ -101,6 +104,10 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		{
 			m_playbackHandlers.Add(MakeTuple(playbackHandler, characterId));
 		});
+
+		m_cache_state = VoxtaClientState::Disconnected;
+		m_cache_playbackActor = nullptr;
+		m_cache_guid.Invalidate();
 	}
 
 	AFTER_EACH()
@@ -113,15 +120,19 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		m_voxtaClient->VoxtaClientCharacterRegisteredEventNative.Remove(m_characterRegisteredEventHandle);
 		m_voxtaClient->VoxtaClientCharMessageAddedEventNative.Remove(m_charMessageAddedEventHandle);
 		m_voxtaClient->VoxtaClientAudioPlaybackRegisteredEventNative.Remove(m_charMessageAddedEventHandle);
-		delete m_actorTestSpawner;
+		m_voxtaClient->Disconnect();
 		m_voxtaClient = nullptr;
 		m_actorTestSpawner = nullptr;
+		m_cache_playbackActor = nullptr;
+		m_cache_guid.Invalidate();
 
 		m_latestNewStateResponse = VoxtaClientState::Disconnected;
 		m_orderedListOfNewStateResponses.Empty();
 		m_characters.Empty();
 		m_messages.Empty();
 		m_playbackHandlers.Empty();
+
+		m_cache_state = VoxtaClientState::Disconnected;
 
 		GLog->Flush();
 		GLog->RemoveOutputDevice(m_testLogSink);
@@ -149,7 +160,6 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		/** Setup */
 		PreconfigureClient(PreconfigureClientState::CharacterListLoaded);
 
-		TEST_DELAY;
 		TestCommandBuilder.Do([this] ()
 		{
 			/** Assert */
@@ -182,7 +192,6 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		/** Setup */
 		PreconfigureClient(PreconfigureClientState::CharacterListLoaded);
 
-		TEST_DELAY;
 		TestCommandBuilder.Do([this] ()
 		{
 			/** Assert */
@@ -210,7 +219,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			m_voxtaClient->StartConnection(FString("127.0.0.1"), 5384);
 		});
 
-		TEST_DELAY;
+		WaitUntilState(VoxtaClientState::Idle);
 		TestCommandBuilder.Do([this] ()
 		{
 			/** Assert */
@@ -232,12 +241,12 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			m_voxtaClient->StartConnection(FString(), 5384);
 		});
 
-		TEST_DELAY;
+		WaitUntilState(VoxtaClientState::Disconnected);
 		TestCommandBuilder.Do([this] ()
 		{
 			/** Assert */
 			GLog->Flush();
-			ASSERT_THAT(AreEqual(m_voxtaClient->GetCurrentState(), VoxtaClientState::Disconnected));
+			ASSERT_THAT(AreEqual(m_latestNewStateResponse, VoxtaClientState::Disconnected));
 			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(TEXT("address"), ELogVerbosity::Type::Error)));
 		});
 	}
@@ -254,12 +263,12 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			m_voxtaClient->StartConnection(FString("1.2.3.4.5"), 5384);
 		});
 
-		TEST_DELAY;
+		WaitUntilState(VoxtaClientState::Disconnected);
 		TestCommandBuilder.Do([this] ()
 		{
 			/** Assert */
 			GLog->Flush();
-			ASSERT_THAT(AreEqual(m_voxtaClient->GetCurrentState(), VoxtaClientState::Disconnected));
+			ASSERT_THAT(AreEqual(m_latestNewStateResponse, VoxtaClientState::Disconnected));
 			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(TEXT("address"), ELogVerbosity::Type::Error)));
 		});
 	}
@@ -277,13 +286,13 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			m_voxtaClient->StartConnection(FString("127.0.0.1"), port);
 		});
 
-		TEST_DELAY;
+		WaitUntilState(VoxtaClientState::Disconnected);
 		TestCommandBuilder.Do([this, port] ()
 		{
 			/** Assert */
 			GLog->Flush();
-			ASSERT_THAT(AreEqual(m_voxtaClient->GetCurrentState(), VoxtaClientState::Disconnected));
-			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(FString::FromInt(port), ELogVerbosity::Type::Error)));
+			ASSERT_THAT(AreEqual(m_latestNewStateResponse, VoxtaClientState::Disconnected));
+			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(FString::FromInt(port), ELogVerbosity::Type::Warning)));
 		});
 	}
 
@@ -298,11 +307,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 
 			/** Test */
 			m_voxtaClient->StartConnection(FString("127.0.0.1"), 5384);
-		});
-
-		TEST_DELAY;
-		TestCommandBuilder.Do([this] ()
-		{
+		
 			/** Assert */
 			GLog->Flush();
 			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(TEXT("ignoring new connection attempt"), ELogVerbosity::Type::Warning)));
@@ -314,16 +319,15 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		PRE_TEST;
 		/** Setup */
 		PreconfigureClient(PreconfigureClientState::Started);
-		FTimespan timeout = FTimespan::FromSeconds(5);
 
 		/** Test */
-		AddCommand(new FWaitUntil(*TestRunner, [&] () { return m_voxtaClient->GetCurrentState() == VoxtaClientState::Idle; }, timeout));
+		WaitUntilState(VoxtaClientState::Idle);
 
-		TEST_DELAY;
 		TestCommandBuilder.Do([this] ()
 		{
 			/** Assert */
 			GLog->Flush();
+			ASSERT_THAT(AreEqual(m_latestNewStateResponse, VoxtaClientState::Idle));
 			ASSERT_THAT(IsTrue(m_characters.Num() > 0));
 			for (int i = 0; i < m_characters.Num(); i++)
 			{
@@ -346,7 +350,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			m_voxtaClient->Disconnect();
 		});
 
-		TEST_DELAY;
+		WaitUntilState(VoxtaClientState::Terminated);
 		TestCommandBuilder.Do([this] ()
 		{
 			/** Assert */
@@ -366,11 +370,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 
 			/** Test */
 			m_voxtaClient->Disconnect();
-		});
-
-		TEST_DELAY;
-		TestCommandBuilder.Do([this] ()
-		{
+	
 			/** Assert */
 			GLog->Flush();
 			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(TEXT("ignoring disconnect attempt"), ELogVerbosity::Type::Warning)));
@@ -421,7 +421,11 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			ASSERT_THAT(AreEqual(m_voxtaClient->GetCurrentState(), m_cache_state));
 			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(characterId, ELogVerbosity::Type::Error)));
 			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring("Disconnected", ELogVerbosity::Type::Error)));
+
+			m_voxtaClient->StopActiveChat();
 		});
+
+		TEST_DELAY;
 	}
 
 	TEST_METHOD(StartChatWithCharacter_WithEmptyString_ExpectErrorAndStateRemainsUnchanged)
@@ -436,17 +440,17 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 
 			/** Test */
 			m_voxtaClient->StartChatWithCharacter(FGuid());
-		});
 
-		TEST_DELAY;
-		TestCommandBuilder.Do([this] ()
-		{
 			/** Assert */
 			GLog->Flush();
 			ASSERT_THAT(AreEqual(m_latestNewStateResponse, m_cache_state));
 			ASSERT_THAT(AreEqual(m_voxtaClient->GetCurrentState(), m_cache_state));
 			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(TEXT("empty"), ELogVerbosity::Type::Error)));
+
+			m_voxtaClient->StopActiveChat();
 		});
+
+		TEST_DELAY;
 	}
 
 	TEST_METHOD(StartChatWithCharacter_WithInvalidCharacterId_ExpectErrorAndStateRemainsUnchanged)
@@ -462,17 +466,17 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 
 			/** Test */
 			m_voxtaClient->StartChatWithCharacter(characterId);
-		});
 
-		TEST_DELAY;
-		TestCommandBuilder.Do([this, characterId] ()
-		{
 			/** Assert */
 			GLog->Flush();
 			ASSERT_THAT(AreEqual(m_latestNewStateResponse, m_cache_state));
 			ASSERT_THAT(AreEqual(m_voxtaClient->GetCurrentState(), m_cache_state));
 			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(characterId, ELogVerbosity::Type::Error)));
+
+			m_voxtaClient->StopActiveChat();
 		});
+
+		TEST_DELAY;
 	}
 
 	TEST_METHOD(StartChatWithCharacter_WithValidCharID_ExpectStateChange)
@@ -486,21 +490,24 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			m_voxtaClient->StartChatWithCharacter(m_voxtaId);
 		});
 
-		TEST_DELAY;
+		WaitUntilState(VoxtaClientState::StartingChat);
 		TestCommandBuilder.Do([this] ()
 		{
 			/** Assert */
 			GLog->Flush();
 			ASSERT_THAT(AreEqual(m_latestNewStateResponse, VoxtaClientState::StartingChat));
 			ASSERT_THAT(AreEqual(m_voxtaClient->GetCurrentState(), VoxtaClientState::StartingChat));
+
+			m_voxtaClient->StopActiveChat();
 		});
+
+		TEST_DELAY;
 	}
 
 	TEST_METHOD(StartChatWithCharacter_WaitForFirstMessage_ExpectStateChangeAndAudioGeneratedWarning)
 	{
 		PRE_TEST;
 		/** Setup */
-		FTimespan timeout = FTimespan::FromSeconds(10);
 		PreconfigureClient(PreconfigureClientState::CharacterListLoaded);
 		TestCommandBuilder.Do([this] ()
 		{
@@ -509,26 +516,28 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		});
 
 		/** Test */
-		AddCommand(new FWaitUntil(*TestRunner, [&] () { return m_voxtaClient->GetCurrentState() == VoxtaClientState::WaitingForUserReponse; }, timeout));
+		WaitUntilState(VoxtaClientState::WaitingForUserReponse);
 
-		TEST_DELAY;
 		TestCommandBuilder.Do([this] ()
 		{
 			/** Assert */
 			GLog->Flush();
+			ASSERT_THAT(AreEqual(m_latestNewStateResponse, VoxtaClientState::WaitingForUserReponse));
 			ASSERT_THAT(AreEqual(m_messages.Num(), 1));
 			ASSERT_THAT(AreEqual(m_messages[0].Value.GetCharId(), m_voxtaId));
 			ASSERT_THAT(AreEqual(m_messages[0].Key.GetId(), m_voxtaId));
 			ASSERT_THAT(AreEqual(m_messages[0].Key.GetName(), m_voxtaName));
-			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring("Audio data was generated", ELogVerbosity::Type::Warning)));
+
+			m_voxtaClient->StopActiveChat();
 		});
+
+		TEST_DELAY;
 	}
 
 	TEST_METHOD(StartChatWithCharacter_WaitForFirstMessageAudioPlaybackStart_ExpectStateChange)
 	{
 		PRE_TEST;
 		/** Setup */
-		FTimespan timeout = FTimespan::FromSeconds(10);
 		PreconfigureClient(PreconfigureClientState::CharacterListLoaded);
 		TestCommandBuilder.Do([this] ()
 		{
@@ -538,23 +547,27 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		});
 
 		/** Test */
-		AddCommand(new FWaitUntil(*TestRunner, [&] () { return m_voxtaClient->GetCurrentState() == VoxtaClientState::AudioPlayback; }, timeout));
+		WaitUntilState(VoxtaClientState::AudioPlayback);
 
-		TEST_DELAY;
 		TestCommandBuilder.Do([this] ()
 		{
 			/** Assert */
 			GLog->Flush();
+			ASSERT_THAT(AreEqual(m_latestNewStateResponse, VoxtaClientState::AudioPlayback));
 			ASSERT_THAT(AreEqual(m_messages.Num(), 1));
 			ASSERT_THAT(AreEqual(m_messages[0].Value.GetCharId(), m_voxtaId));
 			ASSERT_THAT(AreEqual(m_messages[0].Key.GetId(), m_voxtaId));
 			ASSERT_THAT(AreEqual(m_messages[0].Key.GetName(), m_voxtaName));
+
+			m_voxtaClient->StopActiveChat();
 		});
+
+		TEST_DELAY;
 	}
 #pragma endregion
 
 #pragma region SendUserInput
-	TEST_METHOD(SendUserInput_WithInvalidStartingState_ExpectErrorAndStateRemainsUnchanged)
+	TEST_METHOD(SendUserInput_WithInvalidStartingState_ExpectWarningAndStateRemainsUnchanged)
 	{
 		PRE_TEST;
 		FString text = TEXT("some user text");
@@ -563,19 +576,16 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			/** Setup */
 			m_cache_state = m_voxtaClient->GetCurrentState();
 			TestRunner->SetSuppressLogErrors();
+			m_voxtaClient->SetLogFilter(false);
 
 			/** Test */
 			m_voxtaClient->SendUserInput(text);
-		});
 
-		TEST_DELAY;
-		TestCommandBuilder.Do([this, text] ()
-		{
 			/** Assert */
 			GLog->Flush();
 			ASSERT_THAT(AreEqual(m_latestNewStateResponse, m_cache_state));
 			ASSERT_THAT(AreEqual(m_voxtaClient->GetCurrentState(), m_cache_state));
-			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(text, ELogVerbosity::Type::Error)));
+			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(text, ELogVerbosity::Type::Warning)));
 		});
 	}
 
@@ -583,48 +593,57 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 	{
 		PRE_TEST;
 		/** Setup */
-		PreconfigureClient(PreconfigureClientState::ChatStarted);
+		PreconfigureClient(PreconfigureClientState::ReadyForUserInput);
 		TestCommandBuilder.Do([this] ()
 		{
 			/** Test */
 			m_voxtaClient->SendUserInput(TEXT("some user text"));
 		});
 
-		TEST_DELAY;
+		/** Test */
+		WaitUntilState(VoxtaClientState::GeneratingReply);
+
 		TestCommandBuilder.Do([this] ()
 		{
 			/** Assert */
 			GLog->Flush();
 			ASSERT_THAT(AreEqual(m_latestNewStateResponse, VoxtaClientState::GeneratingReply));
 			ASSERT_THAT(AreEqual(m_voxtaClient->GetCurrentState(), VoxtaClientState::GeneratingReply));
+
+			m_voxtaClient->StopActiveChat();
 		});
+
+		TEST_DELAY;
 	}
 
 	TEST_METHOD(SendUserInput_WaitForReply_ExpectMessageBroadcast)
 	{
 		PRE_TEST;
 		/** Setup */
-		FTimespan timeout = FTimespan::FromSeconds(10);
 		FString text = TEXT("Hey there!");
-		PreconfigureClient(PreconfigureClientState::ChatStarted);
+		PreconfigureClient(PreconfigureClientState::ReadyForUserInput);
 		TestCommandBuilder.Do([this, text] ()
 		{
 			m_voxtaClient->SendUserInput(text);
 		});
 
 		/** Test */
-		AddCommand(new FWaitUntil(*TestRunner, [&] () { return m_voxtaClient->GetCurrentState() == VoxtaClientState::WaitingForUserReponse; }, timeout));
+		WaitUntilState(VoxtaClientState::WaitingForUserReponse);
 
-		TEST_DELAY;
 		TestCommandBuilder.Do([this, text] ()
 		{
 			/** Assert */
 			GLog->Flush();
+			ASSERT_THAT(AreEqual(m_latestNewStateResponse, VoxtaClientState::WaitingForUserReponse));
 			ASSERT_THAT(AreEqual(m_messages.Num(), 3)); // 1: ai greeting, 2: user message, 3: ai reply
 			ASSERT_THAT(AreEqual(m_messages[1].Value.GetTextContent(), text));
 			ASSERT_THAT(AreEqual(m_messages[1].Key.GetId(), m_voxtaClient->GetUserId()));
 			ASSERT_THAT(IsTrue(m_messages[1].Key.GetId().IsValid()));
+
+			m_voxtaClient->StopActiveChat();
 		});
+
+		TEST_DELAY;
 	}
 #pragma endregion
 
@@ -634,49 +653,32 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		PRE_TEST;
 		/** Setup */
 		PreconfigureClient(PreconfigureClientState::CharacterListLoaded);
-
-		TEST_DELAY;
-		TestCommandBuilder.Do([this] ()
-		{
-			VoxtaClientState oldState = m_cache_state;
-
-			m_cache_playbackActor = &m_actorTestSpawner->SpawnActor<ATestPlaybackActor>();
-			m_cache_playbackActor->Initialize(m_voxtaId);
-			m_cache_playbackActor->m_audioPlaybackComponent->VoxtaMessageAudioPlaybackFinishedEventNative.AddLambda(
-			[this, oldState] (const FGuid& messageId)
-			{
-				/** Assert */
-				GLog->Flush();
-				ASSERT_THAT(AreEqual(VoxtaClientState::AudioPlayback, oldState));
-				ASSERT_THAT(AreEqual(VoxtaClientState::WaitingForUserReponse, m_cache_state));
-				ASSERT_THAT(IsTrue(messageId.IsValid()));
-			});
-		});
-	}
-
-	TEST_METHOD(NotifyAudioPlaybackComplete_CorrectStateButWrongMessageId_ExpectErrorAndStateRemains)
-	{
-		PRE_TEST;
-		/** Setup */
-		PreconfigureClient(PreconfigureClientState::CharacterListLoaded);
-
-		TEST_DELAY;
+		
 		TestCommandBuilder.Do([this] ()
 		{
 			m_cache_playbackActor = &m_actorTestSpawner->SpawnActor<ATestPlaybackActor>();
-			m_cache_playbackActor->Initialize(m_voxtaId);
 			m_cache_playbackActor->m_audioPlaybackComponent->VoxtaMessageAudioPlaybackFinishedEventNative.AddLambda(
-			[this] (const FGuid& messageId)
+			[this] (const FGuid& finishedMessageId)
 			{
-				/** Test */
-				VoxtaClientState oldState = m_cache_state;
-
-				/** Assert */
-				GLog->Flush();
-				ASSERT_THAT(AreEqual(VoxtaClientState::AudioPlayback, oldState));
-				ASSERT_THAT(AreEqual(VoxtaClientState::WaitingForUserReponse, m_cache_state));
+				m_cache_guid = finishedMessageId;
 			});
+			m_cache_playbackActor->Initialize(m_voxtaId);
+			m_voxtaClient->StartChatWithCharacter(m_voxtaId);
 		});
+
+		WaitUntilState(VoxtaClientState::AudioPlayback);
+		WaitUntilState(VoxtaClientState::WaitingForUserReponse);
+
+		TestCommandBuilder.Do([this] ()
+		{			
+			GLog->Flush();
+			ASSERT_THAT(AreEqual(m_latestNewStateResponse, VoxtaClientState::WaitingForUserReponse));
+			ASSERT_THAT(IsTrue(m_cache_guid.IsValid()));
+
+			m_voxtaClient->StopActiveChat();
+		});
+
+		TEST_DELAY;
 	}
 #pragma endregion
 
@@ -689,11 +691,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		{
 			/** Setup */
 			m_voxtaClient->StartConnection(hostAddress, 5384);
-		});
 
-		TEST_DELAY;
-		TestCommandBuilder.Do([this, hostAddress] ()
-		{
 			/** Test */
 			FString address = m_voxtaClient->GetServerAddress();
 
@@ -711,11 +709,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		{
 			/** Setup */
 			m_voxtaClient->StartConnection(hostAddress, 5384);
-		});
 
-		TEST_DELAY;
-		TestCommandBuilder.Do([this] ()
-		{
 			/** Test */
 			FString address = m_voxtaClient->GetServerAddress();
 
@@ -733,11 +727,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			/** Setup */
 			TestRunner->SetSuppressLogErrors();
 			m_voxtaClient->StartConnection(FString(), 5384);
-		});
 
-		TEST_DELAY;
-		TestCommandBuilder.Do([this] ()
-		{
 			/** Test */
 			FString address = m_voxtaClient->GetServerAddress();
 
@@ -755,11 +745,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			/** Setup */
 			TestRunner->SetSuppressLogErrors();
 			m_voxtaClient->StartConnection(FString("1.2.3.4.5"), 5384);
-		});
 
-		TEST_DELAY;
-		TestCommandBuilder.Do([this] ()
-		{
 			/** Test */
 			FString address = m_voxtaClient->GetServerAddress();
 
@@ -793,11 +779,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		{
 			/** Setup */
 			m_voxtaClient->StartConnection(TEXT("127.0.0.1"), hostPort);
-		});
 
-		TEST_DELAY;
-		TestCommandBuilder.Do([this, hostPort] ()
-		{
 			/** Test */
 			int port = m_voxtaClient->GetServerPort();
 
@@ -815,11 +797,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			/** Setup */
 			TestRunner->SetSuppressLogErrors();
 			m_voxtaClient->StartConnection(FString(), 5384);
-		});
 
-		TEST_DELAY;
-		TestCommandBuilder.Do([this] ()
-		{
 			/** Test */
 			int port = m_voxtaClient->GetServerPort();
 
@@ -837,11 +815,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			/** Setup */
 			TestRunner->SetSuppressLogErrors();
 			m_voxtaClient->StartConnection(FString("1.2.3.4.5"), 5384);
-		});
 
-		TEST_DELAY;
-		TestCommandBuilder.Do([this] ()
-		{
 			/** Test */
 			int port = m_voxtaClient->GetServerPort();
 
@@ -897,17 +871,18 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		/** Test */
 		m_cache_state = m_voxtaClient->GetCurrentState();
 		PreconfigureClient(PreconfigureClientState::CharacterListLoaded);
-		TEST_DELAY;
 		TestCommandBuilder.Do([this] ()
 		{
 			m_voxtaClient->Disconnect();
 		});
 
-		TEST_DELAY;
+		WaitUntilState(VoxtaClientState::Terminated);
 		TestCommandBuilder.Do([this, expectedStateResponses] ()
 		{
 			/** Assert */
 			GLog->Flush();
+			ASSERT_THAT(AreEqual(m_latestNewStateResponse, VoxtaClientState::Terminated));
+
 			ASSERT_THAT(AreEqual(expectedStateResponses.Num(), m_orderedListOfNewStateResponses.Num()));
 
 			for (size_t i = 0; i < m_orderedListOfNewStateResponses.Num(); i++)
@@ -937,8 +912,6 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 	{
 		PRE_TEST;
 		PreconfigureClient(PreconfigureClientState::CharacterListLoaded);
-
-		TEST_DELAY;
 		TestCommandBuilder.Do([this] ()
 		{
 			/** Test */
@@ -991,14 +964,10 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		PRE_TEST;
 		/** Setup */
 		PreconfigureClient(PreconfigureClientState::CharacterListLoaded);
-
-		TEST_DELAY;
 		TestCommandBuilder.Do([this] ()
 		{
-			const UVoxtaAudioPlayback* playbackHandler;
-
 			/** Test */
-			playbackHandler = m_voxtaClient->GetRegisteredAudioPlaybackHandlerForID(m_voxtaId);
+			 const UVoxtaAudioPlayback* playbackHandler = m_voxtaClient->GetRegisteredAudioPlaybackHandlerForID(m_voxtaId);
 
 			/** Assert */
 			GLog->Flush();
@@ -1011,16 +980,13 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		PRE_TEST;
 		/** Setup */
 		PreconfigureClient(PreconfigureClientState::CharacterListLoaded);
-
-		TEST_DELAY;
 		TestCommandBuilder.Do([this] ()
 		{
 			m_cache_playbackActor = &m_actorTestSpawner->SpawnActor<ATestPlaybackActor>();
 			m_cache_playbackActor->Initialize(m_voxtaId);
-			const UVoxtaAudioPlayback* playbackHandler;
-
+			
 			/** Test */
-			playbackHandler = m_voxtaClient->GetRegisteredAudioPlaybackHandlerForID(m_voxtaId);
+			const UVoxtaAudioPlayback* playbackHandler = m_voxtaClient->GetRegisteredAudioPlaybackHandlerForID(m_voxtaId);
 
 			/** Assert */
 			GLog->Flush();
@@ -1032,14 +998,12 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 #pragma region GetChatSession
 	TEST_METHOD(GetChatSession_WithInvalidStartingState_ExpectNullptr)
 	{
+		/** Setup */
 		PRE_TEST;
 		TestCommandBuilder.Do([this] ()
 		{
-			/** Setup */
-			const FChatSession* chatSession;
-
 			/** Test */
-			chatSession = m_voxtaClient->GetChatSession();
+			const FChatSession* chatSession = m_voxtaClient->GetChatSession();
 
 			/** Assert */
 			GLog->Flush();
@@ -1047,39 +1011,36 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		});
 	}
 
-	TEST_METHOD(GetChatSession_AfterStartingChat_ExpectNullptr)
+	TEST_METHOD(GetChatSession_AfterStartingChat_ExpectValidPtr)
 	{
 		PRE_TEST;
 		/** Setup */
-		PreconfigureClient(PreconfigureClientState::ChatStarted);
-
-		PRE_TEST;
+		PreconfigureClient(PreconfigureClientState::ReadyForUserInput);
 		TestCommandBuilder.Do([this] ()
 		{
-			/** Setup */
-			const FChatSession* chatSession;
-
 			/** Test */
-			chatSession = m_voxtaClient->GetChatSession();
+			 const FChatSession* chatSession = m_voxtaClient->GetChatSession();
 
 			/** Assert */
 			GLog->Flush();
 			ASSERT_THAT(IsNotNull(chatSession));
+
+			m_voxtaClient->StopActiveChat();
 		});
+
+		TEST_DELAY;
 	}
 #pragma endregion
 
 #pragma region GetA2FHandler
 	TEST_METHOD(GetA2FHandler_WithInvalidStartingState_ExpectValidPtr)
 	{
+		/** Setup */
 		PRE_TEST;
 		TestCommandBuilder.Do([this] ()
 		{
-			/** Setup */
-			const Audio2FaceRESTHandler* chatSession;
-
 			/** Test */
-			chatSession = m_voxtaClient->GetA2FHandler();
+			const Audio2FaceRESTHandler* chatSession = m_voxtaClient->GetA2FHandler();
 
 			/** Assert */
 			GLog->Flush();
@@ -1144,8 +1105,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			bool result = false;
 
 			/** Test */
-			result = m_voxtaClient->TryRegisterPlaybackHandler(characterId,
-				m_cache_playbackActor->m_audioPlaybackComponent);
+			result = m_voxtaClient->TryRegisterPlaybackHandler(characterId, m_cache_playbackActor->m_audioPlaybackComponent);
 
 			/** Assert */
 			GLog->Flush();
@@ -1167,8 +1127,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			bool result = false;
 
 			/** Test */
-			result = m_voxtaClient->TryRegisterPlaybackHandler(characterId,
-				m_cache_playbackActor->m_audioPlaybackComponent);
+			result = m_voxtaClient->TryRegisterPlaybackHandler(characterId, m_cache_playbackActor->m_audioPlaybackComponent);
 
 			/** Assert */
 			GLog->Flush();
@@ -1207,8 +1166,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			TestRunner->SetSuppressLogWarnings();
 			FGuid characterId = FGuid::NewGuid();
 			m_cache_playbackActor = &m_actorTestSpawner->SpawnActor<ATestPlaybackActor>();
-			m_voxtaClient->TryRegisterPlaybackHandler(characterId,
-				m_cache_playbackActor->m_audioPlaybackComponent);
+			m_voxtaClient->TryRegisterPlaybackHandler(characterId, m_cache_playbackActor->m_audioPlaybackComponent);
 			bool result = false;
 
 			/** Test */
@@ -1226,8 +1184,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 	{
 		Started,
 		CharacterListLoaded,
-		AudioPlaybackStarted,
-		ChatStarted
+		ReadyForUserInput
 	};
 
 	void PreconfigureClient(PreconfigureClientState state)
@@ -1240,7 +1197,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		{
 			return;
 		}
-		AddCommand(new FWaitUntil(*TestRunner, [&] () { return m_voxtaClient->GetCurrentState() == VoxtaClientState::Idle; }));
+		WaitUntilState(VoxtaClientState::Idle);
 		if (state == PreconfigureClientState::CharacterListLoaded)
 		{
 			return;
@@ -1251,25 +1208,27 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			m_cache_playbackActor->Initialize(m_voxtaId);
 			m_voxtaClient->StartChatWithCharacter(m_voxtaId);
 		});
-		AddCommand(new FWaitUntil(*TestRunner, [&] () { return m_voxtaClient->GetCurrentState() == VoxtaClientState::AudioPlayback; }));
-		if (state == PreconfigureClientState::AudioPlaybackStarted)
-		{
-			return;
-		}
-		FTimespan timeout = FTimespan::FromSeconds(5.0);
-		AddCommand(new FWaitUntil(*TestRunner, [&] () { return m_voxtaClient->GetCurrentState() == VoxtaClientState::WaitingForUserReponse; }, timeout));
+		WaitUntilState(VoxtaClientState::WaitingForUserReponse);
 	}
 
-	FWaitUntil* WaitForDuration(double seconds)
+	void WaitForFixedDuration(double seconds)
 	{
-		return new FWaitUntil(*TestRunner, [this, seconds] ()
+		AddCommand(new FWaitUntil(*TestRunner, [this, seconds] ()
+		{
+			if (m_endTime == FDateTime::MaxValue())
 			{
-				if (m_endTime == FDateTime::MaxValue())
-				{
-					m_endTime = FDateTime::Now() + FTimespan::FromSeconds(seconds);
-				}
-				return FDateTime::Now() > m_endTime;
-			}, FTimespan::FromSeconds(seconds + 5));
+				m_endTime = FDateTime::Now() + FTimespan::FromSeconds(seconds);
+			}
+			return FDateTime::Now() > m_endTime;
+		}, FTimespan::FromSeconds(UNRESPONSIVE_TIMEOUT)));
+	}
+
+	void WaitUntilState(VoxtaClientState newState)
+	{
+		AddCommand(new FWaitUntil(*TestRunner, [&, newState] () 
+			{
+				return m_voxtaClient->GetCurrentState() == newState; 
+			}, FTimespan::FromSeconds(UNRESPONSIVE_TIMEOUT)));
 	}
 #pragma endregion
 };

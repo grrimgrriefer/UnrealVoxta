@@ -8,6 +8,11 @@ void UVoxtaGlobalAudioPlayback::SetEnabled(bool newState)
 	m_isEnabled = newState;	
 }
 
+bool UVoxtaGlobalAudioPlayback::IsEnabled()
+{
+	return m_isEnabled;
+}
+
 void UVoxtaGlobalAudioPlayback::PlaybackMessage(const FBaseCharData& sender, const FChatMessage& message)
 {
 	if (m_isEnabled)

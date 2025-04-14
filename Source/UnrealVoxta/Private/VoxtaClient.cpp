@@ -42,6 +42,7 @@ void UVoxtaClient::Initialize(FSubsystemCollectionBase& collection)
 	m_A2FHandler = MakeShared<Audio2FaceRESTHandler>();
 	m_texturesCacheHandler = MakeShared<TexturesCacheHandler>();
 	m_globalAudioPlaybackComp = nullptr;
+	isSensitiveLogsCensored = true;
 	Super::Initialize(collection);
 }
 
@@ -65,7 +66,7 @@ void UVoxtaClient::StartConnection(const FString& ipv4Address, int port)
 
 	if (port < 0 || port > MAX_uint16)
 	{
-		SENSITIVE_LOG1(VoxtaLog, Error, "Port {0} is an impossible number, please double check your settings. "
+		UE_LOGFMT(VoxtaLog, Error, "Port {0} is an impossible number, please double check your settings. "
 			"Ignoring connection attempt.", port);
 		return;
 	}
@@ -105,10 +106,9 @@ void UVoxtaClient::Disconnect(bool silent)
 	}
 	StopChatInternal();
 	m_hub->Stop();
-	//Cleanup();
 }
 
-void UVoxtaClient::StartChatWithCharacter(const FGuid& charId, const FString& context, bool enableGlobalAudioFallback)
+void UVoxtaClient::StartChatWithCharacter(const FGuid& charId, const FString& context)
 {
 	if (!charId.IsValid())
 	{
@@ -125,13 +125,11 @@ void UVoxtaClient::StartChatWithCharacter(const FGuid& charId, const FString& co
 	if (character != nullptr && character->IsValid())
 	{
 		SendMessageToServer(m_voxtaRequestApi->GetStartChatRequestData(character->Get(), context));
-
-		if (enableGlobalAudioFallback && m_globalAudioPlaybackComp == nullptr)
+		if (m_globalAudioPlaybackComp == nullptr)
 		{
 			m_globalAudioPlaybackComp = GetWorld()->SpawnActor<AVoxtaGlobalAudioPlaybackHolder>();
 			globalAudioPlaybackHandle = m_globalAudioPlaybackComp->GetGlobalPlaybackComponent()->VoxtaMessageAudioPlaybackFinishedEventNative.AddUObject(this, &UVoxtaClient::NotifyAudioPlaybackComplete);
 		}
-		m_globalAudioPlaybackComp->GetGlobalPlaybackComponent()->SetEnabled(enableGlobalAudioFallback);
 
 		SetState(VoxtaClientState::StartingChat);
 	}
@@ -140,6 +138,11 @@ void UVoxtaClient::StartChatWithCharacter(const FGuid& charId, const FString& co
 		UE_LOGFMT(VoxtaLog, Error, "Cannot start a chat with characterId {0} as it's not in the current character list.",
 			GuidToString(charId));
 	}
+}
+
+void UVoxtaClient::SetGlobalAudioFallbackEnabled(bool newState)
+{
+	m_globalAudioPlaybackComp->GetGlobalPlaybackComponent()->SetEnabled(newState);
 }
 
 void UVoxtaClient::StopActiveChat()
@@ -162,14 +165,14 @@ void UVoxtaClient::UpdateChatContext(const FString& newContext)
 
 void UVoxtaClient::SendUserInput(const FString& inputText, bool generateReply, bool characterActionInference)
 {
-	if (!m_chatSession.IsValid())
-	{
-		UE_LOGFMT(VoxtaLog, Warning, "Cannot send user input as there's no active chat session.");
-		return;
-	}
-
 	if (m_currentState == VoxtaClientState::WaitingForUserReponse)
 	{
+		if (!m_chatSession.IsValid())
+		{
+			UE_LOGFMT(VoxtaLog, Error, "Cannot send userinput, chat was not valid? Current state: {1}", UEnum::GetValueAsString(m_currentState));
+			return;
+		}
+
 		SendMessageToServer(m_voxtaRequestApi->GetSendUserMessageData(m_chatSession->GetSessionId(),
 			inputText, generateReply, characterActionInference));
 		SetState(VoxtaClientState::GeneratingReply);
@@ -399,7 +402,11 @@ bool UVoxtaClient::IsMatchingAPIVersion() const
 
 const FChatSession* UVoxtaClient::GetChatSession() const
 {
-	return m_chatSession.Get();
+	if (m_chatSession.IsValid())
+	{
+		return m_chatSession.Get();
+	}
+	return nullptr;
 }
 
 Audio2FaceRESTHandler* UVoxtaClient::GetA2FHandler() const
@@ -527,7 +534,14 @@ void UVoxtaClient::OnClosed()
 
 void UVoxtaClient::SendMessageToServer(const FSignalRValue& message)
 {
-	m_hub->Invoke(SEND_MESSAGE_EVENT_NAME, message).BindUObject(this, &UVoxtaClient::OnMessageSent);
+	if (m_hub != nullptr)
+	{
+		m_hub->Invoke(SEND_MESSAGE_EVENT_NAME, message).BindUObject(this, &UVoxtaClient::OnMessageSent);
+	}
+	else
+	{
+		UE_LOGFMT(VoxtaLog, Warning, "Could not send message as the SignalR hub was destroyed, are you running in a test environment?.");
+	}
 }
 
 void UVoxtaClient::OnMessageSent(const FSignalRInvokeResult& deliveryReceipt)
@@ -759,7 +773,7 @@ bool UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessageBase
 					}
 					else
 					{
-						if (chatMessage->GetAudioUrls().Num() > 0)
+						if (m_globalAudioPlaybackComp->GetGlobalPlaybackComponent()->IsEnabled() && chatMessage->GetAudioUrls().Num() > 0)
 						{
 							SetState(VoxtaClientState::AudioPlayback);
 							m_globalAudioPlaybackComp->GetGlobalPlaybackComponent()->PlaybackMessage(*character->Get(), *chatMessage);

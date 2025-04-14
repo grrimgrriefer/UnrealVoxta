@@ -51,7 +51,7 @@ void UVoxtaAudioPlayback::InitializeInternal(bool autoRegisterHandler)
 		FString::Format(*FString(TEXT("http://{0}:{1}/")), { m_hostAddress, m_hostPort }));
 }
 
-void UVoxtaAudioPlayback::MarkCustomPlaybackComplete(const FGuid& guid)
+void UVoxtaAudioPlayback::MarkAudioChunkCustomPlaybackComplete(const FGuid& guid)
 {
 	if (m_lipSyncType != LipSyncType::Custom)
 	{
@@ -68,7 +68,7 @@ void UVoxtaAudioPlayback::MarkCustomPlaybackComplete(const FGuid& guid)
 	}
 
 	m_internalState = AudioPlaybackInternalState::Idle;
-	UE_LOGFMT(VoxtaLog, Log, "Playback of audioClip with guid: {0} is markd as complete, continueing Voxta logic.",
+	UE_LOGFMT(VoxtaLog, Log, "Playback of audioClip with guid: {0} is marked as complete, continuing Voxta logic.",
 		GuidToString(guid));
 
 	MarkAudioChunkPlaybackCompleteInternal();
@@ -287,21 +287,23 @@ void UVoxtaAudioPlayback::OnChunkStateChange(const MessageChunkAudioContainer* c
 		return;
 	}
 
-	if (m_orderedAudio[chunk->INDEX]->GetCurrentState() == MessageChunkState::ReadyForPlayback && m_internalState == AudioPlaybackInternalState::Idle)
+	int index = chunk->INDEX;
+	if (m_orderedAudio[index]->GetCurrentState() == MessageChunkState::ReadyForPlayback && m_internalState == AudioPlaybackInternalState::Idle)
 	{
 		PlayCurrentAudioChunkIfAvailable();
 	}
-	if (m_orderedAudio[chunk->INDEX]->GetCurrentState() != MessageChunkState::Busy &&
-		m_orderedAudio[chunk->INDEX]->GetCurrentState() != MessageChunkState::ReadyForPlayback)
+	else if (m_orderedAudio[index]->GetCurrentState() != MessageChunkState::Busy &&
+			 m_orderedAudio[index]->GetCurrentState() != MessageChunkState::ReadyForPlayback)
 	{
-		m_orderedAudio[chunk->INDEX]->Continue();
+		m_orderedAudio[index]->Continue();
 	}
-	if (chunk->INDEX + 1 < m_orderedAudio.Num())
+	int nextIndex = index + 1;
+	if (nextIndex < m_orderedAudio.Num())
 	{
-		if (m_orderedAudio[chunk->INDEX + 1]->GetCurrentState() != MessageChunkState::Busy &&
-			m_orderedAudio[chunk->INDEX + 1]->GetCurrentState() != MessageChunkState::ReadyForPlayback)
+		if (m_orderedAudio[nextIndex]->GetCurrentState() != MessageChunkState::Busy &&
+			m_orderedAudio[nextIndex]->GetCurrentState() != MessageChunkState::ReadyForPlayback)
 		{
-			m_orderedAudio[chunk->INDEX + 1]->Continue();
+			m_orderedAudio[nextIndex]->Continue();
 		}
 	}
 }
