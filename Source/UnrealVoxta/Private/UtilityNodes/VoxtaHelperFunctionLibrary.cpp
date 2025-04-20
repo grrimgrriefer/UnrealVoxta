@@ -1,7 +1,7 @@
 // Copyright(c) 2025 grrimgrriefer & DZnnah, see LICENSE for details.
 
+#include "VoxtaHelperFunctionLibrary.h"
 #include "Interfaces/IPv4/IPv4Address.h"
-#include "UtilityNodes/VoxtaHelperFunctionLibrary.h"
 #include "Logging/StructuredLog.h"
 
 bool UVoxtaHelperFunctionLibrary::IsIpv4Valid(const FString& address)

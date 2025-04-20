@@ -26,7 +26,7 @@
 
 #include "CallbackManager.h"
 #include "CoreMinimal.h"
-#include "SignalR/Public/IHubConnection.h"
+#include "IHubConnection.h"
 #include "IHubProtocol.h"
 #include "Tickable.h"
 

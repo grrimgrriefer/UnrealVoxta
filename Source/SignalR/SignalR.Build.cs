@@ -1,16 +1,18 @@
-// Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details. Copyright Epic Games, Inc. All
-// Rights Reserved.
+// MIT License; Copyright(c) 2020 - 2022 Frozen Storm Interactive, Yoann Potinet
 
+using System.IO;
 using UnrealBuildTool;
 
 public class SignalR : ModuleRules
 {
 	public SignalR(ReadOnlyTargetRules Target) : base(Target)
 	{
-		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;		
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "ApplicationCore", "Json" });
+		PrivateIncludePaths.AddRange(new [] {
+			Path.Combine(ModuleDirectory, "Public"),
+		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "HTTP", "WebSockets", "Engine" });
+		PrivateDependencyModuleNames.AddRange(new [] { "Core", "CoreUObject", "Engine", "Json", "HTTP", "WebSockets" });
 	}
 }

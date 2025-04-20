@@ -3,15 +3,26 @@
 using UnrealBuildTool;
 using System.IO;
 
+/// <summary>
+/// Specifies all the requirements to compile the Audio specific code of the plugin.
+/// Encapsulates microphone input, audio playback, and WAV file decoding.
+/// </summary>
 public class VoxtaAudioUtility : ModuleRules
 {
+	/// <summary>
+	/// Constructor. 
+	/// </summary>
 	public VoxtaAudioUtility(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "ApplicationCore", "InputCore", "WebSockets", "AudioMixer", "AudioCaptureCore" });
+		PrivateIncludePaths.AddRange(new [] {
+			Path.Combine(ModuleDirectory, "Public", "RuntimeAudioImporter"),
+		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "Voice", "VoxtaData", "AudioPlatformConfiguration", "SignalProcessing", "AudioExtensions" });
+		PublicDependencyModuleNames.AddRange(new [] { "Core", "CoreUObject", "WebSockets", "AudioCaptureCore" });
+
+		PrivateDependencyModuleNames.AddRange(new [] { "Engine", "Voice", "VoxtaData", "AudioPlatformConfiguration", "AudioExtensions" });
 
 		if (Target.Platform.IsInGroup(UnrealPlatformGroup.Windows) ||
 			Target.Platform == UnrealTargetPlatform.Mac)
@@ -22,12 +33,12 @@ public class VoxtaAudioUtility : ModuleRules
 		{
 			PrivateDependencyModuleNames.Add("AudioCaptureAudioUnit");
 			PrivateDependencyModuleNames.Add("AudioCaptureCore");
-			PublicFrameworks.AddRange(new string[] { "CoreAudio", "AVFoundation", "AudioToolbox" });
+			PublicFrameworks.AddRange(new [] { "CoreAudio", "AVFoundation", "AudioToolbox" });
 		}
 		else if (Target.Platform == UnrealTargetPlatform.Android)
 		{
 			PrivateDependencyModuleNames.AddRange(
-				new string[]
+				new []
 				{
 					"AudioCaptureAndroid",
 					"AndroidPermission"

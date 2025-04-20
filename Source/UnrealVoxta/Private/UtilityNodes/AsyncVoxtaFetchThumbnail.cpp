@@ -1,6 +1,6 @@
 // Copyright(c) 2025 grrimgrriefer & DZnnah, see LICENSE for details.
 
-#include "UtilityNodes/AsyncVoxtaFetchThumbnail.h"
+#include "AsyncVoxtaFetchThumbnail.h"
 #include "VoxtaClient.h"
 #include "Kismet/GameplayStatics.h"
 

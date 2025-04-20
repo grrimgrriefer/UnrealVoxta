@@ -1,10 +1,10 @@
 ﻿// Georgy Treshchev 2024.
 
-#include "RuntimeAudioImporter/RuntimeCodecFactory.h"
-#include "RuntimeAudioImporter/BaseRuntimeCodec.h"
-#include "RuntimeAudioImporter/WAV_RuntimeCodec.h"
+#include "RuntimeCodecFactory.h"
+#include "BaseRuntimeCodec.h"
+#include "WAV_RuntimeCodec.h"
 #include "Misc/Paths.h"
-#include "RuntimeAudioImporter/AudioStructs.h"
+#include "AudioStructs.h"
 
 DEFINE_LOG_CATEGORY(AudioLog);
 

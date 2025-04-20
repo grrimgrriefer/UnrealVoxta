@@ -26,7 +26,7 @@
 
 #include "CoreMinimal.h"
 #include "MessageType.h"
-#include "SignalR/Public/SignalRValue.h"
+#include "SignalRValue.h"
 
 struct FHubMessage
 {

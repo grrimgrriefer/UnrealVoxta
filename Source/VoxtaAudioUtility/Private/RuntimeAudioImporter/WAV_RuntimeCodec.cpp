@@ -1,13 +1,13 @@
 ﻿// Georgy Treshchev 2024.
 
-#include "RuntimeAudioImporter/WAV_RuntimeCodec.h"
-#include "RuntimeAudioImporter/AudioStructs.h"
+#include "WAV_RuntimeCodec.h"
+#include "AudioStructs.h"
 #include "HAL/UnrealMemory.h"
 
 #define DR_WAV_IMPLEMENTATION
 #define INCLUDE_WAV
 #include "CodecIncludes.h"
-#include "RuntimeAudioImporter/RAW_RuntimeCodec.h"
+#include "RAW_RuntimeCodec.h"
 #undef INCLUDE_WAV
 
 namespace

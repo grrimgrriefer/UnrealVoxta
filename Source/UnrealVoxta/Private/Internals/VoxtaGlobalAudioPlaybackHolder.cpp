@@ -1,9 +1,8 @@
 // Copyright(c) 2025 grrimgrriefer & DZnnah, see LICENSE for details.
 
-#pragma once
+#include "VoxtaGlobalAudioPlaybackHolder.h"
 #include "CoreMinimal.h"
 #include "VoxtaGlobalAudioPlayback.h"
-#include "VoxtaGlobalAudioPlaybackHolder.h"
 
 AVoxtaGlobalAudioPlaybackHolder::AVoxtaGlobalAudioPlaybackHolder()
 {

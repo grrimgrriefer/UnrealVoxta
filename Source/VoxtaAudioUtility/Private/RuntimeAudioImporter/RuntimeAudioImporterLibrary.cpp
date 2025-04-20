@@ -1,9 +1,9 @@
 // Georgy Treshchev 2024.
 
-#include "RuntimeAudioImporter/RuntimeAudioImporterLibrary.h"
-#include "RuntimeAudioImporter/RuntimeCodecFactory.h"
-#include "RuntimeAudioImporter/ImportedSoundWave.h"
-#include "RuntimeAudioImporter/RAW_RuntimeCodec.h"
+#include "RuntimeAudioImporterLibrary.h"
+#include "RuntimeCodecFactory.h"
+#include "ImportedSoundWave.h"
+#include "RAW_RuntimeCodec.h"
 
 void URuntimeAudioImporterLibrary::ImportAudioFromBuffer(TArray64<uint8> AudioData, TFunction<void(UImportedSoundWave*)> callback)
 {

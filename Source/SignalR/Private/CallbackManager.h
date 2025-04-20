@@ -25,7 +25,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "SignalR/Public/IHubConnection.h"
+#include "IHubConnection.h"
 
 class FCallbackManager
 {

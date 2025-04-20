@@ -4,7 +4,7 @@
 #include "ChatMessage.h"
 #include "VoxtaClient.h"
 #include "Audio2FacePlaybackHandler.h"
-#include "Internals/MessageChunkAudioContainer.h"
+#include "MessageChunkAudioContainer.h"
 #if WITH_OVRLIPSYNC
 #include "OVRLipSyncPlaybackActorComponent.h"
 #include "LipSyncDataOVR.h"
