@@ -24,7 +24,8 @@ public:
 #if WITH_OVRLIPSYNC
 	/**
 	 * Generate a UOVRLipSyncFrameSequence in a background thread and attach it to the ULipSyncDataOVR instance.
-	 *
+	 * Note: Returned object of ULipSyncDataOVR* is attached to Root on creation, to avoid premature deletion.
+
 	 * @param rawAudioData The raw audiodata in bytes.
 	 * @param callback The callback that will be triggered when the OVR lipsync data has been created & pushed
 	 * back on the gamethread.
@@ -34,6 +35,7 @@ public:
 
 	/**
 	 * Generate the A2F curves based in a background thread and attach it to the ULipSyncDataOVR instance.
+	 * Note: Returned object of ULipSyncDataA2F* is attached to Root on creation, to avoid premature deletion.
 	 *
 	 * @param rawAudioData The raw audiodata in bytes.
 	 * @param A2FRestHandler A pointer to the A2F REST APi handler.
@@ -44,8 +46,8 @@ public:
 		TFunction<void(ULipSyncDataA2F*)> callback);
 
 	/**
-	 * Generate an empty ULipSyncDataCustom wrapper, currently only used for integration tests, but might have
-	 * a real implementation later, it depends.
+	 * Generate an empty ULipSyncDataCustom wrapper, currently only used for integration tests.
+	 * Note: Returned object of ULipSyncDataCustom* is attached to Root on creation, to avoid premature deletion.
 	 *
 	 * @return A pointer to the newly created instance of ULipSyncDataCustom
 	 */

@@ -125,11 +125,7 @@ void UVoxtaClient::StartChatWithCharacter(const FGuid& charId, const FString& co
 	if (character != nullptr && character->IsValid())
 	{
 		SendMessageToServer(m_voxtaRequestApi->GetStartChatRequestData(character->Get(), context));
-		if (m_globalAudioPlaybackComp == nullptr)
-		{
-			m_globalAudioPlaybackComp = GetWorld()->SpawnActor<AVoxtaGlobalAudioPlaybackHolder>();
-			globalAudioPlaybackHandle = m_globalAudioPlaybackComp->GetGlobalPlaybackComponent()->VoxtaMessageAudioPlaybackFinishedEventNative.AddUObject(this, &UVoxtaClient::NotifyAudioPlaybackComplete);
-		}
+		GetOrCreateGlobalAudioFallbackInternal();
 
 		SetState(VoxtaClientState::StartingChat);
 	}
@@ -142,7 +138,7 @@ void UVoxtaClient::StartChatWithCharacter(const FGuid& charId, const FString& co
 
 void UVoxtaClient::SetGlobalAudioFallbackEnabled(bool newState)
 {
-	m_globalAudioPlaybackComp->GetGlobalPlaybackComponent()->SetEnabled(newState);
+	GetOrCreateGlobalAudioFallbackInternal()->GetGlobalPlaybackComponent()->SetEnabled(newState);
 }
 
 void UVoxtaClient::StopActiveChat()
@@ -192,14 +188,22 @@ void UVoxtaClient::NotifyAudioPlaybackComplete(const FGuid& messageId)
 		return;
 	}
 
-	if (m_currentState != VoxtaClientState::AudioPlayback)
+	if (m_currentState == VoxtaClientState::AudioPlayback)
+	{
+		UE_LOGFMT(VoxtaLog, Log, "Marking audio playback of message {0} complete.", GuidToString(messageId));
+	}
+	else if (m_currentState == VoxtaClientState::GeneratingReply &&
+		!GetOrCreateGlobalAudioFallbackInternal()->GetGlobalPlaybackComponent()->IsEnabled())
+	{
+		UE_LOGFMT(VoxtaLog, Log, "Skipping audio playback of message {0} due to configuration.", GuidToString(messageId));
+	}
+	else
 	{
 		UE_LOGFMT(VoxtaLog, Error, "Tried to mark AudioPlayback as complete, but we weren't in the audioPlayback state,"
 			" actual state: {0}, messageId tried to mark as complete: {1}", UEnum::GetValueAsString(m_currentState), GuidToString(messageId));
 		return;
 	}
 
-	UE_LOGFMT(VoxtaLog, Log, "Marking audio playback of message {0} complete.", GuidToString(messageId));
 
 	SendMessageToServer(m_voxtaRequestApi->GetNotifyAudioPlaybackCompletedData(m_chatSession->GetSessionId(), messageId));
 	SetState(VoxtaClientState::WaitingForUserReponse);
@@ -773,11 +777,19 @@ bool UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessageBase
 					}
 					else
 					{
-						if (m_globalAudioPlaybackComp->GetGlobalPlaybackComponent()->IsEnabled() && chatMessage->GetAudioUrls().Num() > 0)
+						if (chatMessage->GetAudioUrls().Num() > 0)
 						{
-							SetState(VoxtaClientState::AudioPlayback);
-							m_globalAudioPlaybackComp->GetGlobalPlaybackComponent()->PlaybackMessage(*character->Get(), *chatMessage);
-						}
+							if (GetOrCreateGlobalAudioFallbackInternal()->GetGlobalPlaybackComponent()->IsEnabled())
+							{
+								SetState(VoxtaClientState::AudioPlayback);
+								m_globalAudioPlaybackComp->GetGlobalPlaybackComponent()->PlaybackMessage(*character->Get(), *chatMessage);
+							}
+							else
+							{
+								// Generated audio but configuration indicates playback is not desired.
+								NotifyAudioPlaybackComplete(chatMessage->GetMessageId());
+							}
+						}						
 						else
 						{
 							SetState(VoxtaClientState::WaitingForUserReponse);
@@ -985,4 +997,14 @@ void UVoxtaClient::SetState(VoxtaClientState newState)
 	m_currentState = newState;
 	VoxtaClientStateChangedEventNative.Broadcast(m_currentState);
 	VoxtaClientStateChangedEvent.Broadcast(m_currentState);
+}
+
+AVoxtaGlobalAudioPlaybackHolder* UVoxtaClient::GetOrCreateGlobalAudioFallbackInternal()
+{
+	if (m_globalAudioPlaybackComp == nullptr)
+	{
+		m_globalAudioPlaybackComp = GetWorld()->SpawnActor<AVoxtaGlobalAudioPlaybackHolder>();
+		globalAudioPlaybackHandle = m_globalAudioPlaybackComp->GetGlobalPlaybackComponent()->VoxtaMessageAudioPlaybackFinishedEventNative.AddUObject(this, &UVoxtaClient::NotifyAudioPlaybackComplete);
+	}
+	return m_globalAudioPlaybackComp;
 }

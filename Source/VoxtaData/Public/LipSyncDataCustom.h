@@ -34,6 +34,7 @@ public:
 	 */
 	virtual void ReleaseData() override
 	{
+		this->RemoveFromRoot();
 	}
 #pragma endregion
 };

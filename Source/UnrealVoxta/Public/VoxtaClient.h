@@ -432,5 +432,7 @@ private:
 	 * @return An immutable pointer to the UniquePtr to the immutable Ai Character data struct; or nullptr if it was not found.
 	 */
 	const TUniquePtr<const FAiCharData>* GetAiCharacterDataById(const FGuid& charId) const;
+
+	AVoxtaGlobalAudioPlaybackHolder* GetOrCreateGlobalAudioFallbackInternal();
 #pragma endregion
 };
