@@ -103,6 +103,8 @@ private:
 	void OnConnectionError(const FString& /* Error */);
 	void OnConnectionClosed(int32 StatusCode, const FString& Reason, bool bWasClean);
 
+	void TryReconnectIfNeeded();
+
 	void Ping();
 	void InvokeHubMethod(const FString& MethodName, const TArray<FSignalRValue>& InArguments, FName CallbackId);
 
@@ -111,6 +113,7 @@ private:
 	TSharedPtr<IHubProtocol> HubProtocol;
 	TSharedPtr<FConnection> Connection;
 	TMap<FString, FOnMethodInvocation> InvocationHandlers;
+	FCriticalSection InvocationHandlersGuard;
 	FCallbackManager CallbackManager;
 
 	bool bHandshakeReceived = false;

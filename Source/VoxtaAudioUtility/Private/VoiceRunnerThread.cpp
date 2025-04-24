@@ -18,7 +18,8 @@ FVoiceRunnerThread::~FVoiceRunnerThread()
 {
 	if (m_thread != nullptr)
 	{
-		m_thread->Kill();
+		Stop();
+		m_thread->WaitForCompletion();
 		delete m_thread;
 	}
 }
@@ -56,6 +57,11 @@ void FVoiceRunnerThread::Start()
 		return;
 	}
 	m_thread = FRunnableThread::Create(this, TEXT("VoiceRunnerThread"));
+	if (!m_thread)
+	{
+		UE_LOGFMT(VoxtaLog, Error, "Failed to launch FVoiceRunnerThread – FRunnableThread::Create returned nullptr");
+		return;
+	}
 }
 
 void FVoiceRunnerThread::Stop()

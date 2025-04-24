@@ -26,8 +26,12 @@ private:
 	UFUNCTION()
 	void OnThumbnailFetched(bool success, const UTexture2DDynamic* texture, const FIntVector2& textureSize);
 
-	const UObject* m_worldContextObject;
-	FGuid m_baseCharacterId;
-	UVoxtaClient* m_voxtaClient;
-	bool m_isActive;
+	UPROPERTY()
+	const UObject* m_worldContextObject = nullptr;
+
+	UPROPERTY()
+	UVoxtaClient* m_voxtaClient = nullptr;
+
+	FGuid m_baseCharacterId = FGuid();
+	bool m_isActive = false;
 };

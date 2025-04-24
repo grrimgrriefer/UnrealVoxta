@@ -30,6 +30,8 @@
 
 FString FHandshakeProtocol::CreateHandshakeMessage(TSharedPtr<IHubProtocol> InProtocol)
 {
+    check(InProtocol.IsValid());
+
     TMap<FString, TSharedPtr<FJsonValue>> Values
     {
         { "protocol", MakeShared<FJsonValueString>(InProtocol->Name().ToString()) },

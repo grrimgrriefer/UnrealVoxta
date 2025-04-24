@@ -30,7 +30,7 @@ public:
 #pragma region public API
 public:
 	/** Create an instance of the LipSyncData holder for Audio2Face. */
-	ULipSyncDataA2F() : ILipSyncBaseData(LipSyncType::Audio2Face)
+	ULipSyncDataA2F() : ILipSyncBaseData()
 	{
 	}
 

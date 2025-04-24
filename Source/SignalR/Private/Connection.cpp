@@ -40,6 +40,14 @@ FConnection::FConnection(const FString& InHost, const TMap<FString, FString>& In
 {
 }
 
+FConnection::~FConnection()
+{
+    if (Connection.IsValid())
+    {
+        Close(1000, TEXT("Shutting down connection"));
+    }
+}
+
 void FConnection::Connect()
 {
     Negotiate();
@@ -137,7 +145,7 @@ void FConnection::OnNegotiateResponse(FHttpRequestPtr InRequest, FHttpResponsePt
     {
         if(JsonObject->HasField(TEXT("error")))
         {
-            // TODO
+            UE_LOG(LogSignalR, Error, TEXT("Connection attempt received an unknown error %s"), *InResponse->GetContentAsString());
         }
         else
         {
@@ -151,7 +159,8 @@ void FConnection::OnNegotiateResponse(FHttpRequestPtr InRequest, FHttpResponsePt
             {
                 FString RedirectionUrl = JsonObject->GetStringField(TEXT("url"));
                 FString AccessToken = JsonObject->GetStringField(TEXT("accessToken"));
-                // TODO: redirection
+                
+                UE_LOG(LogSignalR, Error, TEXT("Received a redirect response when attempting to connect. This is not supported (yet)"));
                 return;
             }
 
@@ -191,7 +200,7 @@ void FConnection::OnNegotiateResponse(FHttpRequestPtr InRequest, FHttpResponsePt
 
             if (JsonObject->HasTypedField<EJson::String>(TEXT("connectionToken")))
             {
-                ConnectionId = JsonObject->GetStringField(TEXT("connectionToken"));
+                ConnectionToken = JsonObject->GetStringField(TEXT("connectionToken"));
             }
 
             StartWebSocket();
@@ -254,7 +263,11 @@ FString FConnection::ConvertToWebsocketUrl(const FString& Url)
 {
     const FString TrimmedUrl = Url.TrimStartAndEnd();
 
-    if (TrimmedUrl.StartsWith(TEXT("https://")))
+    if (TrimmedUrl.StartsWith(TEXT("ws://")) || TrimmedUrl.StartsWith(TEXT("wss://")))
+    {
+        return TrimmedUrl;
+    }
+    else if (TrimmedUrl.StartsWith(TEXT("https://")))
     {
         return TEXT("wss") + TrimmedUrl.RightChop(5);
     }
@@ -264,6 +277,7 @@ FString FConnection::ConvertToWebsocketUrl(const FString& Url)
     }
     else
     {
-        return Url;
+        UE_LOG(LogSignalR, Warning, TEXT("URL doesn't have a protocol, assuming ws:// is needed: %s"), *Url);
+        return TEXT("ws://") + TrimmedUrl;
     }
 }

@@ -189,28 +189,6 @@ public:
 
 public:
 
-	// TODO: Make this async
-	/**
-	 * Resample the sound wave to the specified sample rate
-	 *
-	 * @note This is not thread-safe at the moment
-	 * @param NewSampleRate The new sample rate
-	 * @return Whether the sound wave was resampled or not
-	 */
-	UFUNCTION(BlueprintCallable, Category = "Imported Sound Wave|Main")
-	bool ResampleSoundWave(int32 NewSampleRate);
-
-	// TODO: Make this async
-	/**
-	 * Change the number of channels of the sound wave
-	 *
-	 * @note This is not thread-safe at the moment
-	 * @param NewNumOfChannels The new number of channels
-	 * @return Whether the sound wave was mixed or not
-	 */
-	UFUNCTION(BlueprintCallable, Category = "Imported Sound Wave|Main")
-	bool MixSoundWaveChannels(int32 NewNumOfChannels);
-
 	/**
 	 * Stop the sound wave playback
 	 *

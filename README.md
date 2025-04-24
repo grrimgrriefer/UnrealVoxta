@@ -6,10 +6,10 @@ _Made in collaboration with [DZnnah](https://twitter.com/DZnnah)_
 > **This plugin is not affiliated, associated, endorsed by, or in any way officially connected to Voxta.ai**
 
 > [!WARNING]  
-> * This plugin currently suppports Voxta **v1.0.0-beta.117**, other version may / may not work.
+> * This plugin currently supports Voxta **v1.0.0-beta.117**, other versions may / may not work.
 > * This plugin currently only works in Unreal Engine 5.3
 
-### Third party code Licenses
+### Third-party code Licenses
 * SignalR client (MIT license): [LICENSE](./Source/SignalR/License.txt)  
 * RuntimeAudioImporter (MIT licensed): [LICENSE](./Source/VoxtaAudioUtility/Public/RuntimeAudioImporter/LICENSE.txt)  
 
@@ -30,11 +30,10 @@ _This plugin has no additional Terms of Service, however Voxta's official Terms 
 > [!IMPORTANT]  
 > * Voxta has been developed as an experiment, and no guarantees whatsoever are offered.
 > * The content you generate with this software must be legal in the United States and your country of residence.
-> * The content you generate with this software must be legal in the United States and your country of residence.
 > * The authors have no access to any of the data generated within this tool. However, keep in mind that remote services such as OpenAI may collect your data. Make sure to read their terms of services before using their software.
 > * Furthermore, those use cases are prohibited:
 >   * Depictions of minors are prohibited.
->   * Simulations of forced sexual interactions with non consenting characters are prohibited.
+>   * Simulations of forced sexual interactions with non-consenting characters are prohibited.
 >   * Torture and psychological violence.
 >   * Impersonation of real people.
 >   * Using the software to deceive someone, it is mandatory to inform users of the limitations and restrictions of the AI.
@@ -75,7 +74,7 @@ The core functionality is covered by Integration test, more extensive testing is
 ![Tests image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/Tests.PNG&resolveLfs=true&%24format=octetStream "Running Voxta tests.")  
 
 # Blueprint nodes example usage
-_Note, all of these snippets are from the above Template setup blueprints, feel free to explore & modify them how you see fit. For more in-depth explanation, I advice to watch the first part of the youtube tutorial._
+_Note, all of these snippets are from the above Template setup blueprints, feel free to explore & modify them how you see fit. For more in-depth explanation, I advise to watch the first part of the youtube tutorial._
 
 ## Voxta category
 Most of the utility is accessed through the VoxtaClient subsystem, which can be globally accessed via any blueprint as following:  
@@ -103,7 +102,7 @@ Once the connection is established, the VoxtaClient will broadcast the character
 ![ListOfCharacters image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/ListOfCharacters.PNG&resolveLfs=true&%24format=octetStream "Loop over the list of characters and create clickable buttons for every characters.")
 
 ## Starting a conversation
-You can start a conversation using the ID of any character that is available. (IDs are broadcasted as soon as the voxtaclient connects, and they cal also be fetched afterwards via the VotaClient api)  
+You can start a conversation using the ID of any character that is available. (IDs are broadcasted as soon as the voxtaclient connects, and they can also be fetched afterwards via the VoxtaClient api)  
 In this example, a UI widget button is injected with the characterID it is mapped to, and this allows it to start the conversation when being clicked.  
 ![StartConversation image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/StartConversation.PNG&resolveLfs=true&%24format=octetStream "Star conversation with a character.")
 

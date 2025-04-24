@@ -80,11 +80,9 @@ public:
 		const IntegralTypeFrom* DataFrom = reinterpret_cast<const IntegralTypeFrom*>(RAWData_From.GetData());
 		const int64 RawDataSize = RAWData_From.Num() / sizeof(IntegralTypeFrom);
 
-		IntegralTypeTo* DataTo = nullptr;
+		RAWData_To.SetNumUninitialized(RawDataSize * sizeof(IntegralTypeTo));
+		IntegralTypeTo * DataTo = reinterpret_cast<IntegralTypeTo*>(RAWData_To.GetData());
 		TranscodeRAWData<IntegralTypeFrom, IntegralTypeTo>(DataFrom, RawDataSize, DataTo);
-
-		RAWData_To = TArray64<uint8>(reinterpret_cast<uint8*>(DataTo), RawDataSize * sizeof(IntegralTypeTo));
-		FMemory::Free(DataTo);
 	}
 
 	/**
@@ -156,6 +154,7 @@ public:
 			RAWData
 		};
 
+		ResampledRAWData.Reset();
 		ResampledRAWData.AddUninitialized(Audio::GetOutputBufferSize(ResampleParameters));
 		Audio::FResamplerResults ResampleResults;
 		ResampleResults.OutBuffer = &ResampledRAWData;

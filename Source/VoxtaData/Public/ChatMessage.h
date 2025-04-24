@@ -32,19 +32,36 @@ public:
 	 */
 	const TArray<FString>& GetAudioUrls() const { return m_audioUrls; };
 
+	/**  @return Whether this message is complete with no further chunks expected. */
+	bool GetIsComplete() const { return m_isComplete; };
+
 	/**
 	 * Add more data to this message, as VoxtaServer notifies us of the complete data in chunks.
 	 *
 	 * @param textContent The new text that will be appended to what we already had.
 	 * @param audioUrl The new audio (sub)url that will be registered as required for playback.
 	 */
-	void AppendMoreContent(const FString& textContent, const FString& audioUrl)
+	bool TryAppendMoreContent(const FString& textContent, const FString& audioUrl)
 	{
+		if (m_isComplete)
+		{
+			return false;
+		}
+
 		m_text.Append(textContent);
 		if (!audioUrl.IsEmpty()) // text only response is valid, but we dont'adde empty audio urls ofc
 		{
 			m_audioUrls.Emplace(audioUrl);
 		}
+		return true;
+	}
+
+	/** 
+	 * Mark this message as complete, indicating no further chunks are expected. 
+	 */
+	void MarkComplete() 
+	{ 
+		m_isComplete = true; 
 	}
 
 	/**
@@ -73,6 +90,8 @@ private:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Character ID"))
 	FGuid m_charId;
+
+	bool m_isComplete = false;
 
 	TArray<FString> m_audioUrls;
 };

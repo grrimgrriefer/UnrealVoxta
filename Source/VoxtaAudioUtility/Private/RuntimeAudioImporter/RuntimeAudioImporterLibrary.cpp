@@ -55,29 +55,6 @@ bool URuntimeAudioImporterLibrary::DecodeAudioData(FEncodedAudioStruct&& Encoded
 	return false;
 }
 
-bool URuntimeAudioImporterLibrary::EncodeAudioData(FDecodedAudioStruct&& DecodedAudioInfo, FEncodedAudioStruct& EncodedAudioInfo, uint8 Quality)
-{
-	if (EncodedAudioInfo.AudioFormat == ERuntimeAudioFormat::Auto || EncodedAudioInfo.AudioFormat == ERuntimeAudioFormat::Invalid)
-	{
-		UE_LOG(AudioLog, Error, TEXT("Undefined audio data format for encoding"));
-		return false;
-	}
-
-	FRuntimeCodecFactory CodecFactory;
-	TArray<FBaseRuntimeCodec*> RuntimeCodecs = CodecFactory.GetCodecs(EncodedAudioInfo.AudioFormat);
-	for (FBaseRuntimeCodec* RuntimeCodec : RuntimeCodecs)
-	{
-		if (!RuntimeCodec->Encode(MoveTemp(DecodedAudioInfo), EncodedAudioInfo, Quality))
-		{
-			UE_LOG(AudioLog, Error, TEXT("Something went wrong while encoding '%s' audio data"), *UEnum::GetValueAsString(EncodedAudioInfo.AudioFormat));
-			continue;
-		}
-		return true;
-	}
-	UE_LOG(AudioLog, Error, TEXT("Failed to encode the audio data because the codec for the format '%s' was not found"), *UEnum::GetValueAsString(EncodedAudioInfo.AudioFormat));
-	return false;
-}
-
 void URuntimeAudioImporterLibrary::ImportAudioFromDecodedInfo(FDecodedAudioStruct&& DecodedAudioInfo, TFunction<void(UImportedSoundWave*)> callback)
 {
 	// Making sure we are in the game thread

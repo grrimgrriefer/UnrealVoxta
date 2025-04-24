@@ -2,6 +2,8 @@
 
 #include "VoxtaGlobalAudioPlayback.h"
 #include "BaseCharData.h"
+#include "VoxtaClient.h"
+#include "Logging/StructuredLog.h"
 
 void UVoxtaGlobalAudioPlayback::SetEnabled(bool newState)
 {
@@ -22,19 +24,43 @@ void UVoxtaGlobalAudioPlayback::PlaybackMessage(const FBaseCharData& sender, con
 			Prepare();
 		}
 
-		m_characterId = sender.GetId();
+		const FGuid previousCharacterId = m_characterId;
+		m_characterId = sender.GetId();		
+		struct FScopedCharacterIdReset
+		{
+			FGuid& characterId;
+			FGuid previousValue;
+		
+			FScopedCharacterIdReset(FGuid& characterIdRef, const FGuid& resetValue)
+			 : characterId(characterIdRef), previousValue(resetValue) {}
+		
+			~FScopedCharacterIdReset() { characterId = previousValue; }
+		} 
+		ScopedReset(m_characterId, previousCharacterId);
+		
 		UVoxtaAudioPlayback::PlaybackMessage(sender, message);
-		m_characterId = FGuid();
 	}	
 }
 
 void UVoxtaGlobalAudioPlayback::Prepare()
 {
 	USoundAttenuation* settings = NewObject<USoundAttenuation>();
+	if (!settings)
+	{
+		UE_LOGFMT(VoxtaLog, Error, "Failed to create USoundAttenuation for global audio playback");
+		return;
+	}
+
 	settings->Attenuation.bAttenuate = false;
 	settings->Attenuation.bSpatialize = false;
 	SetAttenuationSettings(MoveTemp(settings));
+	
 	InitializeInternal(false);
+	if (!IsValid(m_clientReference))
+	{
+		UE_LOGFMT(VoxtaLog, Error, "Failed to initialize global audio playback - invalid client reference");
+		return;
+	}
 
 	m_characterId = FGuid();
 	m_isInitialized = true;

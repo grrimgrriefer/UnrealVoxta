@@ -22,20 +22,20 @@ public:
 	 *
 	 * @return The SignalR formatted message containing the request.
 	 */
-	FSignalRValue GetAuthenticateRequestData() const;
+	static FSignalRValue GetAuthenticateRequestData();
 
 	/**
 	 * Retrieve a SignalR formatted message to request the list of all characters available.
 	 *
 	 * @return The SignalR formatted message containing the request.
 	 */
-	FSignalRValue GetLoadCharactersListData() const;
+	static FSignalRValue GetLoadCharactersListData();
 
 	// TODO
-	FSignalRValue GetLoadScenariosListData() const;
+	static FSignalRValue GetLoadScenariosListData();
 
 	// TODO
-	FSignalRValue GetLoadChatsListData(const FGuid& characterId, const FGuid& scenarioId = FGuid()) const;
+	static FSignalRValue GetLoadChatsListData(const FGuid& characterId, const FGuid& scenarioId = FGuid());
 
 	/**
 	 * Retrieve a SignalR formatted message to request a new chat session to be started with a specific character.
@@ -45,10 +45,10 @@ public:
 	 *
 	 * @return The SignalR formatted message containing the request.
 	 */
-	FSignalRValue GetStartChatRequestData(const FAiCharData* charData, const FString& context = FString()) const;
+	static FSignalRValue GetStartChatRequestData(const FAiCharData* charData, const FString& context = FString());
 
 	// TODO
-	FSignalRValue GetStopChatRequestData() const;
+	static FSignalRValue GetStopChatRequestData();
 
 	/**
 	 * Retrieve a SignalR formatted message to request the registration of a user-message to the chat.
@@ -62,12 +62,12 @@ public:
 	 *
 	 * @return The SignalR formatted message containing the request.
 	 */
-	FSignalRValue GetSendUserMessageData(const FGuid& sessionId, const FString& userInputText, bool generateReply,
-		bool characterActionInference) const;
+	static FSignalRValue GetSendUserMessageData(const FGuid& sessionId, const FString& userInputText, bool generateReply,
+		bool characterActionInference);
 
 	// TODO
-	FSignalRValue GetNotifyAudioPlaybackStartedData(const FGuid& sessionId, const FGuid& messageId, int startIndex,
-		int endIndex, double duration) const;
+	static FSignalRValue GetNotifyAudioPlaybackStartedData(const FGuid& sessionId, const FGuid& messageId, int startIndex,
+		int endIndex, double duration);
 
 	/**
 	 * Retrieve a SignalR formatted message to inform the VoxtaServer that the playback is completed on the client.
@@ -78,22 +78,22 @@ public:
 	 *
 	 * @return The SignalR formatted message containing the request.
 	 */
-	FSignalRValue GetNotifyAudioPlaybackCompletedData(const FGuid& sessionId, const FGuid& messageId) const;
+	static FSignalRValue GetNotifyAudioPlaybackCompletedData(const FGuid& sessionId, const FGuid& messageId);
 
 	// TODO
-	FSignalRValue GetUpdateContextRequestData(/*const TArray<FString>& actions,*/ const FGuid& sessionId,
-		const FString& context) const;
+	static FSignalRValue GetUpdateContextRequestData(/*const TArray<FString>& actions,*/ const FGuid& sessionId,
+		const FString& context);
 
 	// TODO
-	FSignalRValue GetRequestCharacterSpeechRequestData(const FGuid& sessionId, const FString& text) const;
+	static FSignalRValue GetRequestCharacterSpeechRequestData(const FGuid& sessionId, const FString& text);
 
 	// TODO
-	FSignalRValue SendRevertLastSentMessage(const FGuid& sessionId) const;
+	static FSignalRValue SendRevertLastSentMessage(const FGuid& sessionId);
 
 	// TODO
-	FSignalRValue SendDeleteChat(const FGuid& chatId) const;
+	static FSignalRValue SendDeleteChat(const FGuid& chatId);
 
 	// TODO
-	FSignalRValue SetFlags(const FGuid& sessionId, const TArray<FString>& flags) const;
+	static FSignalRValue SetFlags(const FGuid& sessionId, const TArray<FString>& flags);
 #pragma endregion
 };

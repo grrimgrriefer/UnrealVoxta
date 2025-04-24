@@ -10,8 +10,8 @@ class IImageWrapper;
 
 /**
  * TexturesCacheHandler
- * Internal class which encapsulates all datahandling for a single AI character voiceline.
- * Downloads the data from the VoxtaServer REST api, converting it into a SoundWave, and generating lipsync data.
+ * Internal class which handles asynchronous fetching, decoding, and caching of textures from URLs.
+ * Downloads image data from URLs, converts it into textures, and caches them for future use.
  *
  * Note: The private API hooks into callbacks from background-threads, use care when changing the implementation.
  */
@@ -22,10 +22,10 @@ private:
 	class TextureInfo
 	{
 	public:
-		TextureInfo(const UTexture2DDynamic* texture, int width, int height) :
+		TextureInfo(TWeakObjectPtr<const UTexture2DDynamic> texture, int width, int height) :
 			TEXTURE(texture), TEXTURE_SIZE(width, height)
 		{}
-		const UTexture2DDynamic* TEXTURE;
+		TWeakObjectPtr<const UTexture2DDynamic> TEXTURE;
 		const FIntVector2 TEXTURE_SIZE;
 	};
 #pragma endregion

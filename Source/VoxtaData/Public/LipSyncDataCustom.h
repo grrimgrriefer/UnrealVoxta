@@ -21,7 +21,7 @@ class VOXTADATA_API ULipSyncDataCustom : public UObject, public ILipSyncBaseData
 #pragma region public API
 public:
 	/** Create an instance of the LipSyncData holder for CustomLipSync. */
-	explicit ULipSyncDataCustom() : ILipSyncBaseData(LipSyncType::Custom)
+	explicit ULipSyncDataCustom() : ILipSyncBaseData()
 	{
 	};
 #pragma endregion

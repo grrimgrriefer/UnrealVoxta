@@ -29,8 +29,6 @@
 #include "SignalRSubsystem.h"
 #include "Engine/Engine.h"
 
- //IMPLEMENT_MODULE(FSignalRModule, SignalR);
-
 DEFINE_LOG_CATEGORY(LogSignalR);
 
 FSignalRModule* FSignalRModule::Singleton = nullptr;
@@ -46,9 +44,12 @@ FSignalRModule& FSignalRModule::Get()
     return *Singleton;
 }
 
-TSharedPtr<IHubConnection> FSignalRModule::CreateHubConnection(const FString& InUrl, const TMap<FString, FString>& InHeaders)
+TSharedPtr<IHubConnection> FSignalRModule::CreateHubConnection(const FString& InUrl, const TMap<FString, FString>& InHeaders) const
 {
+    check(!InUrl.IsEmpty());
     check(bInitialized);
+    check(GEngine);
+
     return GEngine->GetEngineSubsystem<USignalRSubsystem>()->CreateHubConnection(InUrl, InHeaders);
 }
 

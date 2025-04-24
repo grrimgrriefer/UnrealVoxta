@@ -22,14 +22,6 @@ public:
 	virtual TArray<FBaseRuntimeCodec*> GetCodecs();
 
 	/**
-	 * Get the codec based on the file path extension
-	 *
-	 * @param FilePath The file path from which to get the codec
-	 * @return The detected codec, or a nullptr if it could not be detected
-	 */
-	virtual TArray<FBaseRuntimeCodec*> GetCodecs(const FString& FilePath);
-
-	/**
 	 * Get the codec based on the audio format
 	 *
 	 * @param AudioFormat The format from which to get the codec
@@ -43,7 +35,7 @@ public:
 	 * @param AudioData The audio data from which to get the codec
 	 * @return The detected codec, or a nullptr if it could not be detected
 	 */
-	virtual TArray<FBaseRuntimeCodec*> GetCodecs(const FRuntimeBulkDataBuffer<uint8>& AudioData);
+	virtual TArray<FBaseRuntimeCodec*> GetCodecs(FRuntimeBulkDataBuffer<uint8>& AudioData);
 
 	/**
 	 * Get the name of the modular feature

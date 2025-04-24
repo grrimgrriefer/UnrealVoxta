@@ -101,7 +101,7 @@ public:
 	 * @param micInputGain The linear amplitude muliplier applied to the input.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
-	void ConfigureSilenceTresholds(float micNoiseGateThreshold, float silenceDetectionThreshold, float micInputGain);
+	void ConfigureSilenceThresholds(float micNoiseGateThreshold, float silenceDetectionThreshold, float micInputGain);
 #pragma endregion
 
 #pragma region data
@@ -115,14 +115,16 @@ private:
 	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Current Mic Input Gain"))
 	float m_micInputGain = 6.f;
 
-	int m_bufferMs;
-	int m_sampleRate;
-	int m_inputChannels;
+	int m_bufferMs = 0;
+	int m_sampleRate = 0;
+	int m_inputChannels = 0;
 
-	UVoxtaClient* m_voxtaClient;
+	UPROPERTY()
+	UVoxtaClient* m_voxtaClient = nullptr;
+
 	AudioCaptureHandler m_audioCaptureDevice;
-	TSharedPtr<AudioWebSocket> m_audioWebSocket;
-	VoxtaMicrophoneState m_connectionState;
+	TSharedPtr<AudioWebSocket> m_audioWebSocket = nullptr;
+	VoxtaMicrophoneState m_connectionState = VoxtaMicrophoneState::Uninitialized;
 #pragma endregion
 
 #pragma region private API

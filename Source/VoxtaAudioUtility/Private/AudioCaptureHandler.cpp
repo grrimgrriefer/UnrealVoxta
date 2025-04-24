@@ -59,7 +59,7 @@ bool AudioCaptureHandler::TryInitializeVoiceCapture(int sampleRate, int numChann
 	}
 }
 
-void AudioCaptureHandler::ConfigureSilenceTresholds(float micNoiseGateThreshold, float silenceDetectionThreshold, float micInputGain)
+void AudioCaptureHandler::ConfigureSilenceThresholds(float micNoiseGateThreshold, float silenceDetectionThreshold, float micInputGain)
 {
 	static IConsoleVariable* silenceDetectionReleaseCVar = IConsoleManager::Get().FindConsoleVariable(TEXT("voice.MicNoiseGateThreshold"));
 	static IConsoleVariable* silenceDetectionThresholdCVar = IConsoleManager::Get().FindConsoleVariable(TEXT("voice.SilenceDetectionThreshold"));
@@ -179,7 +179,7 @@ bool AudioCaptureHandler::IsInputSilent() const
 		(FDateTime::Now() - m_lastVoiceTimestamp).GetTotalSeconds() > 0.1f;
 }
 
-void AudioCaptureHandler::SendInternal(const TArray<uint8> rawData) const
+void AudioCaptureHandler::SendInternal(const TArray<uint8>& rawData) const
 {
 	if (m_isTestMode)
 	{
@@ -236,12 +236,11 @@ void AudioCaptureHandler::SetIsTestMode(bool isTestMode)
 
 float AudioCaptureHandler::AnalyseDecibels(const TArray<uint8>& voiceInputData, uint32 dataSize) const
 {
-	int16 sample;
 	float sumSquared = 0.f;
 
 	for (uint32 i = 0; i < dataSize / 2; ++i)
 	{
-		sample = (voiceInputData[i * 2 + 1] << 8) | voiceInputData[i * 2];
+		int16 sample = static_cast<int16>(static_cast<uint16>(voiceInputData[i * 2]) | (static_cast<uint16>(voiceInputData[i * 2 + 1]) << 8));
 		sumSquared += static_cast<float>(sample) * static_cast<float>(sample);
 	}
 

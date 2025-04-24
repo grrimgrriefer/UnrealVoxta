@@ -24,7 +24,7 @@ void UAsyncVoxtaFetchThumbnail::Activate()
 	if (!m_worldContextObject)
 	{
 		FFrame::KismetExecutionMessage(TEXT("Invalid WorldContextObject. Cannot fetch thumbnail."), ELogVerbosity::Error);
-		SetReadyToDestroy();
+		OnThumbnailFetched(false, nullptr, FIntVector2());
 		return;
 	}
 
@@ -32,7 +32,7 @@ void UAsyncVoxtaFetchThumbnail::Activate()
 	if (!GameInstance)
 	{
 		FFrame::KismetExecutionMessage(TEXT("Could not get Game Instance."), ELogVerbosity::Error);
-		SetReadyToDestroy();
+		OnThumbnailFetched(false, nullptr, FIntVector2());
 		return;
 	}
 
@@ -40,22 +40,24 @@ void UAsyncVoxtaFetchThumbnail::Activate()
 	if (!m_voxtaClient)
 	{
 		FFrame::KismetExecutionMessage(TEXT("Could not get VoxtaClient Subsystem."), ELogVerbosity::Error);
-		SetReadyToDestroy();
+		OnThumbnailFetched(false, nullptr, FIntVector2());
 		return;
 	}
 
 	m_isActive = true;
 
-	FDownloadedTextureDelegateNative fetchedTexture = FDownloadedTextureDelegateNative::CreateUObject(this, &UAsyncVoxtaFetchThumbnail::OnThumbnailFetched);
+	FDownloadedTextureDelegateNative fetchedTexture = FDownloadedTextureDelegateNative::CreateWeakLambda(this,
+		[this] (bool bSuccess, const UTexture2DDynamic* Texture, FIntVector2 Size)
+		{
+				OnThumbnailFetched(bSuccess, Texture, Size);
+		}
+	);
 	m_voxtaClient->TryFetchAndCacheCharacterThumbnail(m_baseCharacterId, fetchedTexture);
 }
 
 void UAsyncVoxtaFetchThumbnail::OnThumbnailFetched(bool success, const UTexture2DDynamic* texture, const FIntVector2& textureSize)
 {
-	if (m_isActive)
-	{
-		ThumbnailFetched.Broadcast(success, texture, textureSize.X, textureSize.Y);
-		m_isActive = false;
-		SetReadyToDestroy();
-	}
+	ThumbnailFetched.Broadcast(success, texture, textureSize.X, textureSize.Y);
+	m_isActive = false;
+	SetReadyToDestroy();
 }

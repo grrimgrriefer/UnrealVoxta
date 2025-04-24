@@ -35,8 +35,6 @@
 void UVoxtaClient::Initialize(FSubsystemCollectionBase& collection)
 {
 	m_logUtility = MakeShared<VoxtaLogger>();
-	m_voxtaRequestApi = MakeShared<VoxtaApiRequestHandler>();
-	m_voxtaResponseApi = MakeShared<VoxtaApiResponseHandler>();
 	m_logUtility->RegisterVoxtaLogger();
 	m_voiceInput = NewObject<UVoxtaAudioInput>(this);
 	m_A2FHandler = MakeShared<Audio2FaceRESTHandler>();
@@ -124,7 +122,7 @@ void UVoxtaClient::StartChatWithCharacter(const FGuid& charId, const FString& co
 	const TUniquePtr<const FAiCharData>* character = GetAiCharacterDataById(charId);
 	if (character != nullptr && character->IsValid())
 	{
-		SendMessageToServer(m_voxtaRequestApi->GetStartChatRequestData(character->Get(), context));
+		SendMessageToServer(VoxtaApiRequestHandler::GetStartChatRequestData(character->Get(), context));
 		GetOrCreateGlobalAudioFallbackInternal();
 
 		SetState(VoxtaClientState::StartingChat);
@@ -143,14 +141,14 @@ void UVoxtaClient::SetGlobalAudioFallbackEnabled(bool newState)
 
 void UVoxtaClient::StopActiveChat()
 {
-	SendMessageToServer(m_voxtaRequestApi->GetStopChatRequestData());
+	SendMessageToServer(VoxtaApiRequestHandler::GetStopChatRequestData());
 }
 
 void UVoxtaClient::UpdateChatContext(const FString& newContext)
 {
 	if (m_chatSession.IsValid())
 	{
-		SendMessageToServer(m_voxtaRequestApi->GetUpdateContextRequestData(m_chatSession->GetSessionId(), newContext));
+		SendMessageToServer(VoxtaApiRequestHandler::GetUpdateContextRequestData(m_chatSession->GetSessionId(), newContext));
 	}
 	else
 	{
@@ -169,7 +167,7 @@ void UVoxtaClient::SendUserInput(const FString& inputText, bool generateReply, b
 			return;
 		}
 
-		SendMessageToServer(m_voxtaRequestApi->GetSendUserMessageData(m_chatSession->GetSessionId(),
+		SendMessageToServer(VoxtaApiRequestHandler::GetSendUserMessageData(m_chatSession->GetSessionId(),
 			inputText, generateReply, characterActionInference));
 		SetState(VoxtaClientState::GeneratingReply);
 	}
@@ -205,7 +203,7 @@ void UVoxtaClient::NotifyAudioPlaybackComplete(const FGuid& messageId)
 	}
 
 
-	SendMessageToServer(m_voxtaRequestApi->GetNotifyAudioPlaybackCompletedData(m_chatSession->GetSessionId(), messageId));
+	SendMessageToServer(VoxtaApiRequestHandler::GetNotifyAudioPlaybackCompletedData(m_chatSession->GetSessionId(), messageId));
 	SetState(VoxtaClientState::WaitingForUserReponse);
 }
 
@@ -233,11 +231,11 @@ void UVoxtaClient::TryFetchAndCacheCharacterThumbnail(const FGuid& baseCharacter
 		}
 		character = aiCharacter->Get();
 	}
-	FStringView charUrl = character->GetThumnailUrl();
-	if (charUrl != nullptr && !charUrl.IsEmpty())
+	FStringView charUrl = character->GetThumbnailUrl();
+	if (!charUrl.IsEmpty())
 	{
 		FString url = FString::Format(*FString(TEXT("http://{0}:{1}{2}")),
-			{ m_hostAddress, m_hostPort, character->GetThumnailUrl() });
+			{ m_hostAddress, m_hostPort, character->GetThumbnailUrl() });
 		SENSITIVE_LOG1(VoxtaLog, Log, "Loading thumbnail from URL:  {0}", url);
 
 		m_texturesCacheHandler->FetchTextureFromUrl(url, onThumbnailFetched);
@@ -255,17 +253,17 @@ void UVoxtaClient::TryFetchAndCacheCharacterThumbnail(const FGuid& baseCharacter
 bool UVoxtaClient::TryRegisterPlaybackHandler(const FGuid& characterId,
 	TWeakObjectPtr<UVoxtaAudioPlayback> playbackHandler)
 {
-	if (playbackHandler == nullptr)
+	if (!playbackHandler.IsValid())
 	{
 		UE_LOGFMT(VoxtaLog, Error, "You tried to register a Voxta AudioPlayback handler that was null, for the "
 			"character with id {0}.", GuidToString(characterId));
 		return false;
 	}
 
-	if (m_chatSession.IsValid() && !m_chatSession->GetActiveServices().Contains(VoxtaServiceType::SpeechToText))
+	if (m_chatSession.IsValid() && !m_chatSession->GetActiveServices().Contains(VoxtaServiceType::TextToSpeech))
 	{
 		UE_LOGFMT(VoxtaLog, Warning, "You tried to register a Voxta AudioPlayback handler for character {0}, but no "
-			"STT service is active on VoxtaServer. (make sure to have it enabled at start, runtime activation not yet "
+			"TTS service is active on VoxtaServer. (make sure to have it enabled at start; runtime activation not yet "
 			"supported...)", GuidToString(characterId));
 		return false;
 	}
@@ -301,7 +299,7 @@ bool UVoxtaClient::TryUnregisterPlaybackHandler(const FGuid& characterId)
 {
 	TWeakObjectPtr<UVoxtaAudioPlayback>* audioPlaybackComp = m_registeredCharacterAudioPlaybackComps.Find(characterId);
 	FDelegateHandle* handle = m_audioPlaybackHandles.Find(characterId);
-	if (audioPlaybackComp != nullptr && audioPlaybackComp->Get() != nullptr)
+	if (audioPlaybackComp != nullptr && audioPlaybackComp->IsValid())
 	{		
 		if (handle != nullptr)
 		{
@@ -418,7 +416,7 @@ Audio2FaceRESTHandler* UVoxtaClient::GetA2FHandler() const
 	return m_A2FHandler.Get();
 }
 
-void UVoxtaClient::SetLogFilter(bool isCensorActive)
+void UVoxtaClient::SetCensoredLogs(bool isCensorActive)
 {
 	isSensitiveLogsCensored = isCensorActive;
 }
@@ -449,41 +447,31 @@ void UVoxtaClient::StartListeningToServer()
 
 void UVoxtaClient::OnReceivedMessage(const TArray<FSignalRValue>& arguments)
 {
-	FWeakObjectPtr weakSelf(this);
-
 	/** Wait on the next tick to run the responsehandling on the GameThread,
 	 * instead of the background thread of the socket. */
-	FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda(
-		[weakSelf, Arguments = arguments] (float deltaTime)
+	FTSTicker::GetCoreTicker().AddTicker(
+		FTickerDelegate::CreateWeakLambda(this, [this, Arguments = arguments] (float DeltaTime)
 		{
-			if (!weakSelf.IsValid())
+			if (m_currentState == VoxtaClientState::Disconnected ||
+				m_currentState == VoxtaClientState::Terminated)
 			{
-				return false;
+				UE_LOGFMT(VoxtaLog, Log, "Tried to process a message with the connection already severed, "
+					"skipping processing of remaining response data.");
 			}
-			UVoxtaClient* Self = Cast<UVoxtaClient>(weakSelf.Get());
-			if (Self != nullptr)
+			else if (Arguments.IsEmpty() || Arguments[0].GetType() != FSignalRValue::EValueType::Object)
 			{
-				if (Self->m_currentState == VoxtaClientState::Disconnected ||
-					Self->m_currentState == VoxtaClientState::Terminated)
-				{
-					UE_LOGFMT(VoxtaLog, Log, "Tried to process a message with the connection already severed, "
-						"skipping processing of remaining response data.");
-				}
-				else if (Arguments.IsEmpty() || Arguments[0].GetType() != FSignalRValue::EValueType::Object)
-				{
-					UE_LOGFMT(VoxtaLog, Error, "Received invalid message from server.");
-				}
-				else if (Self->HandleResponse(Arguments[0].AsObject()))
-				{
-					UE_LOGFMT(VoxtaLog, Log, "VoxtaServer message handled successfully.");
-				}
-				else
-				{
-					UE_LOGFMT(VoxtaLog, Warning, "Response handler reported a failure, please check the logs to see "
-						"what's wrong. Type: {0}", Arguments[0].AsObject()[EASY_STRING("$type")].AsString());
-				}
+				UE_LOGFMT(VoxtaLog, Error, "Received invalid message from server.");
 			}
-			// We don't care about else, as that means the 'playmode' is over.
+			else if (HandleResponse(Arguments[0].AsObject()))
+			{
+				UE_LOGFMT(VoxtaLog, Log, "VoxtaServer message handled successfully.");
+			}
+			else
+			{
+				UE_LOGFMT(VoxtaLog, Warning, "Response handler reported a failure, please check the logs to see "
+					"what's wrong. Type: {0}", Arguments[0].AsObject()[EASY_STRING("$type")].AsString());
+			}
+			
 			return false; // Return false to remove the ticker after it runs once
 		}));
 }
@@ -492,46 +480,38 @@ void UVoxtaClient::OnConnected()
 {
 	/** Wait on the next tick to run the responsehandling on the GameThread,
 	 * instead of the background thread of the socket. */
-	FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda(
-		[Self = TWeakObjectPtr<UVoxtaClient>(this)] (float deltatime)
+	FTSTicker::GetCoreTicker().AddTicker(
+		FTickerDelegate::CreateWeakLambda(this, [this] (float DeltaTime)
 		{
-			if (Self != nullptr)
-			{
-				UE_LOGFMT(VoxtaLog, Log, "VoxtaClient connected successfully");
-				Self->SendMessageToServer(Self->m_voxtaRequestApi->GetAuthenticateRequestData());
-			}
-			// We don't care about else, as that means the 'playmode' is over.
+			UE_LOGFMT(VoxtaLog, Log, "VoxtaClient connected successfully");
+			SendMessageToServer(VoxtaApiRequestHandler::GetAuthenticateRequestData());
 			return false; // Return false to remove the ticker after it runs once
-		}));
+		})
+	);
 }
 
 void UVoxtaClient::OnConnectionError(const FString& error)
 {
-	FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda(
-		[Self = TWeakObjectPtr<UVoxtaClient>(this), Error = error] (float deltatime)
+	FTSTicker::GetCoreTicker().AddTicker(
+		FTickerDelegate::CreateWeakLambda(this, [this, Error = error] (float DeltaTime)
 		{
-			if (Self != nullptr)
-			{
-				UE_LOGFMT(VoxtaLog, Error, "VoxtaClient connection has encountered error: {0}.", Error);
-				Self->Disconnect();
-			}
-			// We don't care about else, as that means the 'playmode' is over.
+			UE_LOGFMT(VoxtaLog, Error, "VoxtaClient connection has encountered error: {0}.", Error);
+			Disconnect();
 			return false; // Return false to remove the ticker after it runs once
 		}));
 }
 
 void UVoxtaClient::OnClosed()
 {
-	FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda(
-		[Self = TWeakObjectPtr<UVoxtaClient>(this)] (float deltatime)
+	FTSTicker::GetCoreTicker().AddTicker(
+		FTickerDelegate::CreateWeakLambda(this, [this] (float DeltaTime)
 		{
-			if (Self != nullptr && (Self->GetCurrentState() != VoxtaClientState::Terminated &&
-				Self->GetCurrentState() != VoxtaClientState::Disconnected))
+			if (GetCurrentState() != VoxtaClientState::Terminated &&
+				GetCurrentState() != VoxtaClientState::Disconnected)
 			{
 				UE_LOGFMT(VoxtaLog, Log, "VoxtaClient connection has been closed.");
-				Self->Disconnect();
+				Disconnect();
 			}
-			// We don't care about else, as that means the 'playmode' is over.
 			return false; // Return false to remove the ticker after it runs once
 		}));
 }
@@ -579,13 +559,13 @@ bool UVoxtaClient::HandleResponseHelper(const ServerResponseBase* response, cons
 bool UVoxtaClient::HandleResponse(const TMap<FString, FSignalRValue>& responseData)
 {
 	FString responseType = responseData[EASY_STRING("$type")].AsString();
-	if (m_voxtaResponseApi->IGNORED_MESSAGE_TYPES.Contains(responseType))
+	if (VoxtaApiResponseHandler::IGNORED_MESSAGE_TYPES.Contains(responseType))
 	{
 		UE_LOGFMT(VoxtaLog, Log, "Ignoring message of type: {0}", responseType);
 		return true;
 	}
 
-	TUniquePtr<ServerResponseBase> response = m_voxtaResponseApi->GetResponseData(responseData);
+	TUniquePtr<ServerResponseBase> response = VoxtaApiResponseHandler::GetResponseData(responseData);
 	if (!response.IsValid())
 	{
 		UE_LOGFMT(VoxtaLog, Error, "Failed to deserialize message of type: {0}", responseType);
@@ -643,7 +623,7 @@ bool UVoxtaClient::HandleWelcomeResponse(const ServerResponseWelcome& response)
 			m_userData->GetName());
 
 		SetState(VoxtaClientState::Authenticated);
-		SendMessageToServer(m_voxtaRequestApi->GetLoadCharactersListData());
+		SendMessageToServer(VoxtaApiRequestHandler::GetLoadCharactersListData());
 	}
 	else
 	{
@@ -742,7 +722,7 @@ bool UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessageBase
 			{
 				// Add a space before the text when appending it to the previous. As VoxtaServer ends the last sentence
 				// of a chunk directly after the period, without an extra space.
-				chatMessage->AppendMoreContent(chatMessage->GetTextContent().IsEmpty()
+				chatMessage->TryAppendMoreContent(chatMessage->GetTextContent().IsEmpty()
 					? derivedResponse->MESSAGE_TEXT
 					: " " + derivedResponse->MESSAGE_TEXT, derivedResponse->AUDIO_URL_PATH);
 				UE_LOGFMT(VoxtaLog, Log, "Updated message contents of message with id: {0}", derivedResponse->MESSAGE_ID);
@@ -750,15 +730,21 @@ bool UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessageBase
 			else
 			{
 				SENSITIVE_LOG2(VoxtaLog, Warning, "Received a messageChunk without already having the start of the message. "
-					"messageId: {0} content: {1}", chatMessage->GetMessageId(), chatMessage->GetTextContent())
+					"messageId: {0}, content: {1}", derivedResponse->MESSAGE_ID, derivedResponse->MESSAGE_TEXT)
 			}
 			break;
 		}
 		case MessageEnd:
 		{
-			const ServerResponseChatMessageEnd* derivedResponse =
-				StaticCast<const ServerResponseChatMessageEnd*>(&response);
-			const FChatMessage* chatMessage = GetChatMessageById(derivedResponse->MESSAGE_ID);
+			const ServerResponseChatMessageEnd* derivedResponse = StaticCast<const ServerResponseChatMessageEnd*>(&response);
+			FChatMessage* rawPtr = GetChatMessageById(derivedResponse->MESSAGE_ID);
+			if (!rawPtr)
+			{
+				SENSITIVE_LOG1(VoxtaLog, Error, "Received replyEnd without matching start. messageId: {0}", derivedResponse->MESSAGE_ID);
+				break;
+			}
+			rawPtr->MarkComplete();
+			const FChatMessage * chatMessage = rawPtr;
 
 			if (chatMessage)
 			{
@@ -769,7 +755,7 @@ bool UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessageBase
 					SENSITIVE_LOG3(VoxtaLog, Log, "Message with id: {0} marked as complete. Speaker: {1} Contents: {2}",
 						derivedResponse->MESSAGE_ID, character->Get()->GetName(), chatMessage->GetTextContent())
 
-					auto playbackHandler = m_registeredCharacterAudioPlaybackComps.Find(character->Get()->GetId());
+						auto playbackHandler = m_registeredCharacterAudioPlaybackComps.Find(character->Get()->GetId());
 					if (playbackHandler != nullptr)
 					{
 						SetState(VoxtaClientState::AudioPlayback);
@@ -789,7 +775,7 @@ bool UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessageBase
 								// Generated audio but configuration indicates playback is not desired.
 								NotifyAudioPlaybackComplete(chatMessage->GetMessageId());
 							}
-						}						
+						}
 						else
 						{
 							SetState(VoxtaClientState::WaitingForUserReponse);
@@ -806,8 +792,8 @@ bool UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessageBase
 			}
 			else
 			{
-				SENSITIVE_LOG2(VoxtaLog, Warning, "Received a messageEnd without already having the start of the message. "
-					"messageId: {0} content: {1}", chatMessage->GetMessageId(), chatMessage->GetTextContent())
+				SENSITIVE_LOG1(VoxtaLog, Warning, "Received a messageEnd without already having the start of the message. "
+					"messageId: {0}", derivedResponse->MESSAGE_ID)
 			}
 			break;
 		}
@@ -820,12 +806,20 @@ bool UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessageBase
 					return InItem.GetMessageId() == derivedResponse->MESSAGE_ID;
 				});
 
-			UE_LOGFMT(VoxtaLog, Log, "Message with id: {0} marked as cancelled, removing it from the history.",
-				derivedResponse->MESSAGE_ID);
+			if (index != INDEX_NONE)
+			{
+				UE_LOGFMT(VoxtaLog, Log, "Message with id: {0} marked as cancelled, removing it from the history.",
+					derivedResponse->MESSAGE_ID);
 
-			VoxtaClientCharMessageRemovedEventNative.Broadcast(messages[index]);
-			VoxtaClientCharMessageRemovedEvent.Broadcast(messages[index]);
-			messages.RemoveAt(index);
+				VoxtaClientCharMessageRemovedEventNative.Broadcast(messages[index]);
+				VoxtaClientCharMessageRemovedEvent.Broadcast(messages[index]);
+				messages.RemoveAt(index);
+			}
+			else
+			{
+				UE_LOGFMT(VoxtaLog, Log, "Message with id: {0} marked as cancelled, but it was not found in the history?",
+					derivedResponse->MESSAGE_ID);
+			}			
 		}
 	}
 	return true;
@@ -862,7 +856,8 @@ bool UVoxtaClient::HandleChatUpdateResponse(const ServerResponseChatUpdate& resp
 				"MessageId {0} Content: {1}", response.MESSAGE_ID, response.TEXT_CONTENT);
 
 			FChatMessage message = FChatMessage(response.MESSAGE_ID, response.SENDER_ID);
-			message.AppendMoreContent(response.TEXT_CONTENT, FString());
+			message.TryAppendMoreContent(response.TEXT_CONTENT, FString());
+			message.MarkComplete();
 			m_chatSession->GetChatMessages().Emplace(MoveTemp(message));
 
 			// we want a pointer after it's moved to the heap, just for safety.

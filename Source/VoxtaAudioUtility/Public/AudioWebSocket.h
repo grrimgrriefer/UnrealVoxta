@@ -59,7 +59,7 @@ public:
 	 * @param buffer A pointer to the first byte of the data to be sent.
 	 * @param nBufferFrames Number of bytes to send.
 	 */
-	void Send(const void* buffer, unsigned int nBufferFrames);
+	void Send(const void* buffer, unsigned int nBufferBytes);
 
 	/**
 	 * Send string data through the websocket.

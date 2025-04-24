@@ -22,7 +22,7 @@ struct FUserCharData : public FBaseCharData
 
 #pragma region public API
 public:
-	virtual FString GetThumnailUrl() const override { return FString::Format(*FString(TEXT("/api/profile/{0}/thumbnail")), { m_idAsString }); }
+	virtual FString GetThumbnailUrl() const override { return FString::Format(*FString(TEXT("/api/profile/{0}/thumbnail")), { m_idAsString }); }
 
 	/**
 	 * Create an instance of the datacontainer for the User.

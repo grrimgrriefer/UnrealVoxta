@@ -92,13 +92,17 @@ IHubConnection::FOnMethodInvocation& FHubConnection::On(const FString& InEventNa
 		return BadDelegate;
 	}
 
-	if (InvocationHandlers.Contains(InEventName))
 	{
-		UE_LOG(LogSignalR, Error, TEXT("An action for this event has already been registered. event name: %s"), *InEventName);
-		return BadDelegate;
-	}
+		FScopeLock lock(&InvocationHandlersGuard);
 
-	return InvocationHandlers.Add(InEventName);
+		if (InvocationHandlers.Contains(InEventName))
+		{
+			UE_LOG(LogSignalR, Error, TEXT("An action for this event has already been registered. event name: %s"), *InEventName);
+			return BadDelegate;
+		}
+
+		return InvocationHandlers.Add(InEventName);
+	}	
 }
 
 IHubConnection::FOnMethodCompletion& FHubConnection::Invoke(const FString& InEventName, const TArray<FSignalRValue>& InArguments)
@@ -183,9 +187,12 @@ void FHubConnection::ProcessMessage(const FString& InMessageStr)
 				check(InvocationMessage != nullptr);
 
 				const FString& MethodName = InvocationMessage->Target;
-				if (InvocationHandlers.Contains(MethodName))
 				{
-					InvocationHandlers[MethodName].ExecuteIfBound(InvocationMessage->Arguments);
+					FScopeLock lock(&InvocationHandlersGuard);
+					if (InvocationHandlers.Contains(MethodName))
+					{
+						InvocationHandlers[MethodName].ExecuteIfBound(InvocationMessage->Arguments);
+					}
 				}
 				break;
 			}
@@ -193,20 +200,21 @@ void FHubConnection::ProcessMessage(const FString& InMessageStr)
 				UE_LOG(LogSignalR, Warning, TEXT("Received unexpected message type 'StreamInvocation'"));
 				break;
 			case ESignalRMessageType::StreamItem:
-				// TODO
+				UE_LOG(LogSignalR, Warning, TEXT("Received unsupported message type 'StreamItem'"));
 				break;
 			case ESignalRMessageType::Completion:
 			{
 				TSharedPtr<FCompletionMessage> CompletionMessage = StaticCastSharedPtr<FCompletionMessage>(Message);
 				check(CompletionMessage != nullptr);
 
+				FName InvocationId = FName(*CompletionMessage->InvocationId);
 				if (!CompletionMessage->Error.IsEmpty())
 				{
 					UE_LOG(LogSignalR, Error, TEXT("%s"), *CompletionMessage->Error);
+					CallbackManager.InvokeCallback(InvocationId, CompletionMessage->Error, false);
 				}
 				else
-				{
-					FName InvocationId = FName(*CompletionMessage->InvocationId);
+				{					
 					if (!CallbackManager.InvokeCallback(InvocationId, CompletionMessage->Result, true))
 					{
 						UE_LOG(LogSignalR, Warning, TEXT("No callback found for id: %s"), *InvocationId.ToString());
@@ -266,12 +274,7 @@ void FHubConnection::OnConnectionError(const FString& InError)
 {
 	OnHubConnectionErrorEvent.Broadcast(InError);
 
-	if (bShouldReconnect)
-	{
-		bShouldReconnect = false;
-		UE_LOG(LogSignalR, Verbose, TEXT("Reconnecting"));
-		Start();
-	}
+	TryReconnectIfNeeded();
 }
 
 void FHubConnection::OnConnectionClosed(int32 StatusCode, const FString& Reason, bool bWasClean)
@@ -291,12 +294,17 @@ void FHubConnection::OnConnectionClosed(int32 StatusCode, const FString& Reason,
 	if (bReceivedCloseMessage)
 	{
 		bReceivedCloseMessage = false;
-		if (bShouldReconnect)
-		{
-			bShouldReconnect = false;
-			UE_LOG(LogSignalR, Verbose, TEXT("Reconnecting"));
-			Start();
-		}
+		TryReconnectIfNeeded();
+	}
+}
+
+void FHubConnection::TryReconnectIfNeeded()
+{
+	if (bShouldReconnect)
+	{
+		bShouldReconnect = false;
+		UE_LOG(LogSignalR, Verbose, TEXT("Reconnecting"));
+		Start();
 	}
 }
 

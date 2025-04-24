@@ -34,7 +34,7 @@ public:
 #pragma region public API
 public:
 	/** Create an instance of the LipSyncData holder for OVRLipSync. */
-	ULipSyncDataOVR() : ILipSyncBaseData(LipSyncType::OVRLipSync)
+	ULipSyncDataOVR() : ILipSyncBaseData()
 	{
 	}
 
@@ -47,7 +47,7 @@ public:
 	 */
 	void SetFrameSequence(UOVRLipSyncFrameSequence* ovrLipSyncFrameSequence)
 	{
-		m_ovrLipSyncFrameSequence = MoveTemp(ovrLipSyncFrameSequence);
+		m_ovrLipSyncFrameSequence = ovrLipSyncFrameSequence;
 	}
 
 	/** @return A raw pointer to the OVR curves that were generated and assigned to this data instance */
@@ -60,6 +60,6 @@ public:
 #pragma region data
 private:
 	UPROPERTY()
-	UOVRLipSyncFrameSequence* m_ovrLipSyncFrameSequence;
+	UOVRLipSyncFrameSequence* m_ovrLipSyncFrameSequence = nullptr;
 #pragma endregion
 };

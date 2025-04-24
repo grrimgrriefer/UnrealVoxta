@@ -5,7 +5,7 @@
 #include "SignalR/Public/SignalRValue.h"
 #include "AiCharData.h"
 
-FSignalRValue VoxtaApiRequestHandler::GetAuthenticateRequestData() const
+FSignalRValue VoxtaApiRequestHandler::GetAuthenticateRequestData()
 {
 	return FSignalRValue(TMap<FString, FSignalRValue> {
 		{ EASY_STRING("$type"), SIGNALR_STRING("authenticate") },
@@ -21,21 +21,21 @@ FSignalRValue VoxtaApiRequestHandler::GetAuthenticateRequestData() const
 	});
 }
 
-FSignalRValue VoxtaApiRequestHandler::GetLoadCharactersListData() const
+FSignalRValue VoxtaApiRequestHandler::GetLoadCharactersListData()
 {
 	return FSignalRValue(TMap<FString, FSignalRValue> {
 		{ EASY_STRING("$type"), SIGNALR_STRING("loadCharactersList") }
 	});
 }
 
-FSignalRValue VoxtaApiRequestHandler::GetLoadScenariosListData() const
+FSignalRValue VoxtaApiRequestHandler::GetLoadScenariosListData()
 {
 	return FSignalRValue(TMap<FString, FSignalRValue> {
 		{ EASY_STRING("$type"), SIGNALR_STRING("loadScenariosList") }
 	});
 }
 
-FSignalRValue VoxtaApiRequestHandler::GetLoadChatsListData(const FGuid& characterId, const FGuid& scenarioId) const
+FSignalRValue VoxtaApiRequestHandler::GetLoadChatsListData(const FGuid& characterId, const FGuid& scenarioId)
 {
 	TMap<FString, FSignalRValue> requestData = TMap<FString, FSignalRValue>{
 		{ EASY_STRING("$type"), SIGNALR_STRING("loadChatsList") },
@@ -53,8 +53,10 @@ FSignalRValue VoxtaApiRequestHandler::GetLoadChatsListData(const FGuid& characte
 	return FSignalRValue(requestData);
 }
 
-FSignalRValue VoxtaApiRequestHandler::GetStartChatRequestData(const FAiCharData* charData, const FString& context) const
+FSignalRValue VoxtaApiRequestHandler::GetStartChatRequestData(const FAiCharData* charData, const FString& context)
 {
+	checkf(charData != nullptr, TEXT("charData cannot be null when starting a chat"));
+
 	TMap<FString, FSignalRValue> requestData = TMap<FString, FSignalRValue>{
 		{ EASY_STRING("$type"), SIGNALR_STRING("startChat") },
 		{ EASY_STRING("contextKey"), FSignalRValue(VOXTA_CONTEXT_KEY) },
@@ -88,7 +90,7 @@ FSignalRValue VoxtaApiRequestHandler::GetStartChatRequestData(const FAiCharData*
 	return FSignalRValue(requestData);
 }
 
-FSignalRValue VoxtaApiRequestHandler::GetStopChatRequestData() const
+FSignalRValue VoxtaApiRequestHandler::GetStopChatRequestData()
 {
 	return FSignalRValue(TMap<FString, FSignalRValue> {
 		{ EASY_STRING("$type"), SIGNALR_STRING("stopChat") }
@@ -96,7 +98,7 @@ FSignalRValue VoxtaApiRequestHandler::GetStopChatRequestData() const
 }
 
 FSignalRValue VoxtaApiRequestHandler::GetSendUserMessageData(const FGuid& sessionId,
-	const FString& userInputText, bool generateReply, bool characterActionInference) const
+	const FString& userInputText, bool generateReply, bool characterActionInference)
 {
 	return FSignalRValue(TMap<FString, FSignalRValue> {
 		{ EASY_STRING("$type"), SIGNALR_STRING("send") },
@@ -108,7 +110,7 @@ FSignalRValue VoxtaApiRequestHandler::GetSendUserMessageData(const FGuid& sessio
 }
 
 FSignalRValue VoxtaApiRequestHandler::GetNotifyAudioPlaybackCompletedData(const FGuid& sessionId,
-	const FGuid& messageId) const
+	const FGuid& messageId)
 {
 	return FSignalRValue(TMap<FString, FSignalRValue> {
 		{ EASY_STRING("$type"), SIGNALR_STRING("speechPlaybackComplete") },
@@ -118,7 +120,7 @@ FSignalRValue VoxtaApiRequestHandler::GetNotifyAudioPlaybackCompletedData(const 
 }
 
 FSignalRValue VoxtaApiRequestHandler::GetNotifyAudioPlaybackStartedData(const FGuid& sessionId,
-	const FGuid& messageId, int startIndex, int endIndex, double duration) const
+	const FGuid& messageId, int startIndex, int endIndex, double duration)
 {
 	return FSignalRValue(TMap<FString, FSignalRValue> {
 		{ EASY_STRING("$type"), SIGNALR_STRING("speechPlaybackStart") },
@@ -131,7 +133,7 @@ FSignalRValue VoxtaApiRequestHandler::GetNotifyAudioPlaybackStartedData(const FG
 }
 
 FSignalRValue VoxtaApiRequestHandler::GetUpdateContextRequestData(/*const TArray<FString>& actions, */
-	const FGuid& sessionId, const FString& context) const
+	const FGuid& sessionId, const FString& context)
 {
 	TMap<FString, FSignalRValue> requestData = TMap<FString, FSignalRValue>{
 		{ EASY_STRING("$type"), SIGNALR_STRING("updateContext") },
@@ -159,7 +161,7 @@ FSignalRValue VoxtaApiRequestHandler::GetUpdateContextRequestData(/*const TArray
 }
 
 FSignalRValue VoxtaApiRequestHandler::GetRequestCharacterSpeechRequestData(const FGuid& sessionId,
-	const FString& text) const
+	const FString& text)
 {
 	return FSignalRValue(TMap<FString, FSignalRValue> {
 		{ EASY_STRING("$type"), SIGNALR_STRING("characterSpeechRequest") },
@@ -168,7 +170,7 @@ FSignalRValue VoxtaApiRequestHandler::GetRequestCharacterSpeechRequestData(const
 	});
 }
 
-FSignalRValue VoxtaApiRequestHandler::SendRevertLastSentMessage(const FGuid& sessionId) const
+FSignalRValue VoxtaApiRequestHandler::SendRevertLastSentMessage(const FGuid& sessionId)
 {
 	return FSignalRValue(TMap<FString, FSignalRValue> {
 		{ EASY_STRING("$type"), SIGNALR_STRING("revert") },
@@ -176,7 +178,7 @@ FSignalRValue VoxtaApiRequestHandler::SendRevertLastSentMessage(const FGuid& ses
 	});
 }
 
-FSignalRValue VoxtaApiRequestHandler::SendDeleteChat(const FGuid& chatId) const
+FSignalRValue VoxtaApiRequestHandler::SendDeleteChat(const FGuid& chatId)
 {
 	return FSignalRValue(TMap<FString, FSignalRValue> {
 		{ EASY_STRING("$type"), SIGNALR_STRING("deleteChat") },
@@ -184,7 +186,7 @@ FSignalRValue VoxtaApiRequestHandler::SendDeleteChat(const FGuid& chatId) const
 	});
 }
 
-FSignalRValue VoxtaApiRequestHandler::SetFlags(const FGuid& sessionId, const TArray<FString>& flags) const
+FSignalRValue VoxtaApiRequestHandler::SetFlags(const FGuid& sessionId, const TArray<FString>& flags)
 {
 	TArray<FSignalRValue> serializedFlags = TArray<FSignalRValue>();
 	for (int i = 0; i < flags.Num(); i++)

@@ -47,7 +47,7 @@ public:
      * @param url
      * @return An IHubConnection instance
      */
-    SIGNALR_API TSharedPtr<IHubConnection> CreateHubConnection(const FString& InUrl, const TMap<FString, FString>& InHeaders = TMap<FString, FString>());
+    SIGNALR_API TSharedPtr<IHubConnection> CreateHubConnection(const FString& InUrl, const TMap<FString, FString>& InHeaders = TMap<FString, FString>()) const;
 
 private:
 

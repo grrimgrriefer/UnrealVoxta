@@ -1,9 +1,11 @@
-﻿// Georgy Treshchev 2024.
-
-/**
+﻿/**
+ * Georgy Treshchev 2024.
+ * 
  * Replacing C dynamic memory management functions
  * (calloc, malloc, free, realloc, memset, memcpy) with FMemory ones
  */
+
+#pragma once
 #undef calloc
 #undef malloc
 #undef free

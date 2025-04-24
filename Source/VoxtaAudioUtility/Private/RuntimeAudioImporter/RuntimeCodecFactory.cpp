@@ -10,29 +10,18 @@ DEFINE_LOG_CATEGORY(AudioLog);
 
 TArray<FBaseRuntimeCodec*> FRuntimeCodecFactory::GetCodecs()
 {
-	TArray<FBaseRuntimeCodec*> AvailableCodecs = { new FWAV_RuntimeCodec() };
-	return AvailableCodecs;
-}
-
-TArray<FBaseRuntimeCodec*> FRuntimeCodecFactory::GetCodecs(const FString& FilePath)
-{
-	TArray<FBaseRuntimeCodec*> Codecs;
-	const FString Extension = FPaths::GetExtension(FilePath, false);
-
-	for (FBaseRuntimeCodec* Codec : GetCodecs())
+	static TArray<TUniquePtr<FBaseRuntimeCodec>> Cached;
+	if (Cached.Num() == 0)
 	{
-		if (Codec->IsExtensionSupported(Extension))
-		{
-			Codecs.Add(Codec);
-		}
+		Cached.Emplace(MakeUnique<FWAV_RuntimeCodec>());
 	}
 
-	if (Codecs.Num() == 0)
+	TArray<FBaseRuntimeCodec*> Raw;
+	for (const TUniquePtr<FBaseRuntimeCodec>& Ptr : Cached)
 	{
-		UE_LOG(AudioLog, Warning, TEXT("Failed to determine the audio codec for '%s' using its file name"), *FilePath);
+		Raw.Add(Ptr.Get());
 	}
-
-	return Codecs;
+	return Raw;
 }
 
 TArray<FBaseRuntimeCodec*> FRuntimeCodecFactory::GetCodecs(ERuntimeAudioFormat AudioFormat)
@@ -54,12 +43,12 @@ TArray<FBaseRuntimeCodec*> FRuntimeCodecFactory::GetCodecs(ERuntimeAudioFormat A
 	return Codecs;
 }
 
-TArray<FBaseRuntimeCodec*> FRuntimeCodecFactory::GetCodecs(const FRuntimeBulkDataBuffer<uint8>& AudioData)
+TArray<FBaseRuntimeCodec*> FRuntimeCodecFactory::GetCodecs(FRuntimeBulkDataBuffer<uint8>& AudioData)
 {
 	TArray<FBaseRuntimeCodec*> Codecs;
 	for (FBaseRuntimeCodec* Codec : GetCodecs())
 	{
-		if (Codec->CheckAudioFormat(AudioData))
+		if (Codec->CheckAndFixAudioFormat(AudioData))
 		{
 			Codecs.Add(Codec);
 		}

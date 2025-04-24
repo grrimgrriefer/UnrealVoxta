@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "HAL/ThreadSafeBool.h"
 
 #define VOICE_COMPONENT_NULL 255
 #define THREAD_RETURN_DEFAULT_VALUE 254
@@ -69,6 +70,6 @@ private:
 	FRunnableThread* m_thread;
 
 	float m_sleepTime;
-	bool m_isStopped;
+	FThreadSafeBool  m_isStopped;
 #pragma endregion
 };

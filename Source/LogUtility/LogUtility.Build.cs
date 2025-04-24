@@ -15,5 +15,7 @@ public class LogUtility : ModuleRules
 	public LogUtility(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+
+		PublicDependencyModuleNames.AddRange(new [] { "Core" });
 	}
 }

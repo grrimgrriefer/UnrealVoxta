@@ -202,10 +202,15 @@ public:
 		{
 			FreeBuffer();
 
-			const int64 BufferSize = Other.View.Num() + Other.ReservedCapacity;
+			const int64 UsedSize = Other.View.Num();
+			const int64 BufferSize = UsedSize + Other.ReservedCapacity;
 
 			DataType* BufferCopy = static_cast<DataType*>(FMemory::Malloc(BufferSize * sizeof(DataType)));
-			FMemory::Memcpy(BufferCopy, Other.View.GetData(), BufferSize * sizeof(DataType));
+			FMemory::Memcpy(BufferCopy, Other.View.GetData(), UsedSize * sizeof(DataType));
+			if (Other.ReservedCapacity > 0)
+			{
+				FMemory::Memzero(BufferCopy + UsedSize, Other.ReservedCapacity * sizeof(DataType));
+			}
 
 			View = ViewType(BufferCopy, BufferSize);
 			ReservedCapacity = Other.ReservedCapacity;
@@ -415,6 +420,7 @@ struct FRuntimeAudioInputDeviceInfo
 
 	FRuntimeAudioInputDeviceInfo(const Audio::FCaptureDeviceInfo& DeviceInfo)
 		: DeviceName(DeviceInfo.DeviceName)
+		, DeviceId(DeviceInfo.DeviceId)
 		, InputChannels(DeviceInfo.InputChannels)
 		, PreferredSampleRate(DeviceInfo.PreferredSampleRate)
 		, bSupportsHardwareAEC(DeviceInfo.bSupportsHardwareAEC)

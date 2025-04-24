@@ -51,6 +51,7 @@ void LipSyncGenerator::GenerateOVRLipSyncData(const TArray<uint8>& rawAudioData,
 			TArray<TTuple<TArray<float>, float>> frames;
 			for (uint64 offs = 0; (offs + chunkSize) < pcmDataSize; offs += chunkSize)
 			{
+				viseme.Reset();
 				context.ProcessFrame(PCMData + offs, chunkSizeSamples, viseme, laughterScore, FrameDelayInMs,
 					numChannels > 1);
 				frames.Emplace(viseme, laughterScore);
@@ -94,6 +95,15 @@ void LipSyncGenerator::GenerateA2FLipSyncData(const TArray<uint8>& rawAudioData,
 
 	if (waveInfo.ReadWaveInfo(waveData, rawAudioData.Num()))
 	{
+		if (!IFileManager::Get().DirectoryExists(*cacheFolder))
+		{
+			if (!IFileManager::Get().MakeDirectory(*cacheFolder, true))
+			{
+				UE_LOGFMT(VoxtaLog, Error, "Failed to create wav data folder for A2F processing.");
+				callback(nullptr);
+				return;
+			}
+		}
 		IFileHandle* FileHandle = FPlatformFileManager::Get().GetPlatformFile().OpenWrite(
 			*FPaths::Combine(cacheFolder, wavName));
 
@@ -105,7 +115,7 @@ void LipSyncGenerator::GenerateA2FLipSyncData(const TArray<uint8>& rawAudioData,
 		}
 		else
 		{
-			UE_LOGFMT(VoxtaLog, Error, "Failed wav data to disk for A2F processing.");
+			UE_LOGFMT(VoxtaLog, Error, "Failed to write wav data to disk for A2F processing.");
 			callback(nullptr);
 			return;
 		}

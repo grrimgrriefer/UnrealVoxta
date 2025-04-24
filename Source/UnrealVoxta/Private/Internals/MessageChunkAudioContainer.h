@@ -38,6 +38,8 @@ public:
 		TFunction<void(const MessageChunkAudioContainer* newState)> callback,
 		int id);
 
+	virtual ~MessageChunkAudioContainer() = default;
+
 	/** Trigger the next pre-processing state, assuming the instance is finished with what it was doing. */
 	void Continue();
 
@@ -52,7 +54,7 @@ public:
 	const TArray<uint8>& GetRawAudioData() const;
 
 	/** @return an immutable pointer to the LipSync dataobject, this is guarenteed to implement the ILipSyncDataBase interface. */
-	template<class T>
+	template <typename T, typename = std::enable_if_t<std::is_base_of_v<ILipSyncBaseData, T>>>
 	const T* GetLipSyncData() const;
 
 	/** @return The current state of this instance. */
@@ -79,10 +81,12 @@ private:
 	const TFunction<void(const MessageChunkAudioContainer* chunk)> ON_STATE_CHANGED;
 
 	TArray<uint8> m_rawAudioData;
-	Audio2FaceRESTHandler* m_A2FRestHandler;
-	USoundWaveProcedural* m_soundWave;
+	Audio2FaceRESTHandler* m_A2FRestHandler = nullptr;
 	MessageChunkState m_state = MessageChunkState::Idle;
-	ILipSyncBaseData* m_lipSyncData;
+
+	// UObjects added to root while this object is alive; as UPROPERTY doesn't work with normal classes
+	USoundWaveProcedural* m_soundWave = nullptr;
+	ILipSyncBaseData* m_lipSyncData = nullptr;
 #pragma endregion
 
 #pragma region private API

@@ -46,7 +46,7 @@ public:
 	 * @param silenceDetectionThreshold The linear amplitude, anything below this will not generate any audio data.
 	 * @param micInputGain The linear amplitude muliplier applied to the input.
 	 */
-	void ConfigureSilenceTresholds(float micNoiseGateThreshold, float silenceDetectionThreshold, float micInputGain);
+	void ConfigureSilenceThresholds(float micNoiseGateThreshold, float silenceDetectionThreshold, float micInputGain);
 
 	/**
 	 * Tries to start that IVoiceCapture and also start the background thread that will forward any
@@ -76,7 +76,7 @@ public:
 #pragma region data
 private:
 	UPROPERTY()
-	TArray<uint8> m_socketDataBuffer;
+	TArray<uint8> m_socketDataBuffer = TArray<uint8>();
 
 	const float DEFAULT_SILENCE_DECIBELS = -144.f;
 
@@ -84,12 +84,12 @@ private:
 	friend class FVoiceRunnerThread;
 
 	FString m_deviceName = EMPTY_STRING;
-	bool m_isCapturing;
-	int m_bufferMillisecondSize;
+	bool m_isCapturing = false;
+	int m_bufferMillisecondSize = 0;
 
 	float m_decibels = DEFAULT_SILENCE_DECIBELS;
-	bool m_isTestMode;
-	FDateTime m_lastVoiceTimestamp;
+	bool m_isTestMode = false;
+	FDateTime m_lastVoiceTimestamp = FDateTime();
 
 	mutable FCriticalSection m_captureGuard;
 	TUniquePtr<FVoiceRunnerThread> m_voiceRunnerThread;
@@ -114,7 +114,7 @@ private:
 	 *
 	 * @param rawData The array of bytes that will be sent.
 	 */
-	void SendInternal(const TArray<uint8> rawData) const;
+	void SendInternal(const TArray<uint8>& rawData) const;
 
 	/**
 	 * Analyze the provided data and calculate the maximum decibels that is present in this chunk of audio.

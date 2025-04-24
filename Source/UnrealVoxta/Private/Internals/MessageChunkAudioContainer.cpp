@@ -60,8 +60,11 @@ void MessageChunkAudioContainer::CleanupData()
 {
 	UE_LOGFMT(VoxtaLog, Log, "Cleaning up MessageChunkAudioContainer for index: {0}", INDEX);
 
-	m_soundWave->RemoveFromRoot();
-	if (LIP_SYNC_TYPE != LipSyncType::None)
+	if (m_soundWave)
+	{
+		m_soundWave->RemoveFromRoot();
+	}
+	if (LIP_SYNC_TYPE != LipSyncType::None && m_lipSyncData)
 	{
 		m_lipSyncData->ReleaseData();
 	}
@@ -74,7 +77,7 @@ const TArray<uint8>& MessageChunkAudioContainer::GetRawAudioData() const
 	return m_rawAudioData;
 }
 
-template<class T>
+ template <typename T, typename>
 const T* MessageChunkAudioContainer::GetLipSyncData() const
 {
 	return StaticCast<const T*>(m_lipSyncData);
@@ -187,7 +190,7 @@ void MessageChunkAudioContainer::GenerateLipSync()
 					{
 						if (TSharedPtr<MessageChunkAudioContainer> sharedSelf = Self.Pin())
 						{
-							sharedSelf->m_lipSyncData = Cast<ILipSyncBaseData>(MoveTemp(lipsyncData));
+							sharedSelf->m_lipSyncData = Cast<ILipSyncBaseData>(lipsyncData);
 
 							UE_LOGFMT(VoxtaLog, Log, "Sucessfully genrated OVR lipsyncdata for "
 								"index {0}", sharedSelf->INDEX);
@@ -253,7 +256,7 @@ void MessageChunkAudioContainer::GenerateLipSync()
 					{
 						if (TSharedPtr<MessageChunkAudioContainer> sharedSelf = Self.Pin())
 						{
-							sharedSelf->m_lipSyncData = Cast<ILipSyncBaseData>(MoveTemp(lipsyncData));
+							sharedSelf->m_lipSyncData = Cast<ILipSyncBaseData>(lipsyncData);
 
 							UE_LOGFMT(VoxtaLog, Log, "Sucessfully genrated A2F lipsyncdata for "
 								"index {0}", sharedSelf->INDEX);

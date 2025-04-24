@@ -38,18 +38,6 @@ public:
 	explicit ILipSyncBaseData()
 	{
 		m_id = FGuid::NewGuid();
-		m_lipsyncType = LipSyncType::None;
-	};
-
-	/**
-	 * Assigns a unique ID to the instance and sets the LipSyncType in a const field.
-	 *
-	 * @param lipSyncType The type of data that this instance will hold (for which lipsync type)
-	 */
-	explicit ILipSyncBaseData(LipSyncType lipSyncType)
-	{
-		m_id = FGuid::NewGuid();
-		m_lipsyncType = lipSyncType;
 	};
 
 	/**
@@ -73,6 +61,5 @@ public:
 #pragma region data
 private:
 	FGuid m_id;
-	LipSyncType m_lipsyncType;
 #pragma endregion
 };

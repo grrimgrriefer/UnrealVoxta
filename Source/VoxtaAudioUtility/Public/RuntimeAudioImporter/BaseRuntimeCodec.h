@@ -21,29 +21,20 @@ public:
 	/**
 	 * Check if the given audio data appears to be valid
 	 */
-	virtual bool CheckAudioFormat(const FRuntimeBulkDataBuffer<uint8>& AudioData) PURE_VIRTUAL(FBaseRuntimeCodec::CheckAudioFormat, return false;)
+	virtual bool CheckAndFixAudioFormat(FRuntimeBulkDataBuffer<uint8>& AudioData) PURE_VIRTUAL(FBaseRuntimeCodec::CheckAudioFormat, return false;)
 
-		/**
-		 * Retrieve audio header information from an encoded source
-		 */
-		virtual bool GetHeaderInfo(FEncodedAudioStruct EncodedData, FRuntimeAudioHeaderInfo& HeaderInfo) PURE_VIRTUAL(FBaseRuntimeCodec::GetHeaderInfo, return false;)
+	/**
+	 * Retrieve audio header information from an encoded source
+	 */
+	virtual bool GetHeaderInfo(const FEncodedAudioStruct& EncodedData, FRuntimeAudioHeaderInfo& HeaderInfo) PURE_VIRTUAL(FBaseRuntimeCodec::GetHeaderInfo, return false;)
 
-		/**
-		 * Encode uncompressed PCM data into a compressed format
-		 */
-		virtual bool Encode(FDecodedAudioStruct DecodedData, FEncodedAudioStruct& EncodedData, uint8 Quality) PURE_VIRTUAL(FBaseRuntimeCodec::Encode, return false;)
-		/**
-		 * Decode compressed audio data into PCM format
-		 */
-		virtual bool Decode(FEncodedAudioStruct EncodedData, FDecodedAudioStruct& DecodedData) PURE_VIRTUAL(FBaseRuntimeCodec::Decode, return false;)
+	/**
+ 	 * Decode compressed audio data into PCM format
+	 */
+	virtual bool Decode(FEncodedAudioStruct EncodedData, FDecodedAudioStruct& DecodedData) PURE_VIRTUAL(FBaseRuntimeCodec::Decode, return false;)
 
-		/**
-		 * Retrieve the format applicable to this codec
-		 */
-		virtual ERuntimeAudioFormat GetAudioFormat() const PURE_VIRTUAL(FBaseRuntimeCodec::GetAudioFormat, return ERuntimeAudioFormat::Invalid;)
-
-		/**
-		 * Check if the given extension is supported by this codec
-		 */
-		virtual bool IsExtensionSupported(const FString& Extension) const PURE_VIRTUAL(FBaseRuntimeCodec::IsExtensionSupported, return false;)
+	/**
+	 * Retrieve the format applicable to this codec
+	 */
+	virtual ERuntimeAudioFormat GetAudioFormat() const PURE_VIRTUAL(FBaseRuntimeCodec::GetAudioFormat, return ERuntimeAudioFormat::Invalid;)
 };

@@ -282,7 +282,7 @@ public:
 	Audio2FaceRESTHandler* GetA2FHandler() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
-	void SetLogFilter(bool isCensorActive);
+	void SetCensoredLogs(bool isCensorActive);
 #pragma endregion
 
 #pragma region data
@@ -299,8 +299,6 @@ private:
 	bool m_enableGlobalAudioFallback = true;
 
 	TSharedPtr<VoxtaLogger> m_logUtility;
-	TSharedPtr<VoxtaApiRequestHandler> m_voxtaRequestApi;
-	TSharedPtr<VoxtaApiResponseHandler> m_voxtaResponseApi;
 	TSharedPtr<IHubConnection> m_hub;
 	TSharedPtr<Audio2FaceRESTHandler> m_A2FHandler;
 	TSharedPtr<TexturesCacheHandler> m_texturesCacheHandler;

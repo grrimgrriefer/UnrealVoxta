@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "VoxtaDefines.h"
 #include "VoxtaVersionData.generated.h"
 
 USTRUCT(BlueprintType)
@@ -35,10 +36,10 @@ public:
 
 private:
 	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Supported VoxtaServer version"))
-	FString m_compatibleServerVersion = TEXT("1.0.0-beta.132");
+	FString m_compatibleServerVersion = TARGETED_SERVER_VERSION;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Supported VoxtaServer API version"))
-	FString m_compatibleAPIVersion = TEXT("2024-11");
+	FString m_compatibleAPIVersion = TARGETED_API_VERSION;
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Current VoxtaServer version"))
 	FString m_serverVersion = TEXT("not connected");

@@ -17,7 +17,7 @@
 
 TexturesCacheHandler::TexturesCacheHandler()
 {
-	IImageWrapperModule& imageWrapperModule = FModuleManager::LoadModuleChecked<IImageWrapperModule>(FName(TEXT("imageWrapper")));
+	IImageWrapperModule& imageWrapperModule = FModuleManager::LoadModuleChecked<IImageWrapperModule>(FName(TEXT("ImageWrapper")));
 	m_imageWrappers =
 	{
 		imageWrapperModule.CreateImageWrapper(EImageFormat::PNG),
@@ -30,7 +30,7 @@ void TexturesCacheHandler::FetchTextureFromUrl(const FString& url, FDownloadedTe
 {
 	if (m_texturesCache.Contains(url))
 	{
-		onThumbnailFetched.ExecuteIfBound(true, m_texturesCache[url].TEXTURE, m_texturesCache[url].TEXTURE_SIZE);
+		onThumbnailFetched.ExecuteIfBound(true, m_texturesCache[url].TEXTURE.Get(), m_texturesCache[url].TEXTURE_SIZE);
 		return;
 	}
 	else if (m_pendingCallbacks.Contains(url))
@@ -87,7 +87,7 @@ void TexturesCacheHandler::FetchTextureFromUrl(const FString& url, FDownloadedTe
 									sharedSelf->m_texturesCache.Emplace(URL, TextureInfo(MoveTemp(texture), width, height));
 									for (auto& var : sharedSelf->m_pendingCallbacks[URL])
 									{
-										var.ExecuteIfBound(true, sharedSelf->m_texturesCache[URL].TEXTURE,
+										var.ExecuteIfBound(true, sharedSelf->m_texturesCache[URL].TEXTURE.Get(),
 											sharedSelf->m_texturesCache[URL].TEXTURE_SIZE);
 									}
 									sharedSelf->m_pendingCallbacks.Remove(URL);

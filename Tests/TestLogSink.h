@@ -21,7 +21,7 @@ public:
 	{
 		for (const TPair<FString, ELogVerbosity::Type>& entry : m_logMessages)
 		{
-			if (entry.Key.Contains(message))
+			if (entry.Key.Contains(message) && entry.Value == type)
 			{
 				return true;
 			}
@@ -29,5 +29,5 @@ public:
 		return false;
 	}
 private:
-	TMap<FString, ELogVerbosity::Type> m_logMessages;
+	TMultiMap<FString, ELogVerbosity::Type> m_logMessages;
 };

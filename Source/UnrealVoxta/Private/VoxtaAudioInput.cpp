@@ -16,6 +16,12 @@ void UVoxtaAudioInput::InitializeSocket(int bufferMs, int sampleRate, int inputC
 	}
 
 	m_voxtaClient = Cast<UVoxtaClient>(GetOuter());
+	if (!m_voxtaClient)
+	{
+		UE_LOGFMT(VoxtaLog, Error, "UVoxtaAudioInput must be created with UVoxtaClient as its outer; aborting socket initialization.");
+		return;
+	}
+
 	VoxtaClientState clientCurrentState = m_voxtaClient->GetCurrentState();
 	if (clientCurrentState == VoxtaClientState::Disconnected ||
 		clientCurrentState == VoxtaClientState::AttemptingToConnect ||
@@ -115,7 +121,7 @@ void UVoxtaAudioInput::StartStreaming(bool isTestMode)
 		UpdateConnectionState(VoxtaMicrophoneState::ActivelyStreaming);
 
 		UE_LOGFMT(VoxtaLog, Log, "Using predefined silence tresholds.");
-		ConfigureSilenceTresholds(m_micNoiseGateThreshold, m_silenceDetectionThreshold, m_micInputGain);
+		ConfigureSilenceThresholds(m_micNoiseGateThreshold, m_silenceDetectionThreshold, m_micInputGain);
 	}
 	else
 	{
@@ -151,12 +157,12 @@ const FString& UVoxtaAudioInput::GetInputDeviceName() const
 	return m_audioCaptureDevice.GetDeviceName();
 }
 
-void UVoxtaAudioInput::ConfigureSilenceTresholds(float micNoiseGateThreshold, float silenceDetectionThreshold, float micInputGain)
+void UVoxtaAudioInput::ConfigureSilenceThresholds(float micNoiseGateThreshold, float silenceDetectionThreshold, float micInputGain)
 {
 	m_micNoiseGateThreshold = micNoiseGateThreshold;
 	m_silenceDetectionThreshold = silenceDetectionThreshold;
 	m_micInputGain = micInputGain;
-	m_audioCaptureDevice.ConfigureSilenceTresholds(m_micNoiseGateThreshold, m_silenceDetectionThreshold, m_micInputGain);
+	m_audioCaptureDevice.ConfigureSilenceThresholds(m_micNoiseGateThreshold, m_silenceDetectionThreshold, m_micInputGain);
 	return;
 }
 
@@ -200,27 +206,35 @@ void UVoxtaAudioInput::UpdateConnectionState(VoxtaMicrophoneState newState)
 
 void UVoxtaAudioInput::OnSocketConnected()
 {
-	UE_LOGFMT(VoxtaLog, Log, "Succesfully connected Audiosocket (microphone input) to VoxtaServer.");
-
-	ChatSessionHandshake();
+	AsyncTask(ENamedThreads::GameThread, [this]()
+	{
+		UE_LOGFMT(VoxtaLog, Log, "Succesfully connected Audiosocket (microphone input) to VoxtaServer.");
+		ChatSessionHandshake();
+	});
 }
 
 void UVoxtaAudioInput::OnSocketConnectionError(const FString& error)
 {
-	UE_LOGFMT(VoxtaLog, Error, "AudioInput socket error: {0}. Closing socket.", error);
-	DisconnectFromChat();
+	AsyncTask(ENamedThreads::GameThread, [this, Error = error] ()
+	{
+		UE_LOGFMT(VoxtaLog, Error, "AudioInput socket error: {0}. Closing socket.", Error);
+		DisconnectFromChat();
+	});
 }
 
 void UVoxtaAudioInput::OnSocketClosed(int statusCode, const FString& reason, bool wasClean)
 {
-	if (wasClean)
+	AsyncTask(ENamedThreads::GameThread, [this, StatusCode = statusCode, Reason = reason, WasClean = wasClean] ()
 	{
-		UE_LOGFMT(VoxtaLog, Log, "AudioInput socket was closed. Reason: {0} Code: {1}", reason, statusCode);
-	}
-	else
-	{
-		UE_LOGFMT(VoxtaLog, Warning, "Audio socket was improperly closed because of reason: {0} Code: {1}",
-			reason, statusCode);
-	}
-	UpdateConnectionState(VoxtaMicrophoneState::NotConnected);
+		if (WasClean)
+		{
+			UE_LOGFMT(VoxtaLog, Log, "AudioInput socket was closed. Reason: {0} Code: {1}", Reason, StatusCode);
+		}
+		else
+		{
+			UE_LOGFMT(VoxtaLog, Warning, "Audio socket was improperly closed because of reason: {0} Code: {1}",
+				Reason, StatusCode);
+		}
+		UpdateConnectionState(VoxtaMicrophoneState::NotConnected);
+	});
 }

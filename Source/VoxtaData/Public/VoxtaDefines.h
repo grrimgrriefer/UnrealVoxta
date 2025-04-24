@@ -17,14 +17,17 @@ class UTexture2DDynamic;
 #define SIGNALR_STRINGVIEW(x) ConvertToSignalRValue(x)
 
 /** Helper function for SIGNALR_STRINGVIEW macro */
-template <typename T>
+template <typename T, typename = std::enable_if_t<std::is_convertible_v<T, FStringView>>>
 FSignalRValue ConvertToSignalRValue(const T& value);
 
 DECLARE_LOG_CATEGORY_EXTERN(VoxtaLog, Log, All);
 
-const FString VOXTA_CONTEXT_KEY = FString("UnrealVoxta - SimpleChat");
-const FString EMPTY_STRING = FString(TEXT(""));
+static const FString VOXTA_CONTEXT_KEY = FString("UnrealVoxta - SimpleChat");
+static const FString EMPTY_STRING = FString(TEXT(""));
 
 DECLARE_DELEGATE_ThreeParams(FDownloadedTextureDelegateNative, bool, const UTexture2DDynamic*, const FIntVector2&);
 
 VOXTADATA_API FString GuidToString(const FGuid& input);
+
+#define TARGETED_SERVER_VERSION TEXT("1.0.0-beta.132");
+#define TARGETED_API_VERSION TEXT("2024-11");

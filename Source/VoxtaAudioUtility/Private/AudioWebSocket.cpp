@@ -1,4 +1,4 @@
-// Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
+﻿// Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
 
 #include "AudioWebSocket.h"
 #include "VoxtaDefines.h"
@@ -13,6 +13,12 @@ AudioWebSocket::AudioWebSocket(const FString& serverIP, uint16 serverPort) :
 
 bool AudioWebSocket::Connect(const FGuid& sessionId)
 {
+	if (m_socketConnection.IsValid())
+	{
+		UE_LOGFMT(VoxtaLog, Warning, "AudioWebSocket (Microphone) connection was still active. Please close it before opening a new one.");
+		return false;
+	}
+
 	// websocket url might change in future versions, this is still correct as of beta.v132
 	m_sessionId = sessionId;
 	const FString uri = FString::Format(*FString(TEXT("ws://{0}:{1}/ws/audio/input/stream?sessionId={2}")),
@@ -88,11 +94,17 @@ void AudioWebSocket::Close(int code, const FString& reason)
 	}
 }
 
-void AudioWebSocket::Send(const void* buffer, unsigned int nBufferFrames)
+void AudioWebSocket::Send(const void* buffer, unsigned int nBufferBytes)
 {
+	if (buffer == nullptr || nBufferBytes == 0)
+	{
+		UE_LOGFMT(VoxtaLog, Warning, "Cannot send data. Buffer is {0} and bytecount is {1}.", buffer == nullptr ? "null" : "non‑null", nBufferBytes);
+		return;
+	}
+
 	if (m_socketConnection.IsValid())
 	{
-		m_socketConnection->Send(buffer, nBufferFrames, true);
+		m_socketConnection->Send(buffer, nBufferBytes, true);
 	}
 	else
 	{

@@ -84,8 +84,8 @@ TSharedPtr<FJsonValue> SerializeValue(const FSignalRValue& InValue)
         }
     default:
         {
-            UE_LOG(LogSignalR, Error, TEXT("Cannot convert JSON value to string"));
-            break;
+            UE_LOG(LogSignalR, Error, TEXT("Unknown FSignalRValue type – serialising as null"));
+            return MakeShared<FJsonValueNull>();
         }
     }
 
@@ -181,7 +181,7 @@ TArray<TSharedPtr<FHubMessage>> FJsonHubProtocol::ParseMessages(const FString& I
         TSharedPtr<FHubMessage> Message = ParseMessage(MessagePayload);
         if (Message.IsValid())
         {
-            Messages.Add(ParseMessage(MessagePayload));
+            Messages.Add(Message);
         }
 
         TmpStr = TmpStr.Mid(Pos + 1);
@@ -221,7 +221,8 @@ FSignalRValue DeserializeValue(TSharedPtr<FJsonValue> InValue)
     case EJson::Null:
         return FSignalRValue(nullptr);
     default:
-        return nullptr;
+        UE_LOG(LogSignalR, Error, TEXT("Unknown FJsonValue type – deserialising as null"));
+        return FSignalRValue(nullptr);
     }
 }
 
@@ -345,10 +346,12 @@ TSharedPtr<FHubMessage> FJsonHubProtocol::ParseMessage(const FString& MessagePay
                 break;
             }
             default:
+                UE_LOG(LogSignalR, Warning, TEXT("Received unknown message type: %d in message: %s"), 
+                    static_cast<int>(Obj->GetNumberField(TEXT("type"))), *MessagePayload);
                 break;
             }
 
-            return Message;
+            return Message.IsValid() ? Message : nullptr;
         }
     }
 }

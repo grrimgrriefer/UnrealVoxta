@@ -43,6 +43,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 	FDelegateHandle m_stateChangedEventHandle;
 	FDelegateHandle m_characterRegisteredEventHandle;
 	FDelegateHandle m_charMessageAddedEventHandle;
+	FDelegateHandle m_charMessageRemovedEventHandle;
 	FDelegateHandle m_audioPlaybackRegisteredEventHandle;
 
 	VoxtaClientState m_latestNewStateResponse;
@@ -90,7 +91,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		{
 			m_messages.Add(MakeTuple(baseCharData, message));
 		});
-		m_charMessageAddedEventHandle = m_voxtaClient->VoxtaClientCharMessageRemovedEventNative.AddLambda([this] (const FChatMessage& message)
+		m_charMessageRemovedEventHandle = m_voxtaClient->VoxtaClientCharMessageRemovedEventNative.AddLambda([this] (const FChatMessage& message)
 		{
 			int index = m_messages.IndexOfByPredicate([&message] (const TTuple<FBaseCharData, FChatMessage>& inItem)
 			{
@@ -119,7 +120,8 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		m_voxtaClient->VoxtaClientStateChangedEventNative.Remove(m_stateChangedEventHandle);
 		m_voxtaClient->VoxtaClientCharacterRegisteredEventNative.Remove(m_characterRegisteredEventHandle);
 		m_voxtaClient->VoxtaClientCharMessageAddedEventNative.Remove(m_charMessageAddedEventHandle);
-		m_voxtaClient->VoxtaClientAudioPlaybackRegisteredEventNative.Remove(m_charMessageAddedEventHandle);
+		m_voxtaClient->VoxtaClientCharMessageRemovedEventNative.Remove(m_charMessageRemovedEventHandle);
+		m_voxtaClient->VoxtaClientAudioPlaybackRegisteredEventNative.Remove(m_audioPlaybackRegisteredEventHandle);
 		m_voxtaClient->Disconnect();
 		m_voxtaClient = nullptr;
 		m_actorTestSpawner = nullptr;
@@ -576,7 +578,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			/** Setup */
 			m_cache_state = m_voxtaClient->GetCurrentState();
 			TestRunner->SetSuppressLogErrors();
-			m_voxtaClient->SetLogFilter(false);
+			m_voxtaClient->SetCensoredLogs(false);
 
 			/** Test */
 			m_voxtaClient->SendUserInput(text);

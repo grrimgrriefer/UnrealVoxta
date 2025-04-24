@@ -28,7 +28,7 @@ public:
 	/**  @return Immutable reference to the name of this character. */
 	FStringView GetName() const { return m_name; }
 
-	virtual FString GetThumnailUrl() const { return FString(); }
+	virtual FString GetThumbnailUrl() const { return FString(); }
 
 	/**
 	 * Create an instance of the datacontainer for the CharData.
@@ -51,12 +51,12 @@ public:
 #pragma region data
 protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Character ID"))
-	FGuid m_id;
+	FGuid m_id = FGuid();
 
 	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Name"))
-	FString m_name;
+	FString m_name = EMPTY_STRING;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Character ID as formatted string"))
-	FString m_idAsString;
+	FString m_idAsString = EMPTY_STRING;
 #pragma endregion
 };
