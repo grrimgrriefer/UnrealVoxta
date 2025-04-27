@@ -2,6 +2,7 @@
 
 #pragma once
 #include "CoreMinimal.h"
+#include "Subsystems/GameInstanceSubsystem.h"
 #include "VoxtaData/Public/VoxtaClientState.h"
 #include "VoxtaDefines.h"
 #include "VoxtaClient.generated.h"
@@ -31,6 +32,7 @@ struct FAiCharData;
 struct FUserCharData;
 struct FBaseCharData;
 struct FChatSession;
+struct FChatMessage;
 struct FVoxtaVersionData;
 
 /**
@@ -252,11 +254,11 @@ public:
 	 * for the audio playback to be completed, or if there's no audio playback and we can just skip it.
 	 *
 	 * @param characterId The VoxtaServer assigned id of the character that is being registered for.
-	 * @param UVoxtaAudioPlayback The audioPlayback component for the specified characterId.
+	 * @param playbackHandler The audioPlayback component for the specified characterId.
 	 *
 	 * @return True if the character was registered successfully (no duplicate playback for the same id)
 	 */
-	bool TryRegisterPlaybackHandler(const FGuid& characterId, TWeakObjectPtr<UVoxtaAudioPlayback> UVoxtaAudioPlayback);
+	bool TryRegisterPlaybackHandler(const FGuid& characterId, TWeakObjectPtr<UVoxtaAudioPlayback> playbackHandler);
 
 	/**
 	 * Remove the weakPointer to the audioPlayback that was registered for the specified characterId.
@@ -279,10 +281,16 @@ public:
 	const FChatSession* GetChatSession() const;
 
 	/** @return An reference to the A2F handler instance, should probably be moved elsewhere, idk yet. */
-	Audio2FaceRESTHandler* GetA2FHandler() const;
+	TWeakPtr<Audio2FaceRESTHandler> GetA2FHandler() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
 	void SetCensoredLogs(bool isCensorActive);
+
+	UFUNCTION(BlueprintPure, Category = "Voxta")
+	bool IsLogCensorActive() const;
+
+	UFUNCTION(BlueprintPure, Category = "Voxta")
+	bool IsGlobalAudioFallbackActive() const;
 #pragma endregion
 
 #pragma region data
@@ -345,7 +353,7 @@ private:
 	 * Listener to the reponse from the Voxta server.
 	 *
 	 * Note: This reponse just notifies the internal VoxtaClient that the server received
-	 * the message sucessfully. This response does NOT contain any new information, as those are sent
+	 * the message Successfully. This response does NOT contain any new information, as those are sent
 	 * via the OnReceivedMessage function.
 	 *
 	 * @param deliveryReceiptThe receipt of delivery, given to us by the Server. This should not contain any errors.
@@ -400,18 +408,6 @@ private:
 	 * @param messageId The ID of the message that has completed the playback on the client.
 	 */
 	void NotifyAudioPlaybackComplete(const FGuid& messageId);
-
-	/**
-	 * Fetches a raw pointer to the ChatMessage that maches the id given in the parameters.
-	 *
-	 * Note: The text & audio in this data is not guarenteed to be complete. Be aware that only after the
-	 * id has been broadcasted by VoxtaClientCharMessageAddedEvent that the message is considered final.
-	 *
-	 * @param messageId The id of the chatmessage you want to retrieve.
-	 *
-	 * @return A raw pointer to the chatmessage, or nullptr if it was not found.
-	 */
-	FChatMessage* GetChatMessageById(const FGuid& messageId) const;
 
 	/**
 	 * Update the internal 'current state' to a new state.

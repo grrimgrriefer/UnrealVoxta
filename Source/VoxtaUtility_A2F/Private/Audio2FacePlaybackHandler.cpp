@@ -7,14 +7,12 @@
 #include "LipSyncDataA2F.h"
 
 #ifndef VOXTA_LOG_DEFINED
-#if WITH_EDITOR
 DEFINE_LOG_CATEGORY(VoxtaLog);
 #define VOXTA_LOG_DEFINED
 #endif
-#endif
 
 // ArkitNames https://developer.apple.com/documentation/arkit/arfaceanchor/blendshapelocation
-const FName UAudio2FacePlaybackHandler::CURVE_NAMES[52] =
+const FName UAudio2FacePlaybackHandler::CURVE_NAMES[UAudio2FacePlaybackHandler::CURVE_COUNT] =
 {
 	EASY_NAME("EyeBlinkLeft"),
 	EASY_NAME("EyeLookDownLeft"),
@@ -72,26 +70,43 @@ const FName UAudio2FacePlaybackHandler::CURVE_NAMES[52] =
 
 void UAudio2FacePlaybackHandler::Initialize(UAudioComponent* audioComponent)
 {
+	if (!audioComponent)
+	{
+		UE_LOGFMT(VoxtaLog, Warning, "Audio2FacePlaybackHandler initialised with a nullptr AudioComponent, Play() will abort.");
+		return;
+	}
+	
 	m_audioComponent = audioComponent;
 }
 
-void UAudio2FacePlaybackHandler::GetA2FCurveWeights(TArray<float>& targetArrayRef) const
+void UAudio2FacePlaybackHandler::GetA2FCurveWeights(TArray<float>& targetArrayRef)
 {
 	if (m_forcedNeutral)
 	{
-		targetArrayRef.Empty(52);
+		targetArrayRef.Init(0.f, UAudio2FacePlaybackHandler::CURVE_COUNT);
 	}
 	else
 	{
+		FScopeLock Lock(&m_curvesGuard);
 		targetArrayRef = m_currentCurves;
 	}
 }
 
 void UAudio2FacePlaybackHandler::Play(const ULipSyncDataA2F* lipsyncData)
 {
-	m_lipsyncData = lipsyncData;
+	if (!m_audioComponent)
+	{
+		UE_LOGFMT(VoxtaLog, Error, "Play() called before Initialise() or after Stop(); aborting to avoid crash.");
+		return;
+	}
 
+	m_lipsyncData = lipsyncData;
 	m_forcedNeutral = false;
+
+	{
+		FScopeLock Lock(&m_curvesGuard);
+		m_currentCurves.Init(0.f, UAudio2FacePlaybackHandler::CURVE_COUNT);
+	}
 
 	UE_LOGFMT(VoxtaLog, Log, "Starting playback of audio, along with A2F lip syncing.");
 	m_playbackPercentHandle = m_audioComponent->OnAudioPlaybackPercentNative.AddUObject(
@@ -107,10 +122,36 @@ void UAudio2FacePlaybackHandler::Stop()
 	{
 		return;
 	}
+
+	m_audioComponent->Stop();
 	m_audioComponent->OnAudioPlaybackPercentNative.Remove(m_playbackPercentHandle);
 	m_audioComponent->OnAudioFinishedNative.Remove(m_playbackFinishedHandle);
 	m_audioComponent = nullptr;
 	InitNeutralPose();
+}
+
+void UAudio2FacePlaybackHandler::BeginDestroy()
+{
+	if (m_audioComponent)
+	{
+		if (m_playbackPercentHandle.IsValid())
+		{
+			m_audioComponent->OnAudioPlaybackPercentNative.Remove(m_playbackPercentHandle);
+			m_playbackPercentHandle.Reset();
+		}
+
+		if (m_playbackFinishedHandle.IsValid())
+		{
+			m_audioComponent->OnAudioFinishedNative.Remove(m_playbackFinishedHandle);
+			m_playbackFinishedHandle.Reset();
+		}
+
+		m_audioComponent = nullptr;
+	}
+
+	m_lipsyncData = nullptr;
+
+	Super::BeginDestroy();
 }
 
 void UAudio2FacePlaybackHandler::OnAudioPlaybackPercent(const UAudioComponent*, const USoundWave* soundWave, float Percent)
@@ -125,10 +166,11 @@ void UAudio2FacePlaybackHandler::OnAudioPlaybackPercent(const UAudioComponent*, 
 	int closestFrame = FMath::RoundToInt(currentFrame);
 	if (closestFrame >= totalFrameCount)
 	{
-		InitNeutralPose();
-		UE_LOGFMT(VoxtaLog, Error, "The closest frame was outside of bounds, this should be impossible.");
-		return;
+		closestFrame = totalFrameCount - 1;
+		UE_LOGFMT(VoxtaLog, Warning, "The closest frame was outside of bounds, this should be impossible.");
 	}
+	FScopeLock Lock(&m_curvesGuard);
+
 	if (FMath::IsNearlyEqual(currentFrame, closestFrame))
 	{
 		m_currentCurves = m_lipsyncData->GetA2FCurveWeights()[closestFrame];
@@ -142,7 +184,9 @@ void UAudio2FacePlaybackHandler::OnAudioPlaybackPercent(const UAudioComponent*, 
 		const TArray<float>& floor = m_lipsyncData->GetA2FCurveWeights()[floorFrame];
 		const TArray<float>& ceiling = m_lipsyncData->GetA2FCurveWeights()[ceilingFrame];
 
-		for (int i = 0; i < floor.Num(); i++)
+		const int32 NumCurves = floor.Num();
+		m_currentCurves.SetNum(NumCurves);
+		for (int32 i = 0; i < NumCurves; ++i)
 		{
 			m_currentCurves[i] = (floor[i] * (1.f - normalizedBlend)) + (ceiling[i] * normalizedBlend);
 		}
@@ -156,7 +200,7 @@ void UAudio2FacePlaybackHandler::OnAudioPlaybackPercent(const UAudioComponent*, 
 
 void UAudio2FacePlaybackHandler::OnAudioPlaybackFinished(UAudioComponent* audioComponent)
 {
-	InitNeutralPose();
+	Stop();
 }
 
 void UAudio2FacePlaybackHandler::InitNeutralPose()

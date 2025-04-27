@@ -50,7 +50,13 @@ TSharedPtr<IHubConnection> FSignalRModule::CreateHubConnection(const FString& In
     check(bInitialized);
     check(GEngine);
 
-    return GEngine->GetEngineSubsystem<USignalRSubsystem>()->CreateHubConnection(InUrl, InHeaders);
+    if (USignalRSubsystem* Subsystem = GEngine->GetEngineSubsystem<USignalRSubsystem>())
+    {
+        return Subsystem->CreateHubConnection(InUrl, InHeaders);
+    }
+    
+    UE_LOG(LogSignalR, Error, TEXT("USignalRSubsystem is not available, returning nullptr"));
+    return nullptr;
 }
 
 void FSignalRModule::StartupModule()
@@ -63,4 +69,5 @@ void FSignalRModule::StartupModule()
 void FSignalRModule::ShutdownModule()
 {
     bInitialized = false;
+    Singleton = nullptr;
 }

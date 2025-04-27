@@ -7,6 +7,9 @@
 /**
  * A factory for constructing the codecs used for encoding and decoding audio data
  * Codecs are intended to be registered as modular features
+ * 
+ * Thread Safety: This class is thread-safe and can be accessed from multiple threads simultaneously.
+ * Individual codec implementations are responsible for their own thread safety.
  */
 class FRuntimeCodecFactory
 {
@@ -19,23 +22,25 @@ public:
 	 *
 	 * @return An array of all available codecs
 	 */
-	virtual TArray<FBaseRuntimeCodec*> GetCodecs();
+	TArray<FBaseRuntimeCodec*> GetCodecs();
 
 	/**
 	 * Get the codec based on the audio format
 	 *
 	 * @param AudioFormat The format from which to get the codec
-	 * @return The detected codec, or a nullptr if it could not be detected
+	 * 
+	 * @return Array of detected codecs, or an empty array if none could be detected
 	 */
-	virtual TArray<FBaseRuntimeCodec*> GetCodecs(ERuntimeAudioFormat AudioFormat);
+	TArray<FBaseRuntimeCodec*> GetCodecs(ERuntimeAudioFormat AudioFormat);
 
 	/**
 	 * Get the codec based on the audio data (slower, but more reliable)
 	 *
 	 * @param AudioData The audio data from which to get the codec
-	 * @return The detected codec, or a nullptr if it could not be detected
+	 * 
+	 * @return Array of detected codecs, or an empty array if none could be detected
 	 */
-	virtual TArray<FBaseRuntimeCodec*> GetCodecs(FRuntimeBulkDataBuffer<uint8>& AudioData);
+	TArray<FBaseRuntimeCodec*> GetCodecs(FRuntimeBulkDataBuffer<uint8>& AudioData);
 
 	/**
 	 * Get the name of the modular feature

@@ -9,7 +9,7 @@
 /**
  * FBaseCharData
  * Read-only data struct containing all the universal information fields. Can be used by systems who don't need to
- * know if this is an AiCharacer or a UserCharacter representing the User (player).
+ * know if this is an AiCharacter or a UserCharacter representing the User (player).
  *
  * Resides in the UVoxtaClient directly.
  * Cannot be retrieved or fetched through any public API, but will be referenced via the
@@ -28,12 +28,17 @@ public:
 	/**  @return Immutable reference to the name of this character. */
 	FStringView GetName() const { return m_name; }
 
-	virtual FString GetThumbnailUrl() const { return FString(); }
+	/**
+	 * Derived classes should override this to provide character-specific thumbnails.
+	 * 
+	 * @return URL to the thumbnail image for this character. Empty by default.
+	 */
+	virtual FString GetThumbnailUrl() const PURE_VIRTUAL(FBaseCharData::GetThumbnailUrl, return FString();)
 
 	/**
 	 * Create an instance of the datacontainer for the CharData.
 	 *
-	 * @param id The id (guid in string version) that the VoxtaServer has assigned to this character.
+	 * @param id The GUID that the VoxtaServer has assigned to this character.
 	 * @param name The name of this character, as reported by VoxtaServer
 	 */
 	explicit FBaseCharData(FGuid id, FStringView name) :

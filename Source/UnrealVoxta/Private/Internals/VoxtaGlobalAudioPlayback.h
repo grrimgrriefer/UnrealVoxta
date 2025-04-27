@@ -14,7 +14,7 @@ class UVoxtaGlobalAudioPlayback : public UVoxtaAudioPlayback
 public:
 	void SetEnabled(bool newState);
 
-	bool IsEnabled();
+	bool IsEnabled() const;
 
 	virtual void PlaybackMessage(const FBaseCharData& sender, const FChatMessage& message) override;
 #pragma endregion
@@ -36,6 +36,7 @@ private:
 #pragma endregion
 
 #pragma region private API
+private:
 	void Prepare();
 #pragma endregion
 };

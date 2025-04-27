@@ -42,66 +42,6 @@ UImportedSoundWave* UImportedSoundWave::CreateImportedSoundWave()
 	return NewObject<UImportedSoundWave>();
 }
 
-void UImportedSoundWave::DuplicateSoundWave(bool bUseSharedAudioBuffer, const FOnDuplicateSoundWave& Result)
-{
-	DuplicateSoundWave(bUseSharedAudioBuffer, FOnDuplicateSoundWaveNative::CreateWeakLambda(this, [Result] (bool bSucceeded, UImportedSoundWave* DuplicatedSoundWave)
-		{
-			Result.ExecuteIfBound(bSucceeded, DuplicatedSoundWave);
-		}));
-}
-
-void UImportedSoundWave::DuplicateSoundWave(bool bUseSharedAudioBuffer, const FOnDuplicateSoundWaveNative& Result)
-{
-	if (IsInGameThread())
-	{
-		AsyncTask(ENamedThreads::AnyBackgroundHiPriTask, [WeakThis = MakeWeakObjectPtr(this), bUseSharedAudioBuffer, Result] ()
-		{
-			if (WeakThis.IsValid())
-			{
-				WeakThis->DuplicateSoundWave(bUseSharedAudioBuffer, Result);
-			}
-			else
-			{
-				Result.ExecuteIfBound(false, nullptr);
-			}
-		});
-		return;
-	}
-
-	auto ExecuteResult = [Result] (bool bSucceeded, UImportedSoundWave* DuplicatedSoundWave)
-		{
-			AsyncTask(ENamedThreads::GameThread, [Result, bSucceeded, DuplicatedSoundWave] ()
-			{
-				if (DuplicatedSoundWave)
-				{
-					DuplicatedSoundWave->ClearInternalFlags(EInternalObjectFlags::Async);
-				}
-				Result.ExecuteIfBound(bSucceeded, DuplicatedSoundWave);
-			});
-		};
-
-	UImportedSoundWave* DuplicatedSoundWave = NewObject<UImportedSoundWave>(GetOuter());
-	if (!DuplicatedSoundWave)
-	{
-		UE_LOG(AudioLog, Error, TEXT("Failed to duplicate the imported sound wave '%s'"), *GetName());
-		Result.ExecuteIfBound(false, nullptr);
-		return;
-	}
-	DuplicatedSoundWave->SetInternalFlags(EInternalObjectFlags::Async);
-	FRAIScopeLock Lock(&*DataGuard);
-	DuplicatedSoundWave->PCMBufferInfo = bUseSharedAudioBuffer ? PCMBufferInfo : MakeShared<FPCMStruct>(*PCMBufferInfo);
-	DuplicatedSoundWave->bStopSoundOnPlaybackFinish = bStopSoundOnPlaybackFinish;
-	DuplicatedSoundWave->ImportedAudioFormat = ImportedAudioFormat;
-	DuplicatedSoundWave->Duration = Duration;
-	DuplicatedSoundWave->SetSampleRate(GetSampleRate());
-	DuplicatedSoundWave->NumChannels = NumChannels;
-	if (bUseSharedAudioBuffer)
-	{
-		DuplicatedSoundWave->DataGuard = DataGuard;
-	}
-	ExecuteResult(true, DuplicatedSoundWave);
-}
-
 Audio::EAudioMixerStreamDataFormat::Type UImportedSoundWave::GetGeneratedPCMDataFormat() const
 {
 	return Audio::EAudioMixerStreamDataFormat::Type::Float;
@@ -142,7 +82,8 @@ int32 UImportedSoundWave::OnGeneratePCMAudio(TArray<uint8>& OutAudio, int32 NumS
 		}
 
 		// Filling in OutAudio array with the retrieved PCM data
-		OutAudio = TArray<uint8>(reinterpret_cast<uint8*>(RetrievedPCMDataPtr), RetrievedPCMDataSize);
+		OutAudio.Reset();
+		OutAudio.Append(reinterpret_cast<uint8*>(RetrievedPCMDataPtr), RetrievedPCMDataSize);
 
 		// Increasing the number of frames played
 		SetNumOfPlayedFrames_Internal(GetNumOfPlayedFrames_Internal() + (NumSamples / NumChannels));
@@ -213,7 +154,7 @@ void UImportedSoundWave::Parse(FAudioDevice* AudioDevice, const UPTRINT NodeWave
 	{
 		if (!PlaybackFinishedBroadcast)
 		{
-			UE_LOG(AudioLog, Warning, TEXT("Playback of the sound wave '%s' has been completed"), *GetName());
+			UE_LOG(AudioLog, Log, TEXT("Playback of the sound wave '%s' has been completed"), *GetName());
 
 			PlaybackFinishedBroadcast = true;
 

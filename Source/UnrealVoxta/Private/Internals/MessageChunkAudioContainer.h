@@ -6,7 +6,7 @@
 #include "LipSyncType.h"
 #include "MessageChunkState.h"
 
-class USoundWaveProcedural;
+class UImportedSoundWave;
 class Audio2FaceRESTHandler;
 class ILipSyncBaseData;
 
@@ -34,7 +34,7 @@ public:
 	 */
 	MessageChunkAudioContainer(const FString& fullUrl,
 		LipSyncType lipSyncType,
-		Audio2FaceRESTHandler* A2FRestHandler,
+		TWeakPtr<Audio2FaceRESTHandler> A2FRestHandler,
 		TFunction<void(const MessageChunkAudioContainer* newState)> callback,
 		int id);
 
@@ -55,7 +55,10 @@ public:
 
 	/** @return an immutable pointer to the LipSync dataobject, this is guarenteed to implement the ILipSyncDataBase interface. */
 	template <typename T, typename = std::enable_if_t<std::is_base_of_v<ILipSyncBaseData, T>>>
-	const T* GetLipSyncData() const;
+	const T* GetLipSyncData() const
+	{
+		return StaticCast<const T*>(m_lipSyncData);
+	}
 
 	/** @return The current state of this instance. */
 	MessageChunkState GetCurrentState() const;
@@ -65,7 +68,8 @@ public:
 	 *
 	 * Note: UE requires a non-const pointer to play, which is why this doesn't return an immutable pointer.
 	 */
-	USoundWaveProcedural* GetSoundWave() const;
+	UImportedSoundWave* GetSoundWave() const;
+
 #pragma endregion
 
 #pragma region data
@@ -81,11 +85,11 @@ private:
 	const TFunction<void(const MessageChunkAudioContainer* chunk)> ON_STATE_CHANGED;
 
 	TArray<uint8> m_rawAudioData;
-	Audio2FaceRESTHandler* m_A2FRestHandler = nullptr;
+	TWeakPtr<Audio2FaceRESTHandler> m_A2FRestHandler = nullptr;
 	MessageChunkState m_state = MessageChunkState::Idle;
 
 	// UObjects added to root while this object is alive; as UPROPERTY doesn't work with normal classes
-	USoundWaveProcedural* m_soundWave = nullptr;
+	UImportedSoundWave* m_soundWave = nullptr;
 	ILipSyncBaseData* m_lipSyncData = nullptr;
 #pragma endregion
 

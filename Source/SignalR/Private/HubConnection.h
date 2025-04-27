@@ -32,35 +32,91 @@
 
 class FConnection;
 
+/**
+ * Implements a connection to a SignalR hub.
+ * Provides methods to start and stop the connection, invoke hub methods,
+ * and register handlers for hub method invocations.
+ */
 class FHubConnection : public IHubConnection, FTickableGameObject
 {
 public:
-	static const constexpr float PingTimer = 10.0f;
+	static constexpr float PingTimer = 10.0f;
 
+	/**
+	 * Creates a new connection to a SignalR hub.
+	 *
+	 * @param InUrl The URL of the SignalR hub.
+	 * @param InHeaders HTTP headers to include in requests to the server.
+	 */
 	FHubConnection(const FString& InUrl, const TMap<FString, FString>& InHeaders);
 	virtual ~FHubConnection();
 
 	//~ Begin IHubConnection Interface
+
+	/**
+	 * Starts the hub connection.
+	 */
 	virtual void Start() override;
+	/**
+	 * Stops the hub connection.
+	 */
 	virtual void Stop() override;
 
+	/**
+	 * Gets the event that is triggered when the hub connection is established.
+	 *
+	 * @return Reference to the hub connected event.
+	 */
 	FORCEINLINE virtual FOnHubConnectedEvent& OnConnected() override
 	{
 		return OnHubConnectedEvent;
 	}
 
+	/**
+	 * Gets the event that is triggered when a hub connection error occurs.
+	 *
+	 * @return Reference to the hub connection error event.
+	 */
 	FORCEINLINE virtual FOnHubConnectionErrorEvent& OnConnectionError() override
 	{
 		return OnHubConnectionErrorEvent;
 	}
 
+	/**
+	 * Gets the event that is triggered when the hub connection is closed.
+	 *
+	 * @return Reference to the hub connection closed event.
+	 */
 	FORCEINLINE virtual FHubConnectionClosedEvent& OnClosed() override
 	{
 		return OnHubConnectionClosedEvent;
 	}
 
+	/**
+	 * Registers a handler for a hub method invocation.
+	 *
+	 * @param EventName The name of the hub method.
+	 
+	 * @return Reference to the method invocation delegate.
+	 */
 	virtual FOnMethodInvocation& On(const FString& EventName) override;
+
+	/**
+	 * Invokes a hub method with the specified arguments and waits for the result.
+	 *
+	 * @param EventName The name of the hub method to invoke.
+	 * @param InArguments The arguments to pass to the hub method.
+
+	 * @return Reference to the method completion delegate that will be called when the method completes.
+	 */
 	virtual FOnMethodCompletion& Invoke(const FString& EventName, const TArray<FSignalRValue>& InArguments = TArray<FSignalRValue>()) override;
+
+	/**
+	 * Sends a hub method invocation with the specified arguments without waiting for a result.
+	 *
+	 * @param InEventName The name of the hub method to invoke.
+	 * @param InArguments The arguments to pass to the hub method.
+	 */
 	virtual void Send(const FString& InEventName, const TArray<FSignalRValue>& InArguments = TArray<FSignalRValue>()) override;
 	//~ End IHubConnection Interface
 

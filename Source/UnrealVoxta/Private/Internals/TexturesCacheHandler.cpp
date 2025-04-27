@@ -28,24 +28,33 @@ TexturesCacheHandler::TexturesCacheHandler()
 
 void TexturesCacheHandler::FetchTextureFromUrl(const FString& url, FDownloadedTextureDelegateNative onThumbnailFetched)
 {
-	if (m_texturesCache.Contains(url))
 	{
-		onThumbnailFetched.ExecuteIfBound(true, m_texturesCache[url].TEXTURE.Get(), m_texturesCache[url].TEXTURE_SIZE);
-		return;
-	}
-	else if (m_pendingCallbacks.Contains(url))
-	{
-		m_pendingCallbacks[url].Emplace(onThumbnailFetched);
-		return;
-	}
+		FScopeLock lock(&m_cacheLock);
 
-	TArray<FDownloadedTextureDelegateNative> callbackArray;
-	callbackArray.Add(onThumbnailFetched);
-	m_pendingCallbacks.Add(url, callbackArray);
+		if (const TextureInfo* cached = m_texturesCache.Find(url))
+		{
+			if (const UTexture2DDynamic* tex = cached->TEXTURE.Get())
+			{
+				onThumbnailFetched.ExecuteIfBound(true, tex, cached->TEXTURE_SIZE);
+				return;
+			}
+			m_texturesCache.Remove(url);
+		}
+		else if (m_pendingCallbacks.Contains(url))
+		{
+			m_pendingCallbacks[url].Emplace(onThumbnailFetched);
+			return;
+		}
+
+		TArray<FDownloadedTextureDelegateNative> callbackArray;
+		callbackArray.Add(onThumbnailFetched);
+		m_pendingCallbacks.Add(url, callbackArray);
+	}
 
 	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> httpRequest = FHttpModule::Get().CreateRequest();
 	httpRequest->SetURL(url);
 	httpRequest->SetVerb(TEXT("GET"));
+	httpRequest->SetTimeout(10.0f);
 	httpRequest->OnProcessRequestComplete().BindLambda([Self = TWeakPtr<TexturesCacheHandler>(AsShared()), URL = url]
 	(FHttpRequestPtr request, FHttpResponsePtr response, bool bWasSuccessful)
 		{
@@ -54,6 +63,7 @@ void TexturesCacheHandler::FetchTextureFromUrl(const FString& url, FDownloadedTe
 				if (bWasSuccessful && response.IsValid() && EHttpResponseCodes::IsOk(response->GetResponseCode()) &&
 					response->GetContentLength() > 0 && response->GetContent().Num() > 0)
 				{				
+					FScopeLock lock(&sharedSelf->m_wrapperLock);
 					for (auto& imageWrapper : sharedSelf->m_imageWrappers)
 					{
 						if (imageWrapper.IsValid() &&
@@ -83,27 +93,36 @@ void TexturesCacheHandler::FetchTextureFromUrl(const FString& url, FDownloadedTe
 											{
 												textureResource->WriteRawToTexture_RenderThread(RawData);
 											});
-									}
-									sharedSelf->m_texturesCache.Emplace(URL, TextureInfo(MoveTemp(texture), width, height));
-									for (auto& var : sharedSelf->m_pendingCallbacks[URL])
+									}									
+
 									{
-										var.ExecuteIfBound(true, sharedSelf->m_texturesCache[URL].TEXTURE.Get(),
-											sharedSelf->m_texturesCache[URL].TEXTURE_SIZE);
-									}
-									sharedSelf->m_pendingCallbacks.Remove(URL);
-									return;
+										FScopeLock cacheLock(&sharedSelf->m_cacheLock);
+										sharedSelf->m_texturesCache.Emplace(URL, TextureInfo(MoveTemp(texture), width, height));
+										for (auto& var : sharedSelf->m_pendingCallbacks[URL])
+										{
+											var.ExecuteIfBound(true, sharedSelf->m_texturesCache[URL].TEXTURE.Get(),
+												sharedSelf->m_texturesCache[URL].TEXTURE_SIZE);
+										}
+										sharedSelf->m_pendingCallbacks.Remove(URL);
+									}									
 								}
+								return;
 							}
 						}
 					}
 				}
+
 				// Failed to process / fetch image
 				SENSITIVE_LOG1(VoxtaLog, Warning, "Failed to fetch thumbnail from: {0}", URL);
-				for (auto& var : sharedSelf->m_pendingCallbacks[URL])
 				{
-					var.ExecuteIfBound(false, nullptr, FIntVector2());
+					FScopeLock lock(&sharedSelf->m_cacheLock);
+					for (auto& var : sharedSelf->m_pendingCallbacks[URL])
+					{
+						var.ExecuteIfBound(false, nullptr, FIntVector2());
+					}
+					sharedSelf->m_pendingCallbacks.Remove(URL);
 				}
-				sharedSelf->m_pendingCallbacks.Remove(URL);
+				
 			}
 			else
 			{

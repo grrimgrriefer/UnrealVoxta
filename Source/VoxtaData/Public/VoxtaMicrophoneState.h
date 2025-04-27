@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 
 /**
- * MicrophoneState
+ * VoxtaMicrophoneState
  * To keep track of what's going on with the VoxtaAudioInput internals, as well as user-friendly logging.
  */
 UENUM(BlueprintType, Category = "Voxta")

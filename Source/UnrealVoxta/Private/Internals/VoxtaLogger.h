@@ -24,7 +24,7 @@ public:
 
 #pragma region FOutputDevice overrides
 protected:
-	/** Custom output implementation, triggered for every signle message that is logged, while registered. */
+	/** Custom output implementation, triggered for every single message that is logged, while registered. */
 	virtual void Serialize(const TCHAR* Message, ELogVerbosity::Type Verbosity, const class FName& Category) override;
 #pragma endregion
 

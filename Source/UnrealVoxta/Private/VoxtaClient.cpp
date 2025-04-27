@@ -17,19 +17,7 @@
 #include "VoxtaHelperFunctionLibrary.h"
 #include "VoxtaData/Public/ChatSession.h"
 #include "VoxtaData/Public/VoxtaVersionData.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseBase.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseWelcome.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseCharacterList.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseChatStarted.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseChatMessageStart.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseChatMessageChunk.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseChatMessageEnd.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseChatMessageCancelled.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseChatUpdate.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseSpeechTranscription.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseError.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseContextUpdated.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseChatClosed.h"
+#include "VoxtaData/Public/ServerResponses.h"
 #include "LogUtility/Public/Defines.h"
 
 void UVoxtaClient::Initialize(FSubsystemCollectionBase& collection)
@@ -40,7 +28,7 @@ void UVoxtaClient::Initialize(FSubsystemCollectionBase& collection)
 	m_A2FHandler = MakeShared<Audio2FaceRESTHandler>();
 	m_texturesCacheHandler = MakeShared<TexturesCacheHandler>();
 	m_globalAudioPlaybackComp = nullptr;
-	isSensitiveLogsCensored = true;
+	SensitiveLogging::isSensitiveLogsCensored = true;
 	Super::Initialize(collection);
 }
 
@@ -62,6 +50,13 @@ void UVoxtaClient::StartConnection(const FString& ipv4Address, int port)
 		return;
 	}
 
+	USignalRSubsystem* signalR = GEngine ? GEngine->GetEngineSubsystem<USignalRSubsystem>() : nullptr;
+	if (!signalR)
+	{
+		UE_LOGFMT(VoxtaLog, Error, "SignalR subsystem unavailable, aborting connection attempt.");
+		return;
+	}
+
 	if (port < 0 || port > MAX_uint16)
 	{
 		UE_LOGFMT(VoxtaLog, Error, "Port {0} is an impossible number, please double check your settings. "
@@ -78,7 +73,7 @@ void UVoxtaClient::StartConnection(const FString& ipv4Address, int port)
 	m_hostAddress = (ipv4Address.ToLower() == UVoxtaHelperFunctionLibrary::LOCALHOST) ? TEXT("127.0.0.1") : ipv4Address;
 	m_hostPort = port;
 
-	m_hub = GEngine->GetEngineSubsystem<USignalRSubsystem>()->CreateHubConnection(
+	m_hub = signalR->CreateHubConnection(
 		FString::Format(*EASY_STRING("http://{0}:{1}/hub"), {
 			m_hostAddress,
 			m_hostPort
@@ -93,6 +88,11 @@ void UVoxtaClient::StartConnection(const FString& ipv4Address, int port)
 
 void UVoxtaClient::Disconnect(bool silent)
 {
+	if (m_voiceInput != nullptr && m_voiceInput->IsInitialized())
+	{
+		m_voiceInput->Cleanup();
+	}
+
 	if (m_currentState == VoxtaClientState::Disconnected)
 	{
 		UE_LOGFMT(VoxtaLog, Warning, "VoxtaClient is currently not connected, ignoring disconnect attempt");
@@ -103,7 +103,10 @@ void UVoxtaClient::Disconnect(bool silent)
 		SetState(VoxtaClientState::Terminated);
 	}
 	StopChatInternal();
-	m_hub->Stop();
+	if (m_hub.IsValid())
+	{
+		m_hub->Stop();
+	}
 }
 
 void UVoxtaClient::StartChatWithCharacter(const FGuid& charId, const FString& context)
@@ -136,7 +139,21 @@ void UVoxtaClient::StartChatWithCharacter(const FGuid& charId, const FString& co
 
 void UVoxtaClient::SetGlobalAudioFallbackEnabled(bool newState)
 {
-	GetOrCreateGlobalAudioFallbackInternal()->GetGlobalPlaybackComponent()->SetEnabled(newState);
+	if (AVoxtaGlobalAudioPlaybackHolder* holder = GetOrCreateGlobalAudioFallbackInternal())
+	{
+		if (UVoxtaGlobalAudioPlayback* comp = holder->GetGlobalPlaybackComponent())
+		{
+			comp->SetEnabled(newState);
+		}
+		else
+		{
+			UE_LOGFMT(VoxtaLog, Warning, "Failed to enable/disable global audio fallback, playback component is unavailable.");
+		}
+	}
+	else
+	{
+		UE_LOGFMT(VoxtaLog, Warning, "Failed to enable/disable global audio fallback, global playback holder is unavailable.");
+	}
 }
 
 void UVoxtaClient::StopActiveChat()
@@ -159,7 +176,7 @@ void UVoxtaClient::UpdateChatContext(const FString& newContext)
 
 void UVoxtaClient::SendUserInput(const FString& inputText, bool generateReply, bool characterActionInference)
 {
-	if (m_currentState == VoxtaClientState::WaitingForUserReponse)
+	if (m_currentState == VoxtaClientState::WaitingForUserResponse)
 	{
 		if (!m_chatSession.IsValid())
 		{
@@ -190,10 +207,9 @@ void UVoxtaClient::NotifyAudioPlaybackComplete(const FGuid& messageId)
 	{
 		UE_LOGFMT(VoxtaLog, Log, "Marking audio playback of message {0} complete.", GuidToString(messageId));
 	}
-	else if (m_currentState == VoxtaClientState::GeneratingReply &&
-		!GetOrCreateGlobalAudioFallbackInternal()->GetGlobalPlaybackComponent()->IsEnabled())
+	else if (m_currentState == VoxtaClientState::GeneratingReply && IsGlobalAudioFallbackActive())
 	{
-		UE_LOGFMT(VoxtaLog, Log, "Skipping audio playback of message {0} due to configuration.", GuidToString(messageId));
+		UE_LOGFMT(VoxtaLog, Log, "Skipping audio playback of message {0} due to configuration.", GuidToString(messageId));		
 	}
 	else
 	{
@@ -202,9 +218,8 @@ void UVoxtaClient::NotifyAudioPlaybackComplete(const FGuid& messageId)
 		return;
 	}
 
-
 	SendMessageToServer(VoxtaApiRequestHandler::GetNotifyAudioPlaybackCompletedData(m_chatSession->GetSessionId(), messageId));
-	SetState(VoxtaClientState::WaitingForUserReponse);
+	SetState(VoxtaClientState::WaitingForUserResponse);
 }
 
 void UVoxtaClient::TryFetchAndCacheCharacterThumbnail(const FGuid& baseCharacterId,	FDownloadedTextureDelegateNative onThumbnailFetched)
@@ -216,6 +231,12 @@ void UVoxtaClient::TryFetchAndCacheCharacterThumbnail(const FGuid& baseCharacter
 		return;
 	}
 	const FBaseCharData* character = nullptr;
+	if (!m_userData.IsValid())
+	{
+		UE_LOGFMT(VoxtaLog, Warning, "Cannot fetch thumbnail, user metadata not yet available.");
+		return;
+	}
+
 	if (baseCharacterId == m_userData->GetId())
 	{
 		character = m_userData.Get();
@@ -231,12 +252,12 @@ void UVoxtaClient::TryFetchAndCacheCharacterThumbnail(const FGuid& baseCharacter
 		}
 		character = aiCharacter->Get();
 	}
-	FStringView charUrl = character->GetThumbnailUrl();
-	if (!charUrl.IsEmpty())
+	const FStringView charThumnailUrl = character->GetThumbnailUrl();
+	if (!charThumnailUrl.IsEmpty())
 	{
-		FString url = FString::Format(*FString(TEXT("http://{0}:{1}{2}")),
-			{ m_hostAddress, m_hostPort, character->GetThumbnailUrl() });
-		SENSITIVE_LOG1(VoxtaLog, Log, "Loading thumbnail from URL:  {0}", url);
+		FString url = FString::Format(TEXT("http://{0}:{1}{2}"),
+			{ m_hostAddress, m_hostPort, charThumnailUrl });
+		SENSITIVE_LOG1(VoxtaLog, Log, "Loading thumbnail from URL: {0}", url);
 
 		m_texturesCacheHandler->FetchTextureFromUrl(url, onThumbnailFetched);
 	}
@@ -351,7 +372,7 @@ FString UVoxtaClient::GetBrowserUrlForCharacter(const FGuid& aiCharacterId) cons
 {
 	if (GetAiCharacterDataById(aiCharacterId) != nullptr)
 	{
-		return FString::Format(*FString(TEXT("http://{0}:{1}/characters/{2}")),
+		return FString::Format(TEXT("http://{0}:{1}/characters/{2}"),
 			{ m_hostAddress, m_hostPort, GuidToString(aiCharacterId) });
 	}
 	return FString();
@@ -411,14 +432,37 @@ const FChatSession* UVoxtaClient::GetChatSession() const
 	return nullptr;
 }
 
-Audio2FaceRESTHandler* UVoxtaClient::GetA2FHandler() const
+TWeakPtr<Audio2FaceRESTHandler> UVoxtaClient::GetA2FHandler() const
 {
-	return m_A2FHandler.Get();
+	return m_A2FHandler;
 }
 
 void UVoxtaClient::SetCensoredLogs(bool isCensorActive)
 {
-	isSensitiveLogsCensored = isCensorActive;
+	SensitiveLogging::isSensitiveLogsCensored = isCensorActive;
+}
+
+bool UVoxtaClient::IsLogCensorActive() const
+{
+	return SensitiveLogging::isSensitiveLogsCensored;
+}
+
+bool UVoxtaClient::IsGlobalAudioFallbackActive() const
+{
+	if (m_globalAudioPlaybackComp == nullptr)
+	{
+		return false;
+	}
+	UVoxtaGlobalAudioPlayback* comp = m_globalAudioPlaybackComp->GetGlobalPlaybackComponent();
+	if (comp != nullptr)
+	{
+		return comp->IsEnabled();
+	}
+	else
+	{
+		UE_LOGFMT(VoxtaLog, Error, "VoxtaGlobalAudioPlayback was null on the holder, this should never happen. Likely GC issue.");
+		return false;
+	}
 }
 
 TArray<FAiCharData> UVoxtaClient::GetAvailableAiCharactersCopy() const
@@ -680,7 +724,10 @@ bool UVoxtaClient::HandleChatStartedResponse(const ServerResponseChatStarted& re
 	}
 	else
 	{
-		m_voiceInput->InitializeSocket();
+		if (!m_voiceInput->IsInitialized())
+		{
+			m_voiceInput->InitializeSocket();
+		}
 		m_voiceInput->ConnectToCurrentChat();
 	}
 
@@ -699,7 +746,6 @@ bool UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessageBase
 		return false;
 	}
 
-	TArray<FChatMessage>& messages = m_chatSession->GetChatMessages();
 	using enum ServerResponseChatMessageBase::ChatMessageType;
 	switch (response.MESSAGE_TYPE)
 	{
@@ -707,7 +753,7 @@ bool UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessageBase
 		{
 			const ServerResponseChatMessageStart* derivedResponse =
 				StaticCast<const ServerResponseChatMessageStart*>(&response);
-			messages.Emplace(FChatMessage(derivedResponse->MESSAGE_ID, derivedResponse->SENDER_ID));
+			m_chatSession->AddChatMessage(FChatMessage(derivedResponse->MESSAGE_ID, derivedResponse->SENDER_ID));
 
 			UE_LOGFMT(VoxtaLog, Log, "Registered start of message with id: {0}", derivedResponse->MESSAGE_ID);
 			break;
@@ -716,7 +762,7 @@ bool UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessageBase
 		{
 			const ServerResponseChatMessageChunk* derivedResponse =
 				StaticCast<const ServerResponseChatMessageChunk*>(&response);
-			FChatMessage* chatMessage = GetChatMessageById(derivedResponse->MESSAGE_ID);
+			FChatMessage* chatMessage = m_chatSession->GetChatMessageById(derivedResponse->MESSAGE_ID);
 
 			if (chatMessage)
 			{
@@ -724,7 +770,7 @@ bool UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessageBase
 				// of a chunk directly after the period, without an extra space.
 				chatMessage->TryAppendMoreContent(chatMessage->GetTextContent().IsEmpty()
 					? derivedResponse->MESSAGE_TEXT
-					: " " + derivedResponse->MESSAGE_TEXT, derivedResponse->AUDIO_URL_PATH);
+					: TEXT(" ") + derivedResponse->MESSAGE_TEXT, derivedResponse->AUDIO_URL_PATH);
 				UE_LOGFMT(VoxtaLog, Log, "Updated message contents of message with id: {0}", derivedResponse->MESSAGE_ID);
 			}
 			else
@@ -737,7 +783,7 @@ bool UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessageBase
 		case MessageEnd:
 		{
 			const ServerResponseChatMessageEnd* derivedResponse = StaticCast<const ServerResponseChatMessageEnd*>(&response);
-			FChatMessage* rawPtr = GetChatMessageById(derivedResponse->MESSAGE_ID);
+			FChatMessage* rawPtr = m_chatSession->GetChatMessageById(derivedResponse->MESSAGE_ID);
 			if (!rawPtr)
 			{
 				SENSITIVE_LOG1(VoxtaLog, Error, "Received replyEnd without matching start. messageId: {0}", derivedResponse->MESSAGE_ID);
@@ -765,7 +811,7 @@ bool UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessageBase
 					{
 						if (chatMessage->GetAudioUrls().Num() > 0)
 						{
-							if (GetOrCreateGlobalAudioFallbackInternal()->GetGlobalPlaybackComponent()->IsEnabled())
+							if (IsGlobalAudioFallbackActive())
 							{
 								SetState(VoxtaClientState::AudioPlayback);
 								m_globalAudioPlaybackComp->GetGlobalPlaybackComponent()->PlaybackMessage(*character->Get(), *chatMessage);
@@ -778,7 +824,7 @@ bool UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessageBase
 						}
 						else
 						{
-							SetState(VoxtaClientState::WaitingForUserReponse);
+							SetState(VoxtaClientState::WaitingForUserResponse);
 						}
 					}
 					VoxtaClientCharMessageAddedEventNative.Broadcast(*character->Get(), *chatMessage);
@@ -799,6 +845,8 @@ bool UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessageBase
 		}
 		case MessageCancelled:
 		{
+			const TArray<FChatMessage>& messages = m_chatSession->GetChatMessages();
+
 			const ServerResponseChatMessageCancelled* derivedResponse =
 				StaticCast<const ServerResponseChatMessageCancelled*>(&response);
 			int index = messages.IndexOfByPredicate([derivedResponse] (const FChatMessage& InItem)
@@ -813,7 +861,7 @@ bool UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessageBase
 
 				VoxtaClientCharMessageRemovedEventNative.Broadcast(messages[index]);
 				VoxtaClientCharMessageRemovedEvent.Broadcast(messages[index]);
-				messages.RemoveAt(index);
+				m_chatSession->RemoveChatMessage(derivedResponse->MESSAGE_ID);
 			}
 			else
 			{
@@ -835,7 +883,7 @@ bool UVoxtaClient::HandleChatUpdateResponse(const ServerResponseChatUpdate& resp
 
 	if (response.SESSION_ID == m_chatSession->GetSessionId())
 	{
-		if (GetChatMessageById(response.MESSAGE_ID) != nullptr)
+		if (m_chatSession->GetChatMessageById(response.MESSAGE_ID) != nullptr)
 		{
 			SENSITIVE_LOG3(VoxtaLog, Error, "Recieved a chat update but a message with that id already exists, "
 				"let me know if this ever triggers as it has no implementation. Sender: {0} MessageId {1} Content: {2}",
@@ -858,10 +906,10 @@ bool UVoxtaClient::HandleChatUpdateResponse(const ServerResponseChatUpdate& resp
 			FChatMessage message = FChatMessage(response.MESSAGE_ID, response.SENDER_ID);
 			message.TryAppendMoreContent(response.TEXT_CONTENT, FString());
 			message.MarkComplete();
-			m_chatSession->GetChatMessages().Emplace(MoveTemp(message));
+			m_chatSession->AddChatMessage(MoveTemp(message));
 
 			// we want a pointer after it's moved to the heap, just for safety.
-			const FChatMessage* chatMessage = GetChatMessageById(response.MESSAGE_ID);
+			const FChatMessage* chatMessage = m_chatSession->GetChatMessageById(response.MESSAGE_ID);
 			VoxtaClientCharMessageAddedEventNative.Broadcast(*m_userData.Get(), *chatMessage);
 			VoxtaClientCharMessageAddedEvent.Broadcast(*m_userData.Get(), *chatMessage);
 		}
@@ -879,15 +927,15 @@ bool UVoxtaClient::HandleSpeechTranscriptionResponse(const ServerResponseSpeechT
 	using enum ServerResponseSpeechTranscription::TranscriptionState;
 	switch (response.TRANSCRIPTION_STATE)
 	{
-		case PARTIAL:
+		case Partial:
 			SENSITIVE_LOG1(VoxtaLog, Log, "Received update for partial speech transcription. Current version of "
 				"transcription: {0} ", response.TRANSCRIBED_SPEECH)
 
 			VoxtaClientSpeechTranscribedPartialEventNative.Broadcast(response.TRANSCRIBED_SPEECH);
 			VoxtaClientSpeechTranscribedPartialEvent.Broadcast(response.TRANSCRIBED_SPEECH);
 			break;
-		case END:
-			if (m_currentState == VoxtaClientState::WaitingForUserReponse)
+		case End:
+			if (m_currentState == VoxtaClientState::WaitingForUserResponse)
 			{
 				SENSITIVE_LOG1(VoxtaLog, Log, "Received finalized version of speech transcription: {0}",
 					response.TRANSCRIBED_SPEECH)
@@ -898,7 +946,7 @@ bool UVoxtaClient::HandleSpeechTranscriptionResponse(const ServerResponseSpeechT
 			}
 			// no logging for else, as Transcription sometimes sends the final version more than once, not sure why.
 			break;
-		case CANCELLED:
+		case Cancelled:
 			// transcriptions aren't registered unless finalized, so we can just ignore cancellations completely.
 			break;
 	}
@@ -961,7 +1009,7 @@ void UVoxtaClient::StopChatInternal()
 	m_voiceInput->DisconnectFromChat();
 	VoxtaClientChatSessionStoppedEventNative.Broadcast(*m_chatSession.Get());
 	VoxtaClientChatSessionStoppedEvent.Broadcast(*m_chatSession.Get());
-	delete m_chatSession.Release();
+	m_chatSession.Reset();
 }
 
 const TUniquePtr<const FAiCharData>* UVoxtaClient::GetAiCharacterDataById(const FGuid& charId) const
@@ -969,19 +1017,6 @@ const TUniquePtr<const FAiCharData>* UVoxtaClient::GetAiCharacterDataById(const 
 	return m_characterList.FindByPredicate([&charId] (const TUniquePtr<const FAiCharData>& inItem)
 		{
 			return inItem->GetId() == charId;
-		});
-}
-
-FChatMessage* UVoxtaClient::GetChatMessageById(const FGuid& messageId) const
-{
-	if (!m_chatSession.IsValid())
-	{
-		UE_LOGFMT(VoxtaLog, Warning, "Cannot fetch chat message as there is no active chat session.");
-		return nullptr;
-	}
-	return m_chatSession->GetChatMessages().FindByPredicate([&messageId] (const FChatMessage& inItem)
-		{
-			return inItem.GetMessageId() == messageId;
 		});
 }
 
@@ -998,8 +1033,22 @@ AVoxtaGlobalAudioPlaybackHolder* UVoxtaClient::GetOrCreateGlobalAudioFallbackInt
 {
 	if (m_globalAudioPlaybackComp == nullptr)
 	{
-		m_globalAudioPlaybackComp = GetWorld()->SpawnActor<AVoxtaGlobalAudioPlaybackHolder>();
-		globalAudioPlaybackHandle = m_globalAudioPlaybackComp->GetGlobalPlaybackComponent()->VoxtaMessageAudioPlaybackFinishedEventNative.AddUObject(this, &UVoxtaClient::NotifyAudioPlaybackComplete);
+		if (UWorld* World = GetWorld())
+		{
+			m_globalAudioPlaybackComp = World->SpawnActor<AVoxtaGlobalAudioPlaybackHolder>();
+			if (m_globalAudioPlaybackComp)
+			{
+				globalAudioPlaybackHandle = m_globalAudioPlaybackComp->GetGlobalPlaybackComponent()->VoxtaMessageAudioPlaybackFinishedEventNative.AddUObject(this, &UVoxtaClient::NotifyAudioPlaybackComplete);
+			}
+			else
+			{
+				UE_LOGFMT(VoxtaLog, Warning, "Failed to spawn AVoxtaGlobalAudioPlaybackHolder, global audio fallback disabled.");
+			}
+		}
+		else
+		{
+			UE_LOGFMT(VoxtaLog, Warning, "GetWorld() returned null – cannot create global audio playback holder.");
+		}
 	}
 	return m_globalAudioPlaybackComp;
 }

@@ -3,4 +3,4 @@
 #include "UnrealVoxtaEditor.h"
 #include "Modules/ModuleManager.h"
 
-IMPLEMENT_MODULE(FDefaultModuleImpl, UnrealVoxtaEditor)
+IMPLEMENT_MODULE(FDefaultModuleImpl, UnrealVoxtaEditor);

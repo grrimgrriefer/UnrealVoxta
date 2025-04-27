@@ -27,15 +27,48 @@
 #include "CoreMinimal.h"
 #include "IHubConnection.h"
 
+/**
+ * Manages callbacks for asynchronous method invocations in SignalR connections.
+ * This class provides functionality to register, invoke, and remove callbacks for hub methods.
+ */
 class FCallbackManager
 {
 public:
 	FCallbackManager();
 	~FCallbackManager();
 
+	/**
+	 * Registers a new callback and returns its ID along with a reference to the callback.
+	 * 
+	 * @return A tuple containing the callback ID and a reference to the callback.
+	 */
 	TTuple<FName, IHubConnection::FOnMethodCompletion&> RegisterCallback();
+
+	/**
+	 * Invokes a callback with the specified arguments.
+	 * 
+	 * @param InCallbackId The ID of the callback to invoke.
+	 * @param InArguments The arguments to pass to the callback.
+	 * @param InRemoveCallback Whether to remove the callback after invoking it.
+	 * 
+	 * @return True if the callback was found and invoked, false otherwise.
+	 */
 	bool InvokeCallback(FName InCallbackId, const FSignalRValue& InArguments, bool InRemoveCallback);
+
+	 /**
+	 * Removes a callback with the specified ID.
+	 * 
+	 * @param InCallbackId The ID of the callback to remove.
+	 * 
+	 * @return True if the callback was found and removed, false otherwise.
+	 */
 	bool RemoveCallback(FName InCallbackId);
+
+	/**
+	 * Removes all callbacks and invokes them with the specified error message.
+	 * 
+	 * @param ErrorMessage The error message to pass to the callbacks.
+	 */
 	void Clear(const FString& ErrorMessage);
 
 private:
@@ -44,5 +77,5 @@ private:
 	TMap<FName, IHubConnection::FOnMethodCompletion> Callbacks;
 	FCriticalSection CallbacksLock;
 
-	TAtomic<int> CurrentId;
+	FThreadSafeCounter CurrentId;
 };

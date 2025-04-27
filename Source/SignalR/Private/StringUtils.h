@@ -1,4 +1,4 @@
-﻿/*
+/*
  * MIT License
  *
  * Copyright (c) 2020-2022 Frozen Storm Interactive, Yoann Potinet
@@ -28,5 +28,12 @@
 
 namespace StringUtils
 {
+    /**
+     * Checks if a string is empty or contains only whitespace characters.
+     * 
+     * @param InStr String to check
+     * 
+     * @return True if the string is empty or contains only whitespace characters, false otherwise
+     */
     bool IsEmptyOrWhitespace(const FString& InStr);
 }

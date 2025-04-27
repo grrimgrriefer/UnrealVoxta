@@ -5,9 +5,9 @@
 #include "CoreMinimal.h"
 #include "VoxtaData/Public/VoxtaMicrophoneState.h"
 #include "VoxtaAudioUtility/Public/AudioCaptureHandler.h"
+#include "AudioWebSocket.h"  
 #include "VoxtaAudioInput.generated.h"
 
-class AudioWebSocket;
 class UVoxtaClient;
 
 /**
@@ -15,8 +15,8 @@ class UVoxtaClient;
  * Main public-facing class responsible for containing all AudioInput related logic.
  * Takes care of both the microphone input, as well as sending it over a websocket to the VoxtaServer.
  *
- * Note: You should create instantiate this manually, just access it via the voxta subsystem:
- * [ GetWorld()->GetGameInstance()->GetSubsystem<UVoxtaClient>() ]->GetVoiceInputHandler()
+ * Note: You should not instantiate this manually, just access it via the voxta subsystem:
+ * [ GetWorld()->GetGameInstance()->GetSubsystem<UVoxtaClient>() ]->GetVoiceInputHandler() ]
  */
 UCLASS(Category = "Voxta")
 class UNREALVOXTA_API UVoxtaAudioInput : public UObject
@@ -49,6 +49,13 @@ public:
 	 * @param inputChannels The input channels for the microphone, 1 is preferred.
 	 */
 	void InitializeSocket(int bufferMs = 200, int sampleRate = 16000, int inputChannels = 1);
+
+	/**
+	 * Used for cleaning up resources, should only be triggered when shutting down the game.
+	 */
+	void Cleanup();
+
+	bool IsInitialized() const;
 
 	void ConnectToCurrentChat();
 	void DisconnectFromChat();
@@ -104,6 +111,11 @@ public:
 	void ConfigureSilenceThresholds(float micNoiseGateThreshold, float silenceDetectionThreshold, float micInputGain);
 #pragma endregion
 
+#pragma region UObject overrides
+	/** Fallback in case the Cleanup was not called, should not be necessary though, but oh well. */
+	virtual void BeginDestroy() override;
+#pragma endregion
+
 #pragma region data
 private:
 	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Current Mic Noise Gate Threshold"))
@@ -125,6 +137,10 @@ private:
 	AudioCaptureHandler m_audioCaptureDevice;
 	TSharedPtr<AudioWebSocket> m_audioWebSocket = nullptr;
 	VoxtaMicrophoneState m_connectionState = VoxtaMicrophoneState::Uninitialized;
+
+	FDelegateHandle m_connectedHandle;
+	FDelegateHandle m_connectionErrorHandle;
+	FDelegateHandle m_closedHandle;
 #pragma endregion
 
 #pragma region private API

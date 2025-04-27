@@ -15,9 +15,9 @@ public:
 	/** Contains the possible states that of the transcribed speech, as reported by the VoxtaClient. */
 	enum class TranscriptionState
 	{
-		PARTIAL,
-		END,
-		CANCELLED
+		Partial,
+		End,
+		Cancelled
 	};
 #pragma endregion
 
@@ -28,8 +28,7 @@ public:
 			TranscriptionState transcriptionState) : ServerResponseBase(ServerResponseType::SpeechTranscription),
 		TRANSCRIPTION_STATE(transcriptionState),
 		TRANSCRIBED_SPEECH(transcribedSpeech)
-	{
-	}
+	{}
 #pragma endregion
 
 #pragma region data

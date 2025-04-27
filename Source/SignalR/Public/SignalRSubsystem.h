@@ -39,8 +39,10 @@ public:
 	/**
 	 * Create a new hub connection.
 	 *
-	 * @param url
-	 * @return An IHubConnection instance
+	 * @param url The URL of the SignalR hub to connect to (e.g., "https://example.com/chatHub")
+	 * @param InHeaders Optional HTTP headers to include with connection requests
+	 * 
+	 * @return A shared pointer to the hub connection. Returns nullptr if creation fails.
 	 */
 	TSharedPtr<IHubConnection> CreateHubConnection(const FString& InUrl, const TMap<FString, FString>& InHeaders = TMap<FString, FString>());
 };

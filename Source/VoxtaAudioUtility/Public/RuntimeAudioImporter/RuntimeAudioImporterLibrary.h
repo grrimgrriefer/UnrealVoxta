@@ -4,7 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "AudioStructs.h"
-#include "ImportedSoundWave.h"
+
+class UImportedSoundWave;
 
 class VOXTAAUDIOUTILITY_API URuntimeAudioImporterLibrary
 {

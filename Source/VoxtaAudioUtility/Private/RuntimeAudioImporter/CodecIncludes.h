@@ -23,9 +23,12 @@
 THIRD_PARTY_INCLUDES_START
 
 #ifdef INCLUDE_WAV
+#ifndef DR_WAV_INCLUDED
 #define DRWAV_API static
 #define DRWAV_PRIVATE static
 #include "RuntimeAudioImporter/dr_wav.h"
+#define DR_WAV_INCLUDED
+#endif
 #endif
 
 THIRD_PARTY_INCLUDES_END

@@ -42,16 +42,27 @@ FString FHandshakeProtocol::CreateHandshakeMessage(TSharedPtr<IHubProtocol> InPr
 
     FString Out;
     TSharedRef<TJsonWriter<>> JsonWriter = TJsonWriterFactory<>::Create(&Out);
-    FJsonSerializer::Serialize(Obj.ToSharedRef(), JsonWriter);
+    if (!FJsonSerializer::Serialize(Obj.ToSharedRef(), JsonWriter))
+    {
+        UE_LOG(LogSignalR, Error, TEXT("Failed to serialise handshake message"));
+        return FString();
+    }
 
     return Out + FJsonHubProtocol::RecordSeparator;
 }
 
 TTuple<TSharedPtr<FJsonObject>, FString> FHandshakeProtocol::ParseHandshakeResponse(const FString& Response)
 {
+    if (Response.IsEmpty())
+    {
+        UE_LOG(LogSignalR, Warning, TEXT("Empty handshake response received"));
+        return MakeTuple<TSharedPtr<FJsonObject>, FString>(nullptr, TEXT(""));
+    }
+
     int32 Pos = -1;
     if(!Response.FindChar(FJsonHubProtocol::RecordSeparator, Pos))
     {
+        UE_LOG(LogSignalR, Warning, TEXT("Record separator not found in handshake response"));
         return MakeTuple<TSharedPtr<FJsonObject>, FString>(nullptr, Response.Mid(0));
     }
 

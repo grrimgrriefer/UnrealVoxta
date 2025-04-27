@@ -19,13 +19,19 @@ class TexturesCacheHandler : public TSharedFromThis<TexturesCacheHandler>
 {
 #pragma region helper classes
 private:
+	/**
+	 * TextureInfo
+	 * Represents a single entry of a parsed Texture with metadata on width and height.
+	 * 
+	 * TODO: Figure out mips
+	 */
 	class TextureInfo
 	{
 	public:
 		TextureInfo(TWeakObjectPtr<const UTexture2DDynamic> texture, int width, int height) :
 			TEXTURE(texture), TEXTURE_SIZE(width, height)
 		{}
-		TWeakObjectPtr<const UTexture2DDynamic> TEXTURE;
+		const TWeakObjectPtr<const UTexture2DDynamic> TEXTURE;
 		const FIntVector2 TEXTURE_SIZE;
 	};
 #pragma endregion
@@ -38,8 +44,11 @@ public:
 
 #pragma region data
 private:
+	FCriticalSection m_cacheLock;
 	TMap<FString, TArray<FDownloadedTextureDelegateNative>> m_pendingCallbacks;
 	TMap<FString, TextureInfo> m_texturesCache;
+
+	FCriticalSection m_wrapperLock;
 	TArray<TSharedPtr<IImageWrapper>> m_imageWrappers;
 #pragma endregion
 };

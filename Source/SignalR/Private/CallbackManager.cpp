@@ -94,6 +94,6 @@ void FCallbackManager::Clear(const FString& ErrorMessage)
 
 FName FCallbackManager::GenerateCallbackId()
 {
-    const auto CallbackId = CurrentId++;
+    const int32 CallbackId = CurrentId.Increment();
     return *FString::FromInt(CallbackId);
 }

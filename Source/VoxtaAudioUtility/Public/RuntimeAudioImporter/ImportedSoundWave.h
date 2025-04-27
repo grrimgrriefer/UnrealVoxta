@@ -89,23 +89,6 @@ public:
 	//~ End USoundWaveProcedural Interface
 
 	/**
-	 * Duplicate the sound wave to be able to play it in parallel
-	 *
-	 * @param bUseSharedAudioBuffer Whether to use the same audio buffer for the duplicated sound wave or not
-	 * @param Result Delegate broadcasting the result
-	 */
-	UFUNCTION(BlueprintCallable, Category = "Imported Sound Wave|Main")
-	void DuplicateSoundWave(bool bUseSharedAudioBuffer, const FOnDuplicateSoundWave& Result);
-
-	/**
-	 * Duplicate the sound wave to be able to play it in parallel. Suitable for use in C++
-	 *
-	 * @param bUseSharedAudioBuffer Whether to use the same audio buffer for the duplicated sound wave or not
-	 * @param Result Delegate broadcasting the result
-	 */
-	virtual void DuplicateSoundWave(bool bUseSharedAudioBuffer, const FOnDuplicateSoundWaveNative& Result);
-
-	/**
 	 * Populate audio data from decoded info
 	 *
 	 * @param DecodedAudioInfo Decoded audio data
@@ -386,7 +369,7 @@ public:
 	ERuntimeAudioFormat GetAudioFormat() const;
 
 	/** Data guard (mutex) for thread safety */
-	mutable TSharedPtr<FCriticalSection> DataGuard;
+	mutable TSharedRef<FCriticalSection> DataGuard;
 
 protected:
 	/** Bool to control the behaviour of the OnAudioPlaybackFinished delegate */

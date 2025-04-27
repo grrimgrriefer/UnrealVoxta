@@ -18,14 +18,6 @@ class VOXTADATA_API ULipSyncDataCustom : public UObject, public ILipSyncBaseData
 {
 	GENERATED_BODY()
 
-#pragma region public API
-public:
-	/** Create an instance of the LipSyncData holder for CustomLipSync. */
-	explicit ULipSyncDataCustom() : ILipSyncBaseData()
-	{
-	};
-#pragma endregion
-
 #pragma region ILipSyncBaseData overrides
 public:
 	/**
@@ -34,7 +26,16 @@ public:
 	 */
 	virtual void ReleaseData() override
 	{
-		this->RemoveFromRoot();
+		RemoveFromRoot();
+	}
+#pragma endregion
+
+#pragma region public API
+public:
+	/** Create an instance of the LipSyncData holder for CustomLipSync. */
+	ULipSyncDataCustom() : ILipSyncBaseData() 
+	{
+		AddToRoot();
 	}
 #pragma endregion
 };

@@ -3,4 +3,4 @@
 #include "SignalR.h"
 #include "Modules/ModuleManager.h"
 
-IMPLEMENT_MODULE( FDefaultModuleImpl, SignalR );
+IMPLEMENT_MODULE(FDefaultModuleImpl, SignalR);

@@ -38,7 +38,7 @@ public:
 	explicit ILipSyncBaseData()
 	{
 		m_id = FGuid::NewGuid();
-	};
+	}
 
 	/**
 	 * Clean up the data that was made / kept that was directly tied to the playback of one voiceline.

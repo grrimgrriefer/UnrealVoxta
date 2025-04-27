@@ -5,6 +5,10 @@
 #include "CoreMinimal.h"
 #include "BaseRuntimeCodec.h"
 
+/**
+ * WAV format codec implementation for runtime audio importing.
+ * Handles decoding of WAV audio files and fixing potential format issues.
+ */
 class FWAV_RuntimeCodec : public FBaseRuntimeCodec
 {
 public:

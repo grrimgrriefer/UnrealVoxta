@@ -14,7 +14,7 @@
  * Cannot be fetched by anything yet, as it serves no use at the moment. (TODO: support for runtime enabling/disabling
  * of VoxtaServer Services)
   */
-USTRUCT(BlueprintType)
+USTRUCT(BlueprintType, Category = "Voxta")
 struct VOXTADATA_API FVoxtaServiceData
 {
 	GENERATED_BODY()
@@ -26,7 +26,7 @@ public:
 	 *
 	 * @param type The kind of service is this data tied to.
 	 * @param name The name of this service. (hard-coded, NOT from VoxtaServer)
-	 * @param id The VoxtaServer assigned id (guid in string format) tied to this service.
+	 * @param id The GUID assigned by the VoxtaServer for this service.
 	 */
 	explicit FVoxtaServiceData(VoxtaServiceType type,
 			FStringView name,
@@ -36,8 +36,7 @@ public:
 		m_serviceId(id)
 	{}
 
-	explicit FVoxtaServiceData()
-	{}
+	explicit FVoxtaServiceData() {}
 #pragma endregion
 
 #pragma region data

@@ -49,10 +49,19 @@ FHubConnection::FHubConnection(const FString& InUrl, const TMap<FString, FString
 
 FHubConnection::~FHubConnection()
 {
-	if (Connection.IsValid() && Connection->IsConnected())
+	if (Connection.IsValid())
 	{
-		SendCloseMessage();
-		Connection->Close();
+		Connection->OnConnected().RemoveAll(this);
+		Connection->OnConnectionFailed().RemoveAll(this);
+		Connection->OnMessage().RemoveAll(this);
+		Connection->OnConnectionError().RemoveAll(this);
+		Connection->OnClosed().RemoveAll(this);
+		
+		if (Connection->IsConnected())
+		{
+			SendCloseMessage();
+			Connection->Close();
+		}
 	}
 }
 
@@ -207,7 +216,12 @@ void FHubConnection::ProcessMessage(const FString& InMessageStr)
 				TSharedPtr<FCompletionMessage> CompletionMessage = StaticCastSharedPtr<FCompletionMessage>(Message);
 				check(CompletionMessage != nullptr);
 
-				FName InvocationId = FName(*CompletionMessage->InvocationId);
+				FName InvocationId(*CompletionMessage->InvocationId, FNAME_Find);
+				if (InvocationId.IsNone())
+				{
+					UE_LOG(LogSignalR, Warning, TEXT("Unknown invocation id %s"), *CompletionMessage->InvocationId);
+					break;
+				}
 				if (!CompletionMessage->Error.IsEmpty())
 				{
 					UE_LOG(LogSignalR, Error, TEXT("%s"), *CompletionMessage->Error);
@@ -310,7 +324,7 @@ void FHubConnection::TryReconnectIfNeeded()
 
 void FHubConnection::Ping()
 {
-	if (bHandshakeReceived)
+	if (bHandshakeReceived && ConnectionState == EConnectionState::Connected)
 	{
 		FPingMessage Ping;
 		const auto Message = HubProtocol->SerializeMessage(&Ping);

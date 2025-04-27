@@ -31,6 +31,10 @@ DECLARE_LOG_CATEGORY_EXTERN(LogSignalR, Log, All);
 
 class IHubConnection;
 
+/**
+ * Module that provides SignalR client functionality for Unreal Engine.
+ * Handles hub connections and communication with SignalR servers.
+ */
 class FSignalRModule : public IModuleInterface
 {
 public:
@@ -38,15 +42,18 @@ public:
      * Singleton-like access to this module's interface.
      * Beware of calling this during the shutdown phase, though. Your module might have been unloaded already.
      *
-     * @return Returns singleton instance, loading the module on demand if needed
+     * @return Returns the singleton instance of the SignalR module, loading the module on demand if needed
      */
     SIGNALR_API static FSignalRModule& Get();
 
     /**
-     *
-     * @param url
+     * Creates a new hub connection to the specified URL.
+     * 
+     * @param InUrl The URL of the SignalR hub to connect to.
+     * @param InHeaders Optional HTTP headers to include in the connection request.
+     * 
      * @return An IHubConnection instance
-     */
+      */
     SIGNALR_API TSharedPtr<IHubConnection> CreateHubConnection(const FString& InUrl, const TMap<FString, FString>& InHeaders = TMap<FString, FString>()) const;
 
 private:

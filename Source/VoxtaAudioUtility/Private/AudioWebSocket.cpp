@@ -11,6 +11,14 @@ AudioWebSocket::AudioWebSocket(const FString& serverIP, uint16 serverPort) :
 	m_serverPort(serverPort)
 {}
 
+AudioWebSocket::~AudioWebSocket()
+{
+	if (m_socketConnection.IsValid() && m_socketConnection->IsConnected())
+	{
+		m_socketConnection->Close(1000, TEXT("AudioWebSocket object destroyed, shutting down connection"));
+	}
+}
+
 bool AudioWebSocket::Connect(const FGuid& sessionId)
 {
 	if (m_socketConnection.IsValid())
@@ -21,7 +29,7 @@ bool AudioWebSocket::Connect(const FGuid& sessionId)
 
 	// websocket url might change in future versions, this is still correct as of beta.v132
 	m_sessionId = sessionId;
-	const FString uri = FString::Format(*FString(TEXT("ws://{0}:{1}/ws/audio/input/stream?sessionId={2}")),
+	const FString uri = FString::Format(TEXT("ws://{0}:{1}/ws/audio/input/stream?sessionId={2}"),
 		{ m_serverIP, m_serverPort, GuidToString(m_sessionId) });
 	m_socketConnection = FWebSocketsModule::Get().CreateWebSocket(uri, FString(), TMap<FString, FString>());
 
@@ -48,6 +56,7 @@ bool AudioWebSocket::Connect(const FGuid& sessionId)
 				if (TSharedPtr<AudioWebSocket> SharedSelf = Self.Pin())
 				{
 					SharedSelf->OnConnectionErrorEvent.Broadcast(errorString);
+					SharedSelf->m_socketConnection.Reset();
 				}
 				else
 				{
@@ -63,6 +72,7 @@ bool AudioWebSocket::Connect(const FGuid& sessionId)
 					UE_LOGFMT(VoxtaLog, Log, "Websocket closing: Code: {0}, reason: {1}, wasClean: {2}",
 						statusCode, reason, bWasClean);
 					SharedSelf->OnClosedEvent.Broadcast(statusCode, reason, bWasClean);
+					SharedSelf->m_socketConnection.Reset();
 				}
 				else
 				{
@@ -98,7 +108,7 @@ void AudioWebSocket::Send(const void* buffer, unsigned int nBufferBytes)
 {
 	if (buffer == nullptr || nBufferBytes == 0)
 	{
-		UE_LOGFMT(VoxtaLog, Warning, "Cannot send data. Buffer is {0} and bytecount is {1}.", buffer == nullptr ? "null" : "non‑null", nBufferBytes);
+		UE_LOGFMT(VoxtaLog, Warning, "Cannot send data. Buffer null: {0} and bytecount is {1}.", buffer == nullptr, nBufferBytes);
 		return;
 	}
 
@@ -108,7 +118,7 @@ void AudioWebSocket::Send(const void* buffer, unsigned int nBufferBytes)
 	}
 	else
 	{
-		UE_LOGFMT(VoxtaLog, Error, "Cannot send audio data, audioWebSocket is destroyed.");
+		UE_LOGFMT(VoxtaLog, Error, "Cannot send audio data, WebSocket connection is not established.");
 	}
 }
 
@@ -120,6 +130,6 @@ void AudioWebSocket::Send(const FString& message)
 	}
 	else
 	{
-		UE_LOGFMT(VoxtaLog, Error, "Cannot send audio data, audioWebSocket is destroyed.");
+		UE_LOGFMT(VoxtaLog, Error, "Cannot send audio data, WebSocket connection is not established.");
 	}
 }

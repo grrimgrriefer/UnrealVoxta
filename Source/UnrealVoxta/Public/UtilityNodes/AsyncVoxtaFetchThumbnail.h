@@ -27,7 +27,7 @@ private:
 	void OnThumbnailFetched(bool success, const UTexture2DDynamic* texture, const FIntVector2& textureSize);
 
 	UPROPERTY()
-	const UObject* m_worldContextObject = nullptr;
+	const UObject* WORLD_CONTEXT = nullptr;
 
 	UPROPERTY()
 	UVoxtaClient* m_voxtaClient = nullptr;

@@ -10,7 +10,7 @@
  *
  * NOTE: The text and audioUrls are appended with new info as more chunks are received.
  */
-USTRUCT(BlueprintType)
+USTRUCT(BlueprintType, Category = "Voxta")
 struct FChatMessage
 {
 	GENERATED_BODY()
@@ -49,7 +49,7 @@ public:
 		}
 
 		m_text.Append(textContent);
-		if (!audioUrl.IsEmpty()) // text only response is valid, but we dont'adde empty audio urls ofc
+		if (!audioUrl.IsEmpty()) // text only response is valid, but we don't add empty audio urls ofc
 		{
 			m_audioUrls.Emplace(audioUrl);
 		}
@@ -69,7 +69,7 @@ public:
 	 * The notification by VoxtaServer of a new message is always without text, so it will be empty at first.
 	 *
 	 * @param messageId The VoxtaServer assigned id of this message.
-	 * @param charId The VoxtasServer assigne id of the character that says this message.
+	 * @param charId The VoxtaServer assigned id of the character that says this message.
 	 */
 	explicit FChatMessage(FGuid messageId, FGuid charId) :
 		m_messageId(messageId),
@@ -77,11 +77,10 @@ public:
 	{}
 
 	/** Default constructor, should not be used manually, but is enforced by Unreal */
-	explicit FChatMessage() {};
+	FChatMessage() {};
 #pragma endregion
 
 private:
-	// TODO: Add flag to indicate once the message is complete and no further chunks are expected.
 	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Message Text (so far)"))
 	FString m_text;
 

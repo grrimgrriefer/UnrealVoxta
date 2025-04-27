@@ -33,7 +33,7 @@ public:
 	 *
 	 * @param targetArrayRef The array that will be populated with the new curve values.
 	 */
-	void GetA2FCurveWeights(TArray<float>& targetArrayRef) const;
+	void GetA2FCurveWeights(TArray<float>& targetArrayRef);
 
 	/**
 	 * Begin playback of the A2F lipsync data along with the audio in the AudioComponent.
@@ -49,13 +49,27 @@ public:
 	void Stop();
 #pragma endregion
 
+#pragma region UObject overrides
+	/**
+	 * Called when the object is being destroyed.
+	 * Ensures delegates are properly unbound before destruction.
+	 */
+	virtual void BeginDestroy() override;
+#pragma endregion
+
 #pragma region data
 public:
-	static const FName CURVE_NAMES[52];
+	static const int CURVE_COUNT = 52;
+	static const FName CURVE_NAMES[CURVE_COUNT];
 
 private:
-	const ULipSyncDataA2F* m_lipsyncData;
-	UAudioComponent* m_audioComponent;
+	UPROPERTY()
+	const ULipSyncDataA2F* m_lipsyncData = nullptr;
+
+	UPROPERTY()
+	UAudioComponent* m_audioComponent = nullptr;
+
+	FCriticalSection m_curvesGuard;
 
 	FDelegateHandle m_playbackPercentHandle;
 	FDelegateHandle m_playbackFinishedHandle;
@@ -80,7 +94,7 @@ private:
 	/**
 	 * Triggered by the UAudioComponent, mark the audio playback as finished & apply the neutral pose again.
 	 *
-	 * @param The component that has finished playing the audio.
+	 * @param audioComponent The component that has finished playing the audio.
 	 */
 	void OnAudioPlaybackFinished(UAudioComponent* audioComponent);
 #pragma endregion

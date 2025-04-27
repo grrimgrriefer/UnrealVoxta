@@ -3,19 +3,7 @@
 #include "VoxtaApiResponseHandler.h"
 #include "Logging/StructuredLog.h"
 #include "SignalR/Public/SignalRValue.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseBase.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseWelcome.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseCharacterList.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseChatStarted.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseChatMessageStart.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseChatMessageChunk.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseChatMessageEnd.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseChatMessageCancelled.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseChatUpdate.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseSpeechTranscription.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseError.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseContextUpdated.h"
-#include "VoxtaData/Public/ServerResponses/ServerResponseChatClosed.h"
+#include "VoxtaData/Public/ServerResponses.h"
 #include "VoxtaData/Public/VoxtaServiceData.h"
 
 #define SAFE_MAP_GET(Map, Key)                                             \
@@ -44,62 +32,30 @@ const TSet<FString> VoxtaApiResponseHandler::IGNORED_MESSAGE_TYPES{
 		EASY_STRING("memoryUpdated")
 };
 
+const TMap<FString, TFunction<TUniquePtr<ServerResponseBase>(const TMap<FString, FSignalRValue>&)>> VoxtaApiResponseHandler::HANDLERS{
+	{ TEXT("welcome"), [] (const auto& data) { return WrapHandler(&VoxtaApiResponseHandler::GetWelcomeResponse, data); } },
+	{ TEXT("charactersListLoaded"), [] (const auto& data) { return WrapHandler(&VoxtaApiResponseHandler::GetCharacterListLoadedResponse, data); } },
+	{ TEXT("chatStarted"), [] (const auto& data) { return WrapHandler(&VoxtaApiResponseHandler::GetChatStartedResponse, data); } },
+	{ TEXT("replyStart"), [] (const auto& data) { return WrapHandler(&VoxtaApiResponseHandler::GetReplyStartResponse, data); } },
+	{ TEXT("replyChunk"), [] (const auto& data) { return WrapHandler(&VoxtaApiResponseHandler::GetReplyChunkResponse, data); } },
+	{ TEXT("replyEnd"), [] (const auto& data) { return WrapHandler(&VoxtaApiResponseHandler::GetReplyEndResponse, data); } },
+	{ TEXT("replyCancelled"), [] (const auto& data) { return WrapHandler(&VoxtaApiResponseHandler::GetReplyCancelledResponse, data); } },
+	{ TEXT("update"), [] (const auto& data) { return WrapHandler(&VoxtaApiResponseHandler::GetChatUpdateResponse, data); } },
+	{ TEXT("speechRecognitionPartial"), [] (const auto& data) { return WrapHandler(&VoxtaApiResponseHandler::GetSpeechRecognitionPartial, data); } },
+	{ TEXT("speechRecognitionEnd"), [] (const auto& data) { return WrapHandler(&VoxtaApiResponseHandler::GetSpeechRecognitionEnd, data); } },
+	{ TEXT("error"), [] (const auto& data) { return WrapHandler(&VoxtaApiResponseHandler::GetErrorResponse, data); } },
+	{ TEXT("contextUpdated"), [] (const auto& data) { return WrapHandler(&VoxtaApiResponseHandler::GetContextUpdatedResponse, data); } },
+	{ TEXT("chatClosed"), [] (const auto& data) { return WrapHandler(&VoxtaApiResponseHandler::GetChatClosedResponse, data); } }
+};
+
 TUniquePtr<ServerResponseBase> VoxtaApiResponseHandler::GetResponseData(
 	const TMap<FString, FSignalRValue>& serverResponseData)
 {
-	using enum ServerResponseType;
 	const FString type = SAFE_MAP_GET(serverResponseData, EASY_STRING("$type")).AsString();
-	if (type == TEXT("welcome"))
+	auto* handler = HANDLERS.Find(type);
+	if (handler != nullptr)
 	{
-		return GetWelcomeResponse(serverResponseData);
-	}
-	else if (type == TEXT("charactersListLoaded"))
-	{
-		return GetCharacterListLoadedResponse(serverResponseData);
-	}
-	else if (type == TEXT("chatStarted"))
-	{
-		return GetChatStartedResponse(serverResponseData);
-	}
-	else if (type == TEXT("replyStart"))
-	{
-		return GetReplyStartReponseResponse(serverResponseData);
-	}
-	else if (type == TEXT("replyChunk"))
-	{
-		return GetReplyChunkReponseResponse(serverResponseData);
-	}
-	else if (type == TEXT("replyEnd"))
-	{
-		return GetReplyEndReponseResponse(serverResponseData);
-	}
-	else if (type == TEXT("replyCancelled"))
-	{
-		return GetReplyCancelledResponse(serverResponseData);
-	}
-	else if (type == TEXT("update"))
-	{
-		return GetChatUpdateResponse(serverResponseData);
-	}
-	else if (type == TEXT("speechRecognitionPartial"))
-	{
-		return GetSpeechRecognitionPartial(serverResponseData);
-	}
-	else if (type == TEXT("speechRecognitionEnd"))
-	{
-		return GetSpeechRecognitionEnd(serverResponseData);
-	}
-	else if (type == TEXT("error"))
-	{
-		return GetErrorResponse(serverResponseData);
-	}
-	else if (type == TEXT("contextUpdated"))
-	{
-		return GetContextUpdatedResponse(serverResponseData);
-	}
-	else if (type == TEXT("chatClosed"))
-	{
-		return GetChatClosedResponse(serverResponseData);
+		return (*handler)(serverResponseData);
 	}
 	else
 	{
@@ -203,7 +159,7 @@ TUniquePtr<ServerResponseChatStarted> VoxtaApiResponseHandler::GetChatStartedRes
 		contextValue);
 }
 
-TUniquePtr<ServerResponseChatMessageStart> VoxtaApiResponseHandler::GetReplyStartReponseResponse(
+TUniquePtr<ServerResponseChatMessageStart> VoxtaApiResponseHandler::GetReplyStartResponse(
 	const TMap<FString, FSignalRValue>& serverResponseData)
 {
 	return MakeUnique<ServerResponseChatMessageStart>(
@@ -212,21 +168,21 @@ TUniquePtr<ServerResponseChatMessageStart> VoxtaApiResponseHandler::GetReplyStar
 		GetStringAsGuid(SAFE_MAP_GET(serverResponseData, EASY_STRING("sessionId"))));
 }
 
-TUniquePtr<ServerResponseChatMessageChunk> VoxtaApiResponseHandler::GetReplyChunkReponseResponse(
+TUniquePtr<ServerResponseChatMessageChunk> VoxtaApiResponseHandler::GetReplyChunkResponse(
 	const TMap<FString, FSignalRValue>& serverResponseData)
 {
 	return MakeUnique<ServerResponseChatMessageChunk>(
 		GetStringAsGuid(SAFE_MAP_GET(serverResponseData, EASY_STRING("messageId"))),
 		GetStringAsGuid(SAFE_MAP_GET(serverResponseData, EASY_STRING("senderId"))),
 		GetStringAsGuid(SAFE_MAP_GET(serverResponseData, EASY_STRING("sessionId"))),
-		static_cast<int>(SAFE_MAP_GET(serverResponseData, EASY_STRING("startIndex")).AsDouble()),
-		static_cast<int>(SAFE_MAP_GET(serverResponseData, EASY_STRING("endIndex")).AsDouble()),
+		static_cast<int>(SAFE_MAP_GET(serverResponseData, EASY_STRING("startIndex")).AsNumber()),
+		static_cast<int>(SAFE_MAP_GET(serverResponseData, EASY_STRING("endIndex")).AsNumber()),
 		SAFE_MAP_GET(serverResponseData, EASY_STRING("text")).AsString(),
 		SAFE_MAP_GET(serverResponseData, EASY_STRING("audioUrl")).AsString(),
 		SAFE_MAP_GET(serverResponseData, EASY_STRING("isNarration")).AsBool());
 }
 
-TUniquePtr<ServerResponseChatMessageEnd> VoxtaApiResponseHandler::GetReplyEndReponseResponse(
+TUniquePtr<ServerResponseChatMessageEnd> VoxtaApiResponseHandler::GetReplyEndResponse(
 	const TMap<FString, FSignalRValue>& serverResponseData)
 {
 	return MakeUnique<ServerResponseChatMessageEnd>(
@@ -266,7 +222,7 @@ TUniquePtr<ServerResponseSpeechTranscription> VoxtaApiResponseHandler::GetSpeech
 {
 	return MakeUnique<ServerResponseSpeechTranscription>(
 		SAFE_MAP_GET(serverResponseData, EASY_STRING("text")).AsString(),
-		ServerResponseSpeechTranscription::TranscriptionState::PARTIAL);
+		ServerResponseSpeechTranscription::TranscriptionState::Partial);
 }
 
 TUniquePtr<ServerResponseSpeechTranscription> VoxtaApiResponseHandler::GetSpeechRecognitionEnd(
@@ -276,8 +232,8 @@ TUniquePtr<ServerResponseSpeechTranscription> VoxtaApiResponseHandler::GetSpeech
 	return MakeUnique<ServerResponseSpeechTranscription>(
 		isValid ? SAFE_MAP_GET(serverResponseData, EASY_STRING("text")).AsString()
 		: FString(),
-		isValid ? ServerResponseSpeechTranscription::TranscriptionState::END
-		: ServerResponseSpeechTranscription::TranscriptionState::CANCELLED);
+		isValid ? ServerResponseSpeechTranscription::TranscriptionState::End
+		: ServerResponseSpeechTranscription::TranscriptionState::Cancelled);
 }
 
 TUniquePtr<ServerResponseError> VoxtaApiResponseHandler::GetErrorResponse(
@@ -288,7 +244,7 @@ TUniquePtr<ServerResponseError> VoxtaApiResponseHandler::GetErrorResponse(
 		SAFE_MAP_GET(serverResponseData, EASY_STRING("details")).AsString());
 }
 
-void VoxtaApiResponseHandler::ProcessContextData(TMap<FString, FSignalRValue> contextMainObject,
+void VoxtaApiResponseHandler::ProcessContextData(const TMap<FString, FSignalRValue>& contextMainObject,
 	FString& outContextValue)
 {
 	//TArray<FSignalRValue> flagsArray = SAFE_MAP_GET(contextMainObject, EASY_STRING("flags")).AsArray();

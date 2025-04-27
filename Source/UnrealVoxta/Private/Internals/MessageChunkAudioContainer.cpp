@@ -5,18 +5,18 @@
 #include "VoxtaDefines.h"
 #include "LipSyncGenerator.h"
 #include "RuntimeAudioImporter/RuntimeAudioImporterLibrary.h"
+#include "RuntimeAudioImporter/ImportedSoundWave.h"
 #include "HttpModule.h"
 #include "Interfaces/IHttpBase.h"
 #include "Interfaces/IHttpRequest.h"
 #include "Audio2FaceRESTHandler.h"
-#include "Sound/SoundWaveProcedural.h"
 #include "LipSyncBaseData.h"
 #include "Interfaces/IHttpResponse.h"
 #include "LogUtility/Public/Defines.h"
 
 MessageChunkAudioContainer::MessageChunkAudioContainer(const FString& fullUrl,
 	LipSyncType lipSyncType,
-	Audio2FaceRESTHandler* A2FRestHandler,
+	TWeakPtr<Audio2FaceRESTHandler> A2FRestHandler,
 	TFunction<void(const MessageChunkAudioContainer* newState)> callback,
 	int id) :
 	INDEX(id),
@@ -60,13 +60,15 @@ void MessageChunkAudioContainer::CleanupData()
 {
 	UE_LOGFMT(VoxtaLog, Log, "Cleaning up MessageChunkAudioContainer for index: {0}", INDEX);
 
-	if (m_soundWave)
+	if (m_soundWave != nullptr && m_state != MessageChunkState::CleanedUp)
 	{
 		m_soundWave->RemoveFromRoot();
+		m_soundWave = nullptr;
 	}
-	if (LIP_SYNC_TYPE != LipSyncType::None && m_lipSyncData)
+	if (LIP_SYNC_TYPE != LipSyncType::None && m_lipSyncData != nullptr)
 	{
 		m_lipSyncData->ReleaseData();
+		m_lipSyncData = nullptr;
 	}
 	m_rawAudioData.Empty();
 	m_state = MessageChunkState::CleanedUp;
@@ -77,20 +79,18 @@ const TArray<uint8>& MessageChunkAudioContainer::GetRawAudioData() const
 	return m_rawAudioData;
 }
 
- template <typename T, typename>
-const T* MessageChunkAudioContainer::GetLipSyncData() const
-{
-	return StaticCast<const T*>(m_lipSyncData);
-}
-
 MessageChunkState MessageChunkAudioContainer::GetCurrentState() const
 {
 	return m_state;
 }
 
-USoundWaveProcedural* MessageChunkAudioContainer::GetSoundWave() const
+UImportedSoundWave* MessageChunkAudioContainer::GetSoundWave() const
 {
-	return m_soundWave;
+	if (m_state != MessageChunkState::CleanedUp)
+	{
+		return m_soundWave;
+	}
+	return nullptr;
 }
 
 void MessageChunkAudioContainer::DownloadData()
@@ -110,13 +110,21 @@ void MessageChunkAudioContainer::DownloadData()
 	(FHttpRequestPtr request, FHttpResponsePtr response, bool bWasSuccessful)
 		{
 			if (bWasSuccessful && response.IsValid() && EHttpResponseCodes::IsOk(response->GetResponseCode()) &&
-							response->GetContentLength() > 0 && response->GetContent().Num() > 0)
+							response->GetContentLength() > 0)
 			{
 				if (TSharedPtr<MessageChunkAudioContainer> sharedSelf = Self.Pin())
 				{
-					sharedSelf->m_rawAudioData = response->GetContent();
-					SENSITIVE_LOG1(VoxtaLog, Log, "Sucessfully downloaded audio data from: {0}", request->GetURL());
-					sharedSelf->UpdateState(MessageChunkState::Idle_Downloaded);
+					TArray<uint8> rawcontent = response->GetContent();
+					AsyncTask(ENamedThreads::GameThread, [sharedSelf, contentCopy = MoveTemp(rawcontent), url = request->GetURL()] () mutable
+					{
+						if (!sharedSelf.IsValid()) 
+						{ 
+							return; 
+						}
+						sharedSelf->m_rawAudioData = MoveTemp(contentCopy);
+						SENSITIVE_LOG1(VoxtaLog, Log, "Successfully downloaded audio data from: {0}", url);
+						sharedSelf->UpdateState(MessageChunkState::Idle_Downloaded);
+					});
 				}
 				else
 				{
@@ -154,7 +162,7 @@ void MessageChunkAudioContainer::ProcessAudioData()
 					sharedSelf->m_soundWave = soundWave;
 					sharedSelf->m_soundWave->AddToRoot();
 
-					UE_LOGFMT(VoxtaLog, Log, "Sucessfully processed raw audio data into UImportedSoundWave for "
+					UE_LOGFMT(VoxtaLog, Log, "Successfully processed raw audio data into UImportedSoundWave for "
 						"index {0}", sharedSelf->INDEX);
 					sharedSelf->UpdateState(MessageChunkState::Idle_Processed);
 				}
@@ -192,7 +200,7 @@ void MessageChunkAudioContainer::GenerateLipSync()
 						{
 							sharedSelf->m_lipSyncData = Cast<ILipSyncBaseData>(lipsyncData);
 
-							UE_LOGFMT(VoxtaLog, Log, "Sucessfully genrated OVR lipsyncdata for "
+							UE_LOGFMT(VoxtaLog, Log, "Successfully generated OVR lipsyncdata for "
 								"index {0}", sharedSelf->INDEX);
 							sharedSelf->UpdateState(MessageChunkState::ReadyForPlayback);
 						}
@@ -210,69 +218,79 @@ void MessageChunkAudioContainer::GenerateLipSync()
 #endif
 			break;
 		case LipSyncType::Audio2Face:
-			if (m_A2FRestHandler->IsBusy())
 			{
-				if (m_A2FRestHandler->IsInitializing())
+				if (!m_A2FRestHandler.IsValid())
 				{
-					FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda(
-						[Self = TWeakPtr<MessageChunkAudioContainer>(AsShared())] (float deltaTime)
-						{
-							if (Self != nullptr)
+					UE_LOGFMT(VoxtaLog, Error, "Audio2Face selected but no REST handler supplied, aborting.");
+					UpdateState(MessageChunkState::Idle_Processed);
+					return;
+				}
+
+				TSharedPtr<Audio2FaceRESTHandler> resthandler = m_A2FRestHandler.Pin();
+				if (!resthandler->IsAvailable())
+				{
+					if (resthandler->IsInitializing())
+					{
+						FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda(
+							[Self = TWeakPtr<MessageChunkAudioContainer>(AsShared())] (float deltaTime)
 							{
-								if (TSharedPtr<MessageChunkAudioContainer> sharedSelf = Self.Pin())
+								if (Self.IsValid())
 								{
-									if (sharedSelf->m_A2FRestHandler->IsInitializing())
+									if (TSharedPtr<MessageChunkAudioContainer> sharedSelf = Self.Pin())
 									{
-										return true;
-									}
-									else
-									{
-										sharedSelf->m_state = MessageChunkState::Idle_Processed;
-										sharedSelf->GenerateLipSync();
-										return false;
+										if (sharedSelf->m_A2FRestHandler.IsValid())
+										{
+											return sharedSelf->m_A2FRestHandler.Pin()->IsInitializing();
+										}
+										else
+										{
+											sharedSelf->m_state = MessageChunkState::Idle_Processed;
+											sharedSelf->GenerateLipSync();
+											return false;
+										}
 									}
 								}
-							}
-							UE_LOGFMT(VoxtaLog, Error, "MessageChunkContainer was destroyed before A2F finished "
-								"with initializing.");
-							return false;
-						}));
-				}
-				else
-				{
-					UE_LOGFMT(VoxtaLog, Warning, "A2F is still busy at the moment, skipping lipsync generattion request, "
-						"moving the state back into Idle_Processed so it can be re-attempted in a bit.");
-					m_state = MessageChunkState::Idle_Processed; // TODO find a more clean way to do this
-				}
-				return;
-			}
-
-			UE_LOGFMT(VoxtaLog, Log, "Starting A2F lipsync generation for MessageChunkAudioContainer with index: {0}",
-				INDEX);
-			LipSyncGenerator::GenerateA2FLipSyncData(m_rawAudioData, m_A2FRestHandler,
-				[Self = TWeakPtr<MessageChunkAudioContainer>(AsShared())] (ULipSyncDataA2F* lipsyncData)
-				{
-					if (lipsyncData)
-					{
-						if (TSharedPtr<MessageChunkAudioContainer> sharedSelf = Self.Pin())
-						{
-							sharedSelf->m_lipSyncData = Cast<ILipSyncBaseData>(lipsyncData);
-
-							UE_LOGFMT(VoxtaLog, Log, "Sucessfully genrated A2F lipsyncdata for "
-								"index {0}", sharedSelf->INDEX);
-							sharedSelf->UpdateState(MessageChunkState::ReadyForPlayback);
-						}
-						else
-						{
-							UE_LOGFMT(VoxtaLog, Error, "Generated A2F lipsyncdata, but the messageChunkContainer "
-								"was destroyed?");
-						}
+								UE_LOGFMT(VoxtaLog, Error, "MessageChunkContainer was destroyed before A2F finished "
+									"with initializing.");
+								return false;
+							}));
 					}
 					else
 					{
-						UE_LOGFMT(VoxtaLog, Error, "Failed to generate A2F lipsyncdata for MessageChunkAudioContainer.");
+						UE_LOGFMT(VoxtaLog, Warning, "A2F is still busy at the moment, skipping lipsync generation request, "
+							"moving the state back into Idle_Processed so it can be re-attempted in a bit.");
+						m_state = MessageChunkState::Idle_Processed; // TODO find a more clean way to do this
 					}
-				});
+					return;
+				}
+
+				UE_LOGFMT(VoxtaLog, Log, "Starting A2F lipsync generation for MessageChunkAudioContainer with index: {0}",
+					INDEX);
+				LipSyncGenerator::GenerateA2FLipSyncData(m_rawAudioData, m_A2FRestHandler,
+					[Self = TWeakPtr<MessageChunkAudioContainer>(AsShared())] (ULipSyncDataA2F* lipsyncData)
+					{
+							if (lipsyncData)
+							{
+								if (TSharedPtr<MessageChunkAudioContainer> sharedSelf = Self.Pin())
+								{
+									sharedSelf->m_lipSyncData = Cast<ILipSyncBaseData>(lipsyncData);
+
+									UE_LOGFMT(VoxtaLog, Log, "Successfully generated A2F lipsyncdata for "
+										"index {0}", sharedSelf->INDEX);
+									sharedSelf->UpdateState(MessageChunkState::ReadyForPlayback);
+								}
+								else
+								{
+									UE_LOGFMT(VoxtaLog, Error, "Generated A2F lipsyncdata, but the messageChunkContainer "
+										"was destroyed?");
+								}
+							}
+							else
+							{
+								UE_LOGFMT(VoxtaLog, Error, "Failed to generate A2F lipsyncdata for MessageChunkAudioContainer.");
+							}
+					});
+			}
 			break;
 		case LipSyncType::Custom:
 			m_lipSyncData = Cast<ILipSyncBaseData>(LipSyncGenerator::GenerateCustomLipSyncData());
@@ -293,9 +311,18 @@ void MessageChunkAudioContainer::UpdateState(MessageChunkState newState)
 		return;
 	}
 
-	m_state = newState;
-	if (m_state != MessageChunkState::Busy)
+	AsyncTask(ENamedThreads::GameThread, [Self = TWeakPtr<MessageChunkAudioContainer>(AsShared()), newState] ()
 	{
-		ON_STATE_CHANGED(this);
-	}
+		if (Self.IsValid())
+		{
+			if (TSharedPtr<MessageChunkAudioContainer> sharedSelf = Self.Pin())
+			{
+				sharedSelf->m_state = newState;
+				if (sharedSelf->m_state != MessageChunkState::Busy)
+				{
+					sharedSelf->ON_STATE_CHANGED(sharedSelf.Get());
+				}
+			}
+		}
+	});	
 }

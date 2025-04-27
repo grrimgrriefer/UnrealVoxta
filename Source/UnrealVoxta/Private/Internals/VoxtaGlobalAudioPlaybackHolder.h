@@ -15,10 +15,12 @@ class AVoxtaGlobalAudioPlaybackHolder : public AActor
 public:
 	AVoxtaGlobalAudioPlaybackHolder();
 
+	/** @return The global audio playback component that handles playback when no character-specific handler is available */
 	UVoxtaGlobalAudioPlayback* GetGlobalPlaybackComponent() const;
 #pragma endregion
 
 #pragma region data
 private:
+	UPROPERTY()
 	UVoxtaGlobalAudioPlayback* m_globalAudioPlayback;
 };

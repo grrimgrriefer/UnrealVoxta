@@ -27,9 +27,9 @@ public:
 	 * Can be used to add, remove and update chatMessage entries.
 	 * Acts as the source-of-truth of whatever has been said so far.
 	 *
-	 * @return A direct reference to the chatMessage history.
+	 * @return An immutable reference to the chatMessage history.
 	 */
-	TArray<FChatMessage>& GetChatMessages()
+	const TArray<FChatMessage>& GetChatMessages()
 	{
 		return m_chatMessages;
 	}
@@ -62,6 +62,52 @@ public:
 	}
 
 	/**
+	 * Adds a new chat message to the session.
+	 *
+	 * @param message The chat message to add.
+	 */
+	void AddChatMessage(const FChatMessage& message)
+	{
+		m_chatMessages.Add(message);
+	}
+
+	/**
+	 * Adds a new chat message to the session.
+	 *
+	 * @param message The chat message to add.
+	 */
+	void RemoveChatMessage(const FGuid& messageID)
+	{
+		int index = m_chatMessages.IndexOfByPredicate([messageID] (const FChatMessage& InItem)
+		{
+			return InItem.GetMessageId() == messageID;
+		});
+
+		if (index != INDEX_NONE)
+		{
+			m_chatMessages.RemoveAt(index);
+		}
+	}
+
+	/**
+	 * Fetches a raw pointer to the ChatMessage that maches the id given in the parameters.
+	 *
+	 * Note: The text & audio in this data is not guarenteed to be complete. Be aware that only after the
+	 * id has been broadcasted by VoxtaClientCharMessageAddedEvent that the message is considered final.
+	 *
+	 * @param messageId The id of the chatmessage you want to retrieve.
+	 *
+	 * @return An immutable pointer to the chatmessage, or nullptr if it was not found.
+	 */
+	FChatMessage* GetChatMessageById(const FGuid& messageId)
+	{
+		return m_chatMessages.FindByPredicate([&messageId] (const FChatMessage& inItem)
+		{
+			return inItem.GetMessageId() == messageId;
+		});
+	}	
+
+	/**
 	 * Create a new instance of the ChatSession, containing all relevant data to it.
 	 *
 	 * @param characters The AIcharacters participating in the chat session.
@@ -88,7 +134,7 @@ public:
 	}
 
 	/** Default constructor, should not be used manually, but is enforced by Unreal */
-	explicit FChatSession() {};
+	FChatSession() {}
 #pragma endregion
 
 #pragma region data
@@ -107,6 +153,7 @@ private:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Messages so far"))
 	TArray<FChatMessage> m_chatMessages;
+
 	TArray<const FAiCharData*> m_characters;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Enabled services"))

@@ -10,17 +10,23 @@ DEFINE_LOG_CATEGORY(AudioLog);
 
 TArray<FBaseRuntimeCodec*> FRuntimeCodecFactory::GetCodecs()
 {
+	static FCriticalSection CachedCodecsLock;
 	static TArray<TUniquePtr<FBaseRuntimeCodec>> Cached;
-	if (Cached.Num() == 0)
-	{
-		Cached.Emplace(MakeUnique<FWAV_RuntimeCodec>());
-	}
-
 	TArray<FBaseRuntimeCodec*> Raw;
-	for (const TUniquePtr<FBaseRuntimeCodec>& Ptr : Cached)
+
 	{
-		Raw.Add(Ptr.Get());
+		FScopeLock Lock(&CachedCodecsLock);
+		if (Cached.Num() == 0)
+		{
+			Cached.Emplace(MakeUnique<FWAV_RuntimeCodec>());
+		}
+
+		for (const TUniquePtr<FBaseRuntimeCodec>& Ptr : Cached)
+		{
+			Raw.Add(Ptr.Get());
+		}
 	}
+	
 	return Raw;
 }
 

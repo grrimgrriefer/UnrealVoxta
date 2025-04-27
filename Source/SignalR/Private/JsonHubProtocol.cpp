@@ -30,7 +30,8 @@
 
 FName FJsonHubProtocol::Name() const
 {
-    return "json";
+    static const FName NAME_Json(TEXT("json"));
+    return NAME_Json;
 }
 
 int FJsonHubProtocol::Version() const
@@ -84,7 +85,7 @@ TSharedPtr<FJsonValue> SerializeValue(const FSignalRValue& InValue)
         }
     default:
         {
-            UE_LOG(LogSignalR, Error, TEXT("Unknown FSignalRValue type – serialising as null"));
+            UE_LOG(LogSignalR, Error, TEXT("Unknown FSignalRValue type, serialising as null"));
             return MakeShared<FJsonValueNull>();
         }
     }
@@ -185,6 +186,14 @@ TArray<TSharedPtr<FHubMessage>> FJsonHubProtocol::ParseMessages(const FString& I
         }
 
         TmpStr = TmpStr.Mid(Pos + 1);
+    }
+
+    if (!TmpStr.IsEmpty())
+    {
+        if (TSharedPtr<FHubMessage> Message = ParseMessage(TmpStr))
+        {
+            Messages.Add(Message);
+        }
     }
 
     return Messages;

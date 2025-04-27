@@ -28,6 +28,10 @@
 #include "MessageType.h"
 #include "SignalRValue.h"
 
+/**
+ * Base message structure for SignalR hub communication.
+ * All specific message types derive from this base structure.
+ */
 struct FHubMessage
 {
 protected:
@@ -41,6 +45,10 @@ public:
 	const ESignalRMessageType MessageType;
 };
 
+/**
+ * Base message structure for invocation-related messages.
+ * Contains common properties for messages that reference an invocation ID.
+ */
 struct FBaseInvocationMessage : FHubMessage
 {
 protected:
@@ -52,6 +60,10 @@ public:
 	const FString InvocationId;
 };
 
+/**
+ * Represents a method invocation message sent from client to server.
+ * Contains the target method name, arguments, and optional streaming IDs.
+ */
 struct FInvocationMessage : FBaseInvocationMessage
 {
 	FInvocationMessage(const FString& InInvocationId, const FString& InTarget, const TArray<FSignalRValue>& InArgs, const TArray<FString>& InStreamIds = TArray<FString>()) :
@@ -62,10 +74,10 @@ struct FInvocationMessage : FBaseInvocationMessage
 	{}
 
 	FInvocationMessage(FString&& InInvocationId, FString&& InTarget, TArray<FSignalRValue>&& InArgs, TArray<FString>&& InStreamIds = TArray<FString>()) :
-		FBaseInvocationMessage(InInvocationId, ESignalRMessageType::Invocation),
-		Target(InTarget),
-		Arguments(InArgs),
-		StreamIds(InStreamIds)
+		FBaseInvocationMessage(MoveTemp(InInvocationId), ESignalRMessageType::Invocation),
+		Target(MoveTemp(InTarget)),
+		Arguments(MoveTemp(InArgs)),
+		StreamIds(MoveTemp(InStreamIds))
 	{}
 
 	FString Target;
@@ -73,6 +85,10 @@ struct FInvocationMessage : FBaseInvocationMessage
 	TArray<FString> StreamIds;
 };
 
+/**
+ * Represents a completion message received from the server after a method invocation.
+ * Contains the result or error information for the completed method.
+ */
 struct FCompletionMessage : FBaseInvocationMessage
 {
 	FCompletionMessage(const FString& InInvocationId, const FString& InError, const FSignalRValue& InResult, bool InHasResult) :
@@ -94,12 +110,19 @@ struct FCompletionMessage : FBaseInvocationMessage
 	FSignalRValue Result;
 };
 
+/**
+ * Represents a ping message used to keep the connection alive.
+ */
 struct FPingMessage : FHubMessage
 {
 	FPingMessage() : FHubMessage(ESignalRMessageType::Ping)
 	{}
 };
 
+/**
+ * Represents a close message indicating the intention to close the connection.
+ * May contain an error message and flag indicating if reconnection is allowed.
+ */
 struct FCloseMessage : FHubMessage
 {
 	FCloseMessage() : FHubMessage(ESignalRMessageType::Close)
@@ -109,14 +132,44 @@ struct FCloseMessage : FHubMessage
 	TOptional<bool> bAllowReconnect;
 };
 
+/**
+ * Interface for SignalR hub protocol implementations.
+ * Defines methods for serializing and parsing SignalR messages.
+ */
 class IHubProtocol
 {
 public:
 	virtual ~IHubProtocol();
 
+	/**
+	 * Gets the name of the protocol.
+	 *
+	 * @return The name of the protocol.
+	 */
 	virtual FName Name() const = 0;
+
+	/**
+	 * Gets the version of the protocol.
+	 *
+	 * @return The version of the protocol.
+	 */
 	virtual int Version() const = 0;
 
+	/**
+	 * Serializes a hub message to a string.
+	 *
+	 * @param Message The message to serialize.
+	 
+	 * @return The serialized message.
+	 */
 	virtual FString SerializeMessage(const FHubMessage*) const = 0;
+
+	/**
+	 * Parses a string containing one or more serialized hub messages.
+	 *
+	 * @param Message The string to parse.
+
+	 * @return An array of parsed hub messages.
+	 */
 	virtual TArray<TSharedPtr<FHubMessage>> ParseMessages(const FString&) const = 0;
 };

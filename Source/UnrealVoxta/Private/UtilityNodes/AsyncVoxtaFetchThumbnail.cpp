@@ -7,7 +7,7 @@
 UAsyncVoxtaFetchThumbnail* UAsyncVoxtaFetchThumbnail::AsyncVoxtaFetchThumbnail(const UObject* worldContextObject, const FGuid& baseCharacterId)
 {
 	UAsyncVoxtaFetchThumbnail* node = NewObject<UAsyncVoxtaFetchThumbnail>();
-	node->m_worldContextObject = worldContextObject;
+	node->WORLD_CONTEXT = worldContextObject;
 	node->m_baseCharacterId = baseCharacterId;
 	node->RegisterWithGameInstance(worldContextObject);
 	return node;
@@ -21,14 +21,14 @@ void UAsyncVoxtaFetchThumbnail::Activate()
 		return;
 	}
 
-	if (!m_worldContextObject)
+	if (!WORLD_CONTEXT)
 	{
 		FFrame::KismetExecutionMessage(TEXT("Invalid WorldContextObject. Cannot fetch thumbnail."), ELogVerbosity::Error);
 		OnThumbnailFetched(false, nullptr, FIntVector2());
 		return;
 	}
 
-	UGameInstance* GameInstance = UGameplayStatics::GetGameInstance(m_worldContextObject);
+	UGameInstance* GameInstance = UGameplayStatics::GetGameInstance(WORLD_CONTEXT);
 	if (!GameInstance)
 	{
 		FFrame::KismetExecutionMessage(TEXT("Could not get Game Instance."), ELogVerbosity::Error);

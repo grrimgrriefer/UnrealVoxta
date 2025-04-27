@@ -19,11 +19,11 @@ class VOXTAUTILITY_A2F_API ULipSyncDataA2F : public UObject, public ILipSyncBase
 #pragma region ILipSyncBaseData overrides
 public:
 	/**
-	 * Clean up the A2F-lipsync data (currently nothing)
+	 * Clean up the A2F-lipsync data
 	 */
 	virtual void ReleaseData() override
 	{
-		this->RemoveFromRoot();
+		RemoveFromRoot();
 	}
 #pragma endregion
 
@@ -32,6 +32,7 @@ public:
 	/** Create an instance of the LipSyncData holder for Audio2Face. */
 	ULipSyncDataA2F() : ILipSyncBaseData()
 	{
+		AddToRoot();
 	}
 
 	/**
@@ -43,11 +44,11 @@ public:
 	 */
 	void SetA2FCurveWeights(const TArray<TArray<float>>& sourceCurves, int framesPerSecond)
 	{
-		m_completeSampleCount = sourceCurves;
+		m_curveWeights = sourceCurves;
 		m_framesPerSecond = framesPerSecond;
 	}
 
-	/** @return The FPS that the curves were genrated at. */
+	/** @return The FPS that the curves were generated at. */
 	int GetFramePerSecond() const
 	{
 		return m_framesPerSecond;
@@ -56,12 +57,13 @@ public:
 	/** @return A direct reference to the generated curve weights. */
 	const TArray<TArray<float>>& GetA2FCurveWeights() const
 	{
-		return m_completeSampleCount;
+		return m_curveWeights;
 	}
+#pragma endregion
 
 #pragma region data
 private:
-	int m_framesPerSecond;
-	TArray<TArray<float>> m_completeSampleCount;
+	int m_framesPerSecond = 0;
+	TArray<TArray<float>> m_curveWeights;
 #pragma endregion
 };

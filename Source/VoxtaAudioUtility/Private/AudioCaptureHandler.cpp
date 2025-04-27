@@ -28,6 +28,12 @@ bool AudioCaptureHandler::TryInitializeVoiceCapture(int sampleRate, int numChann
 		return true;
 	}
 
+	if (sampleRate != 16000 || numChannels != 1)
+	{
+		UE_LOGFMT(VoxtaLog, Error, "We only support 16-bit mono 16khz audio.");
+		return false;
+	}
+
 	FVoiceModule& VoiceModule = FVoiceModule::Get();
 	if (VoiceModule.IsVoiceEnabled())
 	{
@@ -35,7 +41,7 @@ bool AudioCaptureHandler::TryInitializeVoiceCapture(int sampleRate, int numChann
 		Audio::FCaptureDeviceInfo OutInfo;
 		if (!AudioCapture.GetCaptureDeviceInfo(OutInfo, INDEX_NONE))
 		{
-			UE_LOGFMT(VoxtaLog, Error, "Failed to fetch microhpone device information {0}", m_deviceName);
+			UE_LOGFMT(VoxtaLog, Error, "Failed to fetch microhpone device information");
 			return false;
 		}
 		m_deviceName = OutInfo.DeviceName;
@@ -65,9 +71,18 @@ void AudioCaptureHandler::ConfigureSilenceThresholds(float micNoiseGateThreshold
 	static IConsoleVariable* silenceDetectionThresholdCVar = IConsoleManager::Get().FindConsoleVariable(TEXT("voice.SilenceDetectionThreshold"));
 	static IConsoleVariable* micInputGainCVar = IConsoleManager::Get().FindConsoleVariable(TEXT("voice.MicInputGain"));
 
-	silenceDetectionReleaseCVar->Set(micNoiseGateThreshold);
-	silenceDetectionThresholdCVar->Set(silenceDetectionThreshold);
-	micInputGainCVar->Set(micInputGain);
+	if (silenceDetectionReleaseCVar)
+	{
+		silenceDetectionReleaseCVar->Set(micNoiseGateThreshold);
+	}
+	if (silenceDetectionThresholdCVar)
+	{
+		silenceDetectionThresholdCVar->Set(silenceDetectionThreshold);
+	}
+	if (micInputGainCVar)
+	{
+		micInputGainCVar->Set(micInputGain);
+	}
 }
 bool AudioCaptureHandler::TryStartVoiceCapture()
 {
@@ -174,9 +189,8 @@ bool AudioCaptureHandler::CaptureVoiceInternal(TArray<uint8>& voiceDataBuffer, f
 
 bool AudioCaptureHandler::IsInputSilent() const
 {
-	return !m_isCapturing ||
-		FMath::IsNearlyEqual(m_decibels, DEFAULT_SILENCE_DECIBELS) ||
-		(FDateTime::Now() - m_lastVoiceTimestamp).GetTotalSeconds() > 0.1f;
+	FScopeLock Lock(&m_captureGuard);
+	return IsInputSilentInternal();
 }
 
 void AudioCaptureHandler::SendInternal(const TArray<uint8>& rawData) const
@@ -221,7 +235,7 @@ void AudioCaptureHandler::CaptureAndSendVoiceData()
 float AudioCaptureHandler::GetDecibels() const
 {
 	FScopeLock Lock(&m_captureGuard);
-	return IsInputSilent() ? DEFAULT_SILENCE_DECIBELS : m_decibels;
+	return IsInputSilentInternal() ? DEFAULT_SILENCE_DECIBELS : m_decibels;
 }
 
 const FString& AudioCaptureHandler::GetDeviceName() const
@@ -247,4 +261,11 @@ float AudioCaptureHandler::AnalyseDecibels(const TArray<uint8>& voiceInputData, 
 	float rms = FMath::Sqrt(sumSquared / (dataSize / 2.f));
 	float decibels = 20.0f * FMath::LogX(10.f, FMath::Max(rms, 1.f) / 32768.f);
 	return FMath::Max(decibels, DEFAULT_SILENCE_DECIBELS);
+}
+
+bool AudioCaptureHandler::IsInputSilentInternal() const
+{
+	return !m_isCapturing ||
+		FMath::IsNearlyEqual(m_decibels, DEFAULT_SILENCE_DECIBELS) ||
+		(FDateTime::Now() - m_lastVoiceTimestamp).GetTotalSeconds() > 0.1f;
 }

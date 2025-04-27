@@ -27,7 +27,7 @@ public:
 	virtual void ReleaseData() override
 	{
 		m_ovrLipSyncFrameSequence = nullptr;
-		this->RemoveFromRoot();
+		RemoveFromRoot();
 	}
 #pragma endregion
 
@@ -36,11 +36,12 @@ public:
 	/** Create an instance of the LipSyncData holder for OVRLipSync. */
 	ULipSyncDataOVR() : ILipSyncBaseData()
 	{
+		AddToRoot();
 	}
 
 	/**
-	 * Register the generated UOVRLipSyncFrameSequence as part of this instance.
-	 * This will transfer ownership of the provided pointer to this object.
+	 * Store the generated UOVRLipSyncFrameSequence in this instance.
+	 * The sequence will remain valid as long as this ULipSyncDataOVR object exists.
 	 *
 	 * @param ovrLipSyncFrameSequence The sequence of OVR curves that will be provided to the OVR audio playback
 	 * component when playing the matching audio.

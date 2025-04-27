@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Dom/JsonObject.h"
 #include "HttpModule.h"
 #include "Interfaces/IHttpRequest.h"
 #include "Interfaces/IHttpResponse.h"
@@ -34,8 +35,8 @@ public:
 	 * @param callback The response after A2F is finished, containing the path of the JSON shapes file and if A2F
 	 * reported the generation of it to be successful or not.
 	 */
-	void GetBlendshapes(FString wavFileName, FString shapesFilePath, FString shapesFileName,
-		TFunction<void(FString shapesFilePath, bool success)> callback);
+	void GetBlendshapes(const FString& wavFileName, const FString& shapesFilePath, const FString& shapesFileName,
+		TFunction<void(const FString&, bool /*success*/)> callback);
 
 	/** @return True if A2F is currently trying to initialize itself. */
 	bool IsInitializing() const;
@@ -43,9 +44,9 @@ public:
 	/**
 	 * A2F headless cannot generate in parallel, which is why we need this.
 	 *
-	 * @return True if A2F is still busy generating lipsync data for an earlier call.
+	 * @return True if A2F is ready to generate new lipsync data.
 	 */
-	bool IsBusy() const;
+	bool IsAvailable() const;
 #pragma endregion
 
 #pragma region private helper classes
@@ -62,7 +63,7 @@ private:
 
 #pragma region data
 private:
-	CurrentA2FState m_currentState = CurrentA2FState::NotConnected;
+	std::atomic<CurrentA2FState> m_currentState = CurrentA2FState::NotConnected;
 #pragma endregion
 
 #pragma region private API
@@ -73,9 +74,9 @@ private:
 	/** Send a request to the http://localhost:8011/A2F/Player/SetRootPath" REST call (POST) */
 	void SetPlayerRootPath(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> callback) const;
 	/** Send a request to the http://localhost:8011/A2F/Player/SetTrack" REST call (POST) */
-	void SetPlayerTrack(FString fileName, TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> callback) const;
+	void SetPlayerTrack(const FString& fileName, TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> callback) const;
 	/** Send a request to the http://localhost:8011/A2F/Exporter/ExportBlendshapes" REST call (POST) */
-	void GenerateBlendShapes(FString filePath, FString fileName,
+	void GenerateBlendShapes(const FString& filePath, const FString& fileName,
 		TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> callback) const;
 
 	// TODO: implement these, maybe? idk yet

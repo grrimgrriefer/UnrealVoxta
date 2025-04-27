@@ -8,7 +8,7 @@
 #include "AiCharData.generated.h"
 
 /**
- * FUserCharData
+ * FAiCharData
  * Read-only data struct containing all the relevant information for an AI character.
  *
  * Resides in the UVoxtaClient directly.

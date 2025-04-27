@@ -11,6 +11,7 @@ class MessageChunkAudioContainer;
 class UActorComponent;
 class UAudio2FacePlaybackHandler;
 class UVoxtaClient;
+class USoundWaveProcedural;
 struct FBaseCharData;
 struct FChatMessage;
 

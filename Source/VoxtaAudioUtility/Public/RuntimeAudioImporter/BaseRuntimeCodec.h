@@ -21,7 +21,7 @@ public:
 	/**
 	 * Check if the given audio data appears to be valid
 	 */
-	virtual bool CheckAndFixAudioFormat(FRuntimeBulkDataBuffer<uint8>& AudioData) PURE_VIRTUAL(FBaseRuntimeCodec::CheckAudioFormat, return false;)
+	virtual bool CheckAndFixAudioFormat(FRuntimeBulkDataBuffer<uint8>&AudioData) PURE_VIRTUAL(FBaseRuntimeCodec::CheckAndFixAudioFormat, return false;)
 
 	/**
 	 * Retrieve audio header information from an encoded source

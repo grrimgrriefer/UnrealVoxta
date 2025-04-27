@@ -4,8 +4,8 @@ using System.IO;
 using UnrealBuildTool;
 
 /// <summary>
-/// Specifies all the requirements to compile the LogUtility (mostly mactros and other defines)
-/// Should not depend on any module.
+/// Specifies all the requirements to compile the LogUtility (mostly macros and other defines)
+/// Should not depend on any module beyond Core.
 /// </summary>
 public class LogUtility : ModuleRules
 {

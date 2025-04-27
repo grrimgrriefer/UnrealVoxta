@@ -62,6 +62,7 @@ public:
 	/** Stops the capture, permanently clearing the reserved memory for the background thread. */
 	void ShutDown(bool alsoDestroyCaptureDevice = false);
 
+	/** @return If the current input can be considered to be pure silence. */
 	bool IsInputSilent() const;
 
 	/** @return The volume in decibels, of the last audioChunk (~30ms delay) */
@@ -75,10 +76,9 @@ public:
 
 #pragma region data
 private:
-	UPROPERTY()
-	TArray<uint8> m_socketDataBuffer = TArray<uint8>();
+	TArray<uint8> m_socketDataBuffer;
 
-	const float DEFAULT_SILENCE_DECIBELS = -144.f;
+	static constexpr float DEFAULT_SILENCE_DECIBELS = -144.f;
 
 	/** The background thread needs access to our private functions. */
 	friend class FVoiceRunnerThread;
@@ -119,11 +119,14 @@ private:
 	/**
 	 * Analyze the provided data and calculate the maximum decibels that is present in this chunk of audio.
 	 *
-	 * @param VoiceData The raw bytes of audio data.
-	 * @param DataSize The amount of bytes that should be part of the analysis
+	 * @param voiceInputData The raw bytes of audio data.
+	 * @param dataSize The amount of bytes that should be part of the analysis
 	 *
 	 * @return The decibel value in float format.
 	 */
 	float AnalyseDecibels(const TArray<uint8>& voiceInputData, uint32 dataSize) const;
+
+	/** @return If the current input can be considered to be pure silence. NOT threadsafe */
+	bool IsInputSilentInternal() const;
 #pragma endregion
 };

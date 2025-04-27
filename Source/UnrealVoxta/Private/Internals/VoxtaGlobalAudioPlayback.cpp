@@ -10,7 +10,7 @@ void UVoxtaGlobalAudioPlayback::SetEnabled(bool newState)
 	m_isEnabled = newState;	
 }
 
-bool UVoxtaGlobalAudioPlayback::IsEnabled()
+bool UVoxtaGlobalAudioPlayback::IsEnabled() const
 {
 	return m_isEnabled;
 }
@@ -24,27 +24,14 @@ void UVoxtaGlobalAudioPlayback::PlaybackMessage(const FBaseCharData& sender, con
 			Prepare();
 		}
 
-		const FGuid previousCharacterId = m_characterId;
-		m_characterId = sender.GetId();		
-		struct FScopedCharacterIdReset
-		{
-			FGuid& characterId;
-			FGuid previousValue;
-		
-			FScopedCharacterIdReset(FGuid& characterIdRef, const FGuid& resetValue)
-			 : characterId(characterIdRef), previousValue(resetValue) {}
-		
-			~FScopedCharacterIdReset() { characterId = previousValue; }
-		} 
-		ScopedReset(m_characterId, previousCharacterId);
-		
+		TGuardValue<FGuid> GuardCharacterId(m_characterId, sender.GetId());
 		UVoxtaAudioPlayback::PlaybackMessage(sender, message);
 	}	
 }
 
 void UVoxtaGlobalAudioPlayback::Prepare()
 {
-	USoundAttenuation* settings = NewObject<USoundAttenuation>();
+	USoundAttenuation* settings = NewObject<USoundAttenuation>(this);
 	if (!settings)
 	{
 		UE_LOGFMT(VoxtaLog, Error, "Failed to create USoundAttenuation for global audio playback");

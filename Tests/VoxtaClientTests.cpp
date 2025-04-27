@@ -12,6 +12,13 @@
 #include "Components/ActorTestSpawner.h"
 #include "TestGameInstance.h"
 #include "TestPlaybackActor.h"
+#include "Logging/StructuredLog.h"
+#include "LogUtility/Public/Defines.h"
+
+#ifndef VOXTA_LOG_DEFINED
+DEFINE_LOG_CATEGORY(VoxtaLog);
+#define VOXTA_LOG_DEFINED
+#endif
 
 #define EMPTY_TEXT TEXT("")
 #define TEST_DELAY_SECONDS 1
@@ -518,13 +525,13 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		});
 
 		/** Test */
-		WaitUntilState(VoxtaClientState::WaitingForUserReponse);
+		WaitUntilState(VoxtaClientState::WaitingForUserResponse);
 
 		TestCommandBuilder.Do([this] ()
 		{
 			/** Assert */
 			GLog->Flush();
-			ASSERT_THAT(AreEqual(m_latestNewStateResponse, VoxtaClientState::WaitingForUserReponse));
+			ASSERT_THAT(AreEqual(m_latestNewStateResponse, VoxtaClientState::WaitingForUserResponse));
 			ASSERT_THAT(AreEqual(m_messages.Num(), 1));
 			ASSERT_THAT(AreEqual(m_messages[0].Value.GetCharId(), m_voxtaId));
 			ASSERT_THAT(AreEqual(m_messages[0].Key.GetId(), m_voxtaId));
@@ -630,13 +637,13 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		});
 
 		/** Test */
-		WaitUntilState(VoxtaClientState::WaitingForUserReponse);
+		WaitUntilState(VoxtaClientState::WaitingForUserResponse);
 
 		TestCommandBuilder.Do([this, text] ()
 		{
 			/** Assert */
 			GLog->Flush();
-			ASSERT_THAT(AreEqual(m_latestNewStateResponse, VoxtaClientState::WaitingForUserReponse));
+			ASSERT_THAT(AreEqual(m_latestNewStateResponse, VoxtaClientState::WaitingForUserResponse));
 			ASSERT_THAT(AreEqual(m_messages.Num(), 3)); // 1: ai greeting, 2: user message, 3: ai reply
 			ASSERT_THAT(AreEqual(m_messages[1].Value.GetTextContent(), text));
 			ASSERT_THAT(AreEqual(m_messages[1].Key.GetId(), m_voxtaClient->GetUserId()));
@@ -669,12 +676,12 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		});
 
 		WaitUntilState(VoxtaClientState::AudioPlayback);
-		WaitUntilState(VoxtaClientState::WaitingForUserReponse);
+		WaitUntilState(VoxtaClientState::WaitingForUserResponse);
 
 		TestCommandBuilder.Do([this] ()
 		{			
 			GLog->Flush();
-			ASSERT_THAT(AreEqual(m_latestNewStateResponse, VoxtaClientState::WaitingForUserReponse));
+			ASSERT_THAT(AreEqual(m_latestNewStateResponse, VoxtaClientState::WaitingForUserResponse));
 			ASSERT_THAT(IsTrue(m_cache_guid.IsValid()));
 
 			m_voxtaClient->StopActiveChat();
@@ -1042,11 +1049,97 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 		TestCommandBuilder.Do([this] ()
 		{
 			/** Test */
-			const Audio2FaceRESTHandler* chatSession = m_voxtaClient->GetA2FHandler();
+			TWeakPtr<Audio2FaceRESTHandler> handler = m_voxtaClient->GetA2FHandler();
 
 			/** Assert */
 			GLog->Flush();
-			ASSERT_THAT(IsNotNull(chatSession));
+			ASSERT_THAT(IsNotNull(handler));
+		});
+	}
+#pragma endregion
+
+#pragma region SetCensoredLogs
+	TEST_METHOD(Validate_VoxtaLogCensor_ExpectSensitiveLogParamsCensoredByDefault)
+	{
+		PRE_TEST;
+
+		TestCommandBuilder.Do([this] ()
+		{
+			/** Test */
+			FString test02 = TEXT("test02");
+			SENSITIVE_LOG_BASIC(VoxtaLog, Log, TEXT("test01: %s"), *test02);
+
+			FString test04 = TEXT("test04");
+			SENSITIVE_LOG1(VoxtaLog, Log, "test03: {0}", test04);
+
+			FString test06 = TEXT("test06");
+			FString test07 = TEXT("test07");
+			SENSITIVE_LOG2(VoxtaLog, Log, "test05: {0}, {1}", test06, test07);
+
+			FString test09 = TEXT("test09");
+			FString test10 = TEXT("test10");
+			FString test11 = TEXT("test11");
+			SENSITIVE_LOG3(VoxtaLog, Log, "test08: {0}, {1}, {2}", test09, test10, test11);
+
+			/** Assert */
+			GLog->Flush();
+
+			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(TEXT("test01"), ELogVerbosity::Type::Log)));
+			ASSERT_THAT(IsFalse(m_testLogSink->ContainsLogMessageWithSubstring(test02, ELogVerbosity::Type::Log)));
+
+			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(TEXT("test03"), ELogVerbosity::Type::Log)));
+			ASSERT_THAT(IsFalse(m_testLogSink->ContainsLogMessageWithSubstring(test04, ELogVerbosity::Type::Log)));
+
+			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(TEXT("test05"), ELogVerbosity::Type::Log)));
+			ASSERT_THAT(IsFalse(m_testLogSink->ContainsLogMessageWithSubstring(test06, ELogVerbosity::Type::Log)));
+			ASSERT_THAT(IsFalse(m_testLogSink->ContainsLogMessageWithSubstring(test07, ELogVerbosity::Type::Log)));
+
+			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(TEXT("test08"), ELogVerbosity::Type::Log)));
+			ASSERT_THAT(IsFalse(m_testLogSink->ContainsLogMessageWithSubstring(test09, ELogVerbosity::Type::Log)));
+			ASSERT_THAT(IsFalse(m_testLogSink->ContainsLogMessageWithSubstring(test10, ELogVerbosity::Type::Log)));
+			ASSERT_THAT(IsFalse(m_testLogSink->ContainsLogMessageWithSubstring(test11, ELogVerbosity::Type::Log)));
+		});
+	}
+
+	TEST_METHOD(SetCensoredLogs_False_ExpectSensitiveLogParamsUncensored)
+	{
+		PRE_TEST;
+
+		TestCommandBuilder.Do([this] ()
+		{
+			/** Test */
+			FString test02 = TEXT("test02");
+			SENSITIVE_LOG_BASIC(VoxtaLog, Log, TEXT("test01: %s"), *test02);
+
+			FString test04 = TEXT("test04");
+			SENSITIVE_LOG1(VoxtaLog, Log, "test03: {0}", test04);
+
+			FString test06 = TEXT("test06");
+			FString test07 = TEXT("test07");
+			SENSITIVE_LOG2(VoxtaLog, Log, "test05: {0}, {1}", test06, test07);
+
+			FString test09 = TEXT("test09");
+			FString test10 = TEXT("test10");
+			FString test11 = TEXT("test11");
+			SENSITIVE_LOG3(VoxtaLog, Log, "test08: {0}, {1}, {2}", test09, test10, test11);
+
+			/** Assert */
+			GLog->Flush();
+
+			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(TEXT("test01"), ELogVerbosity::Type::Log)));
+			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(test02, ELogVerbosity::Type::Log)));
+
+			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(TEXT("test03"), ELogVerbosity::Type::Log)));
+			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(test04, ELogVerbosity::Type::Log)));
+
+			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(TEXT("test05"), ELogVerbosity::Type::Log)));
+			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(test06, ELogVerbosity::Type::Log)));
+			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(test07, ELogVerbosity::Type::Log)));
+
+			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(TEXT("test08"), ELogVerbosity::Type::Log)));
+			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(test09, ELogVerbosity::Type::Log)));
+			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(test10, ELogVerbosity::Type::Log)));
+			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(test11, ELogVerbosity::Type::Log)));
 		});
 	}
 #pragma endregion
@@ -1210,7 +1303,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 			m_cache_playbackActor->Initialize(m_voxtaId);
 			m_voxtaClient->StartChatWithCharacter(m_voxtaId);
 		});
-		WaitUntilState(VoxtaClientState::WaitingForUserReponse);
+		WaitUntilState(VoxtaClientState::WaitingForUserResponse);
 	}
 
 	void WaitForFixedDuration(double seconds)

@@ -9,7 +9,7 @@
 
 void UVoxtaAudioInput::InitializeSocket(int bufferMs, int sampleRate, int inputChannels)
 {
-	if (m_connectionState != VoxtaMicrophoneState::Uninitialized)
+	if (IsInitialized())
 	{
 		UE_LOGFMT(VoxtaLog, Warning, "Audio socket was already initialized, skipping new initialize attempt.");
 		return;
@@ -38,9 +38,27 @@ void UVoxtaAudioInput::InitializeSocket(int bufferMs, int sampleRate, int inputC
 	m_audioWebSocket = MakeShared<AudioWebSocket>(m_voxtaClient->GetServerAddress(),
 		m_voxtaClient->GetServerPort());
 
-	m_audioWebSocket->OnConnectedEvent.AddUObject(this, &UVoxtaAudioInput::OnSocketConnected);
-	m_audioWebSocket->OnConnectionErrorEvent.AddUObject(this, &UVoxtaAudioInput::OnSocketConnectionError);
-	m_audioWebSocket->OnClosedEvent.AddUObject(this, &UVoxtaAudioInput::OnSocketClosed);	
+	m_connectedHandle = m_audioWebSocket->OnConnectedEvent.AddUObject(this, &UVoxtaAudioInput::OnSocketConnected);
+	m_connectionErrorHandle = m_audioWebSocket->OnConnectionErrorEvent.AddUObject(this, &UVoxtaAudioInput::OnSocketConnectionError);
+	m_closedHandle = m_audioWebSocket->OnClosedEvent.AddUObject(this, &UVoxtaAudioInput::OnSocketClosed);
+}
+
+bool UVoxtaAudioInput::IsInitialized() const
+{
+	return m_connectionState != VoxtaMicrophoneState::Uninitialized;
+}
+
+void UVoxtaAudioInput::Cleanup()
+{
+	if (m_audioWebSocket.IsValid())
+	{
+		m_audioWebSocket->OnConnectedEvent.Remove(m_connectedHandle);
+		m_audioWebSocket->OnConnectionErrorEvent.Remove(m_connectionErrorHandle);
+		m_audioWebSocket->OnClosedEvent.Remove(m_closedHandle);
+		m_audioWebSocket.Reset();
+	}
+
+	UpdateConnectionState(VoxtaMicrophoneState::Uninitialized);
 }
 
 void UVoxtaAudioInput::DisconnectFromChat()
@@ -48,11 +66,10 @@ void UVoxtaAudioInput::DisconnectFromChat()
 	UE_LOGFMT(VoxtaLog, Log, "Disconnecting socket & shutting down voice capture gracefully.");
 
 	m_audioCaptureDevice.ShutDown();
-	if (m_audioWebSocket != nullptr)
+	if (m_audioWebSocket.IsValid())
 	{
 		m_audioWebSocket->Close();
 	}
-	UpdateConnectionState(VoxtaMicrophoneState::Uninitialized);
 }
 
 void UVoxtaAudioInput::ConnectToCurrentChat()
@@ -69,11 +86,15 @@ void UVoxtaAudioInput::ConnectToCurrentChat()
 		UE_LOGFMT(VoxtaLog, Error, "Tried to connect Voice input to chat but it doesn't support STT, this should be impossible");
 		return;
 	}
-	else
+
+	if (m_connectionState != VoxtaMicrophoneState::NotConnected)
 	{
-		UpdateConnectionState(VoxtaMicrophoneState::Connecting);
-		m_audioWebSocket->Connect(chat->GetSessionId());
+		UE_LOGFMT(VoxtaLog, Warning, "AudioInput was not in non-connected state.");
+		return;
 	}
+
+	UpdateConnectionState(VoxtaMicrophoneState::Connecting);
+	m_audioWebSocket->Connect(chat->GetSessionId());
 }
 
 VoxtaMicrophoneState UVoxtaAudioInput::GetCurrentState() const
@@ -166,10 +187,16 @@ void UVoxtaAudioInput::ConfigureSilenceThresholds(float micNoiseGateThreshold, f
 	return;
 }
 
+void UVoxtaAudioInput::BeginDestroy()
+{
+	Cleanup();
+	Super::BeginDestroy();
+}
+
 void UVoxtaAudioInput::ChatSessionHandshake()
 {
-	const FString socketInitialHeader = FString::Format(*FString(TEXT("{\"contentType\":\"audio/wav\","
-		"\"sampleRate\":{0},\"channels\":{1},\"bitsPerSample\": 16,\"bufferMilliseconds\":{2}}")),
+	const FString socketInitialHeader = FString::Format(TEXT("{\"contentType\":\"audio/wav\","
+		"\"sampleRate\":{0},\"channels\":{1},\"bitsPerSample\": 16,\"bufferMilliseconds\":{2}}"),
 		{ m_sampleRate, m_inputChannels, m_bufferMs });
 
 	UE_LOGFMT(VoxtaLog, Log, "Sending AudioInput (microphone) format data to VoxtaServer: {0}", socketInitialHeader);
@@ -206,35 +233,47 @@ void UVoxtaAudioInput::UpdateConnectionState(VoxtaMicrophoneState newState)
 
 void UVoxtaAudioInput::OnSocketConnected()
 {
-	AsyncTask(ENamedThreads::GameThread, [this]()
+	TWeakObjectPtr<UVoxtaAudioInput> WeakThis(this);
+	AsyncTask(ENamedThreads::GameThread, [WeakThis]()
 	{
-		UE_LOGFMT(VoxtaLog, Log, "Succesfully connected Audiosocket (microphone input) to VoxtaServer.");
-		ChatSessionHandshake();
+		if (WeakThis.IsValid())
+		{
+			UE_LOGFMT(VoxtaLog, Log, "Succesfully connected Audiosocket (microphone input) to VoxtaServer.");
+			WeakThis->ChatSessionHandshake();
+		}		
 	});
 }
 
 void UVoxtaAudioInput::OnSocketConnectionError(const FString& error)
 {
-	AsyncTask(ENamedThreads::GameThread, [this, Error = error] ()
+	TWeakObjectPtr<UVoxtaAudioInput> WeakThis(this);
+	AsyncTask(ENamedThreads::GameThread, [WeakThis, ErrorMsg = error] ()
 	{
-		UE_LOGFMT(VoxtaLog, Error, "AudioInput socket error: {0}. Closing socket.", Error);
-		DisconnectFromChat();
+		if (WeakThis.IsValid())
+		{
+			UE_LOGFMT(VoxtaLog, Error, "AudioInput socket error: {0}. Closing socket.", ErrorMsg);
+			WeakThis->DisconnectFromChat();
+		}
 	});
 }
 
 void UVoxtaAudioInput::OnSocketClosed(int statusCode, const FString& reason, bool wasClean)
 {
-	AsyncTask(ENamedThreads::GameThread, [this, StatusCode = statusCode, Reason = reason, WasClean = wasClean] ()
+	TWeakObjectPtr<UVoxtaAudioInput> WeakThis(this);
+	AsyncTask(ENamedThreads::GameThread, [WeakThis, StatusCode = statusCode, Reason = reason, WasClean = wasClean] ()
 	{
-		if (WasClean)
+		if (WeakThis.IsValid())
 		{
-			UE_LOGFMT(VoxtaLog, Log, "AudioInput socket was closed. Reason: {0} Code: {1}", Reason, StatusCode);
+			if (WasClean)
+			{
+				UE_LOGFMT(VoxtaLog, Log, "AudioInput socket was closed. Reason: {0} Code: {1}", Reason, StatusCode);
+			}
+			else
+			{
+				UE_LOGFMT(VoxtaLog, Warning, "Audio socket was improperly closed because of reason: {0} Code: {1}",
+					Reason, StatusCode);
+			}
+			WeakThis->UpdateConnectionState(VoxtaMicrophoneState::NotConnected);
 		}
-		else
-		{
-			UE_LOGFMT(VoxtaLog, Warning, "Audio socket was improperly closed because of reason: {0} Code: {1}",
-				Reason, StatusCode);
-		}
-		UpdateConnectionState(VoxtaMicrophoneState::NotConnected);
 	});
 }

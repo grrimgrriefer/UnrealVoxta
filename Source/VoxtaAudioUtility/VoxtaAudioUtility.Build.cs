@@ -32,7 +32,6 @@ public class VoxtaAudioUtility : ModuleRules
 		else if (Target.Platform == UnrealTargetPlatform.IOS)
 		{
 			PrivateDependencyModuleNames.Add("AudioCaptureAudioUnit");
-			PrivateDependencyModuleNames.Add("AudioCaptureCore");
 			PublicFrameworks.AddRange(new [] { "CoreAudio", "AVFoundation", "AudioToolbox" });
 		}
 		else if (Target.Platform == UnrealTargetPlatform.Android)

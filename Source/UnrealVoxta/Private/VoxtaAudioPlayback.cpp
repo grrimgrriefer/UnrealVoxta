@@ -10,7 +10,7 @@
 #include "LipSyncDataOVR.h"
 #endif
 #include "BaseCharData.h"
-#include "Sound/SoundWaveProcedural.h"
+#include "RuntimeAudioImporter/ImportedSoundWave.h"
 #include "Logging/StructuredLog.h"
 #include "LogUtility/Public/Defines.h"
 
@@ -50,7 +50,7 @@ void UVoxtaAudioPlayback::InitializeInternal(bool autoRegisterHandler)
 	m_hostAddress = m_clientReference->GetServerAddress();
 	m_hostPort = m_clientReference->GetServerPort();
 	SENSITIVE_LOG1(VoxtaLog, Log, "Initialized audioplayback. Audio will be downloaded from: {0}",
-		FString::Format(*FString(TEXT("http://{0}:{1}/")), { m_hostAddress, m_hostPort }));
+		FString::Format(TEXT("http://{0}:{1}/"), { m_hostAddress, m_hostPort }));
 }
 
 void UVoxtaAudioPlayback::MarkAudioChunkCustomPlaybackComplete(const FGuid& guid)
@@ -87,7 +87,7 @@ void UVoxtaAudioPlayback::PlaybackMessage(const FBaseCharData& sender, const FCh
 		for (int i = 0; i < message.GetAudioUrls().Num(); i++)
 		{
 			m_orderedAudio.Add(MakeShared<MessageChunkAudioContainer>(
-				FString::Format(*FString(TEXT("http://{0}:{1}{2}")), { m_hostAddress, m_hostPort, message.GetAudioUrls()[i] }),
+				FString::Format(TEXT("http://{0}:{1}{2}"), { m_hostAddress, m_hostPort, message.GetAudioUrls()[i] }),
 				m_lipSyncType,
 				m_clientReference->GetA2FHandler(),
 				[Self = TWeakObjectPtr<UVoxtaAudioPlayback>(this)]
@@ -146,14 +146,13 @@ void UVoxtaAudioPlayback::EndPlay(const EEndPlayReason::Type endPlayReason)
 {
 	if (endPlayReason != EEndPlayReason::Quit && endPlayReason != EEndPlayReason::EndPlayInEditor)
 	{
-		UE_LOGFMT(VoxtaLog, Warning, "Removed audioplayback for character with id: {0} due to EndPlay with reason {1}.",
+		UE_LOGFMT(VoxtaLog, Log, "Removed audioplayback for character with id: {0} due to EndPlay with reason {1}.",
 			m_characterId, UEnum::GetValueAsString(endPlayReason));
 	}
 
 	if (m_clientReference != nullptr)
 	{
 		m_clientReference->TryUnregisterPlaybackHandler(m_characterId);
-		UE_LOGFMT(VoxtaLog, Error, "Removing Voxta AudioPlayback handler for character: {0}", m_characterId);
 	}
 	OnAudioFinishedNative.Remove(m_playbackFinishedHandle);
 
@@ -167,6 +166,8 @@ void UVoxtaAudioPlayback::EndPlay(const EEndPlayReason::Type endPlayReason)
 		Cast<UOVRLipSyncPlaybackActorComponent>(m_lipSyncHandler)->Stop();
 	}
 #endif
+
+	Cleanup();
 	Super::EndPlay(endPlayReason);
 }
 
@@ -213,8 +214,8 @@ void UVoxtaAudioPlayback::PlayCurrentAudioChunkIfAvailable()
 				break;
 			case LipSyncType::Custom:
 			{
-				TArray<uint8> rawData = currentClip->GetRawAudioData();
-				USoundWaveProcedural* soundWave = currentClip->GetSoundWave();
+				const TArray<uint8>& rawData = currentClip->GetRawAudioData();
+				UImportedSoundWave* soundWave = currentClip->GetSoundWave();
 				FGuid guid = currentClip->GetLipSyncData<ILipSyncBaseData>()->GetGuid();
 
 				UE_LOGFMT(VoxtaLog, Log, "Broadcasting that audio chunk with guid: {0} is ready for playback with "
@@ -338,7 +339,7 @@ void UVoxtaAudioPlayback::Cleanup()
 	for (TSharedPtr<MessageChunkAudioContainer> audioChunk : m_orderedAudio)
 	{
 		audioChunk->CleanupData();
-		audioChunk = nullptr;
+		audioChunk.Reset();
 	}
 	m_orderedAudio.Empty();
 }

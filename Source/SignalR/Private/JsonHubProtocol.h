@@ -27,17 +27,55 @@
 #include "CoreMinimal.h"
 #include "IHubProtocol.h"
 
+/**
+ * Implementation of the SignalR JSON hub protocol.
+ * Handles serialization and deserialization of SignalR messages in JSON format.
+ */
 class SIGNALR_API FJsonHubProtocol : public IHubProtocol
 {
 public:
+    /**
+     * Character used to separate records in the SignalR protocol stream.
+     */
     static constexpr TCHAR RecordSeparator = TEXT('\x1e');
 
+    /**
+     * Virtual destructor for the JSON hub protocol.
+     */
+    virtual ~FJsonHubProtocol() override = default;
+
+    /**
+     * Gets the name of this hub protocol.
+     * 
+     * @return The name of the protocol.
+     */
     virtual FName Name() const override;
+
+    /**
+     * Gets the version of this hub protocol.
+     * 
+     * @return The protocol version.
+     */
     virtual int Version() const override;
 
+    /**
+     * Serializes a hub message to a JSON string.
+     * 
+     * @param InMessage The message to serialize.
+     * 
+     * @return The serialized message string.
+     */
     virtual FString SerializeMessage(const FHubMessage* InMessage) const override;
-    virtual TArray<TSharedPtr<FHubMessage>> ParseMessages(const FString&) const override;
+
+    /**
+     * Parses a string containing one or more JSON messages into hub message objects.
+     * 
+     * @param InMessage The string to parse.
+     * 
+     * @return Array of parsed hub messages.
+     */
+    virtual TArray<TSharedPtr<FHubMessage>> ParseMessages(const FString& InMessage) const override;
 
 private:
-    TSharedPtr<FHubMessage> ParseMessage(const FString&) const;
+    TSharedPtr<FHubMessage> ParseMessage(const FString& InMessage) const;
 };

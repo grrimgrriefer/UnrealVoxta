@@ -13,25 +13,24 @@ struct VOXTADATA_API FVoxtaVersionData
 
 #pragma region public API
 public:
-	FStringView GetCompatibleServerVersion() const { return m_compatibleServerVersion; };
+	FStringView GetCompatibleServerVersion() const { return m_compatibleServerVersion; }
 
-	FStringView GetCompatibleAPIVersion() const { return m_compatibleAPIVersion; };
+	FStringView GetCompatibleAPIVersion() const { return m_compatibleAPIVersion; }
 
-	FStringView GetServerVersion() const { return m_serverVersion; };
+	FStringView GetServerVersion() const { return m_serverVersion; }
 
-	FStringView GetApiVersion() const { return m_apiVersion; };
+	FStringView GetApiVersion() const { return m_apiVersion; }
 	
 	bool IsMatchingServerVersion() const { return m_serverVersion == m_compatibleServerVersion; }
 
 	bool IsMatchingAPIVersion() const { return m_apiVersion == m_compatibleAPIVersion; }
-
 	
 	explicit FVoxtaVersionData(FString voxtaServerVersion, FString voxtaAPIVersion) :
 		m_serverVersion(voxtaServerVersion),
 		m_apiVersion(voxtaAPIVersion)
 	{}
 
-	explicit FVoxtaVersionData() {};
+	FVoxtaVersionData() {}
 #pragma endregion
 
 private:

@@ -7,6 +7,11 @@
 #include "Interfaces/IHttpRequest.h"
 #include "Interfaces/IHttpResponse.h"
 #include "Interfaces/IPluginManager.h"
+#include "Dom/JsonObject.h"
+#include "Dom/JsonValue.h"
+#include "Serialization/JsonSerializer.h"
+#include "Serialization/JsonWriter.h"
+#include "Misc/Paths.h"
 
 void Audio2FaceRESTHandler::TryInitialize()
 {
@@ -101,12 +106,14 @@ void Audio2FaceRESTHandler::TryInitialize()
 	});
 }
 
-void Audio2FaceRESTHandler::GetBlendshapes(FString wavFileName, FString shapesFilePath, FString shapesFileName,
-	TFunction<void(FString shapesFile, bool success)> callback)
+void Audio2FaceRESTHandler::GetBlendshapes(const FString& wavFileName, const FString& shapesFilePath, const FString& shapesFileName,
+	TFunction<void(const FString&, bool /*success*/)> callback)
 {
 	if (m_currentState != CurrentA2FState::Idle)
 	{
-		UE_LOGFMT(VoxtaLog, Error, "Always check if the RESTHandler is busy before trying to request A2F blendshape generation, skipping request");
+		UE_LOGFMT(VoxtaLog, Error, "RESTHandler busy, GetBlendshapes request rejected; "
+			"always check if the RESTHandler is busy before trying to request A2F blendshape generation, skipping request");
+		AsyncTask(ENamedThreads::GameThread, [Callback = callback] () { Callback(FString(), false); });
 		return;
 	}
 	m_currentState = CurrentA2FState::Busy;
@@ -122,6 +129,13 @@ void Audio2FaceRESTHandler::GetBlendshapes(FString wavFileName, FString shapesFi
 					{
 						if (TSharedPtr<Audio2FaceRESTHandler> SharedSelf2 = Self2.Pin())
 						{
+							if (!success)
+							{
+								UE_LOGFMT(VoxtaLog, Warning, "SetPlayerRootPath failed, aborting GetBlendshapes");
+								SharedSelf2->m_currentState = CurrentA2FState::Idle;
+								AsyncTask(ENamedThreads::GameThread, [Callback1] () { Callback1(FString(), false); });
+								return;
+							}
 							SharedSelf2->SetPlayerTrack(WavFileName1,
 								[Self3 = TWeakPtr<Audio2FaceRESTHandler>(SharedSelf2->AsShared()), ShapesFilePath2 = ShapesFilePath1, ShapesFileName2 = ShapesFileName1, Callback2 = Callback1] (FHttpRequestPtr req, FHttpResponsePtr resp, bool success)
 								{
@@ -146,6 +160,7 @@ void Audio2FaceRESTHandler::GetBlendshapes(FString wavFileName, FString shapesFi
 										if (!totalSuccess)
 										{
 											UE_LOGFMT(VoxtaLog, Warning, "SetPlayerTrack failed, aborting GetBlendshapes");
+											SharedSelf3->m_currentState = CurrentA2FState::Idle;
 											AsyncTask(ENamedThreads::GameThread,
 												[totalSuccess, Callback3 = Callback2] ()
 												{
@@ -191,6 +206,7 @@ void Audio2FaceRESTHandler::GetBlendshapes(FString wavFileName, FString shapesFi
 																else
 																{
 																	UE_LOGFMT(VoxtaLog, Warning, "GenerateBlendShapes failed, aborting GetBlendshapes");
+																	SharedSelf5->m_currentState = CurrentA2FState::Idle;
 																	Callback4(FString(), TotalSuccess2);
 																	return;
 																}
@@ -236,9 +252,9 @@ bool Audio2FaceRESTHandler::IsInitializing() const
 	return m_currentState == CurrentA2FState::Initializing;
 }
 
-bool Audio2FaceRESTHandler::IsBusy() const
+bool Audio2FaceRESTHandler::IsAvailable() const
 {
-	return m_currentState != CurrentA2FState::Idle;
+	return m_currentState == CurrentA2FState::Idle;
 }
 
 void Audio2FaceRESTHandler::GetStatus(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback) const
@@ -256,7 +272,7 @@ void Audio2FaceRESTHandler::LoadUsdFile(TFunction<void(FHttpRequestPtr, FHttpRes
 	Request->SetVerb("POST");
 
 	TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
-	JsonObject->SetStringField(TEXT("file_name"), FString::Format(*FString(TEXT("{0}\\claire_solved_arkit.usd")),
+	JsonObject->SetStringField(TEXT("file_name"), FString::Format(TEXT("{0}\\claire_solved_arkit.usd"),
 		{ IPluginManager::Get().FindPlugin("UnrealVoxta")->GetContentDir() }));
 
 	Request->SetContentAsString(JsonToString(JsonObject.ToSharedRef()));
@@ -271,14 +287,14 @@ void Audio2FaceRESTHandler::SetPlayerRootPath(TFunction<void(FHttpRequestPtr, FH
 
 	TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
 	JsonObject->SetStringField(TEXT("a2f_player"), TEXT("/World/audio2face/Player"));
-	JsonObject->SetStringField(TEXT("dir_path"), FString::Format(*FString(TEXT("{0}\\A2FCache")),
+	JsonObject->SetStringField(TEXT("dir_path"), FString::Format(TEXT("{0}\\A2FCache"),
 		{ IPluginManager::Get().FindPlugin("UnrealVoxta")->GetContentDir() }));
 
 	Request->SetContentAsString(JsonToString(JsonObject.ToSharedRef()));
 	Request->ProcessRequest();
 }
 
-void Audio2FaceRESTHandler::SetPlayerTrack(FString fileName, TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback) const
+void Audio2FaceRESTHandler::SetPlayerTrack(const FString& fileName, TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback) const
 {
 	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = GetBaseRequest(Callback);
 	Request->SetURL("http://localhost:8011/A2F/Player/SetTrack");
@@ -296,7 +312,7 @@ void Audio2FaceRESTHandler::SetPlayerTrack(FString fileName, TFunction<void(FHtt
 	Request->ProcessRequest();
 }
 
-void Audio2FaceRESTHandler::GenerateBlendShapes(FString filePath, FString fileName, TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback) const
+void Audio2FaceRESTHandler::GenerateBlendShapes(const FString& filePath, const FString& fileName, TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> Callback) const
 {
 	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = GetBaseRequest(Callback);
 	Request->SetURL("http://localhost:8011/A2F/Exporter/ExportBlendshapes");
@@ -333,6 +349,7 @@ TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Audio2FaceRESTHandler::GetBaseRequ
 		});
 	Request->SetHeader("Content-Type", "application/json");
 	Request->SetHeader("accept", "application/json");
+	Request->SetTimeout(10.0f); // 10 seconds timeout
 	return Request;
 }
 

@@ -34,11 +34,11 @@ public:
 	static const TSet<FString> IGNORED_MESSAGE_TYPES;
 
 	/**
-	 * Internal helper class to deserialize a reponse from the VoxtaServer into the corresponding data struct.
+	 * Internal helper class to deserialize a response from the VoxtaServer into the corresponding data struct.
 	 *
 	 * @param serverResponseData The raw data received from the SignalR message.
 	 *
-	 * @return The uniqueptr to the deserialized object, which derives from ServerResponseBase.
+	 * @return The TUniquePtr to the deserialized object, which derives from ServerResponseBase.
 	 */
 	static TUniquePtr<ServerResponseBase> GetResponseData(
 		const TMap<FString, FSignalRValue>& serverResponseData);
@@ -46,6 +46,8 @@ public:
 
 #pragma region VoxtaServer response deserialize handlers
 private:
+	static const TMap<FString, TFunction<TUniquePtr<ServerResponseBase>(const TMap<FString, FSignalRValue>&)>> HANDLERS;
+
 	/** ServerResponseWelcome override of the generic GetResponseData */
 	static TUniquePtr<ServerResponseWelcome> GetWelcomeResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData);
@@ -63,15 +65,15 @@ private:
 		const TMap<FString, FSignalRValue>& serverResponseData);
 
 	/** ServerResponseChatMessageStart override of the generic GetResponseData */
-	static TUniquePtr<ServerResponseChatMessageStart> GetReplyStartReponseResponse(
+	static TUniquePtr<ServerResponseChatMessageStart> GetReplyStartResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData);
 
 	/** ServerResponseChatMessageChunk override of the generic GetResponseData */
-	static TUniquePtr<ServerResponseChatMessageChunk> GetReplyChunkReponseResponse(
+	static TUniquePtr<ServerResponseChatMessageChunk> GetReplyChunkResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData);
 
 	/** ServerResponseChatMessageEnd override of the generic GetResponseData */
-	static TUniquePtr<ServerResponseChatMessageEnd> GetReplyEndReponseResponse(
+	static TUniquePtr<ServerResponseChatMessageEnd> GetReplyEndResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData);
 
 	/** ServerResponseChatMessageCancelled override of the generic GetResponseData */
@@ -99,7 +101,15 @@ private:
 		const TMap<FString, FSignalRValue>& serverResponseData);
 
 	/** Helper function to parse Context data */
-	static void ProcessContextData(TMap<FString, FSignalRValue> contextMainObject, FString& outContextValue);
+	static void ProcessContextData(const TMap<FString, FSignalRValue>& contextMainObject, FString& outContextValue);
+
+	/** Template helper wrapper for mapping without losing type saftey */
+	template<typename T>
+	static TUniquePtr<ServerResponseBase> WrapHandler(TUniquePtr<T>(*handler)(const TMap<FString, FSignalRValue>&),
+		const TMap<FString, FSignalRValue>& data)
+	{
+		return handler(data);	
+	}
 #pragma endregion
 
 private:

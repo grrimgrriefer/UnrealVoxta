@@ -28,7 +28,6 @@
 #include "WebSocketsModule.h"
 #include "SignalRModule.h"
 #include "Interfaces/IHttpResponse.h"
-#include "Interfaces/IHttpRequest.h"
 #include "Dom/JsonObject.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
@@ -53,7 +52,7 @@ void FConnection::Connect()
     Negotiate();
 }
 
-bool FConnection::IsConnected()
+bool FConnection::IsConnected() const
 {
     return Connection.IsValid() && Connection->IsConnected();
 }
@@ -128,13 +127,13 @@ void FConnection::OnNegotiateResponse(FHttpRequestPtr InRequest, FHttpResponsePt
     {
         UE_LOG(LogSignalR, Error, TEXT("Could not connect to host"))
         OnConnectionFailedEvent.Broadcast();
-
         return;
     }
 
     if(InResponse->GetResponseCode() != 200)
     {
         UE_LOG(LogSignalR, Error, TEXT("Negotiate failed with status code %d"), InResponse->GetResponseCode());
+        OnConnectionFailedEvent.Broadcast();
         return;
     }
 
@@ -203,6 +202,8 @@ void FConnection::OnNegotiateResponse(FHttpRequestPtr InRequest, FHttpResponsePt
                 ConnectionToken = JsonObject->GetStringField(TEXT("connectionToken"));
             }
 
+            // TODO append ID and token once VoxtaServer requires it.
+
             StartWebSocket();
         }
     }
@@ -214,8 +215,8 @@ void FConnection::OnNegotiateResponse(FHttpRequestPtr InRequest, FHttpResponsePt
 
 void FConnection::StartWebSocket()
 {
-    const FString COnver = ConvertToWebsocketUrl(Host);
-    Connection = FWebSocketsModule::Get().CreateWebSocket(COnver, FString(), Headers);
+    const FString WebSocketUrl = ConvertToWebsocketUrl(Host);
+    Connection = FWebSocketsModule::Get().CreateWebSocket(WebSocketUrl, FString(), Headers);
 
     if(Connection.IsValid())
     {
