@@ -7,9 +7,11 @@
 #include "LipSyncDataA2F.generated.h"
 
 /**
- * ULipSyncDataA2F.
- * Wrapper for A2F-lipsync specific data. A2F logic is it's own module for SOLID principle, not for any
- * dependency reasons. (A2F just needs a HTTP client internally to work)
+ * ULipSyncDataA2F
+ * UObject-based container for Audio2Face lipsync data.
+ * Holds all data required for playback of Audio2Face lipsync generation.
+ * Keeps A2F logic modular and separated from other lipsync types.
+ * Each instance holds the lipsync data for a single voiceline and is responsible for its own cleanup.
  */
 UCLASS(Category = "Voxta")
 class VOXTAUTILITY_A2F_API ULipSyncDataA2F : public UObject, public ILipSyncBaseData
@@ -19,7 +21,9 @@ class VOXTAUTILITY_A2F_API ULipSyncDataA2F : public UObject, public ILipSyncBase
 #pragma region ILipSyncBaseData overrides
 public:
 	/**
-	 * Clean up the A2F-lipsync data
+	 * Clean up the A2F-lipsync data.
+	 * Removes this object from the root set, allowing it to be garbage collected.
+	 * Should be called when playback is finished and the data is no longer needed.
 	 */
 	virtual void ReleaseData() override
 	{
@@ -29,7 +33,10 @@ public:
 
 #pragma region public API
 public:
-	/** Create an instance of the LipSyncData holder for Audio2Face. */
+	/**
+	 * Constructor for the Audio2Face lipsync data holder.
+	 * Adds this object to the root set to prevent garbage collection during playback.
+	 */
 	ULipSyncDataA2F() : ILipSyncBaseData()
 	{
 		AddToRoot();

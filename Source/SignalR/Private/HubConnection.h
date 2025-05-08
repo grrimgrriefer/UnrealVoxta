@@ -49,16 +49,24 @@ public:
 	 * @param InHeaders HTTP headers to include in requests to the server.
 	 */
 	FHubConnection(const FString& InUrl, const TMap<FString, FString>& InHeaders);
+
+	/**
+	 * Destructor for the hub connection.
+	 * Cleans up resources and closes the connection if necessary.
+	 */
 	virtual ~FHubConnection();
 
-	//~ Begin IHubConnection Interface
-
+#pragma region IHubConnection overrides
+public:
 	/**
 	 * Starts the hub connection.
+	 * Initiates the connection process to the SignalR hub.
 	 */
 	virtual void Start() override;
+
 	/**
 	 * Stops the hub connection.
+	 * Closes the connection to the SignalR hub and cleans up resources.
 	 */
 	virtual void Stop() override;
 
@@ -96,7 +104,6 @@ public:
 	 * Registers a handler for a hub method invocation.
 	 *
 	 * @param EventName The name of the hub method.
-	 
 	 * @return Reference to the method invocation delegate.
 	 */
 	virtual FOnMethodInvocation& On(const FString& EventName) override;
@@ -106,7 +113,6 @@ public:
 	 *
 	 * @param EventName The name of the hub method to invoke.
 	 * @param InArguments The arguments to pass to the hub method.
-
 	 * @return Reference to the method completion delegate that will be called when the method completes.
 	 */
 	virtual FOnMethodCompletion& Invoke(const FString& EventName, const TArray<FSignalRValue>& InArguments = TArray<FSignalRValue>()) override;
@@ -118,28 +124,64 @@ public:
 	 * @param InArguments The arguments to pass to the hub method.
 	 */
 	virtual void Send(const FString& InEventName, const TArray<FSignalRValue>& InArguments = TArray<FSignalRValue>()) override;
-	//~ End IHubConnection Interface
+#pragma endregion IHubConnection overrides
 
-	//~ Begin FTickableGameObject Interface
+#pragma region FTickableGameObject overrides
+public:
+	/**
+	 * Ticks the hub connection, used for periodic tasks such as sending pings.
+	 *
+	 * @param DeltaTime The time elapsed since the last tick.
+	 */
 	virtual void Tick(float DeltaTime) override;
+
+	/**
+	 * Gets the stat ID for this tickable object.
+	 *
+	 * @return The stat ID.
+	 */
 	TStatId GetStatId() const override;
+
+	/**
+	 * Gets the tickable tick type for this object.
+	 *
+	 * @return The tickable tick type.
+	 */
 	virtual ETickableTickType GetTickableTickType() const override
 	{
 		return ETickableTickType::Always;
 	}
+
+	/**
+	 * Determines if this object is tickable.
+	 *
+	 * @return True if tickable, false otherwise.
+	 */
 	virtual bool IsTickable() const override
 	{
 		return true;
 	}
+
+	/**
+	 * Determines if this object is tickable in the editor.
+	 *
+	 * @return True if tickable in editor, false otherwise.
+	 */
 	virtual bool IsTickableInEditor() const override
 	{
 		return true;
 	}
+
+	/**
+	 * Determines if this object is tickable when the game is paused.
+	 *
+	 * @return True if tickable when paused, false otherwise.
+	 */
 	virtual bool IsTickableWhenPaused() const override
 	{
 		return true;
 	}
-	//~ Begin FTickableGameObject Interface
+#pragma endregion FTickableGameObject overrides
 
 protected:
 	void ProcessMessage(const FString& InMessageStr);

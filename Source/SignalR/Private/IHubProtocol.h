@@ -120,8 +120,8 @@ struct FPingMessage : FHubMessage
 };
 
 /**
- * Represents a close message indicating the intention to close the connection.
- * May contain an error message and flag indicating if reconnection is allowed.
+ * Represents a close message sent when closing a connection.
+ * Contains optional error information and reconnection settings.
  */
 struct FCloseMessage : FHubMessage
 {
@@ -159,7 +159,7 @@ public:
 	 * Serializes a hub message to a string.
 	 *
 	 * @param Message The message to serialize.
-	 
+
 	 * @return The serialized message.
 	 */
 	virtual FString SerializeMessage(const FHubMessage*) const = 0;

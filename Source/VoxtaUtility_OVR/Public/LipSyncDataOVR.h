@@ -9,9 +9,9 @@
 class UOVRLipSyncFrameSequence;
 
 /**
- * ULipSyncDataOVR.
- * Wrapper for OVR-lipsync specific data. This lives in its own module, which is excluded from the others if
- * OVR plugin is not installed in the project. (i.e. if the dev doesn't want lipsync for some reason)
+ * ULipSyncDataOVR
+ * Contains all the data required for playback of OVR lipsync generation.
+ * Used to keep OVR lipsync logic modular and separated from other lipsync types.
  */
 UCLASS(Category = "Voxta")
 class VOXTAUTILITY_OVR_API ULipSyncDataOVR : public UObject, public ILipSyncBaseData
@@ -33,7 +33,10 @@ public:
 
 #pragma region public API
 public:
-	/** Create an instance of the LipSyncData holder for OVRLipSync. */
+	/**
+	 * Constructor for the ULipSyncDataOVR lipsync data holder.
+	 * Adds this object to the root set to prevent garbage collection during playback.
+	 */
 	ULipSyncDataOVR() : ILipSyncBaseData()
 	{
 		AddToRoot();
@@ -51,7 +54,11 @@ public:
 		m_ovrLipSyncFrameSequence = ovrLipSyncFrameSequence;
 	}
 
-	/** @return A raw pointer to the OVR curves that were generated and assigned to this data instance */
+	/**
+	 * Get the OVR lipsync frame sequence data.
+	 * 
+	 * @return Pointer to the OVR lipsync frame sequence.
+	 */
 	UOVRLipSyncFrameSequence* GetOvrLipSyncData() const
 	{
 		return m_ovrLipSyncFrameSequence;

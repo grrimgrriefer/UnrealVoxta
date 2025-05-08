@@ -11,13 +11,20 @@
 #include <type_traits>
 #include <limits>
 
+/**
+ * RAW format codec implementation for runtime audio importing.
+ * Provides utilities for transcoding, resampling, and mixing RAW audio data buffers.
+ * Supports conversion between different integer and floating-point sample formats.
+ */
 class FRAW_RuntimeCodec
 {
 public:
 	/**
-	 * Getting the minimum and maximum values of the specified RAW format
+	 * Get the minimum and maximum representable values for a given integral or floating-point type.
 	 *
-	 * @note Key - Minimum, Value - Maximum
+	 * @tparam IntegralType The type for which to get the min and max values (e.g., int16, uint8, float).
+	 *
+	 * @return A tuple where Key is the minimum and Value is the maximum value for the type.
 	 */
 	template <typename IntegralType>
 	static TTuple<long long, long long> GetRawMinAndMaxValues()
@@ -69,10 +76,12 @@ public:
 	}
 
 	/**
-	 * Transcoding one RAW Data format to another
+	 * Transcode a buffer of RAW audio data from one sample format to another.
 	 *
-	 * @param RAWData_From RAW data for transcoding
-	 * @param RAWData_To Transcoded RAW data with the specified format
+	 * @tparam IntegralTypeFrom The source sample type.
+	 * @tparam IntegralTypeTo The destination sample type.
+	 * @param RAWData_From Input buffer containing audio data in the source format.
+	 * @param RAWData_To Output buffer to receive audio data in the destination format.
 	 */
 	template <typename IntegralTypeFrom, typename IntegralTypeTo>
 	static void TranscodeRAWData(const TArray64<uint8>& RAWData_From, TArray64<uint8>& RAWData_To)
@@ -81,16 +90,18 @@ public:
 		const int64 RawDataSize = RAWData_From.Num() / sizeof(IntegralTypeFrom);
 
 		RAWData_To.SetNumUninitialized(RawDataSize * sizeof(IntegralTypeTo));
-		IntegralTypeTo * DataTo = reinterpret_cast<IntegralTypeTo*>(RAWData_To.GetData());
+		IntegralTypeTo* DataTo = reinterpret_cast<IntegralTypeTo*>(RAWData_To.GetData());
 		TranscodeRAWData<IntegralTypeFrom, IntegralTypeTo>(DataFrom, RawDataSize, DataTo);
 	}
 
 	/**
-	 * Transcoding one RAW Data format to another
+	 * Transcode a buffer of RAW audio data from one sample format to another (pointer version).
 	 *
-	 * @param RAWDataFrom Pointer to memory location of the RAW data for transcoding
-	 * @param NumOfSamples Number of samples in the RAW data
-	 * @param RAWDataTo Pointer to memory location of the transcoded RAW data with the specified format. The number of samples is RAWDataSize
+	 * @tparam IntegralTypeFrom The source sample type.
+	 * @tparam IntegralTypeTo The destination sample type.
+	 * @param RAWDataFrom Pointer to the input audio data in the source format.
+	 * @param NumOfSamples Number of samples in the input buffer.
+	 * @param RAWDataTo Pointer reference to receive the transcoded audio data in the destination format.
 	 */
 	template <typename IntegralTypeFrom, typename IntegralTypeTo>
 	static void TranscodeRAWData(const IntegralTypeFrom* RAWDataFrom, int64 NumOfSamples, IntegralTypeTo*& RAWDataTo)
@@ -112,14 +123,15 @@ public:
 	}
 
 	/**
-	 * Resampling RAW Data to a different sample rate
+	 * Resample RAW audio data to a different sample rate.
 	 *
-	 * @param RAWData RAW data for resampling
-	 * @param NumOfChannels Number of channels in the RAW data
-	 * @param SourceSampleRate Source sample rate of the RAW data
-	 * @param DestinationSampleRate Destination sample rate of the RAW data
-	 * @param ResampledRAWData Resampled RAW data
-	 * @return True if the RAW data was successfully resampled
+	 * @param RAWData Input/output buffer containing audio data to be resampled.
+	 * @param NumOfChannels Number of channels in the audio data.
+	 * @param SourceSampleRate The original sample rate of the audio data.
+	 * @param DestinationSampleRate The desired sample rate after resampling.
+	 * @param ResampledRAWData Output buffer to receive the resampled audio data.
+	 *
+	 * @return True if resampling was successful, false otherwise.
 	 */
 	static bool ResampleRAWData(Audio::FAlignedFloatBuffer& RAWData, uint32 NumOfChannels, uint32 SourceSampleRate, uint32 DestinationSampleRate, Audio::FAlignedFloatBuffer& ResampledRAWData)
 	{
@@ -169,14 +181,15 @@ public:
 	}
 
 	/**
-	 * Mixing RAW Data to a different number of channels
+	 * Mix RAW audio data to a different number of channels.
 	 *
-	 * @param RAWData RAW data for mixing
-	 * @param SampleRate Sample rate of the RAW data
-	 * @param SourceNumOfChannels Source number of channels in the RAW data
-	 * @param DestinationNumOfChannels Destination number of channels in the RAW data
-	 * @param RemixedRAWData Remixed RAW data
-	 * @return True if the RAW data was successfully mixed
+	 * @param RAWData Input/output buffer containing audio data to be remixed.
+	 * @param SampleRate Sample rate of the audio data.
+	 * @param SourceNumOfChannels The original number of channels in the audio data.
+	 * @param DestinationNumOfChannels The desired number of channels after mixing.
+	 * @param RemixedRAWData Output buffer to receive the remixed audio data.
+	 *
+	 * @return True if mixing was successful, false otherwise.
 	 */
 	static bool MixChannelsRAWData(Audio::FAlignedFloatBuffer& RAWData, int32 SampleRate, int32 SourceNumOfChannels, int32 DestinationNumOfChannels, Audio::FAlignedFloatBuffer& RemixedRAWData)
 	{

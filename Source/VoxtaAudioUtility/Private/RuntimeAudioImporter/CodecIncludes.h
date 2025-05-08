@@ -1,8 +1,8 @@
 ﻿/**
  * Georgy Treshchev 2024.
- * 
- * Replacing C dynamic memory management functions
- * (calloc, malloc, free, realloc, memset, memcpy) with FMemory ones
+ *
+ * Replaces C dynamic memory management functions (calloc, malloc, free, realloc, memset, memcpy) with FMemory equivalents for Unreal Engine integration.
+ * This header should be included before including third-party codec headers to ensure Unreal's memory management is used.
  */
 
 #pragma once

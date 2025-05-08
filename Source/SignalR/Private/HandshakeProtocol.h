@@ -29,23 +29,28 @@
 class IHubProtocol;
 class FJsonObject;
 
+/**
+ * Implements the SignalR handshake protocol used during connection initialization.
+ * Handles creation and parsing of handshake messages that negotiate protocol versions
+ * and connection settings between client and server.
+ */
 class FHandshakeProtocol
 {
 public:
     /**
      * Creates a handshake message for the specified hub protocol.
-     * 
+     *
      * @param InProtocol The protocol to create a handshake message for
-     * 
+     *
      * @return A string containing the serialized handshake message
      */
     static FString CreateHandshakeMessage(TSharedPtr<IHubProtocol> InProtocol);
 
     /**
      * Parses a handshake response from the server.
-     * 
+     *
      * @param Response The raw response string from the server
-     * 
+     *
      * @return A tuple containing the parsed handshake message as a JSON object and any remaining response data
      */
     static TTuple<TSharedPtr<FJsonObject>, FString> ParseHandshakeResponse(const FString& Response);

@@ -4,6 +4,10 @@
 #include "CoreMinimal.h"
 #include "Logging/LogMacros.h"
 
+/**
+ * Namespace to encapsulate sensitive logging utilities
+ * and avoid polluting the global namespace.
+ */
 namespace SensitiveLogging
 {
     static bool isSensitiveLogsCensored = true;
@@ -12,6 +16,7 @@ namespace SensitiveLogging
 
 /**
  * Logs a message with sensitive information that will be censored if censoring is enabled.
+ * 
  * @param LogCategory - The log category to use
  * @param Verbosity - The verbosity level (e.g., Warning, Error)
  * @param Format - The format string
@@ -31,6 +36,7 @@ namespace SensitiveLogging
 
 /**
  * Logs a message with one sensitive parameter that will be censored if censoring is enabled.
+ * 
  * @param LogCategory - The log category to use
  * @param Verbosity - The verbosity level (e.g., Warning, Error)
  * @param Format - The format string
@@ -50,6 +56,7 @@ namespace SensitiveLogging
 
 /**
  * Logs a message with two sensitive parameters that will be censored if censoring is enabled.
+ * 
  * @param LogCategory - The log category to use
  * @param Verbosity - The verbosity level (e.g., Warning, Error)
  * @param Format - The format string
@@ -70,6 +77,7 @@ namespace SensitiveLogging
 
 /**
  * Logs a message with three sensitive parameters that will be censored if censoring is enabled.
+ * 
  * @param LogCategory - The log category to use
  * @param Verbosity - The verbosity level (e.g., Warning, Error)
  * @param Format - The format string

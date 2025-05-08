@@ -30,7 +30,8 @@
 
 /**
  * Represents a connection to a SignalR server.
- * Handles the underlying WebSocket connection and negotiation process with the server.
+ * Handles the low-level WebSocket connection, including negotiation, message passing,
+ * and connection lifecycle management. Thread-safe.
  */
 class SIGNALR_API FConnection : public TSharedFromThis<FConnection>
 {
@@ -43,12 +44,16 @@ public:
      */
     FConnection(const FString& InHost, const TMap<FString, FString>& InHeaders);
 
+    /**
+     * Destructor for the connection with the SignalR server.
+     * Triggers the Close function if the connection is still alive at this point.
+     */
     virtual ~FConnection();
 
     FConnection(const FConnection&) = delete;
-    FConnection & operator=(const FConnection&) = delete;
+    FConnection& operator=(const FConnection&) = delete;
     FConnection(FConnection&&) = delete;
-    FConnection & operator=(FConnection&&) = delete;
+    FConnection& operator=(FConnection&&) = delete;
 
     /**
      * Initiates the connection process by starting the negotiation with the server.

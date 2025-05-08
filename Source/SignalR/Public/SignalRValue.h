@@ -26,10 +26,10 @@
 
 #include "CoreMinimal.h"
 
- /**
-  * Represents a value that can be sent to or received from a SignalR hub.
-  * Supports various data types including numbers, objects, arrays, strings, booleans, and binary data.
-  */
+/**
+ * Represents a value that can be sent to or received from a SignalR hub.
+ * Supports various data types including numbers, objects, arrays, strings, booleans, and binary data.
+ */
 class FSignalRValue
 {
 public:
