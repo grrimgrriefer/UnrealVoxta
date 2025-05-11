@@ -17,7 +17,7 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FVoxtaThumbnailFetched ThumbnailFetched;
 
-	UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true", WorldContext = "worldContextObject"), Category = "Voxta")
+	UFUNCTION(BlueprintCallable, Category = "Voxta", meta = (BlueprintInternalUseOnly = "true", WorldContext = "worldContextObject"))
 	static UAsyncVoxtaFetchThumbnail* AsyncVoxtaFetchThumbnail(const UObject* worldContextObject, const FGuid& baseCharacterId);
 
 	virtual void Activate() override;

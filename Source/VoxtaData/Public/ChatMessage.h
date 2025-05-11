@@ -6,9 +6,10 @@
 #include "ChatMessage.generated.h"
 
 /**
- * Data struct representing all the relevant information for a single chat message.
- *
- * NOTE: The text and audioUrls are appended with new info as more chunks are received.
+ * FChatMessage
+ * Represents a single message in a chat conversation, containing both text and audio data.
+ * Messages can be built up incrementally as chunks are received from the server.
+ * A message is considered complete only after being marked as such.
  */
 USTRUCT(BlueprintType, Category = "Voxta")
 struct FChatMessage
@@ -17,23 +18,45 @@ struct FChatMessage
 
 #pragma region public API
 public:
-	/**  @return Immutable reference to the VoxtaServer assigned id of this message. */
-	const FGuid& GetMessageId() const { return m_messageId; };
-
-	/**  @return Immutable reference to the VoxtaServer assigned id of the character who said this message. */
-	const FGuid& GetCharId() const { return m_charId; };
-
-	/**  @return Immutable reference to the complete text (so far) of this message. */
-	FStringView GetTextContent() const { return m_text; };
+	/**
+	 * Get the unique identifier assigned to this message.
+	 * Used to track and reference this specific message.
+	 *
+	 * @return The message's unique ID.
+	 */
+	const FGuid& GetMessageId() const { return m_messageId; }
 
 	/**
-	 * @return Immutable reference to the list of audioUrl chunks that can be used to download the
-	 * synthesized audio for all the text in this message.
+	 * Get the ID of the character who sent this message.
+	 * Used to identify the sender of the message.
+	 *
+	 * @return The sender's character ID.
 	 */
-	const TArray<FString>& GetAudioUrls() const { return m_audioUrls; };
+	const FGuid& GetCharId() const { return m_charId; }
 
-	/**  @return Whether this message is complete with no further chunks expected. */
-	bool GetIsComplete() const { return m_isComplete; };
+	/**
+	 * Get the current text content of the message.
+	 * May be incomplete if message is still being received.
+	 *
+	 * @return The current message text.
+	 */
+	FStringView GetTextContent() const { return m_text; }
+
+	/**
+	 * Get the list of audio URLs for this message's synthesized speech.
+	 * Used to retrieve audio content for playback.
+	 *
+	 * @return Array of audio URL strings.
+	 */
+	const TArray<FString>& GetAudioUrls() const { return m_audioUrls; }
+
+	/**
+	 * Check if this message is complete with no further chunks expected.
+	 * Used to determine if message content is finalized.
+	 *
+	 * @return True if message is complete, false if still receiving chunks.
+	 */
+	bool GetIsComplete() const { return m_isComplete; }
 
 	/**
 	 * Add more data to this message, as VoxtaServer notifies us of the complete data in chunks.
@@ -56,12 +79,12 @@ public:
 		return true;
 	}
 
-	/** 
-	 * Mark this message as complete, indicating no further chunks are expected. 
+	/**
+	 * Mark this message as complete, indicating no further chunks are expected.
 	 */
-	void MarkComplete() 
-	{ 
-		m_isComplete = true; 
+	void MarkComplete()
+	{
+		m_isComplete = true;
 	}
 
 	/**
@@ -76,21 +99,26 @@ public:
 		m_charId(charId)
 	{}
 
-	/** Default constructor, should not be used manually, but is enforced by Unreal */
-	FChatMessage() {};
+	/** Default constructor. */
+	FChatMessage() = default;
 #pragma endregion
 
 private:
+	/** Message text (so far). */
 	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Message Text (so far)"))
 	FString m_text;
 
+	/** Message ID assigned by VoxtaServer. */
 	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Message ID"))
 	FGuid m_messageId;
 
+	/** Character ID of the sender. */
 	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Character ID"))
 	FGuid m_charId;
 
+	/** Whether this message is complete. */
 	bool m_isComplete = false;
 
+	/** List of audio URLs for this message. */
 	TArray<FString> m_audioUrls;
 };

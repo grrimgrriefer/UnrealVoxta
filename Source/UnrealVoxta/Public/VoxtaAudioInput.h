@@ -25,7 +25,9 @@ class UNREALVOXTA_API UVoxtaAudioInput : public UObject
 
 #pragma region delegate declarations
 public:
+	/** Delegate fired when the audio input state changes. */
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaAudioInputStateChanged, VoxtaMicrophoneState, newState);
+	/** Native C++ delegate for audio input state changes. */
 	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaAudioInputStateChangedNative, VoxtaMicrophoneState);
 #pragma endregion
 
@@ -55,29 +57,36 @@ public:
 	 */
 	void Cleanup();
 
+	/** @return True if the audio input is initialized. */
 	bool IsInitialized() const;
 
+	/** Connects the audio input to the current chat session. */
 	void ConnectToCurrentChat();
+
+	/** Disconnects the audio input from the current chat session. */
 	void DisconnectFromChat();
 
+	/**
+	 * Starts audio testing mode with the given sample rate and input channels.
+	 * @param sampleRate The sample rate to use.
+	 * @param inputChannels The number of input channels.
+	 */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
 	void StartAudioTesting(int sampleRate = 16000, int inputChannels = 1);
 
+	/** Stops audio testing mode. */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
 	void StopAudioTesting();
 
-	/** Starts the voice capture, sending captured audiodata to the server in fixed timesteps (bufferMs). */
+	/** Starts streaming audio data to the server. */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
 	void StartStreaming(bool isTestMode = false);
 
-	/**
-	 * Stops the voice capture.
-	 *
-	 * Note: This will cancel the last batch of audio data. (i.e. 0-200ms data lost)
-	 */
+	/** Stops streaming audio data to the server. */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
 	void StopStreaming();
 
+	/** @return The current microphone state. */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
 	VoxtaMicrophoneState GetCurrentState() const;
 
@@ -85,6 +94,7 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Voxta")
 	bool IsRecording() const;
 
+	/** @return True if the input is currently silent. */
 	UFUNCTION(BlueprintPure, Category = "Voxta")
 	bool IsInputSilent() const;
 

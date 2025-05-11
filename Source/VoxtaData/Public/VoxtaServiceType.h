@@ -5,9 +5,14 @@
 #include "CoreMinimal.h"
 
 /**
- * ServiceType
+ * VoxtaServiceType
  * All the possible VoxtaServer Services that the UnrealVoxta client currently supports.
- * Used to fetch the correct version of the service from the FChatSession data container.
+ * Used to identify and track service types in the chat session.
+ *
+ * Services:
+ * - TextGen: Text generation/chat functionality
+ * - SpeechToText: Voice input transcription
+ * - TextToSpeech: Voice synthesis for AI responses
  */
 UENUM(BlueprintType, Category = "Voxta")
 enum class VoxtaServiceType : uint8

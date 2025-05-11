@@ -10,10 +10,10 @@
 /**
  * FUserCharData
  * Read-only data struct containing all the relevant information for the character representing the User (player).
+ * Contains basic character data like ID and name, plus a special thumbnail URL format for user profiles.
  *
- * Resides in the UVoxtaClient directly.
- * Cannot be retrieved or fetched through any public API, but will be referenced via the
- * VoxtaClientCharMessageAddedEvent when the user has contributed a message to the chat.
+ * Resides in the UVoxtaClient directly and is initialized during the Welcome response.
+ * Referenced in VoxtaClientCharMessageAddedEvent when the user contributes a message.
  */
 USTRUCT(BlueprintType, Category = "Voxta")
 struct FUserCharData : public FBaseCharData
@@ -34,8 +34,8 @@ public:
 		FBaseCharData(id, name)
 	{}
 
-	/** Default constructor, should not be used manually, but is enforced by Unreal */
-	explicit FUserCharData() : FBaseCharData() {}
+	/** Default constructor */
+	FUserCharData() = default;
 
 	virtual ~FUserCharData() override = default;
 #pragma endregion

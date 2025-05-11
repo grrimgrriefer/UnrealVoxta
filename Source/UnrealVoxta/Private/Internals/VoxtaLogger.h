@@ -15,7 +15,7 @@ class VoxtaLogger : public FOutputDevice
 {
 #pragma region public API
 public:
-	/** Unregister VoxtaLogger from GLog. I.e. cleanup */
+	/** Destructor. Unregisters VoxtaLogger from GLog. */
 	~VoxtaLogger();
 
 	/** Register VoxtaLogger with GLog, allowing the override to run on any logs printed to the console. */

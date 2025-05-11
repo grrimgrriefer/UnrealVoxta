@@ -7,13 +7,14 @@
 #include "VoxtaServiceData.generated.h"
 
 /**
- * VoxtaServiceData
- * Data class containing the relevant information for VoxtaServer services.
+ * FVoxtaServiceData
+ * Data struct representing a single Voxta service (e.g., TextGen, TTS, STT).
+ * Contains type, name, and unique identifier for the service.
  *
  * Resides in the FChatSession data container.
  * Cannot be fetched by anything yet, as it serves no use at the moment. (TODO: support for runtime enabling/disabling
  * of VoxtaServer Services)
-  */
+ */
 USTRUCT(BlueprintType, Category = "Voxta")
 struct VOXTADATA_API FVoxtaServiceData
 {
@@ -22,11 +23,11 @@ struct VOXTADATA_API FVoxtaServiceData
 #pragma region public API
 public:
 	/**
-	 * Create an instance, containing the data for one specific VoxtaServer service.
+	 * Construct a new VoxtaServiceData.
 	 *
-	 * @param type The kind of service is this data tied to.
-	 * @param name The name of this service. (hard-coded, NOT from VoxtaServer)
-	 * @param id The GUID assigned by the VoxtaServer for this service.
+	 * @param type The type of the service.
+	 * @param name The name of the service.
+	 * @param id The unique identifier for the service.
 	 */
 	explicit FVoxtaServiceData(VoxtaServiceType type,
 			FStringView name,
@@ -36,17 +37,21 @@ public:
 		m_serviceId(id)
 	{}
 
-	explicit FVoxtaServiceData() {}
+	/** Default constructor. */
+	FVoxtaServiceData() = default;
 #pragma endregion
 
 #pragma region data
 private:
+	/** The type of the service (e.g., TextGen, TTS, STT). */
 	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Service type"))
 	VoxtaServiceType m_serviceType;
 
+	/** The name of the service. */
 	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Service name"))
 	FString m_serviceName;
 
+	/** The unique identifier for the service. */
 	FGuid m_serviceId;
 #pragma endregion
 };

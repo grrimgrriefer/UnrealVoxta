@@ -12,9 +12,8 @@
 /**
  * FChatSession
  * Data struct containing all the relevant information regarding a chat session between the user and AI characters.
- *
- * Note: Contains both immutable and stateful data & acts as the single source-of-truth regarding the ongoing chat.
- * Can be fetched via GetChatSession() of the VoxtaClient.
+ * Acts as the single source of truth for chat state, message history, and available services.
+ * Thread-safe for concurrent read/write access.
  */
 USTRUCT(BlueprintType, Category = "Voxta")
 struct VOXTADATA_API FChatSession
@@ -24,10 +23,11 @@ struct VOXTADATA_API FChatSession
 #pragma region public API
 public:
 	/**
-	 * Can be used to add, remove and update chatMessage entries.
-	 * Acts as the source-of-truth of whatever has been said so far.
+	 * Get the chat message history for this session.
+	 * Can be used to add, remove, and update chat message entries.
+	 * Acts as the source-of-truth for what has been said so far.
 	 *
-	 * @return An immutable reference to the chatMessage history.
+	 * @return An immutable reference to the chat message history.
 	 */
 	const TArray<FChatMessage>& GetChatMessages()
 	{
@@ -35,16 +35,18 @@ public:
 	}
 
 	/**
-	 * Used only as required data for some VoxtaServer API calls.
+	 * Get the VoxtaServer assigned ID of this session.
+	 * Used as required data for some VoxtaServer API calls.
 	 *
-	 * @return The VoxtaServer assigned ID of this session.
+	 * @return The session ID.
 	 */
 	FGuid GetSessionId() const { return m_sessionId; }
 
 	/**
-	 * Used by VoxtaClient to know if it should notify audioplayback handlers, mic input, etc...
+	 * Get the services that were enabled when the chat session was started.
+	 * Used by VoxtaClient to know if it should notify audio playback handlers, mic input, etc.
 	 *
-	 * @return The services that were enabled when the chatsession was started.
+	 * @return The map of active services.
 	 */
 	const TMap<VoxtaServiceType, FVoxtaServiceData>& GetActiveServices() const
 	{
@@ -62,7 +64,7 @@ public:
 	}
 
 	/**
-	 * Adds a new chat message to the session.
+	 * Add a new chat message to the session.
 	 *
 	 * @param message The chat message to add.
 	 */
@@ -72,9 +74,9 @@ public:
 	}
 
 	/**
-	 * Adds a new chat message to the session.
+	 * Remove a chat message from the session by message ID.
 	 *
-	 * @param message The chat message to add.
+	 * @param messageID The ID of the chat message to remove.
 	 */
 	void RemoveChatMessage(const FGuid& messageID)
 	{
@@ -90,22 +92,19 @@ public:
 	}
 
 	/**
-	 * Fetches a raw pointer to the ChatMessage that maches the id given in the parameters.
+	 * Fetch a raw pointer to the ChatMessage that matches the given ID.
+	 * Note: The text & audio in this data is not guaranteed to be complete until the message is finalized.
 	 *
-	 * Note: The text & audio in this data is not guarenteed to be complete. Be aware that only after the
-	 * id has been broadcasted by VoxtaClientCharMessageAddedEvent that the message is considered final.
-	 *
-	 * @param messageId The id of the chatmessage you want to retrieve.
-	 *
-	 * @return An immutable pointer to the chatmessage, or nullptr if it was not found.
+	 * @param messageId The ID of the chat message to retrieve.
+	 * @return An immutable pointer to the chat message, or nullptr if not found.
 	 */
 	FChatMessage* GetChatMessageById(const FGuid& messageId)
 	{
-		return m_chatMessages.FindByPredicate([&messageId] (const FChatMessage& inItem)
+		return m_chatMessages.FindByPredicate([&messageId] (const FChatMessage& msg)
 		{
-			return inItem.GetMessageId() == messageId;
+			return msg.GetMessageId() == messageId;
 		});
-	}	
+	}
 
 	/**
 	 * Create a new instance of the ChatSession, containing all relevant data to it.
@@ -133,8 +132,32 @@ public:
 		}
 	}
 
-	/** Default constructor, should not be used manually, but is enforced by Unreal */
-	FChatSession() {}
+	/** Default constructor */
+	FChatSession() = default;
+
+	/**
+	 * Get the VoxtaServer assigned ID of this chat session.
+	 * Used as the session identifier for HTTP requests and WebSocket messages.
+	 *
+	 * @return The ID of the chat.
+	 */
+	FGuid GetChatId() const { return m_chatId; }
+
+	/**
+	 * Get the current context of the chat session.
+	 * Used to retrieve the current context text that influences the AI's responses.
+	 *
+	 * @return The current chat context string.
+	 */
+	FStringView GetChatContext() const { return m_chatContext; }
+
+	/**
+	 * Get the list of character IDs in the chat session.
+	 * Used to identify which characters are participating.
+	 *
+	 * @return The array of character GUIDs.
+	 */
+	const TArray<FGuid>& GetCharacterIds() const { return m_characterIds; }
 #pragma endregion
 
 #pragma region data

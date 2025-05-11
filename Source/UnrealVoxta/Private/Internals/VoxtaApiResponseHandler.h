@@ -22,23 +22,25 @@ struct ServerResponseError;
 
 /**
  * VoxtaApiResponseHandler
- * Helper class that provides utility to deserialize VoxtaServer responses that are received via the SignalR socket.
+ * Stateless utility class for deserializing and mapping raw SignalR responses from the VoxtaServer
+ * into strongly-typed C++ data structures. Used internally by VoxtaClient to process server messages.
  *
- * Note: All methods and fields must be const (immutable), as this class should remain stateless.
+ * All methods are static and the class holds no mutable state.
  */
 class VoxtaApiResponseHandler
 {
 #pragma region public API
 public:
-	/** A collection of message types received from VoxtaServer that are considered safe to ignore. */
+	/** 
+	 * Set of message types that we could receive from VoxtaServer but are considered safe to ignore and require no handling.
+	 */
 	static const TSet<FString> IGNORED_MESSAGE_TYPES;
 
 	/**
-	 * Internal helper class to deserialize a response from the VoxtaServer into the corresponding data struct.
+	 * Deserialize a SignalR response from the VoxtaServer into the corresponding ServerResponseBase-derived struct.
 	 *
 	 * @param serverResponseData The raw data received from the SignalR message.
-	 *
-	 * @return The TUniquePtr to the deserialized object, which derives from ServerResponseBase.
+	 * @return A TUniquePtr to the deserialized object, or nullptr if deserialization failed.
 	 */
 	static TUniquePtr<ServerResponseBase> GetResponseData(
 		const TMap<FString, FSignalRValue>& serverResponseData);
@@ -46,64 +48,73 @@ public:
 
 #pragma region VoxtaServer response deserialize handlers
 private:
+	/**
+	 * Map of string to handler function for deserializing each response type.
+	 */
 	static const TMap<FString, TFunction<TUniquePtr<ServerResponseBase>(const TMap<FString, FSignalRValue>&)>> HANDLERS;
 
-	/** ServerResponseWelcome override of the generic GetResponseData */
+	/** Deserialize a welcome response. */
 	static TUniquePtr<ServerResponseWelcome> GetWelcomeResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData);
 
-	/** ServerResponseCharacterList override of the generic GetResponseData */
+	/** Deserialize a character list response. */
 	static TUniquePtr<ServerResponseCharacterList> GetCharacterListLoadedResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData);
 
-	/** ServerResponseContextUpdated override of the generic GetResponseData */
+	/** Deserialize a context updated response. */
 	static TUniquePtr<ServerResponseContextUpdated> GetContextUpdatedResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData);
 
-	/** ServerResponseChatStarted override of the generic GetResponseData */
+	/** Deserialize a chat started response. */
 	static TUniquePtr<ServerResponseChatStarted> GetChatStartedResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData);
 
-	/** ServerResponseChatMessageStart override of the generic GetResponseData */
+	/** Deserialize a chat message start response. */
 	static TUniquePtr<ServerResponseChatMessageStart> GetReplyStartResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData);
 
-	/** ServerResponseChatMessageChunk override of the generic GetResponseData */
+	/** Deserialize a chat message chunk response. */
 	static TUniquePtr<ServerResponseChatMessageChunk> GetReplyChunkResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData);
 
-	/** ServerResponseChatMessageEnd override of the generic GetResponseData */
+	/** Deserialize a chat message end response. */
 	static TUniquePtr<ServerResponseChatMessageEnd> GetReplyEndResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData);
 
-	/** ServerResponseChatMessageCancelled override of the generic GetResponseData */
+	/** Deserialize a chat message cancelled response. */
 	static TUniquePtr<ServerResponseChatMessageCancelled> GetReplyCancelledResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData);
 
-	/** ServerResponseChatUpdate override of the generic GetResponseData */
+	/** Deserialize a chat update response. */
 	static TUniquePtr<ServerResponseChatUpdate> GetChatUpdateResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData);
 
-	/** ServerResponseChatClosed override of the generic GetResponseData */
+	/** Deserialize a chat closed response. */
 	static TUniquePtr<ServerResponseChatClosed> GetChatClosedResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData);
 
-	/** ServerResponseSpeechTranscription (partial) override of the generic GetResponseData */
+	/** Deserialize a partial speech transcription response. */
 	static TUniquePtr<ServerResponseSpeechTranscription> GetSpeechRecognitionPartial(
 		const TMap<FString, FSignalRValue>& serverResponseData);
 
-	/** ServerResponseSpeechTranscription (end) override of the generic GetResponseData */
+	/** Deserialize a completed speech transcription response. */
 	static TUniquePtr<ServerResponseSpeechTranscription> GetSpeechRecognitionEnd(
 		const TMap<FString, FSignalRValue>& serverResponseData);
 
-	/** ServerResponseError override of the generic GetResponseData */
+	/** Deserialize an error response. */
 	static TUniquePtr<ServerResponseError> GetErrorResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData);
 
-	/** Helper function to parse Context data */
+	/**
+	 * Extract the context string from a context object in the response.
+	 * @param contextMainObject The context object from the response.
+	 * @param outContextValue Output parameter for the extracted context string.
+	 */
 	static void ProcessContextData(const TMap<FString, FSignalRValue>& contextMainObject, FString& outContextValue);
 
-	/** Template helper wrapper for mapping without losing type saftey */
+	/**
+	 * Helper for mapping handler functions to TUniquePtr<ServerResponseBase> without losing type safety.
+	 */
 	template<typename T>
 	static TUniquePtr<ServerResponseBase> WrapHandler(TUniquePtr<T>(*handler)(const TMap<FString, FSignalRValue>&),
 		const TMap<FString, FSignalRValue>& data)
@@ -113,6 +124,9 @@ private:
 #pragma endregion
 
 private:
+	/** @return The SignalR-string parsed as a GUID.  */
 	static FGuid GetStringAsGuid(const FSignalRValue& input);
+
+	/** @return The string parsed as a GUID.  */
 	static FGuid GetStringAsGuid(const FString& input);
 };

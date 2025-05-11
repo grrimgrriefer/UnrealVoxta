@@ -12,23 +12,25 @@ class ILipSyncBaseData;
 
 /**
  * MessageChunkAudioContainer
- * Internal class which encapsulates all datahandling for a single AI character voiceline.
- * Downloads the data from the VoxtaServer REST api, converting it into a SoundWave, and generating lipsync data.
+ * Internal utility class that encapsulates the download, decoding, and lipsync data generation for a single
+ * audio chunk (voiceline) of an AI character. Handles async download from the VoxtaServer REST API,
+ * conversion to a playable sound wave, and optional lipsync data generation (A2F, OVR, or custom).
  *
- * Note: The private API hooks into callbacks from background-threads, use care when changing the implementation.
+ * The object manages its own state machine and notifies a callback on state transitions.
+ * Not a UObject; must be managed via shared pointers.
  */
 class MessageChunkAudioContainer : public TSharedFromThis<MessageChunkAudioContainer>
 {
 #pragma region public API
 public:
 	/**
-	 * Initialize the instance with all the required data to prepare the audio & lipsync data in full isolation.
+	 * Construct a new MessageChunkAudioContainer for a specific audio chunk.
 	 *
-	 * @param fullUrl The full url to download the audio data. (Should be referring to the VoxtaSever REST-api)
-	 * @param lipSyncType The type of lipsync generation that should be done for this voiceline.
-	 * @param A2FRestHandler Pointer to access the A2F REST api.
-	 * @param callback The function that will be triggered when we have completed a 'state' and are waiting to continue.
-	 * @param id The index of this sound asset in the collection of the VoxtaAudioPlayback.
+	 * @param fullUrl The full URL to download the audio data from (VoxtaServer REST API).
+	 * @param lipSyncType The type of lipsync data to generate for this chunk.
+	 * @param A2FRestHandler Weak pointer to the A2F REST handler (required for A2F lipsync).
+	 * @param callback Callback to invoke on state transitions.
+	 * @param id Index of this chunk in the parent VoxtaAudioPlayback's chunk list.
 	 *
 	 * TODO: avoid requiring the A2FRestHandler injection, I kinda wanna move it to main subsystem but idk yet.
 	 */
@@ -40,20 +42,32 @@ public:
 
 	virtual ~MessageChunkAudioContainer() = default;
 
-	/** Trigger the next pre-processing state, assuming the instance is finished with what it was doing. */
+	/**
+	 * Advance the internal state machine to the next processing step (download, decode, lipsync, etc).
+	 * Should be called when the previous step is complete.
+	 */
 	void Continue();
 
-	/** Remove all dynamically created objects & data, also permanently marks the instance as cleaned up, so it can't be used anymore. */
+	/**
+	 * Clean up all dynamically created objects and data, and mark this chunk as cleaned up.
+	 * After this call, the chunk cannot be used again.
+	 */
 	void CleanupData();
 
 	/**
-	 * @return An immutable reference to the raw audioData bytes.
+	 * Get a reference to the raw audio data bytes for this chunk.
+	 *
+	 * @return Immutable reference to the raw audio data.
 	 *
 	 * Note: Main use-case is for custom lipsync, where blueprints could want access to the bytes to do whatever custom logic.
 	 */
 	const TArray<uint8>& GetRawAudioData() const;
 
-	/** @return an immutable pointer to the LipSync dataobject, this is guarenteed to implement the ILipSyncDataBase interface. */
+	/**
+	 * Get an immutable pointer to the lipsync data object for this chunk, cast to the requested type.
+	 * @tparam T Must derive from ILipSyncBaseData.
+	 * @return Pointer to the lipsync data object, or nullptr if not available.
+	 */
 	template <typename T, typename = std::enable_if_t<std::is_base_of_v<ILipSyncBaseData, T>>>
 	const T* GetLipSyncData() const
 	{

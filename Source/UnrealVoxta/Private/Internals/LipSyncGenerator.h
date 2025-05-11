@@ -13,7 +13,7 @@ class Audio2FaceRESTHandler;
 
 /**
  * LipSyncGenerator
- * Internal helper class with static functions
+ * Internal helper class with static functions for generating lipsync data for audio.
  * Downloads the data from the VoxtaServer REST api, converting it into a SoundWave, and generating lipsync data.
  *
  * Note: The private API hooks into callbacks from background-threads, use care when changing the implementation.
@@ -25,7 +25,7 @@ public:
 	/**
 	 * Generate a UOVRLipSyncFrameSequence in a background thread and attach it to the ULipSyncDataOVR instance.
 	 * Note: Returned object of ULipSyncDataOVR* is attached to Root on creation, to avoid premature deletion.
-
+	 *
 	 * @param rawAudioData The raw audiodata in bytes.
 	 * @param callback The callback that will be triggered when the OVR lipsync data has been created & pushed
 	 * back on the gamethread.

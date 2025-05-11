@@ -38,7 +38,14 @@ private:
 
 #pragma region public API
 public:
+	/** Constructor. Initializes the image wrapper module. */
 	TexturesCacheHandler();
+
+	/**
+	 * Fetch a texture from a URL asynchronously and cache it.
+	 * @param url The URL to fetch the texture from.
+	 * @param onThumbnailFetched Delegate to call when the texture is fetched.
+	 */
 	void FetchTextureFromUrl(const FString& url, FDownloadedTextureDelegateNative onThumbnailFetched);
 #pragma endregion
 

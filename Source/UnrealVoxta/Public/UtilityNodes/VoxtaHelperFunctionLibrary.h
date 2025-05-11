@@ -5,6 +5,7 @@
 #include "VoxtaHelperFunctionLibrary.generated.h"
 
 /**
+ * UVoxtaHelperFunctionLibrary
  * Library of functionality exposed to blueprints.
  * Mainly used for simple C++ utility that would require a ton of BP nodes to emulate.
  */

@@ -17,8 +17,10 @@ struct FChatMessage;
 
 /**
  * UVoxtaAudioPlayback
- * Public-facing component, can be placed on an Actor to playback audio for a specific AI Character.
- * Internally handles downloading the audio from the VoxtaServer, importing & parsing it to generating lipsync data.
+ * Component that handles audio playback and lipsync for AI character responses.
+ * Can be placed on an Actor to provide character-specific audio playback with optional lipsync.
+ * Supports various lipsync types including OVRLipSync, Audio2Face, and custom implementations.
+ * Internally handles downloading audio from VoxtaServer, importing & parsing it to generate lipsync data.
  * Also handles the automatic playback unless 'custom lipsync' is enabled.
  */
 UCLASS(HideCategories = (Mobility, Rendering, LOD), ClassGroup = Voxta, meta = (BlueprintSpawnableComponent))
@@ -28,9 +30,12 @@ class UNREALVOXTA_API UVoxtaAudioPlayback : public UAudioComponent, public IA2FW
 
 #pragma region delegate declarations
 public:
+	/** Delegate fired when message audio playback is completed. */
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaMessageAudioPlaybackCompleted, const FGuid&, messageId);
+	/** Delegate fired when an audio chunk is ready for custom playback. */
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FVoxtaMessageAudioChunkReadyForCustomPlayback, const TArray<uint8>&, rawBytes, const USoundWaveProcedural*, processedSoundWave, FGuid, audioChunkGuid);
 
+	/** Native C++ delegates for the above events. */
 	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaMessageAudioPlaybackCompletedNative, const FGuid&);
 	DECLARE_MULTICAST_DELEGATE_ThreeParams(FVoxtaMessageAudioChunkReadyForCustomPlaybackNative, const TArray<uint8>&, const USoundWaveProcedural*, FGuid);
 #pragma endregion
@@ -40,6 +45,7 @@ public:
 	/** Event fired when the UAudioComponent reports that the audio has finished playing. */
 	UPROPERTY(BlueprintAssignable, Category = "Voxta", meta = (IsBindableEvent = "True"))
 	FVoxtaMessageAudioPlaybackCompleted VoxtaMessageAudioPlaybackFinishedEvent;
+	/** Native C++ version of VoxtaMessageAudioPlaybackFinishedEvent */
 	FVoxtaMessageAudioPlaybackCompletedNative VoxtaMessageAudioPlaybackFinishedEventNative;
 
 	/**
@@ -53,6 +59,8 @@ public:
 	 */
 	UPROPERTY(BlueprintAssignable, Category = "Voxta", meta = (IsBindableEvent = "True"))
 	FVoxtaMessageAudioChunkReadyForCustomPlayback VoxtaMessageAudioChunkReadyForCustomPlaybackEvent;
+
+	/** Native C++ version of VoxtaMessageAudioChunkReadyForCustomPlaybackEvent */
 	FVoxtaMessageAudioChunkReadyForCustomPlaybackNative VoxtaMessageAudioChunkReadyForCustomPlaybackEventNative;
 #pragma endregion
 

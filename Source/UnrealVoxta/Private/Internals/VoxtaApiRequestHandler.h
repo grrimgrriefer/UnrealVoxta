@@ -31,10 +31,10 @@ public:
 	 */
 	static FSignalRValue GetLoadCharactersListData();
 
-	// TODO
+	/** Retrieve a SignalR formatted message to request the list of all scenarios. */
 	static FSignalRValue GetLoadScenariosListData();
 
-	// TODO
+	/** Retrieve a SignalR formatted message to request the list of all chats for a character/scenario. */
 	static FSignalRValue GetLoadChatsListData(const FGuid& characterId, const FGuid& scenarioId = FGuid());
 
 	/**
@@ -47,7 +47,7 @@ public:
 	 */
 	static FSignalRValue GetStartChatRequestData(const FAiCharData* charData, const FString& context = FString());
 
-	// TODO
+	/** Retrieve a SignalR formatted message to request stopping the current chat session. */
 	static FSignalRValue GetStopChatRequestData();
 
 	/**
@@ -65,7 +65,7 @@ public:
 	static FSignalRValue GetSendUserMessageData(const FGuid& sessionId, const FString& userInputText, bool generateReply,
 		bool characterActionInference);
 
-	// TODO
+	/** Retrieve a SignalR formatted message to notify the server that audio playback has started. */
 	static FSignalRValue GetNotifyAudioPlaybackStartedData(const FGuid& sessionId, const FGuid& messageId, int startIndex,
 		int endIndex, double duration);
 
@@ -80,20 +80,20 @@ public:
 	 */
 	static FSignalRValue GetNotifyAudioPlaybackCompletedData(const FGuid& sessionId, const FGuid& messageId);
 
-	// TODO
+	/** Retrieve a SignalR formatted message to update the context of the current chat session. */
 	static FSignalRValue GetUpdateContextRequestData(/*const TArray<FString>& actions,*/ const FGuid& sessionId,
 		const FString& context);
 
-	// TODO
+	/** Retrieve a SignalR formatted message to request character speech for a session. */
 	static FSignalRValue GetRequestCharacterSpeechRequestData(const FGuid& sessionId, const FString& text);
 
-	// TODO
+	/** Retrieve a SignalR formatted message to revert the last sent message in a session. */
 	static FSignalRValue SendRevertLastSentMessage(const FGuid& sessionId);
 
-	// TODO
+	/** Retrieve a SignalR formatted message to delete a chat by its ID. */
 	static FSignalRValue SendDeleteChat(const FGuid& chatId);
 
-	// TODO
+	/** Retrieve a SignalR formatted message to set flags for a session. */
 	static FSignalRValue SetFlags(const FGuid& sessionId, const TArray<FString>& flags);
 #pragma endregion
 };
