@@ -19,10 +19,10 @@ struct VOXTADATA_API FBaseCharData
 
 #pragma region public API
 public:
-	/**  @return Immutable reference to the VoxtaServer assigned id of this character. */
+	/** @return Immutable reference to the VoxtaServer assigned id of this character. */
 	const FGuid& GetId() const { return m_id; }
 
-	/**  @return Immutable reference to the name of this character. */
+	/** @return Immutable reference to the name of this character. */
 	FStringView GetName() const { return m_name; }
 
 	/**
@@ -30,18 +30,18 @@ public:
 	 *
 	 * @return URL to the thumbnail image for this character. Empty by default.
 	 */
-	virtual FString GetThumbnailUrl() const PURE_VIRTUAL(FBaseCharData::GetThumbnailUrl, return FString();)
+	virtual FStringView GetThumbnailUrl() const PURE_VIRTUAL(FBaseCharData::GetThumbnailUrl, return FString();)
 
-		/**
-		 * Create an instance of the data container for the CharData.
-		 *
-		 * @param id The GUID that the VoxtaServer has assigned to this character.
-		 * @param name The name of this character, as reported by VoxtaServer
-		 */
-		explicit FBaseCharData(FGuid id, FStringView name) :
-		m_id(id),
-		m_name(name),
-		m_idAsString(GuidToString(id))
+	/**
+	 * Create an instance of the data container for the CharData.
+	 *
+	 * @param id The GUID that the VoxtaServer has assigned to this character.
+	 * @param name The name of this character, as reported by VoxtaServer
+	 */
+	explicit FBaseCharData(FGuid id, FStringView name) :
+	m_id(id),
+	m_name(name),
+	m_idAsString(GuidToString(id))
 	{}
 
 	/** Default constructor. */

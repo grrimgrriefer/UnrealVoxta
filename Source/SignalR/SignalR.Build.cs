@@ -13,6 +13,6 @@ public class SignalR : ModuleRules
 			Path.Combine(ModuleDirectory, "Public"),
 		});
 
-		PrivateDependencyModuleNames.AddRange(new [] { "Core", "CoreUObject", "Engine", "Json", "HTTP", "WebSockets" });
+		PrivateDependencyModuleNames.AddRange(new [] { "Core", "CoreUObject", "Engine", "Json", "HTTP", "WebSockets", "LogUtility" });
 	}
 }

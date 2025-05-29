@@ -28,6 +28,7 @@ struct ServerResponseChatUpdate;
 struct ServerResponseSpeechTranscription;
 struct ServerResponseContextUpdated;
 struct ServerResponseChatClosed;
+struct ServerResponseChatSessionError;
 struct FAiCharData;
 struct FUserCharData;
 struct FBaseCharData;
@@ -171,7 +172,7 @@ public:
 	 * Disconnect from the VoxtaServer and clean up all resources.
 	 * Only call if you intend to stop using Voxta for the rest of the session.
 	 *
-	 * @param silent If true, do not broadcast a state-change notification.
+	 * @param silent If true, do not broadcast a notification for the state-change .
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
 	void Disconnect(bool silent = false);
@@ -193,6 +194,10 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
 	void SetGlobalAudioFallbackEnabled(bool newState);
+
+	/** @return True if the global audio fallback is active. */
+	UFUNCTION(BlueprintPure, Category = "Voxta")
+	bool IsGlobalAudioFallbackActive() const;
 
 	/**
 	 * Tell the server to stop the ongoing chat session and clean up the relevant dependencies.
@@ -319,10 +324,6 @@ public:
 	/** @return True if log censoring is active. */
 	UFUNCTION(BlueprintPure, Category = "Voxta")
 	bool IsLogCensorActive() const;
-
-	/** @return True if the global audio fallback is active. */
-	UFUNCTION(BlueprintPure, Category = "Voxta")
-	bool IsGlobalAudioFallbackActive() const;
 #pragma endregion
 
 #pragma region data
@@ -429,6 +430,8 @@ private:
 	bool HandleContextUpdateResponse(const ServerResponseContextUpdated& response);
 	/** Takes care of ServerResponseChatClosed responses. */
 	bool HandleChatClosedResponse(const ServerResponseChatClosed& response);
+	/** Takes care of ServerResponseChatSessionError responses. */
+	bool HandleChatSessionErrorResponse(const ServerResponseChatSessionError& response);
 #pragma endregion
 
 	void StopChatInternal();

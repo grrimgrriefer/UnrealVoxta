@@ -11,6 +11,7 @@
 #include "ServerResponses/ServerResponseChatMessageEnd.h"
 #include "ServerResponses/ServerResponseChatMessageCancelled.h"
 #include "ServerResponses/ServerResponseChatUpdate.h"
+#include "ServerResponses/ServerResponseChatSessionError.h"
 #include "ServerResponses/ServerResponseSpeechTranscription.h"
 #include "ServerResponses/ServerResponseError.h"
 #include "ServerResponses/ServerResponseContextUpdated.h"

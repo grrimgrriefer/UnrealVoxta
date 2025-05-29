@@ -24,7 +24,7 @@ public class UnrealVoxta : ModuleRules
 
 		PublicDependencyModuleNames.AddRange(new [] { "Core", "CoreUObject", "VoxtaAudioUtility" } );
 
-		PrivateDependencyModuleNames.AddRange(new [] { "Engine", "VoxtaData", "VoxtaUtility_A2F", "SignalR", "HTTP", "Voice", "Json", "Projects", "Networking", "ImageWrapper", "RenderCore" } );
+		PrivateDependencyModuleNames.AddRange(new [] { "Engine", "LogUtility", "VoxtaData", "VoxtaUtility_A2F", "SignalR", "HTTP", "Voice", "Json", "Projects", "Networking", "ImageWrapper", "RenderCore" } );
 
 		if (UnrealVoxta.HasModule(this, "OVRLipSync"))
 		{

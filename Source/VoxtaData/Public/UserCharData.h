@@ -22,7 +22,7 @@ struct FUserCharData : public FBaseCharData
 
 #pragma region public API
 public:
-	virtual FString GetThumbnailUrl() const override { return FString::Format(*THUMBNAIL_URL_FORMAT, { m_idAsString }); }
+	virtual FStringView GetThumbnailUrl() const override { return m_userThumbnailUrl; }
 
 	/**
 	 * Create an instance of the datacontainer for the User.
@@ -31,7 +31,8 @@ public:
 	 * @param name The name of the User, as reported by VoxtaServer
 	 */
 	explicit FUserCharData(FGuid id, FStringView name) :
-		FBaseCharData(id, name)
+		FBaseCharData(id, name),
+		m_userThumbnailUrl(FString::Format(*FString(TEXT("/api/profile/{0}/thumbnail")), { GuidToString(id) }))
 	{}
 
 	/** Default constructor */
@@ -41,8 +42,6 @@ public:
 #pragma endregion
 
 #pragma region data
-	static const FString THUMBNAIL_URL_FORMAT;
+	FString m_userThumbnailUrl;
 #pragma endregion
 };
-
-const FString FUserCharData::THUMBNAIL_URL_FORMAT = TEXT("/api/profile/{0}/thumbnail");

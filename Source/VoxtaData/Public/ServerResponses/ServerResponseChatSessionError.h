@@ -1,0 +1,31 @@
+// Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "ServerResponseBase.h"
+
+/**
+ * Read-only data struct containing the relevant data of the 'chatSessionError' response from the VoxtaServer.
+ */
+struct ServerResponseChatSessionError : public ServerResponseBase
+{
+#pragma region public API
+public:
+	/** Create a deserialized version of the VoxtaServer response represents the 'ChatSessionError' data. */
+	explicit ServerResponseChatSessionError(FStringView chatSessionId,
+			bool retry, FStringView message) : ServerResponseBase(ServerResponseType::ChatSessionError),
+		ERROR_CHAT_SESSION_ID(FString(chatSessionId)),
+		ERROR_RETRY(retry),
+		ERROR_MESSAGE(FString(message))
+	{
+	}
+#pragma endregion
+
+#pragma region data
+public:
+	const FString ERROR_CHAT_SESSION_ID;
+	const bool ERROR_RETRY;
+	const FString ERROR_MESSAGE;
+#pragma endregion
+};

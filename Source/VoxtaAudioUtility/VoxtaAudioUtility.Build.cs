@@ -22,7 +22,7 @@ public class VoxtaAudioUtility : ModuleRules
 
 		PublicDependencyModuleNames.AddRange(new [] { "Core", "CoreUObject", "WebSockets", "AudioCaptureCore" });
 
-		PrivateDependencyModuleNames.AddRange(new [] { "Engine", "Voice", "VoxtaData", "AudioPlatformConfiguration", "AudioExtensions" });
+		PrivateDependencyModuleNames.AddRange(new [] { "Engine", "Voice", "LogUtility", "VoxtaData", "AudioPlatformConfiguration", "AudioExtensions" });
 
 		if (Target.Platform.IsInGroup(UnrealPlatformGroup.Windows) ||
 			Target.Platform == UnrealTargetPlatform.Mac)

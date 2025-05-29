@@ -19,6 +19,7 @@ struct ServerResponseChatUpdate;
 struct ServerResponseChatClosed;
 struct ServerResponseSpeechTranscription;
 struct ServerResponseError;
+struct ServerResponseChatSessionError;
 
 /**
  * VoxtaApiResponseHandler
@@ -103,6 +104,10 @@ private:
 
 	/** Deserialize an error response. */
 	static TUniquePtr<ServerResponseError> GetErrorResponse(
+		const TMap<FString, FSignalRValue>& serverResponseData);
+
+	/** Deserialize a chatsession specific  error response. */
+	static TUniquePtr<ServerResponseChatSessionError> GetChatSessionErrorResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData);
 
 	/**

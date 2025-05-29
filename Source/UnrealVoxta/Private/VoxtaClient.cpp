@@ -34,6 +34,18 @@ void UVoxtaClient::Initialize(FSubsystemCollectionBase& collection)
 
 void UVoxtaClient::Deinitialize()
 {
+	if (m_globalAudioPlaybackComp != nullptr)
+	{
+		if (m_globalAudioPlaybackComp->GetGlobalPlaybackComponent() != nullptr && globalAudioPlaybackHandle.IsValid())
+		{
+			m_globalAudioPlaybackComp->GetGlobalPlaybackComponent()->VoxtaMessageAudioPlaybackFinishedEventNative.Remove(globalAudioPlaybackHandle);
+		}
+		if (UWorld* World = GetWorld())
+		{
+			World->RemoveActor(m_globalAudioPlaybackComp, true);
+		}
+	}
+
 	if (m_currentState != VoxtaClientState::Disconnected)
 	{
 		Disconnect(true);
@@ -47,13 +59,6 @@ void UVoxtaClient::StartConnection(const FString& ipv4Address, int port)
 	{
 		UE_LOGFMT(VoxtaLog, Warning, "VoxtaClient is already in state: {0}, ignoring new connection attempt",
 			UEnum::GetValueAsString(m_currentState));
-		return;
-	}
-
-	USignalRSubsystem* signalR = GEngine ? GEngine->GetEngineSubsystem<USignalRSubsystem>() : nullptr;
-	if (!signalR)
-	{
-		UE_LOGFMT(VoxtaLog, Error, "SignalR subsystem unavailable, aborting connection attempt.");
 		return;
 	}
 
@@ -73,7 +78,7 @@ void UVoxtaClient::StartConnection(const FString& ipv4Address, int port)
 	m_hostAddress = (ipv4Address.ToLower() == UVoxtaHelperFunctionLibrary::LOCALHOST) ? TEXT("127.0.0.1") : ipv4Address;
 	m_hostPort = port;
 
-	m_hub = signalR->CreateHubConnection(
+	m_hub = GEngine->GetEngineSubsystem<USignalRSubsystem>()->CreateHubConnection(
 		FString::Format(*EASY_STRING("http://{0}:{1}/hub"), {
 			m_hostAddress,
 			m_hostPort
@@ -98,7 +103,11 @@ void UVoxtaClient::Disconnect(bool silent)
 		UE_LOGFMT(VoxtaLog, Warning, "VoxtaClient is currently not connected, ignoring disconnect attempt");
 		return;
 	}
-	if (!silent)
+	if (silent)
+	{
+		m_currentState = VoxtaClientState::Terminated;
+	}
+	else
 	{
 		SetState(VoxtaClientState::Terminated);
 	}
@@ -169,7 +178,7 @@ void UVoxtaClient::UpdateChatContext(const FString& newContext)
 	}
 	else
 	{
-		UE_LOGFMT(VoxtaLog, Error, "Cannot update context of chatSession, chat was not valid? Current state: {0}",
+		UE_LOGFMT(VoxtaLog, Warning, "Cannot update context of chatSession, chat was not valid? Current state: {0}",
 			UEnum::GetValueAsString(m_currentState));
 	}
 }
@@ -207,9 +216,9 @@ void UVoxtaClient::NotifyAudioPlaybackComplete(const FGuid& messageId)
 	{
 		UE_LOGFMT(VoxtaLog, Log, "Marking audio playback of message {0} complete.", GuidToString(messageId));
 	}
-	else if (m_currentState == VoxtaClientState::GeneratingReply && IsGlobalAudioFallbackActive())
+	else if (m_currentState == VoxtaClientState::GeneratingReply && !IsGlobalAudioFallbackActive())
 	{
-		UE_LOGFMT(VoxtaLog, Log, "Skipping audio playback of message {0} due to configuration.", GuidToString(messageId));		
+		UE_LOGFMT(VoxtaLog, Log, "Skipping audio playback of message {0} due to configuration.", GuidToString(messageId));
 	}
 	else
 	{
@@ -222,7 +231,7 @@ void UVoxtaClient::NotifyAudioPlaybackComplete(const FGuid& messageId)
 	SetState(VoxtaClientState::WaitingForUserResponse);
 }
 
-void UVoxtaClient::TryFetchAndCacheCharacterThumbnail(const FGuid& baseCharacterId,	FDownloadedTextureDelegateNative onThumbnailFetched)
+void UVoxtaClient::TryFetchAndCacheCharacterThumbnail(const FGuid& baseCharacterId, FDownloadedTextureDelegateNative onThumbnailFetched)
 {
 	if (!baseCharacterId.IsValid())
 	{
@@ -233,7 +242,7 @@ void UVoxtaClient::TryFetchAndCacheCharacterThumbnail(const FGuid& baseCharacter
 	const FBaseCharData* character = nullptr;
 	if (!m_userData.IsValid())
 	{
-		UE_LOGFMT(VoxtaLog, Warning, "Cannot fetch thumbnail, user metadata not yet available.");
+		UE_LOGFMT(VoxtaLog, Error, "Cannot fetch thumbnail, user metadata not yet available.");
 		return;
 	}
 
@@ -321,7 +330,7 @@ bool UVoxtaClient::TryUnregisterPlaybackHandler(const FGuid& characterId)
 	TWeakObjectPtr<UVoxtaAudioPlayback>* audioPlaybackComp = m_registeredCharacterAudioPlaybackComps.Find(characterId);
 	FDelegateHandle* handle = m_audioPlaybackHandles.Find(characterId);
 	if (audioPlaybackComp != nullptr && audioPlaybackComp->IsValid())
-	{		
+	{
 		if (handle != nullptr)
 		{
 			audioPlaybackComp->Get()->VoxtaMessageAudioPlaybackFinishedEventNative.Remove(*handle);
@@ -398,11 +407,12 @@ const UVoxtaAudioPlayback* UVoxtaClient::GetRegisteredAudioPlaybackHandlerForID(
 
 FChatSession UVoxtaClient::GetChatSessionCopy() const
 {
-	if (!m_chatSession.IsValid())
+	const FChatSession* session = GetChatSession();
+	if (session == nullptr)
 	{
 		return FChatSession();
 	}
-	return *m_chatSession;
+	return *session;
 }
 
 FVoxtaVersionData UVoxtaClient::GetServerVersionCopy() const
@@ -414,8 +424,8 @@ FVoxtaVersionData UVoxtaClient::GetServerVersionCopy() const
 	return *m_voxtaVersionData;
 }
 
-bool UVoxtaClient::IsMatchingAPIVersion() const 
-{ 
+bool UVoxtaClient::IsMatchingAPIVersion() const
+{
 	if (m_voxtaVersionData.IsValid())
 	{
 		return m_voxtaVersionData->IsMatchingAPIVersion();
@@ -515,7 +525,7 @@ void UVoxtaClient::OnReceivedMessage(const TArray<FSignalRValue>& arguments)
 				UE_LOGFMT(VoxtaLog, Warning, "Response handler reported a failure, please check the logs to see "
 					"what's wrong. Type: {0}", Arguments[0].AsObject()[EASY_STRING("$type")].AsString());
 			}
-			
+
 			return false; // Return false to remove the ticker after it runs once
 		}));
 }
@@ -594,7 +604,7 @@ bool UVoxtaClient::HandleResponseHelper(const ServerResponseBase* response, cons
 		else
 		{
 			UE_LOGFMT(VoxtaLog, Log, "{0}", logMessage);
-		}		
+		}
 		return (this->*handler)(*derivedResponse);
 	}
 	return false;
@@ -649,6 +659,9 @@ bool UVoxtaClient::HandleResponse(const TMap<FString, FSignalRValue>& responseDa
 		case ChatClosed:
 			return HandleResponseHelper<ServerResponseChatClosed>(response.Get(),
 				TEXT("Chat closed successfully"), &UVoxtaClient::HandleChatClosedResponse, false);
+		case ChatSessionError:
+			return HandleResponseHelper<ServerResponseChatSessionError>(response.Get(),
+				TEXT("Chat session error received successfully"), &UVoxtaClient::HandleChatSessionErrorResponse, false);
 		default:
 			UE_LOGFMT(VoxtaLog, Error, "No handler available for type a message of type: {0}", responseType);
 			return false;
@@ -671,11 +684,11 @@ bool UVoxtaClient::HandleWelcomeResponse(const ServerResponseWelcome& response)
 	}
 	else
 	{
-		UE_LOGFMT(VoxtaLog, Error, "API version is not matching, please use a VoxtaServer with API version {0}.", 
+		UE_LOGFMT(VoxtaLog, Error, "API version is not matching, please use a VoxtaServer with API version {0}.",
 			m_voxtaVersionData->GetCompatibleAPIVersion());
 		Disconnect();
 	}
-	
+
 	return true;
 }
 
@@ -790,7 +803,7 @@ bool UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessageBase
 				break;
 			}
 			rawPtr->MarkComplete();
-			const FChatMessage * chatMessage = rawPtr;
+			const FChatMessage* chatMessage = rawPtr;
 
 			if (chatMessage)
 			{
@@ -801,7 +814,7 @@ bool UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessageBase
 					SENSITIVE_LOG3(VoxtaLog, Log, "Message with id: {0} marked as complete. Speaker: {1} Contents: {2}",
 						derivedResponse->MESSAGE_ID, character->Get()->GetName(), chatMessage->GetTextContent())
 
-						auto playbackHandler = m_registeredCharacterAudioPlaybackComps.Find(character->Get()->GetId());
+					auto playbackHandler = m_registeredCharacterAudioPlaybackComps.Find(character->Get()->GetId());
 					if (playbackHandler != nullptr)
 					{
 						SetState(VoxtaClientState::AudioPlayback);
@@ -832,8 +845,8 @@ bool UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessageBase
 				}
 				else
 				{
-					SENSITIVE_LOG2(VoxtaLog, Warning, "Received a messageEnd for a character that we don't have registered. "
-						"senderId: {0} messageId: {1}", derivedResponse->SENDER_ID, chatMessage->GetMessageId())
+					SENSITIVE_LOG1(VoxtaLog, Warning, "Received a messageEnd without already having the start of the message. "
+						"messageId: {0}", derivedResponse->MESSAGE_ID)
 				}
 			}
 			else
@@ -867,7 +880,7 @@ bool UVoxtaClient::HandleChatMessageResponse(const ServerResponseChatMessageBase
 			{
 				UE_LOGFMT(VoxtaLog, Log, "Message with id: {0} marked as cancelled, but it was not found in the history?",
 					derivedResponse->MESSAGE_ID);
-			}			
+			}
 		}
 	}
 	return true;
@@ -992,18 +1005,24 @@ bool UVoxtaClient::HandleChatClosedResponse(const ServerResponseChatClosed& resp
 	return true;
 }
 
+bool UVoxtaClient::HandleChatSessionErrorResponse(const ServerResponseChatSessionError& response)
+{
+	if (!m_chatSession.IsValid())
+	{
+		UE_LOGFMT(VoxtaLog, Log, "Recieved a chatSessionError but no session was active. Message: {0}, ChatSessionId: {1}", response.ERROR_MESSAGE, response.ERROR_CHAT_SESSION_ID);
+		return true;
+	}
+	UE_LOGFMT(VoxtaLog, Error, "Recieved a chatSessionError, unsure how to proceed. "
+		"Message: {0}, ChatSessionId: {1}, Retry: {2}", response.ERROR_MESSAGE, response.ERROR_CHAT_SESSION_ID, response.ERROR_RETRY);
+
+	return true;
+}
+
 void UVoxtaClient::StopChatInternal()
 {
 	if (!m_chatSession.IsValid())
 	{
 		return;
-	}
-
-	if (m_globalAudioPlaybackComp != nullptr &&
-		m_globalAudioPlaybackComp->GetGlobalPlaybackComponent() != nullptr &&
-		globalAudioPlaybackHandle.IsValid())
-	{
-		m_globalAudioPlaybackComp->GetGlobalPlaybackComponent()->VoxtaMessageAudioPlaybackFinishedEventNative.Remove(globalAudioPlaybackHandle);
 	}
 
 	m_voiceInput->DisconnectFromChat();
@@ -1047,7 +1066,7 @@ AVoxtaGlobalAudioPlaybackHolder* UVoxtaClient::GetOrCreateGlobalAudioFallbackInt
 		}
 		else
 		{
-			UE_LOGFMT(VoxtaLog, Warning, "GetWorld() returned null – cannot create global audio playback holder.");
+			UE_LOGFMT(VoxtaLog, Warning, "GetWorld() returned null, cannot create global audio playback holder.");
 		}
 	}
 	return m_globalAudioPlaybackComp;

@@ -7,6 +7,24 @@
 class TestLogSink : public FOutputDevice
 {
 public:
+	~TestLogSink()
+	{
+#if WITH_EDITOR
+		if (GLog != nullptr)
+		{
+			GLog->RemoveOutputDevice(this);
+		}
+#endif
+	}
+
+	void RegisterTestLogSink()
+	{
+#if WITH_EDITOR
+		check(GLog);
+		GLog->AddOutputDevice(this);
+#endif
+	}
+
 	virtual void Serialize(const TCHAR* message, ELogVerbosity::Type verbosity, const class FName& category) override
 	{
 		m_logMessages.Add(FString(message), verbosity);
@@ -29,5 +47,6 @@ public:
 		return false;
 	}
 private:
+	UPROPERTY()
 	TMultiMap<FString, ELogVerbosity::Type> m_logMessages;
 };

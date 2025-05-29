@@ -4,14 +4,10 @@
 #include "CoreMinimal.h"
 #include "Logging/LogMacros.h"
 
-/**
- * Namespace to encapsulate sensitive logging utilities
- * and avoid polluting the global namespace.
- */
 namespace SensitiveLogging
 {
-    static bool isSensitiveLogsCensored = true;
-    static const FString CENSORED_TEXT_CONTENT = TEXT("****censored****");
+    LOGUTILITY_API extern bool isSensitiveLogsCensored;
+    const FString CENSORED_TEXT_CONTENT = TEXT("****censored****");
 }
 
 /**

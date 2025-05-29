@@ -44,6 +44,7 @@ const TMap<FString, TFunction<TUniquePtr<ServerResponseBase>(const TMap<FString,
 	{ TEXT("speechRecognitionPartial"), [] (const auto& data) { return WrapHandler(&VoxtaApiResponseHandler::GetSpeechRecognitionPartial, data); } },
 	{ TEXT("speechRecognitionEnd"), [] (const auto& data) { return WrapHandler(&VoxtaApiResponseHandler::GetSpeechRecognitionEnd, data); } },
 	{ TEXT("error"), [] (const auto& data) { return WrapHandler(&VoxtaApiResponseHandler::GetErrorResponse, data); } },
+	{ TEXT("chatSessionError"), [] (const auto& data) { return WrapHandler(&VoxtaApiResponseHandler::GetChatSessionErrorResponse, data); } },
 	{ TEXT("contextUpdated"), [] (const auto& data) { return WrapHandler(&VoxtaApiResponseHandler::GetContextUpdatedResponse, data); } },
 	{ TEXT("chatClosed"), [] (const auto& data) { return WrapHandler(&VoxtaApiResponseHandler::GetChatClosedResponse, data); } }
 };
@@ -242,6 +243,15 @@ TUniquePtr<ServerResponseError> VoxtaApiResponseHandler::GetErrorResponse(
 	return MakeUnique<ServerResponseError>(
 		SAFE_MAP_GET(serverResponseData, EASY_STRING("message")).AsString(),
 		SAFE_MAP_GET(serverResponseData, EASY_STRING("details")).AsString());
+}
+
+TUniquePtr<ServerResponseChatSessionError> VoxtaApiResponseHandler::GetChatSessionErrorResponse(
+	const TMap<FString, FSignalRValue>& serverResponseData)
+{
+	return MakeUnique<ServerResponseChatSessionError>(
+		SAFE_MAP_GET(serverResponseData, EASY_STRING("sessionId")).AsString(),
+		SAFE_MAP_GET(serverResponseData, EASY_STRING("retry")).AsBool(),
+		SAFE_MAP_GET(serverResponseData, EASY_STRING("message")).AsString());
 }
 
 void VoxtaApiResponseHandler::ProcessContextData(const TMap<FString, FSignalRValue>& contextMainObject,
