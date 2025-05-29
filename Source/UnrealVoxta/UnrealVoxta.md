@@ -2,7 +2,7 @@
 
 This module provides the core Voxta integration for Unreal Engine, handling state tracking, audio playback, and communication with the Voxta server.
 
-## Key Classes
+## Main components
 
 ### UVoxtaClient
 The main public-facing subsystem for Voxta integration. Manages:
@@ -31,14 +31,21 @@ Handles microphone input and streaming to the Voxta server:
 - Voice activity detection
 - Silent mode toggles
 
+## Sequence diagram
+
+Example flow of authentication, starting chat, receiving a response and sending microphone data. Along with fetching the character thumbnail.  
+Depending on your use case, the sequence will differ ofc.
+
+![SequenceDiagramUnrealVoxta image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/SequenceDiagramUnrealVoxta.PNG&resolveLfs=true&%24format=octetStream "SequenceDiagramUnrealVoxta image.")
+
 ## Getting Started (C++)
 
 1. Add the UnrealVoxta plugin to your project
 2. Add UVoxtaClient to your GameInstance subsystems
 3. Initialize connection to Voxta server:
 ```cpp
-UVoxtaClient* Client = GetWorld()->GetGameInstance()->GetSubsystem<UVoxtaClient>();
-Client->StartConnection("127.0.0.1", 5000);
+UVoxtaClient* m_voxtaClient = GetWorld()->GetGameInstance()->GetSubsystem<UVoxtaClient>();
+m_voxtaClient->StartConnection(FString(TEXT("127.0.0.1")), 5384);
 ```
 
 4. Listen for connection and character events:

@@ -10,22 +10,26 @@ Do keep in mind that this is a modified version of the Module made by Frozen Sto
 
 ### Public API
 
-- `IHubConnection` - Defines the hub connection interface
-- `SignalRModule` - The main module entry point
-- `SignalRSubsystem` - Engine subsystem for managing connections
-- `SignalRValue` - Type system for handling various data types
+- `IHubConnection` : Defines the hub connection interface
+- `SignalRModule` : The main module entry point
+- `SignalRSubsystem` : Engine subsystem for managing connections
+- `SignalRValue` : Type system for handling various data types
 
 ### Internal Components
 
-- `CallbackManager` - Manages callbacks for async operations
-- `Connection` - Handles the underlying WebSocket connection
-- `HandshakeProtocol` - Implements the SignalR handshake protocol
-- `HubConnection` - Core implementation of the hub connection
-- `IHubProtocol` - Protocol interface for message formatting
-- `JsonHubProtocol` - JSON implementation of the hub protocol
+- `CallbackManager` : Manages callbacks for async operations
+- `Connection` : Handles the underlying WebSocket connection
+- `HandshakeProtocol` : Implements the SignalR handshake protocol
+- `HubConnection` : Core implementation of the hub connection
+- `IHubProtocol` : Protocol interface for message formatting
+- `JsonHubProtocol` : JSON implementation of the hub protocol
 - `MessageType` - Defines message type enumerations
-- `NegotiationResponse` - Data structures for connection negotiation
-- `StringUtils` - String manipulation utilities
+- `NegotiationResponse` : Data structures for connection negotiation
+- `StringUtils` : String manipulation utilities
+
+## Sequence diagram
+
+![SequenceDiagramSignalR image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/SequenceDiagramSignalR.PNG&resolveLfs=true&%24format=octetStream "SequenceDiagramSignalR image.")  
 
 ## Features
 

@@ -8,31 +8,37 @@ The VoxtaData module provides the foundational data structures and type definiti
 
 ### Character Data Models
 
-- `BaseCharData` - Base class for character data structures
-- `UserCharData` - User/player character representation
-- `AiCharData` - AI character data with additional metadata
+- `BaseCharData` : Base class for character data structures
+- `UserCharData` : User/player character representation
+- `AiCharData` : AI character data with additional metadata
 
-### Chat System
+### Chat Models
 
-- `ChatSession` - Container for active chat session state
-- `ChatMessage` - Individual message data structure
-- `MessageChunkState` - Message chunk processing states
+- `ChatSession` : Container for active chat session state
+- `ChatMessage` : Individual message data structure
+- `MessageChunkState` : Message chunk processing states
 
-### Server Response System
+### Server Response Models
 
-- `ServerResponseBase` - Base class for all server responses
-- `ServerResponseType` - Supported response types enum
+- `ServerResponseBase` : Base class for all server responses
+- `ServerResponseType` : Supported response types enum
 - Specialized response classes for different server events:
   - Welcome/Authentication
   - Chat operations (messages, started, update, etc.)
   - Speech transcription
   - etc.
 
-### Service Management
+### Service Models
 
-- `VoxtaServiceType` - Available service types (TextGen, STT, TTS)
-- `VoxtaServiceData` - Service configuration container
-- `VoxtaServiceStatusType` - Service state tracking
+- `VoxtaServiceType` : Available service types (TextGen, STT, TTS)
+- `VoxtaServiceData` : Service configuration container
+- `VoxtaServiceStatusType` : Service state tracking
+
+## Sequence diagram
+The general flow of how the data structures are populated by VoxtaServer responses.
+
+![SequenceDiagramVoxtaData image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/SequenceDiagramVoxtaData.PNG&resolveLfs=true&%24format=octetStream "SequenceDiagramVoxtaData image.")  
+
 
 ## Thread Safety
 

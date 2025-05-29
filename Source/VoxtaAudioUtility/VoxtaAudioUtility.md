@@ -2,61 +2,51 @@
 
 ## Overview
 
-The VoxtaAudioUtility module handles real-time audio capture, encoding, and decoding for the VoxtaUnreal plugin. It provides functionality for:
+The VoxtaAudioUtility module handles real-time audio capture, encoding- and decoding audio data from and to VoxtaServer.
 
 - Audio capture from microphone input
-- WAV file format decoding
+- WAV data decoding
 - Real-time audio streaming
 - WebSocket-based audio transmission
 
-## Core Components
+## Module Structure
 
-### Audio Capture Handler
+### Sending audio to VoxtaServer
 
-The `AudioCaptureHandler` class manages microphone input capture and provides audio data to the voice system. Key features include:
+- `AudioCaptureHandler`: Manages microphone input capture and provides audio data to the voice system.
+  - Real-time audio capture from system microphones
+  - Configurable capture settings (sample rate, channels, etc.)
+  - Audio buffer management and queueing (triggered by `VoiceRunnerThread`)
+- `AudioWebSocket`: Manages transmitting audio data through Unreal's FWebSocketsModule.
+  - Connection state management
+  - Broadcast notifications (connection, authenticaion, etc.)
+  - Error handling
+- `VoiceRunnerThread`: A dedicated non-blocking thread for processing voice data.
+  - Every 0.2 seconds:
+    - Fill a buffer with all available voice data
+    - Calculate decibel level from the buffer
+    - If the buffer contains data, send it to VoxtaServer 
 
-- Real-time audio capture from system microphones
-- Audio buffer management and queueing
-- Configurable capture settings (sample rate, channels, etc.)
+![SequenceDiagramAudioUtility_send image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/SequenceDiagramAudioUtility_send.PNG&resolveLfs=true&%24format=octetStream "SequenceDiagramAudioUtility_send image.")  
 
-### Audio WebSocket
+### Receiving audio from VoxtaServer
 
-`AudioWebSocket` handles WebSocket connections for transmitting audio data. Capabilities:
-
-- Secure WebSocket connections (WSS)
-- Binary audio data transmission
-- Connection state management
-
-### Voice Runner Thread
-
-`VoiceRunnerThread` implements a dedicated thread for processing voice data. Features:
-
-- Non-blocking audio processing
-- Thread-safe data handling
-- Event-based communication
-
-## Runtime Audio Import
-
-The module includes a runtime audio codec system for decoding various audio formats:
-
-- WAV codec with dr_wav library integration
-- Extensible codec framework for adding new formats
-- Real-time decoding capabilities
-
-### Key Classes
-
-- `FBaseRuntimeCodec`: Base class for audio codecs
-- `WAV_RuntimeCodec`: WAV format implementation
+- `FBaseRuntimeCodec`: Generic base codec to support more formats in the future.
+- `WAV_RuntimeCodec`: WAV codec with dr_wav library integration
 - `RuntimeAudioImporterLibrary`: Main interface for audio import operations
+
+![SequenceDiagramAudioUtility_receive image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/SequenceDiagramAudioUtility_receive.PNG&resolveLfs=true&%24format=octetStream "SequenceDiagramAudioUtility_receive image.")  
 
 ## Platform Support
 
 The module supports:
 
-- Android
-- iOS
-- Mac
+- Android*
+- iOS*
+- Mac*
 - Windows
+
+*untested
 
 ## Usage Examples
 

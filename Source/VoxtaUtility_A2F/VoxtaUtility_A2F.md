@@ -8,10 +8,18 @@ The VoxtaUtility_A2F module provides integration with NVIDIA's Audio2Face techno
 
 ### Public API
 
-- `Public/AnimNode_ApplyCustomCurves.h` - Animation node to apply predefined curves to ARKit mapping
-- `Public/Audio2FacePlaybackHandler.h` - Handler for synchronizing A2F data with audio playback
-- `Public/Audio2FaceRESTHandler.h` - Manages HTTP REST API communication with A2F headless mode
-- `Public/LipSyncDataA2F.h` - Wrapper for A2F-lipsync specific data
+- `Public/AnimNode_ApplyCustomCurves.h` : Animation node to apply predefined curves to ARKit mapping
+- `Public/Audio2FacePlaybackHandler.h` : Handler for synchronizing A2F data with audio playback
+- `Public/Audio2FaceRESTHandler.h` : Manages HTTP REST API communication with A2F headless mode
+- `Public/LipSyncDataA2F.h` : Wrapper for A2F-lipsync specific data
+
+## Sequence diagrams
+
+Rest api:  
+![SequenceDiagramA2F_rest image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/SequenceDiagramA2F_rest.PNG&resolveLfs=true&%24format=octetStream "SequenceDiagramA2F_rest image.")
+
+Runtime logic:  
+![SequenceDiagramA2FRuntime image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/SequenceDiagramA2FRuntime.PNG&resolveLfs=true&%24format=octetStream "SequenceDiagramA2FRuntime image.")
 
 ## Features
 

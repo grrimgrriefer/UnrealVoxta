@@ -6,9 +6,7 @@ The UnrealVoxtaEditor module provides editor-specific functionality for the Voxt
 
 ## Module Structure
 
-### Public API
-
-- `AnimGraphNode_ApplyCustomCurves` - Editor UI node for applying A2F curves in animation blueprints
+- `AnimGraphNode_ApplyCustomCurves` : Editor UI node for applying A2F curves in animation blueprints
   - Provides visual interface for configuring A2F curve mappings
   - Integrates with Unreal's animation graph system
   - Handles ARKit blendshape mapping customization
@@ -24,7 +22,7 @@ The module's primary feature is the `UAnimGraphNode_ApplyCustomCurves` node:
 - Maps ARKit blendshapes through customizable curves
 - Supports runtime modification of curve parameters
 
-### Usage
+## Usage
 
 The animation node can be added to any Animation Blueprint:
 

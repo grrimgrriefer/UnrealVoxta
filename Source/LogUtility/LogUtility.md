@@ -8,7 +8,11 @@ LogUtility is a lightweight UE module for the Voxta plugin, focused on standardi
 
 The LogUtility module is designed to be minimal and self-contained, with dependencies only on the Core module of Unreal Engine. It consists of the following key files:
 
-- `Public/Defines.h` - C++ logging macros
+- `Public/Defines.h` : C++ logging macros
+
+## Sequence diagram
+
+![SequenceDiagramLogUtility image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/SequenceDiagramLogUtility.PNG&resolveLfs=true&%24format=octetStream "SequenceDiagramLogUtility image.")  
 
 ## Features
 

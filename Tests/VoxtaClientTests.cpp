@@ -2067,7 +2067,7 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 	{
 		TestCommandBuilder.Do([this] ()
 		{
-			m_voxtaClient->StartConnection(FString("127.0.0.1"), 5384);
+			m_voxtaClient->StartConnection(FString(TEXT("127.0.0.1")), 5384);
 		});
 		if (state == PreconfigureClientState::Started)
 		{

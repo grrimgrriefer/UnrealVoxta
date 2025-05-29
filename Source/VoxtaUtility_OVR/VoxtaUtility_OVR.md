@@ -6,8 +6,6 @@ The VoxtaUtility_OVR module provides integration with Oculus OVR lip-sync techno
 
 ## Module Structure
 
-### Public API
-
 - `LipSyncDataOVR` - Wrapper for OVR-lipsync specific data implementing ILipSyncBaseData interface
 
 ## Features
