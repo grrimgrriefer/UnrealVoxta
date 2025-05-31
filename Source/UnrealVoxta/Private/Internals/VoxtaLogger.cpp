@@ -5,11 +5,6 @@
 #include "Logging/LogMacros.h"
 #include "Async/Async.h"
 
-#ifndef VOXTA_LOG_DEFINED
-DEFINE_LOG_CATEGORY(VoxtaLog);
-#define VOXTA_LOG_DEFINED
-#endif
-
 VoxtaLogger::~VoxtaLogger()
 {
 #if WITH_EDITOR

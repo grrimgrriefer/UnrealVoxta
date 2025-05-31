@@ -5,6 +5,7 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "VoxtaData/Public/VoxtaClientState.h"
 #include "VoxtaDefines.h"
+#include "UserCharData.h"
 #include "VoxtaClient.generated.h"
 
 class FSignalRValue;
@@ -30,7 +31,6 @@ struct ServerResponseContextUpdated;
 struct ServerResponseChatClosed;
 struct ServerResponseChatSessionError;
 struct FAiCharData;
-struct FUserCharData;
 struct FBaseCharData;
 struct FChatSession;
 struct FChatMessage;

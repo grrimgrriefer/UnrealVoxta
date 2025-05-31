@@ -6,6 +6,7 @@
 #include "AbstractA2FWeightProvider.h"
 #include "Logging/StructuredLog.h"
 #include "VoxtaDefines.h"
+#include "Components/AudioComponent.h"
 
 void FAnimNode_ApplyCustomCurves::Update_AnyThread(const FAnimationUpdateContext& Context)
 {

@@ -9,11 +9,6 @@
 #include "AudioCaptureCore.h"
 #include "Math/UnrealMathUtility.h"
 
-#ifndef VOXTA_LOG_DEFINED
-DEFINE_LOG_CATEGORY(VoxtaLog);
-#define VOXTA_LOG_DEFINED
-#endif
-
 void AudioCaptureHandler::RegisterSocket(TWeakPtr<AudioWebSocket> socket, int bufferMillisecondSize)
 {
 	m_webSocket = socket;

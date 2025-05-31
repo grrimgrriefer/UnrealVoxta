@@ -6,3 +6,5 @@ FString GuidToString(const FGuid& input)
 {
 	return input.ToString(EGuidFormats::DigitsWithHyphensLower);
 }
+
+DEFINE_LOG_CATEGORY(VoxtaLog);

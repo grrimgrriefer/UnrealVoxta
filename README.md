@@ -9,7 +9,7 @@ _Dev progress: https://trello.com/b/Biv7Si4l/unrealvoxta_
 > This plugin is not affiliated, associated, endorsed by, or in any way officially connected to Voxta.ai  
 >  
 > This plugin currently supports [Voxta](https://voxta.ai/) **v1.0.0-beta.132** (API **2024-11**), other versions are unlikely to work.  
-> This plugin currently supports Unreal Engine 5.5, and will not compile on versions older than 5.3.  
+> This plugin currently supports Unreal Engine 5.5, and will not compile on versions older than 5.4.  
 >  
 > If you use VoxtaCloud services, [their TOS](https://doc.voxta.ai/cloud/terms/) applies.  
 > Do not use this plugin to create anything illegal or malicious.
@@ -23,10 +23,10 @@ _Dev progress: https://trello.com/b/Biv7Si4l/unrealvoxta_
 ### Lipsync
 _If you do not plan on using Lipsync, you can ignore this section._  
 
-* [OVR lipsync for UE 5.3 - 5.5](https://github.com/grrimgrriefer/OVRLipSync/releases/tag/UE-5.3)  
+* [OVR lipsync for UE 5.5](https://github.com/grrimgrriefer/OVRLipSync/releases/tag/UE-5.5)  
 Unzip this modified OVR lipsync in your plugins folder.
 * [A2F Omniverse lipsync](https://www.nvidia.com/en-us/omniverse/) : [installer DIRECT LINK](https://install.launcher.omniverse.nvidia.com/installers/omniverse-launcher-win.exe)  
-Experimental support, see [installation details](###-installing-audio2Face-lipsync) below.
+Experimental support, see [installation details](#installing-audio2face-lipsync) below.
 
 ### Microphone input
 _If you do not plan on using Voice input, you can ignore this section._  
@@ -54,7 +54,7 @@ All of them are integration tests and require a valid instance of VoxtaServer to
 ### Doxygen
 
 Most of the header files are fully documented and [a doxygen is available](https://grrimgrriefer.github.io/UnrealVoxtaDocs/hierarchy.html).  
-* [Boilerplate snippets](https://grrimgrriefer.github.io/UnrealVoxtaDocs/hierarchy.html)
+* [Boilerplate snippets](https://grrimgrriefer.github.io/UnrealVoxtaDocs/md_UnrealVoxta_2Source_2UnrealVoxta_2UnrealVoxta.html)
 * [Main API](https://grrimgrriefer.github.io/UnrealVoxtaDocs/classUVoxtaClient.html)
 * [Full class overview](https://grrimgrriefer.github.io/UnrealVoxtaDocs/hierarchy.html)
 

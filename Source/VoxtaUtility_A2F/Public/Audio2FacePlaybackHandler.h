@@ -3,10 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "LipSyncDataA2F.h"
 #include "Audio2FacePlaybackHandler.generated.h"
 
 class UAudioComponent;
-class ULipSyncDataA2F;
 
 /**
  * UAudio2FacePlaybackHandler

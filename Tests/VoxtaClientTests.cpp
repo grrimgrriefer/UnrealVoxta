@@ -17,11 +17,6 @@
 #include "Logging/StructuredLog.h"
 #include "LogUtility/Public/Defines.h"
 
-#ifndef VOXTA_LOG_DEFINED
-DEFINE_LOG_CATEGORY(VoxtaLog);
-#define VOXTA_LOG_DEFINED
-#endif
-
 #define EMPTY_TEXT TEXT("")
 #define TEST_DELAY_SECONDS 1
 #define UNRESPONSIVE_TIMEOUT (10 + TEST_DELAY_SECONDS)

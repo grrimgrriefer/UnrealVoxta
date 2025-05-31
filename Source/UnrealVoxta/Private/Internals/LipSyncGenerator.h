@@ -5,10 +5,10 @@
 #include "CoreMinimal.h"
 
 #if WITH_OVRLIPSYNC
-class ULipSyncDataOVR;
+#include "LipSyncDataOVR.h"
 #endif
-class ULipSyncDataA2F;
-class ULipSyncDataCustom;
+#include "LipSyncDataA2F.h"
+#include "LipSyncDataCustom.h"
 class Audio2FaceRESTHandler;
 
 /**

@@ -4,12 +4,6 @@
 #include "VoxtaDefines.h"
 #include "Logging/StructuredLog.h"
 #include "Components/AudioComponent.h"
-#include "LipSyncDataA2F.h"
-
-#ifndef VOXTA_LOG_DEFINED
-DEFINE_LOG_CATEGORY(VoxtaLog);
-#define VOXTA_LOG_DEFINED
-#endif
 
 // ArkitNames https://developer.apple.com/documentation/arkit/arfaceanchor/blendshapelocation
 const FName UAudio2FacePlaybackHandler::CURVE_NAMES[UAudio2FacePlaybackHandler::CURVE_COUNT] =

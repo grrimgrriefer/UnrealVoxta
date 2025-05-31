@@ -3,6 +3,7 @@
 #include "VoxtaHelperFunctionLibrary.h"
 #include "Interfaces/IPv4/IPv4Address.h"
 #include "Logging/StructuredLog.h"
+#include "VoxtaDefines.h"
 
 bool UVoxtaHelperFunctionLibrary::IsIpv4Valid(const FString& address)
 {
