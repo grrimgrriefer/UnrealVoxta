@@ -6,17 +6,17 @@
 #include "VoxtaData/Public/ServerResponses.h"
 #include "VoxtaData/Public/VoxtaServiceData.h"
 
-#define SAFE_MAP_GET(Map, Key)                                             \
-    ([&]() -> const FSignalRValue&                                         \
-    {                                                                      \
-        const auto& _key = (Key);                                          \
-        if ((Map).Contains(_key))                                          \
-        {                                                                  \
-            return (Map)[_key];                                            \
-        }                                                                  \
-        UE_LOGFMT(VoxtaLog, Error, "Map missing key: {0}", *(_key));       \
-        static const FSignalRValue _empty;                                 \
-        return _empty;                                                     \
+#define SAFE_MAP_GET(Map, Key)                                               \
+    ([&]() -> const FSignalRValue&                                           \
+    {                                                                        \
+        const auto& _key = (Key);                                            \
+        if ((Map).Contains(_key))                                            \
+        {                                                                    \
+            return (Map)[_key];                                              \
+        }                                                                    \
+        UE_LOGFMT(VoxtaLog, Error, "Map missing key: {0}", *(_key));         \
+        static const FSignalRValue _empty = FSignalRValue(EASY_STRING(""));  \
+        return _empty;                                                       \
     }())
 
 const TSet<FString> VoxtaApiResponseHandler::IGNORED_MESSAGE_TYPES{

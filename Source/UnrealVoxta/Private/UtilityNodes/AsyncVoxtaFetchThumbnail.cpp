@@ -47,9 +47,9 @@ void UAsyncVoxtaFetchThumbnail::Activate()
 	m_isActive = true;
 
 	FDownloadedTextureDelegateNative fetchedTexture = FDownloadedTextureDelegateNative::CreateWeakLambda(this,
-		[this] (bool bSuccess, const UTexture2DDynamic* Texture, FIntVector2 Size)
+		[this] (bool success, const UTexture2DDynamic* texture, FIntVector2 size)
 		{
-				OnThumbnailFetched(bSuccess, Texture, Size);
+				OnThumbnailFetched(success, texture, size);
 		}
 	);
 	m_voxtaClient->TryFetchAndCacheCharacterThumbnail(m_baseCharacterId, fetchedTexture);

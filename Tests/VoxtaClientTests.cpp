@@ -1568,6 +1568,60 @@ TEST_CLASS(VoxtaClientTests, "Voxta")
 	}
 #pragma endregion
 
+#pragma region GetAiCharacterDataCopyById
+	TEST_METHOD(GetAiCharacterDataCopyById_WithInvalidStartingState_ExpectResultWithInvalidId)
+	{
+		PRE_TEST;
+		TestCommandBuilder.Do([this] ()
+		{
+			TestRunner->SetSuppressLogErrors();
+			FGuid characterId = FGuid().NewGuid();
+
+			/** Test */
+			FAiCharData aiCharacter = m_voxtaClient->GetAiCharacterDataCopyById(characterId);
+
+			/** Assert */
+			GLog->Flush();
+			ASSERT_THAT(IsFalse(aiCharacter.GetId().IsValid()));
+			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(characterId, ELogVerbosity::Type::Error)));
+		});
+	}
+
+	TEST_METHOD(GetAiCharacterDataCopyById_WithInvalidGuid_ExpectResultWithInvalidId)
+	{
+		PRE_TEST;
+		PreconfigureClient(PreconfigureClientState::CharacterListLoaded);
+		TestCommandBuilder.Do([this] ()
+		{
+			TestRunner->SetSuppressLogErrors();
+
+			/** Test */
+			FAiCharData aiCharacter = m_voxtaClient->GetAiCharacterDataCopyById(FGuid());
+
+			/** Assert */
+			GLog->Flush();
+			ASSERT_THAT(IsFalse(aiCharacter.GetId().IsValid()));
+			ASSERT_THAT(IsTrue(m_testLogSink->ContainsLogMessageWithSubstring(FGuid(), ELogVerbosity::Type::Error)));
+		});
+	}
+
+	TEST_METHOD(GetAiCharacterDataCopyById_WithDefaultVoxtaGuid_ExpectValidResult)
+	{
+		PRE_TEST;
+		PreconfigureClient(PreconfigureClientState::CharacterListLoaded);
+		TestCommandBuilder.Do([this] ()
+		{
+			/** Test */
+			FAiCharData aiCharacter = m_voxtaClient->GetAiCharacterDataCopyById(m_voxtaId);
+
+			/** Assert */
+			GLog->Flush();
+			ASSERT_THAT(IsTrue(aiCharacter.GetId().IsValid()));
+			ASSERT_THAT(AreEqual(m_voxtaName, aiCharacter.GetName()));
+		});
+	}
+#pragma endregion
+
 #pragma region GetAvailableAiCharactersCopy
 	TEST_METHOD(GetAvailableAiCharactersCopy_WithInvalidStartingState_ExpectEmptyArray)
 	{

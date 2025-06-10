@@ -272,6 +272,16 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Voxta")
 	const UVoxtaAudioPlayback* GetRegisteredAudioPlaybackHandlerForID(const FGuid& characterId) const;
 
+	/**
+	 * Try to retrieve a copy of the characterData for the provided characterId.
+	 * 
+	 * @param characterId The character of which you want to retrieve a character-data.
+	 * 
+	 * @return A copy of the characterdata
+	 */
+	UFUNCTION(BlueprintPure, Category = "Voxta")
+	FAiCharData GetAiCharacterDataCopyById(const FGuid& characterId) const;
+
 	/** @return An copy of every available AIcharacter data. */
 	UFUNCTION(BlueprintPure, Category = "Voxta")
 	TArray<FAiCharData> GetAvailableAiCharactersCopy() const;

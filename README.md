@@ -1,27 +1,34 @@
 # An Unreal Engine plugin for Voxta
 
-_Made by GrrimGrriefer, in collaboration with DZnnah and Barty._  
-_Dev progress: https://trello.com/b/Biv7Si4l/unrealvoxta_
+_By GrrimGrriefer, DZnnah and Barty._  
+_Development progress board: https://trello.com/b/Biv7Si4l/unrealvoxta_
 
-**AI characters are not real, always use common sense!**  
+**⚠️ AI characters are not real, always use common sense! ⚠️**  
 
 > [!CAUTION]  
 > This plugin is not affiliated, associated, endorsed by, or in any way officially connected to Voxta.ai  
 >  
-> This plugin currently supports [Voxta](https://voxta.ai/) **v1.0.0-beta.132** (API **2024-11**), other versions are unlikely to work.  
-> This plugin currently supports Unreal Engine 5.5, and will not compile on versions older than 5.4.  
+> This plugin currently supports [Voxta](https://voxta.ai/) version **v1.0.0-beta.132** (API **2024-11**), other versions are unlikely to work.  
+> This plugin currently supports Unreal Engine **5.5**, other versions are unlikely to work (out of the box).  
 >  
-> If you use VoxtaCloud services, [their TOS](https://doc.voxta.ai/cloud/terms/) applies.  
-> Do not use this plugin to create anything illegal or malicious.
+> **If you connect to VoxtaCloud services, their [Terms of Service](https://doc.voxta.ai/cloud/terms/) apply.**  
+> 
+> Please do not use this plugin to create anything illegal or malicious.
 
 **Third party licenses:**  
 * SignalR client [MIT licensed](./Source/SignalR/License.txt)  
 * RuntimeAudioImporter [MIT licensed](./Source/VoxtaAudioUtility/Public/RuntimeAudioImporter/LICENSE.txt)  
 
+## Latest patch overview
+
+Quick 2min overview on the main changes in the most recent patch (**version 0.1.1**)  
+[![youtubeThumbnailPatch011 image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/youtubeThumbnailPatch011.PNG&resolveLfs=true&%24format=octetStream)](https://youtu.be/LINK_HERE "youtubeThumbnailPatch011 image")  
+https://youtu.be/LINK_HERE
+
 ## Optional prerequisites
 
 ### Lipsync
-_If you do not plan on using Lipsync, you can ignore this section._  
+ℹ️ _If you do not plan on using Lipsync, you can ignore this section._  
 
 * [OVR lipsync for UE 5.5](https://github.com/grrimgrriefer/OVRLipSync/releases/tag/UE-5.5)  
 Unzip this modified OVR lipsync in your plugins folder.
@@ -29,7 +36,7 @@ Unzip this modified OVR lipsync in your plugins folder.
 Experimental support, see [installation details](#installing-audio2face-lipsync) below.
 
 ### Microphone input
-_If you do not plan on using Voice input, you can ignore this section._  
+ℹ️ _If you do not plan on using Voice input, you can ignore this section._  
 
 Audio input for this plugin relies on Unreal's VoiceInput system, which has to be turned on.  
 1. Locate the Config folder in your project
@@ -44,8 +51,10 @@ bEnabled=true
 ## Tests
 [Basic test coverage](./Tests/VoxtaClientTests.cpp) (85 tests atm) of the main VoxtaClient public C++ API. Additional test coverage for the blueprint API and for audio input & output are scheduled for upcoming releases.  
 
-**Note**  
-All of them are integration tests and require a valid instance of VoxtaServer to be running on localhost, and will generate some responses as result. **Be mindful if using VoxtaCloud credits**⚠️.
+**Note:**  
+All tests are integration tests and require a valid instance of VoxtaServer to be running (configured on localhost but that can be easily modified).  
+
+⚠️⚠️ **Be mindful running tests when using VoxtaCloud services, especially cloud TTS audio. It is highly adviced to only execute relevant tests during development to avoid draining cloud credits.** ⚠️⚠️
 
 ![Tests image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/Tests.PNG&resolveLfs=true&%24format=octetStream "Tests image.")
 
@@ -53,14 +62,34 @@ All of them are integration tests and require a valid instance of VoxtaServer to
 
 ### Doxygen
 
-Most of the header files are fully documented and [a doxygen is available](https://grrimgrriefer.github.io/UnrealVoxtaDocs/hierarchy.html).  
-* [Boilerplate snippets](https://grrimgrriefer.github.io/UnrealVoxtaDocs/md_UnrealVoxta_2Source_2UnrealVoxta_2UnrealVoxta.html)
-* [Main API](https://grrimgrriefer.github.io/UnrealVoxtaDocs/classUVoxtaClient.html)
-* [Full class overview](https://grrimgrriefer.github.io/UnrealVoxtaDocs/hierarchy.html)
+All header files are fully documented and easily navigatable via the [online doxygen](https://grrimgrriefer.github.io/UnrealVoxtaDocs/hierarchy.html)  
+For a rough overview of what is included:
 
-### Module readme overviews
+#### Sequence diagram for each module, displaying how its internal classes interact with each other.
 
-For a high-level overview of what each module does & how it works, you can have a look at the markdown files in each module root.
+![docsSequenceDiagrams image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/docsSequenceDiagrams.PNG&resolveLfs=true&%24format=octetStream "docsSequenceDiagrams image.")
+
+#### High level bullet-point list of each modules purpose, features and dependencies.
+
+![docsModuleExplanation image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/docsModuleExplanation.PNG&resolveLfs=true&%24format=octetStream "docsModuleExplanation image.")
+
+#### Boilerplate snippets that can be used to start writing your own custom code.
+
+![docsBoilerplateCodeSnippets image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/docsBoilerplateCodeSnippets.PNG&resolveLfs=true&%24format=octetStream "docsBoilerplateCodeSnippets image.")
+
+#### Per-class/struct pages, including inheritance diagrams, summaries for each public function & property.
+
+![docsInheritanceDiagrams image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/docsInheritanceDiagrams.PNG&resolveLfs=true&%24format=octetStream "docsInheritanceDiagrams image.")
+
+#### Easily navigatable overview of all classes and structs included in the plugin
+
+![docsClassHierarchy image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/docsClassHierarchy.PNG&resolveLfs=true&%24format=octetStream "docsClassHierarchy image.")
+
+### Markdown links
+
+The high-level overviews are located in markdowns as part of the repository. These can be viewed without going to the doxygen link if needed.  
+
+Links are below:
 
 * [UnrealVoxta](./Source/UnrealVoxta/UnrealVoxta.md): Main api to interact with the plugin.
 * [VoxtaData](./Source/VoxtaData/VoxtaData.md): Contains data structures.  
@@ -74,15 +103,23 @@ For a high-level overview of what each module does & how it works, you can have 
 
 ## Getting started [Blueprints]
 
-A template setup is available out-of-the-box, and is built using the blueprint API of the UnrealVoxta plugin.  
-The in-depth breakdown on each node will be made in video-format once the plugin reaches beta (v0.2)  
+Due to the alpha nature of the plugin, only C++ documentation is provide. However, each blueprint node maps 1:1 to a UFUNCTION and will have the same discription visible when hovered.  
+
+![summaryOnHover image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/summaryOnHover.PNG&resolveLfs=true&%24format=octetStream "summaryOnHover image.") 
+
+A full in-depth breakdown on each node will be made in video-format once the plugin reaches beta (v0.2)  
+
+For alpha usage, it is adviced to use the new Modular Template UI as reference.
 
 ## Template screens
 
 **Note**: All source files for the template are included (.psd) to allow for easy reskinning. Do keep in mind that for the Beta all UI will be reskinned (again) by us too. 
 ![Template_filesNfolders image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/Template_filesNfolders.PNG&resolveLfs=true&%24format=octetStream "Template_filesNfolders image.")  
 
-### Template gamemode
+### Activate the Template gamemode
+
+Either select the **BP_ExampleGameMode**, or manually select the example hud in your own GameMode if you have one already.  
+
 ![Template_Gamemode image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/Template_Gamemode.PNG&resolveLfs=true&%24format=octetStream "Template_Gamemode image.")  
 
 ### Template status icons  
@@ -116,6 +153,9 @@ Can be triggered with the cogwheel, shows the current chat and context can be mo
 ![Template_ChatSettings image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/Template_ChatSettings.PNG&resolveLfs=true&%24format=octetStream "Template_ChatSettings image.")  
 
 ## Installing Audio2Face lipsync
+
+⚠️⚠️ **Be mindful that Audio2Face is experimental and will receive a full overhaul before going to beta. Do NOT build anything you need to support medium/long term with this.** ⚠️⚠️
+
 Keep in mind that for A2F lipsync, you will need to add the required plugin:  
 A2F Omniverse lipsync: [direct link](https://install.launcher.omniverse.nvidia.com/installers/omniverse-launcher-win.exe) or download via the portal [https://www.nvidia.com/en-us/omniverse/](https://www.nvidia.com/en-us/omniverse/)  
 ![A2FOmniverseDownload image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/A2FOmniverseDownload.PNG&resolveLfs=true&%24format=octetStream "Download the Omniverse application")

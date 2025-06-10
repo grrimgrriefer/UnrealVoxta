@@ -475,6 +475,21 @@ bool UVoxtaClient::IsGlobalAudioFallbackActive() const
 	}
 }
 
+FAiCharData UVoxtaClient::GetAiCharacterDataCopyById(const FGuid& characterId) const
+{
+	const TUniquePtr<const FAiCharData>* character = GetAiCharacterDataById(characterId);
+	if (character == nullptr || !character->IsValid())
+	{
+		UE_LOGFMT(VoxtaLog, Error, "GetAiCharacterDataCopyById could not find a character that matched id {0}", characterId);
+		return FAiCharData();
+	}
+	else
+	{
+		return *(character->Get());
+	}
+}
+
+
 TArray<FAiCharData> UVoxtaClient::GetAvailableAiCharactersCopy() const
 {
 	TArray<FAiCharData> returnArray;
