@@ -2,33 +2,19 @@
 
 using UnrealBuildTool;
 
+/// <summary>
+/// Specifies all the requirements to compile the Data module for the plugin.
+/// This contains both readonly- and runtime-data structures.
+/// </summary>
 public class VoxtaData : ModuleRules
 {
+	/// <summary>
+	/// Constructor.
+	/// </summary>
 	public VoxtaData(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore" });
-
-		// There has to be a cleaner way to do this lmao
-		bool projectHasOvrLipSync = false;
-		try
-		{
-			projectHasOvrLipSync = !string.IsNullOrWhiteSpace(GetModuleDirectory("OVRLipSync"));
-		}
-		catch (BuildException)
-		{
-			projectHasOvrLipSync = false;
-		}
-
-		if (projectHasOvrLipSync)
-		{
-			PublicDependencyModuleNames.Add("OVRLipSync");
-			PublicDefinitions.Add("WITH_OVRLIPSYNC=1");
-		}
-		else
-		{
-			PublicDefinitions.Add("WITH_OVRLIPSYNC=0");
-		}
+		PublicDependencyModuleNames.AddRange(new [] { "Core", "CoreUObject" });
 	}
 }

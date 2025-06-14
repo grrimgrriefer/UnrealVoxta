@@ -1,13 +1,13 @@
 ﻿// Georgy Treshchev 2024.
 
-#include "RuntimeAudioImporter/WAV_RuntimeCodec.h"
-#include "RuntimeAudioImporter/AudioStructs.h"
+#include "WAV_RuntimeCodec.h"
+#include "AudioStructs.h"
 #include "HAL/UnrealMemory.h"
 
 #define DR_WAV_IMPLEMENTATION
 #define INCLUDE_WAV
 #include "CodecIncludes.h"
-#include "RuntimeAudioImporter/RAW_RuntimeCodec.h"
+#include "RAW_RuntimeCodec.h"
 #undef INCLUDE_WAV
 
 namespace
@@ -16,7 +16,7 @@ namespace
 	 * Check and fix the WAV audio data with the correct byte size in the RIFF container
 	 * Made by https://github.com/kass-kass
 	 */
-	bool CheckAndFixWavDurationErrors(const FRuntimeBulkDataBuffer<uint8>& WavData)
+	bool CheckAndFixWavDurationErrors(FRuntimeBulkDataBuffer<uint8>& WavData)
 	{
 		drwav WAV;
 
@@ -77,7 +77,7 @@ namespace
 	}
 }
 
-bool FWAV_RuntimeCodec::CheckAudioFormat(const FRuntimeBulkDataBuffer<uint8>& AudioData)
+bool FWAV_RuntimeCodec::CheckAndFixAudioFormat(FRuntimeBulkDataBuffer<uint8>& AudioData)
 {
 	drwav WAV;
 
@@ -89,74 +89,6 @@ bool FWAV_RuntimeCodec::CheckAudioFormat(const FRuntimeBulkDataBuffer<uint8>& Au
 	}
 
 	drwav_uninit(&WAV);
-	return true;
-}
-
-bool FWAV_RuntimeCodec::GetHeaderInfo(FEncodedAudioStruct EncodedData, FRuntimeAudioHeaderInfo& HeaderInfo)
-{
-	UE_LOG(AudioLog, Log, TEXT("Retrieving header information for WAV audio format.\nEncoded audio info: %s"), *EncodedData.ToString());
-
-	ensureAlwaysMsgf(EncodedData.AudioFormat == GetAudioFormat(), TEXT("Attempting to retrieve audio header information in the '%s' codec, but the data format is encoded in '%s'"),
-					 *UEnum::GetValueAsString(GetAudioFormat()), *UEnum::GetValueAsString(EncodedData.AudioFormat));
-
-	drwav WAV;
-	if (!drwav_init_memory(&WAV, EncodedData.AudioData.GetView().GetData(), EncodedData.AudioData.GetView().Num(), nullptr))
-	{
-		UE_LOG(AudioLog, Error, TEXT("Failed to initialize WAV Decoder"));
-		return false;
-	}
-
-	{
-		HeaderInfo.Duration = static_cast<float>(WAV.totalPCMFrameCount) / WAV.sampleRate;
-		HeaderInfo.NumOfChannels = WAV.channels;
-		HeaderInfo.SampleRate = WAV.sampleRate;
-		HeaderInfo.PCMDataSize = WAV.totalPCMFrameCount * WAV.channels;
-		HeaderInfo.AudioFormat = GetAudioFormat();
-	}
-
-	drwav_uninit(&WAV);
-	UE_LOG(AudioLog, Log, TEXT("Successfully retrieved header information for WAV audio format.\nHeader info: %s"), *HeaderInfo.ToString());
-	return true;
-}
-
-bool FWAV_RuntimeCodec::Encode(FDecodedAudioStruct DecodedData, FEncodedAudioStruct& EncodedData, uint8 Quality)
-{
-	UE_LOG(AudioLog, Log, TEXT("Encoding uncompressed audio data to WAV audio format.\nDecoded audio info: %s."), *DecodedData.ToString());
-
-	drwav WAV_Encoder;
-
-	drwav_data_format WAV_Format;
-	{
-		WAV_Format.container = drwav_container_riff;
-		WAV_Format.format = DR_WAVE_FORMAT_PCM;
-		WAV_Format.channels = DecodedData.SoundWaveBasicInfo.NumOfChannels;
-		WAV_Format.sampleRate = DecodedData.SoundWaveBasicInfo.SampleRate;
-		WAV_Format.bitsPerSample = 16;
-	}
-
-	void* CompressedData = nullptr;
-	size_t CompressedDataLen;
-
-	if (!drwav_init_memory_write(&WAV_Encoder, &CompressedData, &CompressedDataLen, &WAV_Format, nullptr))
-	{
-		UE_LOG(AudioLog, Error, TEXT("Unable to initialize WAV Encoder"));
-		return false;
-	}
-
-	int16* TempInt16BBuffer;
-	FRAW_RuntimeCodec::TranscodeRAWData<float, int16>(DecodedData.PCMInfo.PCMData.GetView().GetData(), DecodedData.PCMInfo.PCMData.GetView().Num(), TempInt16BBuffer);
-
-	drwav_write_pcm_frames(&WAV_Encoder, DecodedData.PCMInfo.PCMNumOfFrames, TempInt16BBuffer);
-	drwav_uninit(&WAV_Encoder);
-	FMemory::Free(TempInt16BBuffer);
-
-	// Populating the encoded audio data
-	{
-		EncodedData.AudioData = FRuntimeBulkDataBuffer<uint8>(static_cast<uint8*>(CompressedData), static_cast<int64>(CompressedDataLen));
-		EncodedData.AudioFormat = ERuntimeAudioFormat::Wav;
-	}
-
-	UE_LOG(AudioLog, Log, TEXT("Successfully encoded uncompressed audio data to WAV audio format.\nEncoded audio info: %s"), *EncodedData.ToString());
 	return true;
 }
 

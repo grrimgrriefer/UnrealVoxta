@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Misc/ScopeLock.h"
 #include "VoiceRunnerThread.h"
+#include "VoxtaDefines.h"
 
 class AudioWebSocket;
 class IVoiceCapture;
@@ -45,9 +46,7 @@ public:
 	 * @param silenceDetectionThreshold The linear amplitude, anything below this will not generate any audio data.
 	 * @param micInputGain The linear amplitude muliplier applied to the input.
 	 */
-	void ConfigureSilenceTresholds(float micNoiseGateThreshold = 0.001f,
-		float silenceDetectionThreshold = 0.001f,
-		float micInputGain = 6.0f);
+	void ConfigureSilenceThresholds(float micNoiseGateThreshold, float silenceDetectionThreshold, float micInputGain);
 
 	/**
 	 * Tries to start that IVoiceCapture and also start the background thread that will forward any
@@ -61,29 +60,36 @@ public:
 	void StopCapture();
 
 	/** Stops the capture, permanently clearing the reserved memory for the background thread. */
-	void ShutDown();
+	void ShutDown(bool alsoDestroyCaptureDevice = false);
+
+	/** @return If the current input can be considered to be pure silence. */
+	bool IsInputSilent() const;
 
 	/** @return The volume in decibels, of the last audioChunk (~30ms delay) */
 	float GetDecibels() const;
 
 	/** @return Returns the name of the device used by the VoiceModule, if initialized. */
 	const FString& GetDeviceName() const;
+
+	void SetIsTestMode(bool isTestMode);
 #pragma endregion
 
 #pragma region data
 private:
-	UPROPERTY()
 	TArray<uint8> m_socketDataBuffer;
 
-	const float DEFAULT_SILENCE_DECIBELS = -100.f;
+	static constexpr float DEFAULT_SILENCE_DECIBELS = -144.f;
 
 	/** The background thread needs access to our private functions. */
 	friend class FVoiceRunnerThread;
 
-	FString m_deviceName = TEXT("");
-	bool m_isCapturing;
-	int m_bufferMillisecondSize;
+	FString m_deviceName = EMPTY_STRING;
+	bool m_isCapturing = false;
+	int m_bufferMillisecondSize = 0;
+
 	float m_decibels = DEFAULT_SILENCE_DECIBELS;
+	bool m_isTestMode = false;
+	FDateTime m_lastVoiceTimestamp = FDateTime();
 
 	mutable FCriticalSection m_captureGuard;
 	TUniquePtr<FVoiceRunnerThread> m_voiceRunnerThread;
@@ -101,23 +107,26 @@ private:
 	 * @param voiceDataBuffer The array of raw bytes that will be filled with the most recent inverval's data.
 	 * @param decibels The volume in decibels that covers the most recent inverval's data.
 	 */
-	void CaptureVoiceInternal(TArray<uint8>& voiceDataBuffer, float& decibels) const;
+	bool CaptureVoiceInternal(TArray<uint8>& voiceDataBuffer, float& decibels) const;
 
 	/**
 	 * Send the provided raw audio data to VoxtaServer's microphone socket.
 	 *
 	 * @param rawData The array of bytes that will be sent.
 	 */
-	void SendInternal(const TArray<uint8> rawData) const;
+	void SendInternal(const TArray<uint8>& rawData) const;
 
 	/**
 	 * Analyze the provided data and calculate the maximum decibels that is present in this chunk of audio.
 	 *
-	 * @param VoiceData The raw bytes of audio data.
-	 * @param DataSize The amount of bytes that should be part of the analysis
+	 * @param voiceInputData The raw bytes of audio data.
+	 * @param dataSize The amount of bytes that should be part of the analysis
 	 *
 	 * @return The decibel value in float format.
 	 */
-	float AnalyseDecibels(const TArray<uint8>& VoiceData, uint32 DataSize) const;
+	float AnalyseDecibels(const TArray<uint8>& voiceInputData, uint32 dataSize) const;
+
+	/** @return If the current input can be considered to be pure silence. NOT threadsafe */
+	bool IsInputSilentInternal() const;
 #pragma endregion
 };

@@ -5,14 +5,15 @@
 #include "CoreMinimal.h"
 
 #if WITH_OVRLIPSYNC
-class ULipSyncDataOVR;
+#include "LipSyncDataOVR.h"
 #endif
-class ULipSyncDataA2F;
+#include "LipSyncDataA2F.h"
+#include "LipSyncDataCustom.h"
 class Audio2FaceRESTHandler;
 
 /**
  * LipSyncGenerator
- * Internal helper class with static functions
+ * Internal helper class with static functions for generating lipsync data for audio.
  * Downloads the data from the VoxtaServer REST api, converting it into a SoundWave, and generating lipsync data.
  *
  * Note: The private API hooks into callbacks from background-threads, use care when changing the implementation.
@@ -23,6 +24,7 @@ public:
 #if WITH_OVRLIPSYNC
 	/**
 	 * Generate a UOVRLipSyncFrameSequence in a background thread and attach it to the ULipSyncDataOVR instance.
+	 * Note: Returned object of ULipSyncDataOVR* is attached to Root on creation, to avoid premature deletion.
 	 *
 	 * @param rawAudioData The raw audiodata in bytes.
 	 * @param callback The callback that will be triggered when the OVR lipsync data has been created & pushed
@@ -32,13 +34,22 @@ public:
 #endif
 
 	/**
-	 * Generate the A2F curves based in a background thread and attach it to the ULipSyncDataOVR instance.
+	 * Generate the A2F curves in a background thread and attach them to the ULipSyncDataA2F instance.
+	 * Note: Returned object of ULipSyncDataA2F* is attached to Root on creation, to avoid premature deletion.
 	 *
 	 * @param rawAudioData The raw audiodata in bytes.
-	 * @param A2FRestHandler A pointer to the A2F REST APi handler.
+	 * @param A2FRestHandler Weak pointer to the A2F REST API handler; the callback is skipped if the handler is no longer valid.
 	 * @param callback The callback that will be triggered when the A2F curves have been created and imported
 	 * back into the gamethread.
 	 */
-	static void GenerateA2FLipSyncData(const TArray<uint8>& rawAudioData, Audio2FaceRESTHandler* A2FRestHandler,
+	static void GenerateA2FLipSyncData(const TArray<uint8>& rawAudioData, TWeakPtr<Audio2FaceRESTHandler> A2FRestHandler,
 		TFunction<void(ULipSyncDataA2F*)> callback);
+
+	/**
+	 * Generate an empty ULipSyncDataCustom wrapper, currently only used for integration tests.
+	 * Note: Returned object of ULipSyncDataCustom* is attached to Root on creation, to avoid premature deletion.
+	 *
+	 * @return A pointer to the newly created instance of ULipSyncDataCustom
+	 */
+	static ULipSyncDataCustom* GenerateCustomLipSyncData();
 };

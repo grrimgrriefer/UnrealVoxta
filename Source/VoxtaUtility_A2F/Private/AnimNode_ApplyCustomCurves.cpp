@@ -6,25 +6,27 @@
 #include "AbstractA2FWeightProvider.h"
 #include "Logging/StructuredLog.h"
 #include "VoxtaDefines.h"
+#include "Components/AudioComponent.h"
 
-void FAnimNode_ApplyCustomCurves::Update_AnyThread(const FAnimationUpdateContext& context)
+void FAnimNode_ApplyCustomCurves::Update_AnyThread(const FAnimationUpdateContext& Context)
 {
-	GetEvaluateGraphExposedInputs().Execute(context);
-	m_source.Update(context);
+	GetEvaluateGraphExposedInputs().Execute(Context);
+	m_source.Update(Context);
 }
 
-void FAnimNode_ApplyCustomCurves::PreUpdate(const UAnimInstance* animInstance)
+void FAnimNode_ApplyCustomCurves::PreUpdate(const UAnimInstance* AnimInstance)
 {
-	if (!(animInstance->GetWorld()->WorldType == EWorldType::PIE) &&
-		!(animInstance->GetWorld()->WorldType == EWorldType::Game))
+	if (!(AnimInstance->GetWorld()->WorldType == EWorldType::PIE) &&
+		!(AnimInstance->GetWorld()->WorldType == EWorldType::Game))
 	{
 		// Check if we're playing, otherwise this will trigger in blueprint editor when previewing
 		return;
 	}
+	m_cachedWeights.Init(0.f, UE_ARRAY_COUNT(UAudio2FacePlaybackHandler::CURVE_NAMES));
 
 	if (m_curveSource == nullptr)
 	{
-		AActor* actor = animInstance->GetOwningActor();
+		AActor* actor = AnimInstance->GetOwningActor();
 		if (actor != nullptr)
 		{
 			UAudioComponent* component = actor->GetComponentByClass<UAudioComponent>();
@@ -52,23 +54,27 @@ void FAnimNode_ApplyCustomCurves::PreUpdate(const UAnimInstance* animInstance)
 	}
 }
 
-void FAnimNode_ApplyCustomCurves::Evaluate_AnyThread(FPoseContext& output)
+void FAnimNode_ApplyCustomCurves::Evaluate_AnyThread(FPoseContext& Output)
 {
-	m_source.Evaluate(output);
+	m_source.Evaluate(Output);
 
 	if (m_cachedWeights.Num() > 0)
 	{
-		size_t curveId = 0;
-		for (float weight : m_cachedWeights)
+		if (m_cachedWeights.Num() != UAudio2FacePlaybackHandler::CURVE_COUNT)
 		{
-			FName curveName = UAudio2FacePlaybackHandler::CURVE_NAMES[curveId++];
-			output.Curve.Set(curveName, weight);
+			UE_LOGFMT(VoxtaLog, Error, "A2F curve count was different then ARKIT curve count, this is not supported.");
+			return;
+		}
+
+		for (int i = 0; i < m_cachedWeights.Num(); ++i)
+		{
+			Output.Curve.Set(UAudio2FacePlaybackHandler::CURVE_NAMES[i], m_cachedWeights[i]);
 		}
 	}
 }
 
-void FAnimNode_ApplyCustomCurves::GatherDebugData(FNodeDebugData& debugData)
+void FAnimNode_ApplyCustomCurves::GatherDebugData(FNodeDebugData& DebugData)
 {
-	FAnimNode_Base::GatherDebugData(debugData);
-	m_source.GatherDebugData(debugData);
+	FAnimNode_Base::GatherDebugData(DebugData);
+	m_source.GatherDebugData(DebugData);
 }

@@ -9,8 +9,9 @@
 class IA2FWeightProvider;
 
 /**
- * FAnimNode_ApplyCustomCurves.
- * Custom animation node to apply predifined curves (float values per frame) to the ARKit mapping of the rig.
+ * FAnimNode_ApplyCustomCurves
+ * Animation node that applies custom curve values to a pose.
+ * Used for driving facial animation curves (e.g., from lipsync data) in an animation graph.
  */
 USTRUCT(BlueprintInternalUseOnly, Category = "Voxta")
 struct VOXTAUTILITY_A2F_API FAnimNode_ApplyCustomCurves : public FAnimNode_Base
@@ -20,39 +21,45 @@ struct VOXTAUTILITY_A2F_API FAnimNode_ApplyCustomCurves : public FAnimNode_Base
 #pragma region FAnimNode_Base overrides
 public:
 	/**
-	 * Called to update the state of the graph relative to this node.
-	 * Generally this should configure any weights (etc.) that could affect the poses that
-	 * will need to be evaluated. This function is what usually executes EvaluateGraphExposedInputs.
-	 * This can be called on any thread.
-	 * @param	Context		Context structure providing access to relevant data
+	 * Update the state of the graph relative to this node.
+	 * Configures any weights or state that could affect the poses to be evaluated.
+	 * Can be called on any thread.
+	 *
+	 * @param Context Context structure providing access to relevant data.
 	 */
-	virtual void Update_AnyThread(const FAnimationUpdateContext& context) override;
+	virtual void Update_AnyThread(const FAnimationUpdateContext& Context) override;
 
 	/**
-	 * Called to evaluate local-space bones transforms according to the weights set up in Update().
-	 * You should implement either Evaluate or EvaluateComponentSpace, but not both of these.
-	 * This can be called on any thread.
-	 * @param	Output		Output structure to write pose or curve data to. Also provides access to relevant data as a context.
+	 * Evaluate local-space bone transforms according to the weights set up in Update().
+	 * You should implement either Evaluate or EvaluateComponentSpace, but not both.
+	 * Can be called on any thread.
+	 *
+	 * @param Output Output structure to write pose or curve data to.
 	 */
-	virtual void Evaluate_AnyThread(FPoseContext& output) override;
+	virtual void Evaluate_AnyThread(FPoseContext& Output) override;
 
 	/**
-	 * Called to gather on-screen debug data.
-	 * This is called on the game thread.
-	 * @param	DebugData	Debug data structure used to output any relevant data
+	 * Gather on-screen debug data.
+	 * Called on the game thread.
+	 *
+	 * @param DebugData Debug data structure used to output any relevant data.
 	 */
-	virtual void GatherDebugData(FNodeDebugData& debugData) override;
+	virtual void GatherDebugData(FNodeDebugData& DebugData) override;
 
 	/**
-	 * Override this to indicate that PreUpdate() should be called on the game thread (usually to
-	 * gather non-thread safe data) before Update() is called.
-	 * Note that this is called at load on the UAnimInstance CDO to avoid needing to call this at runtime.
-	 * This is called on the game thread.
+	 * Indicates that PreUpdate() should be called on the game thread before Update().
+	 * Used to gather non-thread safe data.
+	 * Called on the game thread.
 	 */
 	virtual bool HasPreUpdate() const override { return true; }
 
-	/** Override this to perform game-thread work prior to non-game thread Update() being called */
-	virtual void PreUpdate(const UAnimInstance* animInstance) override;
+	/**
+	 * Perform game-thread work prior to non-game thread Update() being called.
+	 * Called on the game thread.
+	 *
+	 * @param AnimInstance The animation instance.
+	 */
+	virtual void PreUpdate(const UAnimInstance* AnimInstance) override;
 #pragma endregion
 
 #pragma region data
@@ -60,7 +67,7 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Source"))
 	FPoseLink m_source;
 
-	IA2FWeightProvider* m_curveSource;
-	TArray<float> m_cachedWeights;
+	IA2FWeightProvider* m_curveSource = nullptr;
+	TArray<float> m_cachedWeights = TArray<float>();
 #pragma endregion
 };

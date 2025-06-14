@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "AudioCaptureDeviceInterface.h"
 #include "Logging/LogMacros.h"
+#include "VoxtaDefines.h"
 
 #include "AudioStructs.generated.h"
 
@@ -12,7 +13,9 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(AudioLog, Log, All);
 
-/** Possible audio formats (extensions) */
+/**
+ * Possible audio formats (extensions)
+ */
 UENUM(BlueprintType, Category = "Runtime Audio Importer")
 enum class ERuntimeAudioFormat : uint8
 {
@@ -26,7 +29,9 @@ enum class ERuntimeAudioFormat : uint8
 	Invalid UMETA(DisplayName = "invalid", Hidden)
 };
 
-/** Possible RAW (uncompressed, PCM) audio formats */
+/**
+ * Possible RAW (uncompressed, PCM) audio formats
+ */
 UENUM(BlueprintType, Category = "Runtime Audio Importer")
 enum class ERuntimeRAWAudioFormat : uint8
 {
@@ -39,7 +44,9 @@ enum class ERuntimeRAWAudioFormat : uint8
 	Float32 UMETA(DisplayName = "Floating point 32-bit")
 };
 
-/** A line of subtitle text and the time at which it should be displayed. This is the same as FSubtitleCue but editable in Blueprints */
+/**
+ * A line of subtitle text and the time at which it should be displayed. This is the same as FSubtitleCue but editable in Blueprints.
+ */
 USTRUCT(BlueprintType, Category = "Runtime Audio Importer")
 struct FEditableSubtitleCue
 {
@@ -47,8 +54,7 @@ struct FEditableSubtitleCue
 
 	FEditableSubtitleCue()
 		: Time(0)
-	{
-	}
+	{}
 
 	/** The text to appear in the subtitle */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Runtime Audio Importer")
@@ -60,7 +66,8 @@ struct FEditableSubtitleCue
 };
 
 /**
- * An alternative to FBulkDataBuffer with consistent data types
+ * An alternative to FBulkDataBuffer with consistent data types.
+ * Provides a buffer for bulk audio data with memory management and utility functions.
  */
 template <typename DataType>
 class FRuntimeBulkDataBuffer
@@ -71,11 +78,11 @@ public:
 	FRuntimeBulkDataBuffer() = default;
 
 	/**
-	 * Reserve (pre-allocate) memory for the buffer
-	 * This function can only be called if there's no data allocated
+	 * Reserve (pre-allocate) memory for the buffer.
+	 * This function can only be called if there's no data allocated.
 	 *
-	 * @param NewCapacity New capacity to reserve
-	 * @return True if the memory was successfully reserved, false otherwise
+	 * @param NewCapacity New capacity to reserve.
+	 * @return True if the memory was successfully reserved, false otherwise.
 	 */
 	bool Reserve(int64 NewCapacity)
 	{
@@ -100,11 +107,21 @@ public:
 		return true;
 	}
 
+	/**
+	 * Overload of Append logic with a simplified API.
+	 *
+	 * @param Other The data to append.
+	 */
 	void Append(const FRuntimeBulkDataBuffer<DataType>& Other)
 	{
 		Append(Other.GetView().GetData(), Other.GetView().Num());
 	}
 
+	/**
+	 * Overload of Append logic with a simplified API.
+	 *
+	 * @param Other The data to append.
+	 */
 	void Append(FRuntimeBulkDataBuffer<DataType>&& Other)
 	{
 		Append(Other.GetView().GetData(), Other.GetView().Num());
@@ -112,11 +129,11 @@ public:
 	}
 
 	/**
-	 * Append data to the buffer from the given buffer
-	 * Takes the reserved capacity into account
-	 *
-	 * @param InBuffer Buffer to append data from
-	 * @param InNumberOfElements Number of elements to append
+	 * Append data to the buffer from the given buffer.
+	 * Takes the reserved capacity into account.
+	 * 
+	 * @param InBuffer Buffer to append data from.
+	 * @param InNumberOfElements Number of elements to append.
 	 */
 	void Append(const DataType* InBuffer, int64 InNumberOfElements)
 	{
@@ -173,8 +190,7 @@ public:
 
 	FRuntimeBulkDataBuffer(DataType* InBuffer, int64 InNumberOfElements)
 		: View(InBuffer, InNumberOfElements)
-	{
-	}
+	{}
 
 	template <typename Allocator>
 	explicit FRuntimeBulkDataBuffer(const TArray<DataType, Allocator>& Other)
@@ -203,10 +219,15 @@ public:
 		{
 			FreeBuffer();
 
-			const int64 BufferSize = Other.View.Num() + Other.ReservedCapacity;
+			const int64 UsedSize = Other.View.Num();
+			const int64 BufferSize = UsedSize + Other.ReservedCapacity;
 
 			DataType* BufferCopy = static_cast<DataType*>(FMemory::Malloc(BufferSize * sizeof(DataType)));
-			FMemory::Memcpy(BufferCopy, Other.View.GetData(), BufferSize * sizeof(DataType));
+			FMemory::Memcpy(BufferCopy, Other.View.GetData(), UsedSize * sizeof(DataType));
+			if (Other.ReservedCapacity > 0)
+			{
+				FMemory::Memzero(BufferCopy + UsedSize, Other.ReservedCapacity * sizeof(DataType));
+			}
 
 			View = ViewType(BufferCopy, BufferSize);
 			ReservedCapacity = Other.ReservedCapacity;
@@ -261,31 +282,39 @@ protected:
 	int64 ReservedCapacity = 0;
 };
 
-/** Encoded audio information */
+/**
+ * Encoded audio information.
+ */
 struct FEncodedAudioStruct
 {
 	FEncodedAudioStruct()
 		: AudioFormat(ERuntimeAudioFormat::Invalid)
-	{
-	}
+	{}
 
+	/**
+	 * Construct from a TArray of audio data.
+	 * @param AudioDataArray The audio data array.
+	 * @param AudioFormat The audio format.
+	 */
 	template <typename Allocator>
 	FEncodedAudioStruct(const TArray<uint8, Allocator>& AudioDataArray, ERuntimeAudioFormat AudioFormat)
 		: AudioData(AudioDataArray)
 		, AudioFormat(AudioFormat)
-	{
-	}
+	{}
 
+	/**
+	 * Construct from a bulk data buffer.
+	 * @param AudioDataBulk The audio data buffer.
+	 * @param AudioFormat The audio format.
+	 */
 	FEncodedAudioStruct(FRuntimeBulkDataBuffer<uint8> AudioDataBulk, ERuntimeAudioFormat AudioFormat)
 		: AudioData(MoveTemp(AudioDataBulk))
 		, AudioFormat(AudioFormat)
-	{
-	}
+	{}
 
 	/**
-	 * Converts Encoded Audio Struct to a readable format
-	 *
-	 * @return String representation of the Encoded Audio Struct
+	 * Converts Encoded Audio Struct to a readable format.
+	 * @return String representation of the Encoded Audio Struct.
 	 */
 	FString ToString() const
 	{
@@ -301,7 +330,10 @@ struct FEncodedAudioStruct
 	ERuntimeAudioFormat AudioFormat;
 };
 
-/** Basic sound wave data */
+/**
+ * Basic sound wave data.
+ * This struct is used to carry metadata extracted from decoded audio.
+ */
 struct FSoundWaveBasicStruct
 {
 	FSoundWaveBasicStruct()
@@ -309,8 +341,7 @@ struct FSoundWaveBasicStruct
 		, SampleRate(0)
 		, Duration(0)
 		, AudioFormat(ERuntimeAudioFormat::Invalid)
-	{
-	}
+	{}
 
 	/** Number of channels */
 	uint32 NumOfChannels;
@@ -325,7 +356,8 @@ struct FSoundWaveBasicStruct
 	ERuntimeAudioFormat AudioFormat;
 
 	/**
-	 * Whether the sound wave data appear to be valid or not
+	 * Whether the sound wave data appear to be valid or not.
+	 * @return True if valid, false otherwise.
 	 */
 	bool IsValid() const
 	{
@@ -333,9 +365,8 @@ struct FSoundWaveBasicStruct
 	}
 
 	/**
-	 * Converts the basic sound wave struct to a readable format
-	 *
-	 * @return String representation of the basic sound wave struct
+	 * Converts the basic sound wave struct to a readable format.
+	 * @return String representation of the basic sound wave struct.
 	 */
 	FString ToString() const
 	{
@@ -343,16 +374,18 @@ struct FSoundWaveBasicStruct
 	}
 };
 
-/** PCM data buffer structure */
+/**
+ * PCM data buffer structure with 32-bit float samples.
+ */
 struct FPCMStruct
 {
 	FPCMStruct()
 		: PCMNumOfFrames(0)
-	{
-	}
+	{}
 
 	/**
-	 * Whether the PCM data appear to be valid or not
+	 * Whether the PCM data appear to be valid or not.
+	 * @return True if valid, false otherwise.
 	 */
 	bool IsValid() const
 	{
@@ -360,9 +393,8 @@ struct FPCMStruct
 	}
 
 	/**
-	 * Converts PCM struct to a readable format
-	 *
-	 * @return String representation of the PCM Struct
+	 * Converts PCM struct to a readable format.
+	 * @return String representation of the PCM Struct.
 	 */
 	FString ToString() const
 	{
@@ -377,11 +409,15 @@ struct FPCMStruct
 	uint32 PCMNumOfFrames;
 };
 
-/** Decoded audio information */
+/**
+ * Decoded audio information.
+ * Aggregates SoundWaveBasicInfo and PCMInfo into a complete decoded payload.
+ */
 struct FDecodedAudioStruct
 {
 	/**
-	 * Whether the decoded audio data appear to be valid or not
+	 * Whether the decoded audio data appear to be valid or not.
+	 * @return True if valid, false otherwise.
 	 */
 	bool IsValid() const
 	{
@@ -389,9 +425,8 @@ struct FDecodedAudioStruct
 	}
 
 	/**
-	 * Converts Decoded Audio Struct to a readable format
-	 *
-	 * @return String representation of the Decoded Audio Struct
+	 * Converts Decoded Audio Struct to a readable format.
+	 * @return String representation of the Decoded Audio Struct.
 	 */
 	FString ToString() const
 	{
@@ -405,28 +440,33 @@ struct FDecodedAudioStruct
 	FPCMStruct PCMInfo;
 };
 
-/** Platform audio input device info */
+/**
+ * Platform audio input device info.
+ */
 USTRUCT(BlueprintType, Category = "Runtime Audio Importer")
 struct FRuntimeAudioInputDeviceInfo
 {
 	GENERATED_BODY()
 
 	FRuntimeAudioInputDeviceInfo()
-		: DeviceName("")
-		, DeviceId("")
+		: DeviceName(EMPTY_STRING)
+		, DeviceId(EMPTY_STRING)
 		, InputChannels(0)
 		, PreferredSampleRate(0)
 		, bSupportsHardwareAEC(true)
-	{
-	}
+	{}
 
+	/**
+	 * Construct from a capture device info struct.
+	 * @param DeviceInfo The capture device info.
+	 */
 	FRuntimeAudioInputDeviceInfo(const Audio::FCaptureDeviceInfo& DeviceInfo)
 		: DeviceName(DeviceInfo.DeviceName)
+		, DeviceId(DeviceInfo.DeviceId)
 		, InputChannels(DeviceInfo.InputChannels)
 		, PreferredSampleRate(DeviceInfo.PreferredSampleRate)
 		, bSupportsHardwareAEC(DeviceInfo.bSupportsHardwareAEC)
-	{
-	}
+	{}
 
 	/** The name of the audio device */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Runtime Audio Importer")
@@ -449,7 +489,9 @@ struct FRuntimeAudioInputDeviceInfo
 	bool bSupportsHardwareAEC;
 };
 
-/** Audio header information */
+/**
+ * Audio header information.
+ */
 USTRUCT(BlueprintType, Category = "Runtime Audio Importer")
 struct FRuntimeAudioHeaderInfo
 {
@@ -461,13 +503,11 @@ struct FRuntimeAudioHeaderInfo
 		, SampleRate(0)
 		, PCMDataSize(0)
 		, AudioFormat(ERuntimeAudioFormat::Invalid)
-	{
-	}
+	{}
 
 	/**
-	 * Converts Audio Header Info to a readable format
-	 *
-	 * @return String representation of the Encoded Audio Struct
+	 * Converts Audio Header Info to a readable format.
+	 * @return String representation of the Encoded Audio Struct.
 	 */
 	FString ToString() const
 	{
@@ -498,6 +538,9 @@ struct FRuntimeAudioHeaderInfo
 
 // This might be useful for scope lock debugging
 #if WITH_DEBUG_SCOPE_LOCK
+/**
+ * Debug scope lock for audio importer.
+ */
 class FRAIScopeLock : public FScopeLock
 {
 public:

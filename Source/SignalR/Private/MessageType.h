@@ -26,6 +26,10 @@
 
 #include "CoreMinimal.h"
 
+/**
+ * Enumeration of SignalR message types.
+ * Defines the different types of messages that can be exchanged between client and server.
+ */
 enum class ESignalRMessageType : uint8
 {
 	Invocation = 1,

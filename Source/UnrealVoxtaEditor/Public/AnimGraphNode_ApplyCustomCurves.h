@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AnimNode_ApplyCustomCurves.h"
 #include "AnimGraphNode_Base.h"
+#include "AnimNode_ApplyCustomCurves.h"
 #include "AnimGraphNode_ApplyCustomCurves.generated.h"
 
 /**

@@ -15,7 +15,7 @@ class VoxtaLogger : public FOutputDevice
 {
 #pragma region public API
 public:
-	/** Unregister VoxtaLogger from GLog. I.e. cleanup */
+	/** Destructor. Unregisters VoxtaLogger from GLog. */
 	~VoxtaLogger();
 
 	/** Register VoxtaLogger with GLog, allowing the override to run on any logs printed to the console. */
@@ -24,7 +24,7 @@ public:
 
 #pragma region FOutputDevice overrides
 protected:
-	/** Custom output implementation, triggered for every signle message that is logged, while registered. */
+	/** Custom output implementation, triggered for every single message that is logged, while registered. */
 	virtual void Serialize(const TCHAR* Message, ELogVerbosity::Type Verbosity, const class FName& Category) override;
 #pragma endregion
 

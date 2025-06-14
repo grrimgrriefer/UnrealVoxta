@@ -1,62 +1,44 @@
-# An unofficial Voxta plugin for Unreal Engine
+# An Unreal Engine plugin for Voxta
 
-_Made in collaboration with [DZnnah](https://twitter.com/DZnnah)_  
+_By GrrimGrriefer, DZnnah and Barty._  
+_Development progress board: https://trello.com/b/Biv7Si4l/unrealvoxta_
 
-> [!CAUTION]
-> **This plugin is not affiliated, associated, endorsed by, or in any way officially connected to Voxta.ai**
+**⚠️ AI characters are not real, always use common sense! ⚠️**  
 
-> [!WARNING]  
-> * This plugin currently suppports Voxta **v1.0.0-beta.117**, other version may / may not work.
-> * This plugin currently only works in Unreal Engine 5.3
+> [!CAUTION]  
+> This plugin is not affiliated, associated, endorsed by, or in any way officially connected to Voxta.ai  
+>  
+> This plugin currently supports [Voxta](https://voxta.ai/) version **v1.0.0-beta.132** (API **2024-11**), other versions are unlikely to work.  
+> This plugin currently supports Unreal Engine **5.5**, other versions are unlikely to work (out of the box).  
+>  
+> **If you connect to VoxtaCloud services, their [Terms of Service](https://doc.voxta.ai/cloud/terms/) apply.**  
+> 
+> Please do not use this plugin to create anything illegal or malicious.
 
-### Third party code Licenses
-* SignalR client (MIT license): [LICENSE](./Source/SignalR/License.txt)  
-* RuntimeAudioImporter (MIT licensed): [LICENSE](./Source/VoxtaAudioUtility/Public/RuntimeAudioImporter/LICENSE.txt)  
+**Third party licenses:**  
+* SignalR client [MIT licensed](./Source/SignalR/License.txt)  
+* RuntimeAudioImporter [MIT licensed](./Source/VoxtaAudioUtility/Public/RuntimeAudioImporter/LICENSE.txt)  
 
-### Optional dependencies
-* OVR lipsync: [OVR lipsync for UE 5.3](https://github.com/grrimgrriefer/OVRLipSync/releases/tag/UE-5.3)
-* A2F Omniverse lipsync: [direct link](https://install.launcher.omniverse.nvidia.com/installers/omniverse-launcher-win.exe) or download via the portal [https://www.nvidia.com/en-us/omniverse/](https://www.nvidia.com/en-us/omniverse/)
+## Latest patch overview
 
-> [!TIP]
-> Internal logic based on the native Windows C++ implementation: [TalkToMeCPP](https://github.com/grrimgrriefer/TalkToMeCPP). You can use this if you want the C++ code without all the Unreal Engine dependencies.
+Quick 2min overview on the main changes in the most recent patch (**version 0.1.1**)  
+[![youtubeThumbnailPatch011 image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/youtubeThumbnailPatch011.PNG&resolveLfs=true&%24format=octetStream)](https://youtu.be/LINK_HERE "youtubeThumbnailPatch011 image")  
+https://youtu.be/LINK_HERE
 
-### Dev Progress
-* Trello board:
-https://trello.com/b/Biv7Si4l/unrealvoxta
+## Optional prerequisites
 
-# Voxta TOS
-_This plugin has no additional Terms of Service, however Voxta's official Terms of Service still apply._
+### Lipsync
+ℹ️ _If you do not plan on using Lipsync, you can ignore this section._  
 
-> [!IMPORTANT]  
-> * Voxta has been developed as an experiment, and no guarantees whatsoever are offered.
-> * The content you generate with this software must be legal in the United States and your country of residence.
-> * The content you generate with this software must be legal in the United States and your country of residence.
-> * The authors have no access to any of the data generated within this tool. However, keep in mind that remote services such as OpenAI may collect your data. Make sure to read their terms of services before using their software.
-> * Furthermore, those use cases are prohibited:
->   * Depictions of minors are prohibited.
->   * Simulations of forced sexual interactions with non consenting characters are prohibited.
->   * Torture and psychological violence.
->   * Impersonation of real people.
->   * Using the software to deceive someone, it is mandatory to inform users of the limitations and restrictions of the AI.
-> * Additionally, if using Voxta Cloud, there are additional terms:
->   * You will not abuse the service and will not use it to harm others.
->   * You will not use the service to generate content that is illegal or harmful.
->   * You must immediately disclose any vulnerability to the Voxta team on Discord.
->   * You will not take action that can harm the service, such as using it to generate a large amount of content in a short period of time.
+* [OVR lipsync for UE 5.5](https://github.com/grrimgrriefer/OVRLipSync/releases/tag/UE-5.5)  
+Unzip this modified OVR lipsync in your plugins folder.
+* [A2F Omniverse lipsync](https://www.nvidia.com/en-us/omniverse/) : [installer DIRECT LINK](https://install.launcher.omniverse.nvidia.com/installers/omniverse-launcher-win.exe)  
+Experimental support, see [installation details](#installing-audio2face-lipsync) below.
 
-> [!NOTE]  
-> * I have no power to enforce these rules, but they might revoke your access to future releases / cloud utility if you break them. 
-> * AI characters are not real. Remember that they can say make up things that can be hurtful, and simply false. Please seek help if you feel alone, or if you develop an unhealthy relationship with the AI.
-> * In terms of the plugin itself, anything that doesn't break the [MIT license](./LICENSE) is fair game, have fun with it.
+### Microphone input
+ℹ️ _If you do not plan on using Voice input, you can ignore this section._  
 
-# Video guide
-Full guide on how to install, how to use the templates, & info on how to make your own custom setup:  
-[![YouTube UnrealVoxta tutorial video](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/YoutubeThumbnailGithub.PNG&resolveLfs=true&%24format=octetStream)](https://youtu.be/kWv_00FuTvg "YouTube UnrealVoxta tutorial video")  
-https://youtu.be/kWv_00FuTvg
-
-# Enable Voice Input
-This plugin uses Unreal's fancy VoiceInput system which makes the system far more reliable. However this has to be turned on for projects as it's disabled by default. You can keep it disabled if you only want to use text input, but if you want audio (microphone) input too,  
-this is how you enable it:
+Audio input for this plugin relies on Unreal's VoiceInput system, which has to be turned on.  
 1. Locate the Config folder in your project
 2. Locate the DefaultEngine.ini
 3. Add this below snippet to it.
@@ -64,115 +46,116 @@ this is how you enable it:
 [Voice]
 bEnabled=true
 ```
-![EnableVoiceInput image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/EnableVoiceInput.PNG&resolveLfs=true&%24format=octetStream "Manually enable VoiceInput for your project.")  
+![EnableVoiceInput image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/EnableVoiceInput.PNG&resolveLfs=true&%24format=octetStream "EnableVoiceInput image.")  
 
-# Template setup
-In the content folder of the plugin you will find a setup of default blueprints. This should allow you to have a fully working setup with most features enabled in only a handful of minutes. For a step-by-step guide, I refer you to the video mentioned above.  
-![TemplateBlueprints image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/TemplateBlueprints.PNG&resolveLfs=true&%24format=octetStream "Template blueprints for example setup.")  
+## Tests
+[Basic test coverage](./Tests/VoxtaClientTests.cpp) (85 tests atm) of the main VoxtaClient public C++ API. Additional test coverage for the blueprint API and for audio input & output are scheduled for upcoming releases.  
 
-# Blueprint nodes example usage
-_Note, all of these snippets are from the above Template setup blueprints, feel free to explore & modify them how you see fit. For more in-depth explanation, I advice to watch the first part of the youtube tutorial._
+**Note:**  
+All tests are integration tests and require a valid instance of VoxtaServer to be running (configured on localhost but that can be easily modified).  
 
-## Voxta category
-Most of the utility is accessed through the VoxtaClient subsystem, which can be globally accessed via any blueprint as following:  
-![GetClient image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/GetClient.PNG&resolveLfs=true&%24format=octetStream "Retrieve the VoxtaClient subsystem.")  
+⚠️⚠️ **Be mindful running tests when using VoxtaCloud services, especially cloud TTS audio. It is highly adviced to only execute relevant tests during development to avoid draining cloud credits.** ⚠️⚠️
 
-Everything related to Voxta is inside the 'Voxta' category. (also applies for other components and their utilities).  
-Due to obvious reason the Events are still in the Events category but these should all be fairly obvious.  
-![GetVoxtaFunctions image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/GetVoxtaFunctions.PNG&resolveLfs=true&%24format=octetStream "Bind the registration of the playback to the event of the characters being registered.")  
+![Tests image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/Tests.PNG&resolveLfs=true&%24format=octetStream "Tests image.")
 
-Every function and component has been extensively documented, so if something is unclear, just hover the mouse over it and the tooltip should explain the usage. If it's still unclear, just ping me, as I might ofc have missed something:  
-![Documentation1 image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/Documentation1.PNG&resolveLfs=true&%24format=octetStream  "Example of node documentation.")  
-![Documentation2 image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/Documentation2.PNG&resolveLfs=true&%24format=octetStream "Example of parameter documentation.")  
+## Getting started [C++]
 
-## Event binding pattern
-In the template blueprints, Voxta Events are always bound to local events linked to functions, this helps make the eventgraph less cluttered, you'll see this pattern of hooking into events a lot:  
-![BindingToEvents image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/BindingToEvents.PNG&resolveLfs=true&%24format=octetStream "Bind the registration of the playback to the event of the characters being registered.")  
+### Doxygen
 
-## Establishing the connection
-To start the connection, you will need to provide the host address (in ipv4 format) and port
-![StartConnection image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/StartConnection.PNG&resolveLfs=true&%24format=octetStream "Start connection via UI")  
-_Due to custom nature of this data, it is highly adviced to retrieve these from the user through UI in some way (such as in the example above_
+All header files are fully documented and easily navigatable via the [online doxygen](https://grrimgrriefer.github.io/UnrealVoxtaDocs/hierarchy.html)  
+For a rough overview of what is included:
 
-## Character registration
-Once the connection is established, the VoxtaClient will broadcast the characters that currently exist. This data can be used to populate a list of clickable buttons, which then can be presented to the user to give them a choice on which character they want to have an experience with.
-![ListOfCharacters image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/ListOfCharacters.PNG&resolveLfs=true&%24format=octetStream "Loop over the list of characters and create clickable buttons for every characters.")
+#### Sequence diagram for each module, displaying how its internal classes interact with each other.
 
-## Starting a conversation
-You can start a conversation using the ID of any character that is available. (IDs are broadcasted as soon as the voxtaclient connects, and they cal also be fetched afterwards via the VotaClient api)  
-In this example, a UI widget button is injected with the characterID it is mapped to, and this allows it to start the conversation when being clicked.  
-![StartConversation image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/StartConversation.PNG&resolveLfs=true&%24format=octetStream "Star conversation with a character.")
+![docsSequenceDiagrams image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/docsSequenceDiagrams.PNG&resolveLfs=true&%24format=octetStream "docsSequenceDiagrams image.")
 
-## Register the audio-playback for an AI Character
-Audio is handled with a 'VoxtaAudioPlayback' actor component. This component will automatically download the audio, generate the lipsync data, and handle the playback, for any audio that is generated for the character with a matching ID.  
-![VoxtaAudioPlaybackComponent image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/VoxtaAudioPlaybackComponent.PNG&resolveLfs=true&%24format=octetStream "Add the VoxtaAudioPlayback to an Actor")
+#### High level bullet-point list of each modules purpose, features and dependencies.
 
-It is important that once the conversation starts, you initialize the component with the ID of the character that you want it to represent. (i.e. especially for situations with multiple characters)  
-_The example below uses index == 0, but you could also fetch the name etc from the id, to map it to a specific model etc. Depending on what kind of application you're building._  
-![RegisterCharacterAsPartOfConversation image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/RegisterCharacterAsPartOfConversation.PNG&resolveLfs=true&%24format=octetStream "Register this Actor with VoxtaAudioPlayback to Voxta")
+![docsModuleExplanation image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/docsModuleExplanation.PNG&resolveLfs=true&%24format=octetStream "docsModuleExplanation image.")
 
-Actors with this component automatically register themselves with the VoxtaClient subsystem. Right after they 'Initialize' themselves, the VoxtaClient will broadcast the notification that the character of that ID has been claimed by that audioPlaybackHandler.  
-In the example below the UI stores the reference to it, so it can display an icon while the character is speaking.  
-![RetrieveAudioPlaybackFromVoxtaClient image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/RetrieveAudioPlaybackFromVoxtaClient.PNG&resolveLfs=true&%24format=octetStream "Store the reference of the VoxtaAudioPlayback component after it has registered itself.")
+#### Boilerplate snippets that can be used to start writing your own custom code.
 
-## Sending text input from the user
-The plugin supports sending user input via the microphone and via text. Above is an example of how such input is sent through via text.
-![UserInput image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/UserInput.PNG&resolveLfs=true&%24format=octetStream "Send user input to Voxta.")
+![docsBoilerplateCodeSnippets image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/docsBoilerplateCodeSnippets.PNG&resolveLfs=true&%24format=octetStream "docsBoilerplateCodeSnippets image.")
 
-## Microphone audio input
-Everything regarding the Microphone audio input is handled throught the Voice Input Handler, which is available via the VoxtaClient API.  
+#### Per-class/struct pages, including inheritance diagrams, summaries for each public function & property.
 
-First the socket has to be initialized with the VoxtaServer. The default settings are ideal for what the Server wants, but if the user's hardware does not support these value, you might have to expose them via some kind of settings menu.  
-![MicrophoneSocket image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/MicrophoneSocket.PNG&resolveLfs=true&%24format=octetStream "Send microphone user input to Voxta.")  
+![docsInheritanceDiagrams image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/docsInheritanceDiagrams.PNG&resolveLfs=true&%24format=octetStream "docsInheritanceDiagrams image.")
 
-After the socket is initialized you can turn on the streaming while the server is 'WaitingForUserResponse' and then disable it again once the audio playback starts. You can also leave it running all the time, but this method uses less network bandwith of course.
-![StreamingMicInput image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/StreamingMicInput.PNG&resolveLfs=true&%24format=octetStream "Streaming microphone audio data to VoxtaServer.")  
+#### Easily navigatable overview of all classes and structs included in the plugin
 
-You can hook into the Voice Input Handler to get the transcribed speech while the user is still speaking. This can then be shown in the UI, etc...
-![StreamingMicInput image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/OngoingTranscription.PNG&resolveLfs=true&%24format=octetStream "Display the speech as it's being transcribed while the user is speaking.")
+![docsClassHierarchy image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/docsClassHierarchy.PNG&resolveLfs=true&%24format=octetStream "docsClassHierarchy image.")
 
-The Voice Input handler also provides general utility information, such as 'input decibels', 'current state', 'microphone device label', and more.
-![VoiceInputExtraInfo image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/VoiceInputExtraInfo.PNG&resolveLfs=true&%24format=octetStream "Get info from the VoiceInputHandler.")  
+### Markdown links
 
-## Character responses
-When the VoxtaClient broadcasts that a message has been added for a character, the audio will play automatically* _(unless 'Custom lipsync is enabled')_  
+The high-level overviews are located in markdowns as part of the repository. These can be viewed without going to the doxygen link if needed.  
 
-Alternatively, you can add the messages to a UI chat history log. An example is shown below:  
-![AddMessageToUI image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/AddMessageToUI.PNG&resolveLfs=true&%24format=octetStream "Add a message from a character to the chat history on the screen.")
-This will spawn a custom 'text message widget' and initialize it with the data after it is added to the 'message scroll box' on the UI.
+Links are below:
 
-Note: It is important to support the removal of messages, as the server can remove them. This ensures your UI remains in sync. Example on how to remove them from a scroll box:  
-![RemoveMessageFromUI image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/RemoveMessageFromUI.PNG&resolveLfs=true&%24format=octetStream "Remove a message from a character from the chat history on the screen.")
+* [UnrealVoxta](./Source/UnrealVoxta/UnrealVoxta.md): Main api to interact with the plugin.
+* [VoxtaData](./Source/VoxtaData/VoxtaData.md): Contains data structures.  
+(native c++ structs, classes, enums; along with UObject data wrappers)
+* [VoxtaAudioUtility](./Source/VoxtaAudioUtility/VoxtaAudioUtility.md): Logic specific to audio input & output.
+* [LogUtility](./Source/LogUtility/LogUtility.md): Logging-macro overrides to exclude sensitive info from logs & crashreports.
+* [SignalR](./Source/SignalR/SignalR.md): Modified 3rd party library for websocket communication via the SignalR protocol.
+* [UnrealVoxtaEditor](./Source/UnrealVoxtaEditor/UnrealVoxtaEditor.md): Custom animation node required for in-editor preview of non-streaming A2F.
+* [VoxtaUtility_OVR](./Source/VoxtaUtility_OVR/VoxtaUtility_OVR.md): Custom wrapper to allow automatic seamless connection to the UnrealVoxta api.
+* [VoxtaUtility_A2F](./Source/VoxtaUtility_A2F/VoxtaUtility_A2F.md): Custom logic to upload audio to local A2F, then download and parse the blendshapes and apply them at runtime.
 
-## Lipsync type
-Both OVR and A2F are supported out of the box (A2F is still experimental). You can select which one to use in the inspector of the VoxtaAudioPlayback component.
-![LipSyncSelection image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/LipSyncSelection.PNG&resolveLfs=true&%24format=octetStream "Select a type of lipsync you want to use.")
+## Getting started [Blueprints]
 
-### Lipsync animator
-For MetaHumans, there is a template animator setup available that supports both Runtime OVR and A2F:  
-![MetahumanLipsyncTemplateSetup image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/MetahumanLipsyncTemplateSetup.PNG&resolveLfs=true&%24format=octetStream "Use the template animation blueprint for metahumans.")
+Due to the alpha nature of the plugin, only C++ documentation is provide. However, each blueprint node maps 1:1 to a UFUNCTION and will have the same discription visible when hovered.  
 
-This setup fetches the LipSyncType from the VoxtaAudioPlayback component and caches it, allowing the animator blueprint to access it.
-![GetLipsyncTypeFromParent image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/GetLipsyncTypeFromParent.PNG&resolveLfs=true&%24format=octetStream "Get the lipsynctype from the VoxtaAudioPLayback component")
+![summaryOnHover image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/summaryOnHover.PNG&resolveLfs=true&%24format=octetStream "summaryOnHover image.") 
 
-### 1. OVR lipsync
-Keep in mind that for OVR lipsync, you will need to add the required plugin:  
-**OVR lipsync: [OVR lipsync for UE 5.3](https://github.com/grrimgrriefer/OVRLipSync/releases/tag/UE-5.3)**  
-![OVRLipSyncPlugin image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/OVRLipSyncPlugin.PNG&resolveLfs=true&%24format=octetStream "Add the OVR plugin to your project")
+A full in-depth breakdown on each node will be made in video-format once the plugin reaches beta (v0.2)  
 
-The component can be added by default or at runtime like this:  
-![OVRAddComponent image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/OVRAddComponent.PNG&resolveLfs=true&%24format=octetStream "Add the OVR lipsync component")
+For alpha usage, it is adviced to use the new Modular Template UI as reference.
 
-Every frame, the current visemes are fetched and applied in the animgraph
-![FetchOvrVisemes image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/FetchOvrVisemes.PNG&resolveLfs=true&%24format=octetStream "Fetch the visemes for the current frame")
+## Template screens
 
-Note: Extra smoothing is applied to prevent visible snapping, especially when starting and stopping speech.  
-![OVRExtraSmoothing image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/OVRExtraSmoothing.PNG&resolveLfs=true&%24format=octetStream "Apply extra smoothing.")
+**Note**: All source files for the template are included (.psd) to allow for easy reskinning. Do keep in mind that for the Beta all UI will be reskinned (again) by us too. 
+![Template_filesNfolders image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/Template_filesNfolders.PNG&resolveLfs=true&%24format=octetStream "Template_filesNfolders image.")  
 
-Inside of the AnimGraph we then blend the Visemes according to their weight and apply them for the current frame.  
-![OVRvisemeBlending image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/OVRvisemeBlending.PNG&resolveLfs=true&%24format=octetStream "Apply extra smoothing.")
+### Activate the Template gamemode
 
-### 2. Audio2Face lipsync
+Either select the **BP_ExampleGameMode**, or manually select the example hud in your own GameMode if you have one already.  
+
+![Template_Gamemode image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/Template_Gamemode.PNG&resolveLfs=true&%24format=octetStream "Template_Gamemode image.")  
+
+### Template status icons  
+These icons are visible in the top right of the template HUD, and display Voice input, Audio output, VoxtaServer status, connection, and settings.  
+In general:
+- Grey = Inactive
+- Cyan = Idle
+- Green = Active
+- Orange = Busy (server only)
+
+![Template_StatusIcons image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/Template_StatusIcons.PNG&resolveLfs=true&%24format=octetStream "Template_StatusIcons image.")  
+
+### Template settings menu
+This menu contains all global meta-configuration elements. Host IPv4, ServerAPI version, configurable microphone gain & noisegate, LogCensoring, global audio (2d)...  
+![Template_Settings image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/Template_Settings.PNG&resolveLfs=true&%24format=octetStream "Template_Settings image.")  
+
+After connection:  
+![Template_Connected image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/Template_Connected.PNG&resolveLfs=true&%24format=octetStream "Template_Connected image.")  
+
+### Template start chat menu  
+Screen with a dropdown to select the character, and an option to change the chat context. A button is available to edit the character in the system-browser.  
+**Note:** Thumbnails will be resized if too large, but will preserve their aspect ratio.
+![Template_StartChat image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/Template_StartChat.PNG&resolveLfs=true&%24format=octetStream "Template_StartChat image.")  
+
+### Template chat handle
+Screen displaying the current chat, minimal UI to avoid blocking the rest of the screen.  
+![Template_ChatWindow image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/Template_ChatWindow.PNG&resolveLfs=true&%24format=octetStream "Template_ChatWindow image.")  
+
+### Template chat settings screen
+Can be triggered with the cogwheel, shows the current chat and context can be modified. Also displays VoxtaServer services status.  
+![Template_ChatSettings image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/Template_ChatSettings.PNG&resolveLfs=true&%24format=octetStream "Template_ChatSettings image.")  
+
+## Installing Audio2Face lipsync
+
+⚠️⚠️ **Be mindful that Audio2Face is experimental and will receive a full overhaul before going to beta. Do NOT build anything you need to support medium/long term with this.** ⚠️⚠️
+
 Keep in mind that for A2F lipsync, you will need to add the required plugin:  
 A2F Omniverse lipsync: [direct link](https://install.launcher.omniverse.nvidia.com/installers/omniverse-launcher-win.exe) or download via the portal [https://www.nvidia.com/en-us/omniverse/](https://www.nvidia.com/en-us/omniverse/)  
 ![A2FOmniverseDownload image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/A2FOmniverseDownload.PNG&resolveLfs=true&%24format=octetStream "Download the Omniverse application")

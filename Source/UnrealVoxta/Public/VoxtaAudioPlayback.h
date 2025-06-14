@@ -11,13 +11,16 @@ class MessageChunkAudioContainer;
 class UActorComponent;
 class UAudio2FacePlaybackHandler;
 class UVoxtaClient;
+class USoundWaveProcedural;
 struct FBaseCharData;
 struct FChatMessage;
 
 /**
  * UVoxtaAudioPlayback
- * Public-facing component, can be placed on an Actor to playback audio for a specific AI Character.
- * Internally handles downloading the audio from the VoxtaServer, importing & parsing it to generating lipsync data.
+ * Component that handles audio playback and lipsync for AI character responses.
+ * Can be placed on an Actor to provide character-specific audio playback with optional lipsync.
+ * Supports various lipsync types including OVRLipSync, Audio2Face, and custom implementations.
+ * Internally handles downloading audio from VoxtaServer, importing & parsing it to generate lipsync data.
  * Also handles the automatic playback unless 'custom lipsync' is enabled.
  */
 UCLASS(HideCategories = (Mobility, Rendering, LOD), ClassGroup = Voxta, meta = (BlueprintSpawnableComponent))
@@ -27,11 +30,14 @@ class UNREALVOXTA_API UVoxtaAudioPlayback : public UAudioComponent, public IA2FW
 
 #pragma region delegate declarations
 public:
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaMessageAudioPlaybackCompleted, const FString&, messageId);
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FVoxtaMessageAudioChunkReadyForCustomPlayback, const TArray<uint8>&, rawBytes, const USoundWaveProcedural*, processedSoundWave, const FGuid&, audioChunkGuid);
+	/** Delegate fired when message audio playback is completed. */
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaMessageAudioPlaybackCompleted, const FGuid&, messageId);
+	/** Delegate fired when an audio chunk is ready for custom playback. */
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FVoxtaMessageAudioChunkReadyForCustomPlayback, const TArray<uint8>&, rawBytes, const USoundWaveProcedural*, processedSoundWave, FGuid, audioChunkGuid);
 
-	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaMessageAudioPlaybackCompletedNative, const FString&);
-	DECLARE_MULTICAST_DELEGATE_ThreeParams(FVoxtaMessageAudioChunkReadyForCustomPlaybackNative, const TArray<uint8>&, const USoundWaveProcedural*, const FGuid&);
+	/** Native C++ delegates for the above events. */
+	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaMessageAudioPlaybackCompletedNative, const FGuid&);
+	DECLARE_MULTICAST_DELEGATE_ThreeParams(FVoxtaMessageAudioChunkReadyForCustomPlaybackNative, const TArray<uint8>&, const USoundWaveProcedural*, FGuid);
 #pragma endregion
 
 #pragma region events
@@ -39,6 +45,7 @@ public:
 	/** Event fired when the UAudioComponent reports that the audio has finished playing. */
 	UPROPERTY(BlueprintAssignable, Category = "Voxta", meta = (IsBindableEvent = "True"))
 	FVoxtaMessageAudioPlaybackCompleted VoxtaMessageAudioPlaybackFinishedEvent;
+	/** Native C++ version of VoxtaMessageAudioPlaybackFinishedEvent */
 	FVoxtaMessageAudioPlaybackCompletedNative VoxtaMessageAudioPlaybackFinishedEventNative;
 
 	/**
@@ -52,6 +59,8 @@ public:
 	 */
 	UPROPERTY(BlueprintAssignable, Category = "Voxta", meta = (IsBindableEvent = "True"))
 	FVoxtaMessageAudioChunkReadyForCustomPlayback VoxtaMessageAudioChunkReadyForCustomPlaybackEvent;
+
+	/** Native C++ version of VoxtaMessageAudioChunkReadyForCustomPlaybackEvent */
 	FVoxtaMessageAudioChunkReadyForCustomPlaybackNative VoxtaMessageAudioChunkReadyForCustomPlaybackEventNative;
 #pragma endregion
 
@@ -63,7 +72,16 @@ public:
 	 * @param characterId The ID of the character for which this component will be playing the audio.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
-	void Initialize(const FString& characterId);
+	void Initialize(const FGuid& characterId);
+
+	/**
+	 * Configures the component so it only will playback messages for the specific character.
+	 * C++ overload as blueprints can change the private field of lipsyncType but C++ can't.
+	 *
+	 * @param characterId The ID of the character for which this component will be playing the audio.
+	 * @param lipSyncType The type of lipsync this character should have.
+	 */
+	void Initialize(const FGuid& characterId, LipSyncType lipSyncType);
 
 	/**
 	 * Notify that the Audio is done with playback. Due to the unpredictable nature of the blueprint, we rely on
@@ -72,7 +90,7 @@ public:
 	 * @param guid The guid that was passed in the VoxtaMessageAudioChunkReadyForCustomPlaybackEvent.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
-	void MarkCustomPlaybackComplete(const FGuid& guid);
+	void MarkAudioChunkCustomPlaybackComplete(const FGuid& guid);
 
 	/**
 	 * The main entrypoint, hooked into the VoxtaClient and will trigger the download & playback of the audio.
@@ -80,7 +98,7 @@ public:
 	 * @param sender The characterID, will skip any messages not assigned to this character.
 	 * @param message The message of which the URLs will be used to fetch the wav audio data.
 	 */
-	void PlaybackMessage(const FBaseCharData& sender, const FChatMessage& message);
+	virtual void PlaybackMessage(const FBaseCharData& sender, const FChatMessage& message);
 
 	/** @return The LipSyncType that this playback handler will use. */
 	LipSyncType GetLipSyncType() const;
@@ -126,18 +144,19 @@ private:
 #pragma endregion
 
 #pragma region data
-private:
+protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Lipsync Type"))
-	LipSyncType m_lipSyncType;
+	LipSyncType m_lipSyncType = LipSyncType::None;
+	FGuid m_characterId;
+	UVoxtaClient* m_clientReference;
 
+private:
 	// TODO: use interface so we don't have to cast to cast to UAudio2FacePlaybackHandler or
 	// UOVRLipSyncPlaybackActorComponent everytime
 	UPROPERTY()
 	UObject* m_lipSyncHandler;
 
-	UVoxtaClient* m_clientReference;
-	FString m_characterId;
-	FString m_currentlyPlayingMessageId;
+	FGuid m_currentlyPlayingMessageId;
 	TArray<TSharedPtr<MessageChunkAudioContainer>> m_orderedAudio;
 
 	FDelegateHandle m_playbackFinishedHandle;
@@ -149,6 +168,9 @@ private:
 #pragma endregion
 
 #pragma region private API
+protected:
+	void InitializeInternal(bool autoRegisterHandler = true);
+
 private:
 	/** Begin playing the audioclip on the currently marked index, if it is available */
 	void PlayCurrentAudioChunkIfAvailable();

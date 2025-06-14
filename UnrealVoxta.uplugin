@@ -1,7 +1,7 @@
 {
   "FileVersion": 3,
   "Version": 1,
-  "VersionName": "1.0",
+  "VersionName": "0.1.1",
   "FriendlyName": "UnrealVoxta",
   "Description": "Unreal Engine client for Voxta [unofficial]",
   "Category": "Other",
@@ -10,6 +10,7 @@
   "DocsURL": "",
   "MarketplaceURL": "",
   "SupportURL": "",
+  "EngineVersion": "5.5.0",
   "CanContainContent": true,
   "IsBetaVersion": true,
   "IsExperimentalVersion": false,
@@ -19,12 +20,12 @@
       "Name": "UnrealVoxta",
       "Type": "Runtime",
       "LoadingPhase": "Default"
-    },	
-	{
-		"Name": "UnrealVoxtaEditor",
-		"Type": "UncookedOnly",
-		"LoadingPhase": "PreDefault"
-	}
+    },
+    {
+      "Name": "UnrealVoxtaEditor",
+      "Type": "UncookedOnly",
+      "LoadingPhase": "PreDefault"
+    }
   ],
   "Plugins": [
     {

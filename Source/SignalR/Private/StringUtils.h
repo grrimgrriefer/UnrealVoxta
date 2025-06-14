@@ -1,4 +1,4 @@
-﻿/*
+/*
  * MIT License
  *
  * Copyright (c) 2020-2022 Frozen Storm Interactive, Yoann Potinet
@@ -26,7 +26,17 @@
 
 #include "CoreMinimal.h"
 
+/**
+ * Collection of string manipulation utilities used by the SignalR client implementation.
+ */
 namespace StringUtils
 {
+    /** 
+     * Determines if a string is null/empty or contains only whitespace characters 
+     *
+     * @param InStr The string to check.
+     *
+     * @return True if the string is empty or whitespace, false otherwise.
+     */
     bool IsEmptyOrWhitespace(const FString& InStr);
 }

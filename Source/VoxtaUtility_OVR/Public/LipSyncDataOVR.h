@@ -9,9 +9,9 @@
 class UOVRLipSyncFrameSequence;
 
 /**
- * ULipSyncDataOVR.
- * Wrapper for OVR-lipsync specific data. This lives in its own module, which is excluded from the others if
- * OVR plugin is not installed in the project. (i.e. if the dev doesn't want lipsync for some reason)
+ * ULipSyncDataOVR
+ * Contains all the data required for playback of OVR lipsync generation.
+ * Used to keep OVR lipsync logic modular and separated from other lipsync types.
  */
 UCLASS(Category = "Voxta")
 class VOXTAUTILITY_OVR_API ULipSyncDataOVR : public UObject, public ILipSyncBaseData
@@ -27,30 +27,38 @@ public:
 	virtual void ReleaseData() override
 	{
 		m_ovrLipSyncFrameSequence = nullptr;
-		this->RemoveFromRoot();
+		RemoveFromRoot();
 	}
 #pragma endregion
 
 #pragma region public API
 public:
-	/** Create an instance of the LipSyncData holder for OVRLipSync. */
-	ULipSyncDataOVR() : ILipSyncBaseData(LipSyncType::OVRLipSync)
+	/**
+	 * Constructor for the ULipSyncDataOVR lipsync data holder.
+	 * Adds this object to the root set to prevent garbage collection during playback.
+	 */
+	ULipSyncDataOVR() : ILipSyncBaseData()
 	{
+		AddToRoot();
 	}
 
 	/**
-	 * Register the generated UOVRLipSyncFrameSequence as part of this instance.
-	 * This will transfer ownership of the provided pointer to this object.
+	 * Store the generated UOVRLipSyncFrameSequence in this instance.
+	 * The sequence will remain valid as long as this ULipSyncDataOVR object exists.
 	 *
 	 * @param ovrLipSyncFrameSequence The sequence of OVR curves that will be provided to the OVR audio playback
 	 * component when playing the matching audio.
 	 */
 	void SetFrameSequence(UOVRLipSyncFrameSequence* ovrLipSyncFrameSequence)
 	{
-		m_ovrLipSyncFrameSequence = MoveTemp(ovrLipSyncFrameSequence);
+		m_ovrLipSyncFrameSequence = ovrLipSyncFrameSequence;
 	}
 
-	/** @return A raw pointer to the OVR curves that were generated and assigned to this data instance */
+	/**
+	 * Get the OVR lipsync frame sequence data.
+	 * 
+	 * @return Pointer to the OVR lipsync frame sequence.
+	 */
 	UOVRLipSyncFrameSequence* GetOvrLipSyncData() const
 	{
 		return m_ovrLipSyncFrameSequence;
@@ -60,6 +68,6 @@ public:
 #pragma region data
 private:
 	UPROPERTY()
-	UOVRLipSyncFrameSequence* m_ovrLipSyncFrameSequence;
+	UOVRLipSyncFrameSequence* m_ovrLipSyncFrameSequence = nullptr;
 #pragma endregion
 };

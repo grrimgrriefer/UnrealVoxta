@@ -1,48 +1,55 @@
 // Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
 
+using System.IO;
 using UnrealBuildTool;
 
+/// <summary>
+/// Specifies all the requirements to compile the main API for all Voxta-related functionality.
+/// This module handles state-tracking of the internal VoxtaClient, and request & response handing.
+/// </summary>
 public class UnrealVoxta : ModuleRules
 {
+	/// <summary>
+	/// Constructor.
+	/// </summary>
 	public UnrealVoxta(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 		bUseRTTI = true;
 
-		PublicDependencyModuleNames.AddRange(
-			new string[]
-			{
-				"Core", "VoxtaAudioUtility", "VoxtaData", "SignalR", "HTTP", "Voice", "VoxtaUtility_A2F"
-			}
-			);
+		PrivateIncludePaths.AddRange(new [] {
+			Path.Combine(ModuleDirectory, "Public", "UtilityNodes"),
+			Path.Combine(ModuleDirectory, "Private", "Internals")
+		});
 
-		PrivateDependencyModuleNames.AddRange(
-			new string[]
-			{
-				"CoreUObject", "Engine", "Slate", "SlateCore", "Json", "JsonUtilities", "Projects"
-			}
-			);
+		PublicDependencyModuleNames.AddRange(new [] { "Core", "CoreUObject", "VoxtaAudioUtility" } );
 
-		// There has to be a cleaner way to do this lmao
-		bool projectHasOvrLipSync = false;
-		try
-		{
-			projectHasOvrLipSync = !string.IsNullOrWhiteSpace(GetModuleDirectory("OVRLipSync"));
-		}
-		catch (BuildException)
-		{
-			projectHasOvrLipSync = false;
-		}
+		PrivateDependencyModuleNames.AddRange(new [] { "Engine", "LogUtility", "VoxtaData", "VoxtaUtility_A2F", "SignalR", "HTTP", "Voice", "Json", "Projects", "Networking", "ImageWrapper", "RenderCore" } );
 
-		if (projectHasOvrLipSync)
+		if (UnrealVoxta.HasModule(this, "OVRLipSync"))
 		{
-			PrivateDependencyModuleNames.Add("VoxtaUtility_OVR");
 			PublicDependencyModuleNames.Add("OVRLipSync");
+			PrivateDependencyModuleNames.Add("VoxtaUtility_OVR");
 			PublicDefinitions.Add("WITH_OVRLIPSYNC=1");
 		}
 		else
 		{
 			PublicDefinitions.Add("WITH_OVRLIPSYNC=0");
+		}
+	}
+
+	/// <summary>
+	/// Utility function to compile with/without OVR integration, depending on whether the OVR plugin is present & active.
+	/// </summary>
+	public static bool HasModule(ModuleRules rulesRef, string moduleName)
+	{
+		try
+		{
+			return !string.IsNullOrWhiteSpace(rulesRef.GetModuleDirectory(moduleName));
+		}
+		catch (BuildException)
+		{
+			return false;
 		}
 	}
 }

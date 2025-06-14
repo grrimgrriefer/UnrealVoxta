@@ -13,23 +13,22 @@ struct ServerResponseChatUpdate : ServerResponseBase
 #pragma region public API
 public:
 	/** Create a deserialized version of the VoxtaServer response represents the 'ChatUpdate' data. */
-	explicit ServerResponseChatUpdate(FStringView messageId,
-			FStringView senderId,
+	explicit ServerResponseChatUpdate(FGuid messageId,
+			FGuid senderId,
 			FStringView text,
-			FStringView sessionId) : ServerResponseBase(ServerResponseType::ChatUpdate),
+			FGuid sessionId) : ServerResponseBase(ServerResponseType::ChatUpdate),
 		MESSAGE_ID(messageId),
 		SENDER_ID(senderId),
 		TEXT_CONTENT(text),
 		SESSION_ID(sessionId)
-	{
-	}
+	{}
 #pragma endregion
 
 #pragma region data
 public:
-	const FString MESSAGE_ID;
-	const FString SENDER_ID;
+	const FGuid MESSAGE_ID;
+	const FGuid SENDER_ID;
 	const FString TEXT_CONTENT;
-	const FString SESSION_ID;
+	const FGuid SESSION_ID;
 #pragma endregion
 };

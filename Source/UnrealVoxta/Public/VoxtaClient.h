@@ -1,12 +1,11 @@
 // Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
 
 #pragma once
-
 #include "CoreMinimal.h"
-#include "Internals/VoxtaLogger.h"
-#include "Internals/VoxtaApiRequestHandler.h"
-#include "Internals/VoxtaApiResponseHandler.h"
+#include "Subsystems/GameInstanceSubsystem.h"
 #include "VoxtaData/Public/VoxtaClientState.h"
+#include "VoxtaDefines.h"
+#include "UserCharData.h"
 #include "VoxtaClient.generated.h"
 
 class FSignalRValue;
@@ -15,22 +14,35 @@ class FSignalRInvokeResult;
 class UVoxtaAudioInput;
 class Audio2FaceRESTHandler;
 class UVoxtaAudioPlayback;
+class AVoxtaGlobalAudioPlaybackHolder;
+class VoxtaLogger;
+class VoxtaApiRequestHandler;
+class VoxtaApiResponseHandler;
+class TexturesCacheHandler;
+struct ServerResponseBase;
+struct ServerResponseError;
 struct ServerResponseChatMessageBase;
 struct ServerResponseWelcome;
 struct ServerResponseCharacterList;
-struct ServerResponseCharacterLoaded;
 struct ServerResponseChatStarted;
 struct ServerResponseChatUpdate;
 struct ServerResponseSpeechTranscription;
+struct ServerResponseContextUpdated;
+struct ServerResponseChatClosed;
+struct ServerResponseChatSessionError;
 struct FAiCharData;
-struct FUserCharData;
 struct FBaseCharData;
 struct FChatSession;
+struct FChatMessage;
+struct FVoxtaVersionData;
 
 /**
  * UVoxtaClient
- * Main public-facing class, contains the stateful client for all Voxta utility.
- * Provides a simple singleton-like API for any external UI / Blueprints / other modules.
+ * Main public-facing subsystem for Voxta integration. Manages the stateful connection to the VoxtaServer,
+ * handles chat session lifecycle, audio input/output, character and message management, and event broadcasting.
+ * Provides a singleton-like API for Blueprints and C++ to interact with Voxta features.
+ *
+ * Use GetWorld()->GetGameInstance()->GetSubsystem<UVoxtaClient>() to access the instance.
  */
 UCLASS(DisplayName = "Voxta Client", Category = "Voxta")
 class UNREALVOXTA_API UVoxtaClient : public UGameInstanceSubsystem
@@ -39,22 +51,32 @@ class UNREALVOXTA_API UVoxtaClient : public UGameInstanceSubsystem
 
 #pragma region delegate declarations
 public:
+	/** Delegate fired when the VoxtaClient state changes. */
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientStateChanged, VoxtaClientState, newState);
+	/** Delegate fired when a character is registered. */
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientCharacterRegistered, const FAiCharData&, charData);
+	/** Delegate fired when a chat message is added. */
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FVoxtaClientCharMessageAdded, const FBaseCharData&, sender, const FChatMessage&, message);
+	/** Delegate fired when a chat message is removed. */
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientCharMessageRemoved, const FChatMessage&, message);
+	/** Delegate fired when speech is transcribed. */
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientSpeechTranscribed, const FString&, message);
+	/** Delegate fired when a chat session starts. */
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientChatSessionStarted, const FChatSession&, chatSession);
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FVoxtaClientAudioPlaybackRegistered, const UVoxtaAudioPlayback*, playbackHandler, const FString&, characterId);
+	/** Delegate fired when a chat session stops. */
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientChatSessionStopped, const FChatSession&, chatSession);
+	/** Delegate fired when an audio playback handler is registered. */
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FVoxtaClientAudioPlaybackRegistered, const UVoxtaAudioPlayback*, playbackHandler, const FGuid&, characterId);
 
+	/** Native C++ delegates for the above events. */
 	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaClientStateChangedNative, VoxtaClientState);
 	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaClientCharacterRegisteredNative, const FAiCharData&);
 	DECLARE_MULTICAST_DELEGATE_TwoParams(FVoxtaClientCharMessageAddedNative, const FBaseCharData&, const FChatMessage&);
 	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaClientCharMessageRemovedNative, const FChatMessage&);
 	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaClientSpeechTranscribedNative, const FString&);
 	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaClientChatSessionStartedNative, const FChatSession&);
-	DECLARE_MULTICAST_DELEGATE_TwoParams(FVoxtaClientAudioPlaybackRegisteredNative, const UVoxtaAudioPlayback*, const FString&);
-
+	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaClientChatSessionStoppedNative, const FChatSession&);
+	DECLARE_MULTICAST_DELEGATE_TwoParams(FVoxtaClientAudioPlaybackRegisteredNative, const UVoxtaAudioPlayback*, const FGuid&);
 #pragma endregion
 
 #pragma region events
@@ -109,45 +131,48 @@ public:
 	/** Static Event variation of VoxtaClientChatSessionStartedEvent */
 	FVoxtaClientChatSessionStartedNative VoxtaClientChatSessionStartedEventNative;
 
+	/**
+	 * Event fired when the chat session has ended.
+	 *
+	 * Note: The chat object provided in the parameters will be destroyed immediatly after this call.
+	 */
+	UPROPERTY(BlueprintAssignable, Category = "Voxta", meta = (IsBindableEvent = "True"))
+	FVoxtaClientChatSessionStopped VoxtaClientChatSessionStoppedEvent;
+	/** Static Event variation of VoxtaClientChatSessionStoppedEvent */
+	FVoxtaClientChatSessionStoppedNative VoxtaClientChatSessionStoppedEventNative;
+
 	/**  Event fired when a playbackHandler has registered itself & claimed audioplayback for that character. */
 	UPROPERTY(BlueprintAssignable, Category = "Voxta", meta = (IsBindableEvent = "True"))
-	FVoxtaClientAudioPlaybackRegistered FVoxtaClientAudioPlaybackRegisteredEvent;
-	/** Static Event variation of VoxtaClientChatSessionStartedEvent */
-	FVoxtaClientAudioPlaybackRegisteredNative FVoxtaClientAudioPlaybackRegisteredEventNative;
-
+	FVoxtaClientAudioPlaybackRegistered VoxtaClientAudioPlaybackRegisteredEvent;
+	/** Static Event variation of VoxtaClientAudioPlaybackRegisteredEvent */
+	FVoxtaClientAudioPlaybackRegisteredNative VoxtaClientAudioPlaybackRegisteredEventNative;
 #pragma endregion
 
 #pragma region UGameInstanceSubsystem overrides
 public:
-	/** Initialization of the instance of the system */
+	/** Initialization of the instance of the system. Called when the subsystem is created. */
 	virtual void Initialize(FSubsystemCollectionBase& collection) override;
-	/** Deinitialization of the instance of the system */
+	/** Deinitialization of the instance of the system. Called when the subsystem is destroyed. */
 	virtual void Deinitialize() override;
 #pragma endregion
 
 #pragma region public API
 public:
 	/**
-	 * Main initializer for the VoxtaClient.
-	 * This will start the SignalR connection to the hub and begin listening to server responses.
+	 * Start the VoxtaClient and connect to the Voxta SignalR hub.
+	 * Only supports cold-start; restart is not supported.
 	 *
-	 * Note: There is no restart functionality atm, so this can only be called for a cold-start.
-	 *
-	 * @param ipv4Address The ipv4 address where the Voxta SignalR hub is hosted.
-	 * @param port The HTTP port used for the Voxta SignalR hub.
-	 *
-	 * TODO: Add restart option
+	 * @param ipv4Address The IPv4 address or hostname of the VoxtaServer.
+	 * @param port The HTTP port of the VoxtaServer.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
 	void StartConnection(const FString& ipv4Address, int port);
 
 	/**
-	 * Stops the SignalR connection and terminates the SignalR connection.
+	 * Disconnect from the VoxtaServer and clean up all resources.
+	 * Only call if you intend to stop using Voxta for the rest of the session.
 	 *
-	 * Note: There is no restart functionality at the time being, so only disconnect when you intend to
-	 * fully stop using Voxta for the remainder of the play session.
-	 *
-	 * @param silent Set to true if you want to disconnect without sending a state-change notification.
+	 * @param silent If true, do not broadcast a notification for the state-change .
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
 	void Disconnect(bool silent = false);
@@ -157,31 +182,46 @@ public:
 	 *
 	 * Note: The id must match the id of an already registered character in the client.
 	 *
-	 * @param charId The charID of the character that you want to load.
+	 * @param charId The character's unique ID.
+	 * @param context Optional context string for the chat.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
-	void StartChatWithCharacter(const FString& charId);
+	void StartChatWithCharacter(const FGuid& charId, const FString& context = TEXT(""));
 
 	/**
-	 * Inform the server that the user has said something.
-	 *
-	 * Note: Autoreply is enabled by default so this will always trigger a reponse from the AI character.
-	 *
-	 * @param inputText The text that should be considered user input in the conversation.
+	 * Enable or disable the global audio fallback handler (for characters without a specific handler).
+	 * @param newState True to enable, false to disable.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
-	void SendUserInput(const FString& inputText);
+	void SetGlobalAudioFallbackEnabled(bool newState);
+
+	/** @return True if the global audio fallback is active. */
+	UFUNCTION(BlueprintPure, Category = "Voxta")
+	bool IsGlobalAudioFallbackActive() const;
 
 	/**
-	 * Inform the server that the audioplayback is complete.
-	 * Is requird to enable speech recognition on the serverside, to whatever is sent via the audio socket.
-	 *
-	 * Note: You should only manually call this when you're using 'custom lipsync'.
-	 *
-	 * @param messageId The ID of the message that has completed the playback on the client.
+	 * Tell the server to stop the ongoing chat session and clean up the relevant dependencies.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Voxta")
-	void NotifyAudioPlaybackComplete(const FString& messageId);
+	void StopActiveChat();
+
+	/**
+	 * Update the context of the current chat session.
+	 * @param newContext The new context string to send to the server.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Voxta")
+	void UpdateChatContext(const FString& newContext);
+
+	/**
+	 * Send user input text to the server as part of the current chat session.
+	 * Triggers an AI reply if generateReply is true.
+	 *
+	 * @param inputText The user's input text.
+	 * @param generateReply Whether to trigger an AI reply.
+	 * @param characterActionInference Whether to enable character action inference.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Voxta")
+	void SendUserInput(const FString& inputText, bool generateReply = true, bool characterActionInference = false);
 
 	/** @return The ipv4 address where this client expects the Voxta server to be hosted. */
 	UFUNCTION(BlueprintPure, Category = "Voxta")
@@ -191,48 +231,109 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Voxta")
 	int GetServerPort() const;
 
-	/** @return An pointer to the VoxtaAudioInput handler. */
+	/** @return An pointer to the VoxtaAudioInput handler, for microphone capture and streaming. */
 	UFUNCTION(BlueprintPure, Category = "Voxta")
 	UVoxtaAudioInput* GetVoiceInputHandler() const;
 
-	/** @return The current state of the VoxtaClient internal. */
+	/** @return The current VoxtaClient state. */
 	UFUNCTION(BlueprintPure, Category = "Voxta")
 	VoxtaClientState GetCurrentState() const;
+
+	/** @return The current user's ID, or an invalid Guid if not authenticated. */
+	UFUNCTION(BlueprintPure, Category = "Voxta")
+	FGuid GetUserId() const;
+
+	/**
+	 * Get the browser URL for a given AI character.
+	 * @param aiCharacterId The character's unique ID.
+	 * @return The browser URL as a string.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Voxta")
+	FString GetBrowserUrlForCharacter(const FGuid& aiCharacterId) const;
+
+	/** @return The main assistant's unique ID. */
+	UFUNCTION(BlueprintPure, Category = "Voxta")
+	FGuid GetMainAssistantId() const;
+
+	/**
+	 * Asynchronously fetch and cache the thumbnail for a character.
+	 * @param baseCharacterId The character's unique ID.
+	 * @param onThumbnailFetched Delegate to call when the thumbnail is fetched.
+	 */
+	void TryFetchAndCacheCharacterThumbnail(const FGuid& baseCharacterId, FDownloadedTextureDelegateNative onThumbnailFetched);
 
 	/**
 	 * Try to retrieve a pointer to the UVoxtaAudioPlayback that has claimed playback for the provided characterId.
 	 *
 	 * @param characterID The character for which you want to retrieve a pointer to the AudioPlayback to.
 	 *
-	 * @return An immutable pointer to the UVoxtaAudioPlayback component, nullptr if it doesn't exist.
+	 * @return An immutable pointer to the UVoxtaAudioPlayback component, or nullptr if it doesn't exist.
 	 */
 	UFUNCTION(BlueprintPure, Category = "Voxta")
-	const UVoxtaAudioPlayback* GetRegisteredAudioPlaybackHandlerForID(const FString& characterId) const;
+	const UVoxtaAudioPlayback* GetRegisteredAudioPlaybackHandlerForID(const FGuid& characterId) const;
 
-	/** @return An immutable pointer to the ChatSession. */
-	const FChatSession* GetChatSession() const;
+	/**
+	 * Try to retrieve a copy of the characterData for the provided characterId.
+	 * 
+	 * @param characterId The character of which you want to retrieve a character-data.
+	 * 
+	 * @return A copy of the characterdata
+	 */
+	UFUNCTION(BlueprintPure, Category = "Voxta")
+	FAiCharData GetAiCharacterDataCopyById(const FGuid& characterId) const;
 
-	/** @return An reference to the A2F handler instance, should probably be moved elsewhere, idk yet. */
-	Audio2FaceRESTHandler* GetA2FHandler() const;
+	/** @return An copy of every available AIcharacter data. */
+	UFUNCTION(BlueprintPure, Category = "Voxta")
+	TArray<FAiCharData> GetAvailableAiCharactersCopy() const;
 
 	/**
 	 * Register the playback handler for this specific character, this is needed as we need to know if we want to wait
 	 * for the audio playback to be completed, or if there's no audio playback and we can just skip it.
 	 *
 	 * @param characterId The VoxtaServer assigned id of the character that is being registered for.
-	 * @param UVoxtaAudioPlayback The audioPlayback component for the specified characterId.
+	 * @param playbackHandler The audioPlayback component for the specified characterId.
 	 *
-	 * @return True if the character was registered successfully (no duplicate playback for the same id)
+	 * @return True if the character was registered successfully, false if duplicate or invalid.
 	 */
-	bool TryRegisterPlaybackHandler(const FString& characterId, TWeakObjectPtr<UVoxtaAudioPlayback> UVoxtaAudioPlayback);
+	bool TryRegisterPlaybackHandler(const FGuid& characterId, TWeakObjectPtr<UVoxtaAudioPlayback> playbackHandler);
 
 	/**
-	 * Remove the weakPointer to the audioPlayback that was registered for the specified characterId.
+	 * Unregister the audio playback handler for a character.
 	 *
-	 * @param characterId The character for which we will remove the weakPointer to whatever audioplayback was
-	 * registered for it
+	 * @param characterId The character for which we will remove the weakPointer to whatever audioplayback was registered for it.
+	 *
+	 * @return True if unregistered, false if not found.
 	 */
-	void UnregisterPlaybackHandler(const FString& characterId);
+	bool TryUnregisterPlaybackHandler(const FGuid& characterId);
+
+	/** @return A copy of the current chat session. */
+	UFUNCTION(BlueprintPure, Category = "Voxta")
+	FChatSession GetChatSessionCopy() const;
+
+	/** @return A copy of the server version data. */
+	UFUNCTION(BlueprintPure, Category = "Voxta")
+	FVoxtaVersionData GetServerVersionCopy() const;
+
+	/** @return True if the API version matches the server. */
+	UFUNCTION(BlueprintPure, Category = "Voxta")
+	bool IsMatchingAPIVersion() const;
+
+	/** @return An immutable pointer to the current chat session, or nullptr if no chat is active. */
+	const FChatSession* GetChatSession() const;
+
+	/** @return Get a weak pointer to the Audio2Face REST handler. Should probably be moved elsewhere, idk yet. */
+	TWeakPtr<Audio2FaceRESTHandler> GetA2FHandler() const;
+
+	/**
+	 * Enable or disable log censoring for sensitive logs.
+	 * @param isCensorActive True to enable censoring, false to disable.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Voxta")
+	void SetCensoredLogs(bool isCensorActive);
+
+	/** @return True if log censoring is active. */
+	UFUNCTION(BlueprintPure, Category = "Voxta")
+	bool IsLogCensorActive() const;
 #pragma endregion
 
 #pragma region data
@@ -243,19 +344,27 @@ private:
 	UPROPERTY()
 	UVoxtaAudioInput* m_voiceInput;
 
-	VoxtaLogger m_logUtility;
-	VoxtaApiRequestHandler m_voxtaRequestApi;
-	VoxtaApiResponseHandler m_voxtaResponseApi;
+	UPROPERTY()
+	AVoxtaGlobalAudioPlaybackHolder* m_globalAudioPlaybackComp;
+	FDelegateHandle globalAudioPlaybackHandle;
+	bool m_enableGlobalAudioFallback = true;
+
+	TSharedPtr<VoxtaLogger> m_logUtility;
 	TSharedPtr<IHubConnection> m_hub;
 	TSharedPtr<Audio2FaceRESTHandler> m_A2FHandler;
+	TSharedPtr<TexturesCacheHandler> m_texturesCacheHandler;
 
+	VoxtaClientState m_currentState = VoxtaClientState::Disconnected;
 	TUniquePtr<FUserCharData> m_userData;
-	TArray<TUniquePtr<const FAiCharData>> m_characterList;
-	TMap<FString, TWeakObjectPtr<UVoxtaAudioPlayback>> m_registeredCharacterPlaybackHandlers;
-	TUniquePtr<FChatSession> m_chatSession;
+	FGuid m_mainAssistantId;
 	FString m_hostAddress;
 	uint16 m_hostPort;
-	VoxtaClientState m_currentState = VoxtaClientState::Disconnected;
+
+	TUniquePtr<FVoxtaVersionData> m_voxtaVersionData;
+	TUniquePtr<FChatSession> m_chatSession;
+	TArray<TUniquePtr<const FAiCharData>> m_characterList;
+	TMap<FGuid, TWeakObjectPtr<UVoxtaAudioPlayback>> m_registeredCharacterAudioPlaybackComps;
+	TMap<FGuid, FDelegateHandle> m_audioPlaybackHandles;
 #pragma endregion
 
 #pragma region private API
@@ -287,7 +396,7 @@ private:
 	 * Listener to the reponse from the Voxta server.
 	 *
 	 * Note: This reponse just notifies the internal VoxtaClient that the server received
-	 * the message sucessfully. This response does NOT contain any new information, as those are sent
+	 * the message Successfully. This response does NOT contain any new information, as those are sent
 	 * via the OnReceivedMessage function.
 	 *
 	 * @param deliveryReceiptThe receipt of delivery, given to us by the Server. This should not contain any errors.
@@ -307,7 +416,7 @@ private:
 	 */
 	template<typename T>
 	bool HandleResponseHelper(const ServerResponseBase* response, const FString& logMessage,
-		bool (UVoxtaClient::* handler)(const T&));
+		bool (UVoxtaClient::* handler)(const T&), bool isSensitive);
 
 #pragma region VoxtaServer response handlers
 private:
@@ -317,8 +426,6 @@ private:
 	bool HandleWelcomeResponse(const ServerResponseWelcome& response);
 	/** Takes care of ServerResponseCharacterList responses. */
 	bool HandleCharacterListResponse(const ServerResponseCharacterList& response);
-	/** Takes care of ServerResponseCharacterLoaded responses. */
-	bool HandleCharacterLoadedResponse(const ServerResponseCharacterLoaded& response);
 	/** Takes care of ServerResponseChatStarted responses. */
 	bool HandleChatStartedResponse(const ServerResponseChatStarted& response);
 	/** Takes care of ServerResponseChatMessageBase responses. */
@@ -329,28 +436,23 @@ private:
 	bool HandleSpeechTranscriptionResponse(const ServerResponseSpeechTranscription& response);
 	/** Takes care of ServerResponseError responses. */
 	bool HandleErrorResponse(const ServerResponseError& response);
+	/** Takes care of ServerResponseContextUpdated responses. */
+	bool HandleContextUpdateResponse(const ServerResponseContextUpdated& response);
+	/** Takes care of ServerResponseChatClosed responses. */
+	bool HandleChatClosedResponse(const ServerResponseChatClosed& response);
+	/** Takes care of ServerResponseChatSessionError responses. */
+	bool HandleChatSessionErrorResponse(const ServerResponseChatSessionError& response);
 #pragma endregion
 
-	/**
-	 * Fetch the immutable UniquePtr to the Ai Character data struct that matches the given charId.
-	 *
-	 * @param charId The Id of the Ai Character that you want to retrieve.
-	 *
-	 * @return An immutable UniquePtr to the immutable Ai Character data struct, or nullptr if it was not found.
-	 */
-	const TUniquePtr<const FAiCharData>* GetAiCharacterDataById(const FString& charId) const;
+	void StopChatInternal();
 
 	/**
-	 * Fetches a raw pointer to the ChatMessage that maches the id given in the parameters.
+	 * Inform the server that the audioplayback is complete.
+	 * Is requird to enable speech recognition on the serverside, to whatever is sent via the audio socket.
 	 *
-	 * Note: The text & audio in this data is not guarenteed to be complete. Be aware that only after the
-	 * id has been broadcasted by VoxtaClientCharMessageAddedEvent that the message is considered final.
-	 *
-	 * @param messageId The id of the chatmessage you want to retrieve.
-	 *
-	 * @return A raw pointer to the chatmessage, or nullptr if it was not found.
+	 * @param messageId The ID of the message that has completed the playback on the client.
 	 */
-	FChatMessage* GetChatMessageById(const FString& messageId) const;
+	void NotifyAudioPlaybackComplete(const FGuid& messageId);
 
 	/**
 	 * Update the internal 'current state' to a new state.
@@ -360,5 +462,16 @@ private:
 	 * @param newState The new state that can be considered to be active in the client.
 	 */
 	void SetState(VoxtaClientState newState);
+
+	/**
+	 * Fetch the immutable UniquePtr to the Ai Character data struct that matches the given charId.
+	 *
+	 * @param charId The Id of the Ai Character that you want to retrieve.
+	 *
+	 * @return An immutable pointer to the UniquePtr to the immutable Ai Character data struct; or nullptr if it was not found.
+	 */
+	const TUniquePtr<const FAiCharData>* GetAiCharacterDataById(const FGuid& charId) const;
+
+	AVoxtaGlobalAudioPlaybackHolder* GetOrCreateGlobalAudioFallbackInternal();
 #pragma endregion
 };

@@ -31,7 +31,5 @@ public:
 	 *
 	 * @param targetArrayRef The array that will be used to fill the new curves. Old values will be overwritten.
 	 */
-	virtual void GetA2FCurveWeightsPreUpdate(TArray<float>& targetArrayRef)
-	{
-	}
+	virtual void GetA2FCurveWeightsPreUpdate(TArray<float>& targetArrayRef) {}
 };

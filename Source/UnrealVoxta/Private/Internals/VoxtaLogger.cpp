@@ -3,11 +3,7 @@
 #include "VoxtaLogger.h"
 #include "Misc/CoreMiscDefines.h"
 #include "Logging/LogMacros.h"
-
-#ifndef VOXTA_LOG_DEFINED
-DEFINE_LOG_CATEGORY(VoxtaLog);
-#define VOXTA_LOG_DEFINED
-#endif
+#include "Async/Async.h"
 
 VoxtaLogger::~VoxtaLogger()
 {
@@ -45,10 +41,25 @@ void VoxtaLogger::Serialize(const TCHAR* Message, ELogVerbosity::Type Verbosity,
 				break;
 		}
 
-		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 10.0f, color, FString::Format(*FString(TEXT("[{0}]: {1} -> {2}")), {
-			ToString(Verbosity),
-			FDateTime::Now().ToString(TEXT("%Y-%m-%d %H:%M:%S")),
-			Message }));
-#endif
+		auto LogToScreen = [=] ()
+			{
+				if (GEngine)
+				{
+					GEngine->AddOnScreenDebugMessage(INDEX_NONE, 10.0f, color, FString::Format(TEXT("[{0}]: {1} -> {2}"), {
+						ToString(Verbosity),
+						FDateTime::Now().ToString(TEXT("%Y-%m-%d %H:%M:%S")),
+						Message }));
+				}
+			};
+
+		if (IsInGameThread())
+		{
+			LogToScreen();
+		}
+		else
+		{
+			AsyncTask(ENamedThreads::GameThread, MoveTemp(LogToScreen));
+		}
 	}
+#endif
 }

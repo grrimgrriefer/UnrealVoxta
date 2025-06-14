@@ -28,10 +28,10 @@
 #include "WebSocketsModule.h"
 #include "SignalRModule.h"
 #include "Interfaces/IHttpResponse.h"
-#include "Interfaces/IHttpRequest.h"
 #include "Dom/JsonObject.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
+#include "LogUtility/Public/Defines.h"
 
 FConnection::FConnection(const FString& InHost, const TMap<FString, FString>& InHeaders):
     Host(InHost),
@@ -39,12 +39,20 @@ FConnection::FConnection(const FString& InHost, const TMap<FString, FString>& In
 {
 }
 
+FConnection::~FConnection()
+{
+    if (Connection.IsValid())
+    {
+        Close(1000, TEXT("Shutting down connection"));
+    }
+}
+
 void FConnection::Connect()
 {
     Negotiate();
 }
 
-bool FConnection::IsConnected()
+bool FConnection::IsConnected() const
 {
     return Connection.IsValid() && Connection->IsConnected();
 }
@@ -53,7 +61,7 @@ void FConnection::Send(const FString& Data)
 {
     if (Connection.IsValid())
     {
-		UE_LOG(LogSignalR, Log, TEXT("Sending: %s"), *Data);
+        SENSITIVE_LOG_BASIC(LogSignalR, Log, TEXT("Sending: %s"), *Data)
         Connection->Send(Data);
     }
     else
@@ -119,13 +127,13 @@ void FConnection::OnNegotiateResponse(FHttpRequestPtr InRequest, FHttpResponsePt
     {
         UE_LOG(LogSignalR, Error, TEXT("Could not connect to host"))
         OnConnectionFailedEvent.Broadcast();
-
         return;
     }
 
     if(InResponse->GetResponseCode() != 200)
     {
         UE_LOG(LogSignalR, Error, TEXT("Negotiate failed with status code %d"), InResponse->GetResponseCode());
+        OnConnectionFailedEvent.Broadcast();
         return;
     }
 
@@ -136,7 +144,7 @@ void FConnection::OnNegotiateResponse(FHttpRequestPtr InRequest, FHttpResponsePt
     {
         if(JsonObject->HasField(TEXT("error")))
         {
-            // TODO
+            UE_LOG(LogSignalR, Error, TEXT("Connection attempt received an unknown error %s"), *InResponse->GetContentAsString());
         }
         else
         {
@@ -150,7 +158,8 @@ void FConnection::OnNegotiateResponse(FHttpRequestPtr InRequest, FHttpResponsePt
             {
                 FString RedirectionUrl = JsonObject->GetStringField(TEXT("url"));
                 FString AccessToken = JsonObject->GetStringField(TEXT("accessToken"));
-                // TODO: redirection
+                
+                UE_LOG(LogSignalR, Error, TEXT("Received a redirect response when attempting to connect. This is not supported (yet)"));
                 return;
             }
 
@@ -190,8 +199,10 @@ void FConnection::OnNegotiateResponse(FHttpRequestPtr InRequest, FHttpResponsePt
 
             if (JsonObject->HasTypedField<EJson::String>(TEXT("connectionToken")))
             {
-                ConnectionId = JsonObject->GetStringField(TEXT("connectionToken"));
+                ConnectionToken = JsonObject->GetStringField(TEXT("connectionToken"));
             }
+
+            // TODO append ID and token once VoxtaServer requires it.
 
             StartWebSocket();
         }
@@ -204,8 +215,8 @@ void FConnection::OnNegotiateResponse(FHttpRequestPtr InRequest, FHttpResponsePt
 
 void FConnection::StartWebSocket()
 {
-    const FString COnver = ConvertToWebsocketUrl(Host);
-    Connection = FWebSocketsModule::Get().CreateWebSocket(COnver, FString(), Headers);
+    const FString WebSocketUrl = ConvertToWebsocketUrl(Host);
+    Connection = FWebSocketsModule::Get().CreateWebSocket(WebSocketUrl, FString(), Headers);
 
     if(Connection.IsValid())
     {
@@ -236,7 +247,7 @@ void FConnection::StartWebSocket()
         {
             if (TSharedPtr<FConnection> SharedSelf = Self.Pin())
             {
-				UE_LOG(LogSignalR, Log, TEXT("Received: %s"), *MessageString);
+                SENSITIVE_LOG_BASIC(LogSignalR, Log, TEXT("Received: %s"), *MessageString)
                 SharedSelf->OnMessageEvent.Broadcast(MessageString);
             }
         });
@@ -253,7 +264,11 @@ FString FConnection::ConvertToWebsocketUrl(const FString& Url)
 {
     const FString TrimmedUrl = Url.TrimStartAndEnd();
 
-    if (TrimmedUrl.StartsWith(TEXT("https://")))
+    if (TrimmedUrl.StartsWith(TEXT("ws://")) || TrimmedUrl.StartsWith(TEXT("wss://")))
+    {
+        return TrimmedUrl;
+    }
+    else if (TrimmedUrl.StartsWith(TEXT("https://")))
     {
         return TEXT("wss") + TrimmedUrl.RightChop(5);
     }
@@ -263,6 +278,7 @@ FString FConnection::ConvertToWebsocketUrl(const FString& Url)
     }
     else
     {
-        return Url;
+        UE_LOG(LogSignalR, Warning, TEXT("URL doesn't have a protocol, assuming ws:// is needed: %s"), *Url);
+        return TEXT("ws://") + TrimmedUrl;
     }
 }

@@ -70,10 +70,12 @@ bool FCallbackManager::InvokeCallback(FName InCallbackId, const FSignalRValue& I
 
 bool FCallbackManager::RemoveCallback(FName InCallbackId)
 {
+    bool isRemoved = false;
     {
         FScopeLock Lock(&CallbacksLock);
-        return Callbacks.Remove(InCallbackId) != 0;
+        isRemoved = Callbacks.Remove(InCallbackId) != 0;
     }
+    return isRemoved;
 }
 
 void FCallbackManager::Clear(const FString& ErrorMessage)
@@ -92,6 +94,6 @@ void FCallbackManager::Clear(const FString& ErrorMessage)
 
 FName FCallbackManager::GenerateCallbackId()
 {
-    const auto CallbackId = CurrentId++;
+    const int32 CallbackId = CurrentId.Increment();
     return *FString::FromInt(CallbackId);
 }

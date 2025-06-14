@@ -3,11 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "HAL/ThreadSafeBool.h"
 
-#define VOICE_COMPONENT_NULL 255
-#define THREAD_RETURN_DEFAULT_VALUE 254
-#define RECEIVE_VOICE_DATA_SUCCESS 0
-#define SEND_VOICE_DATA_SUCCESS 1
+#define VOICE_RUNNER_ERROR_COMPONENT_NULL 255
+#define VOICE_RUNNER_ERROR_DEFAULT 254
+#define VOICE_RUNNER_SUCCESS_SEND 1
 
 class AudioCaptureHandler;
 class FRunnableThread;
@@ -64,11 +64,10 @@ public:
 
 #pragma region data
 private:
-	UPROPERTY()
 	AudioCaptureHandler* m_voiceComponent;
 	FRunnableThread* m_thread;
 
 	float m_sleepTime;
-	bool m_isStopped;
+	FThreadSafeBool  m_isStopped;
 #pragma endregion
 };

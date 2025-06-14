@@ -18,29 +18,36 @@ FVoiceRunnerThread::~FVoiceRunnerThread()
 {
 	if (m_thread != nullptr)
 	{
-		m_thread->Kill();
+		Stop();
+		m_thread->WaitForCompletion();
 		delete m_thread;
 	}
 }
 
 uint32 FVoiceRunnerThread::Run()
 {
-	uint32 Result = THREAD_RETURN_DEFAULT_VALUE;
+	uint32 Result = VOICE_RUNNER_ERROR_DEFAULT;
 	FPlatformProcess::Sleep(m_sleepTime);
 
 	while (!m_isStopped)
 	{
+		double startTime = FPlatformTime::Seconds();
 		if (m_voiceComponent)
 		{
 			m_voiceComponent->CaptureAndSendVoiceData();
-			Result = SEND_VOICE_DATA_SUCCESS;
-			FPlatformProcess::Sleep(m_sleepTime);
+			Result = VOICE_RUNNER_SUCCESS_SEND;
+			double elapsedTime = FPlatformTime::Seconds() - startTime;
+			double remainingTime = m_sleepTime - elapsedTime;
+			if (remainingTime > 0)
+			{
+				FPlatformProcess::Sleep(remainingTime);
+			}
 		}
 		else
 		{
 			UE_LOGFMT(VoxtaLog, Warning, "AudioComponent pointer of FVoiceRunnerThread was destroyed? Stopping thread.");
 			m_isStopped = true;
-			return VOICE_COMPONENT_NULL;
+			return VOICE_RUNNER_ERROR_COMPONENT_NULL;
 		}
 	}
 	UE_LOGFMT(VoxtaLog, Log, "Stopped FVoiceRunnerThread.");
@@ -49,13 +56,18 @@ uint32 FVoiceRunnerThread::Run()
 
 void FVoiceRunnerThread::Start()
 {
-	if (m_thread != nullptr)
+	if (m_thread != nullptr || m_isStopped)
 	{
-		UE_LOGFMT(VoxtaLog, Error, "FVoiceRunnerThread cannot be recycled, please destroy the old instance and make"
+		UE_LOGFMT(VoxtaLog, Error, "FVoiceRunnerThread cannot be recycled, please destroy the old instance and make "
 			"a new one. Aborting start of background thread.");
 		return;
 	}
-	m_thread = FRunnableThread::Create(this, TEXT("VoiceRunnerThread"));
+	m_thread = FRunnableThread::Create(this, TEXT("VoiceRunnerThread"), 0, EThreadPriority::TPri_AboveNormal);
+	if (!m_thread)
+	{
+		UE_LOGFMT(VoxtaLog, Error, "Failed to launch FVoiceRunnerThread, FRunnableThread::Create returned nullptr");
+		return;
+	}
 }
 
 void FVoiceRunnerThread::Stop()

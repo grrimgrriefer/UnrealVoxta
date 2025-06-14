@@ -9,6 +9,8 @@
  * AudioWebSocket
  * Main low level API to communicate with the audio streaming socket of VoxtaServer.
  * Internally relies on Unreal's FWebSocketsModule implementation.
+ * 
+ * Note: This class is not thread-safe. All methods should be called from the same thread.
  */
 class VOXTAAUDIOUTILITY_API AudioWebSocket : public TSharedFromThis<AudioWebSocket>
 {
@@ -34,13 +36,17 @@ public:
 	 */
 	AudioWebSocket(const FString& serverIP, uint16 serverPort);
 
+	~AudioWebSocket();
+
 	/**
 	 * Create the websocket through FWebSocketsModule and start up the connection.
 	 * Call this after setting up event handlers or to reconnect after connection errors.
 	 *
+	 * @param sessionId The sessionId that we want to forward our audio to.
+	 *
 	 * @return False if we failed to create the websocket instance.
 	 */
-	bool Connect();
+	bool Connect(const FGuid& sessionId);
 
 	/**
 	 * Manually close the websocket connection.
@@ -55,9 +61,9 @@ public:
 	 * Send binary data through the websocket.
 	 *
 	 * @param buffer A pointer to the first byte of the data to be sent.
-	 * @param nBufferFrames Number of bytes to send.
+	 * @param nBufferBytes Number of bytes to send.
 	 */
-	void Send(const void* buffer, unsigned int nBufferFrames);
+	void Send(const void* buffer, unsigned int nBufferBytes);
 
 	/**
 	 * Send string data through the websocket.
@@ -72,5 +78,6 @@ private:
 	TSharedPtr<IWebSocket> m_socketConnection;
 	FString m_serverIP;
 	uint16 m_serverPort;
+	FGuid m_sessionId;
 #pragma endregion
 };

@@ -2,12 +2,18 @@
 
 using UnrealBuildTool;
 
+/// <summary>
+/// Specifies all the requirements to compile the OVR specific code of the plugin.
+/// </summary>
 public class VoxtaUtility_OVR : ModuleRules
 {
+	/// <summary>
+	/// Constructor. 
+	/// </summary>
 	public VoxtaUtility_OVR(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "VoxtaData", "OVRLipSync", "VoxtaUtility_OVR" });
+		PrivateDependencyModuleNames.AddRange(new [] { "Core", "CoreUObject", "VoxtaData", "OVRLipSync" });
 	}
 }

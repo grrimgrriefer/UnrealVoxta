@@ -1,38 +1,33 @@
 ﻿// Georgy Treshchev 2024.
 
-#include "RuntimeAudioImporter/RuntimeCodecFactory.h"
-#include "RuntimeAudioImporter/BaseRuntimeCodec.h"
-#include "RuntimeAudioImporter/WAV_RuntimeCodec.h"
+#include "RuntimeCodecFactory.h"
+#include "BaseRuntimeCodec.h"
+#include "WAV_RuntimeCodec.h"
 #include "Misc/Paths.h"
-#include "RuntimeAudioImporter/AudioStructs.h"
+#include "AudioStructs.h"
 
 DEFINE_LOG_CATEGORY(AudioLog);
 
 TArray<FBaseRuntimeCodec*> FRuntimeCodecFactory::GetCodecs()
 {
-	TArray<FBaseRuntimeCodec*> AvailableCodecs = { new FWAV_RuntimeCodec() };
-	return AvailableCodecs;
-}
+	static FCriticalSection CachedCodecsLock;
+	static TArray<TUniquePtr<FBaseRuntimeCodec>> Cached;
+	TArray<FBaseRuntimeCodec*> Raw;
 
-TArray<FBaseRuntimeCodec*> FRuntimeCodecFactory::GetCodecs(const FString& FilePath)
-{
-	TArray<FBaseRuntimeCodec*> Codecs;
-	const FString Extension = FPaths::GetExtension(FilePath, false);
-
-	for (FBaseRuntimeCodec* Codec : GetCodecs())
 	{
-		if (Codec->IsExtensionSupported(Extension))
+		FScopeLock Lock(&CachedCodecsLock);
+		if (Cached.Num() == 0)
 		{
-			Codecs.Add(Codec);
+			Cached.Emplace(MakeUnique<FWAV_RuntimeCodec>());
+		}
+
+		for (const TUniquePtr<FBaseRuntimeCodec>& Ptr : Cached)
+		{
+			Raw.Add(Ptr.Get());
 		}
 	}
-
-	if (Codecs.Num() == 0)
-	{
-		UE_LOG(AudioLog, Warning, TEXT("Failed to determine the audio codec for '%s' using its file name"), *FilePath);
-	}
-
-	return Codecs;
+	
+	return Raw;
 }
 
 TArray<FBaseRuntimeCodec*> FRuntimeCodecFactory::GetCodecs(ERuntimeAudioFormat AudioFormat)
@@ -54,12 +49,12 @@ TArray<FBaseRuntimeCodec*> FRuntimeCodecFactory::GetCodecs(ERuntimeAudioFormat A
 	return Codecs;
 }
 
-TArray<FBaseRuntimeCodec*> FRuntimeCodecFactory::GetCodecs(const FRuntimeBulkDataBuffer<uint8>& AudioData)
+TArray<FBaseRuntimeCodec*> FRuntimeCodecFactory::GetCodecs(FRuntimeBulkDataBuffer<uint8>& AudioData)
 {
 	TArray<FBaseRuntimeCodec*> Codecs;
 	for (FBaseRuntimeCodec* Codec : GetCodecs())
 	{
-		if (Codec->CheckAudioFormat(AudioData))
+		if (Codec->CheckAndFixAudioFormat(AudioData))
 		{
 			Codecs.Add(Codec);
 		}

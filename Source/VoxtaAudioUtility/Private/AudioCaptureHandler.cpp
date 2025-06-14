@@ -7,11 +7,7 @@
 #include "AudioWebSocket.h"
 #include "Voice.h"
 #include "AudioCaptureCore.h"
-
-#ifndef VOXTA_LOG_DEFINED
-DEFINE_LOG_CATEGORY(VoxtaLog);
-#define VOXTA_LOG_DEFINED
-#endif
+#include "Math/UnrealMathUtility.h"
 
 void AudioCaptureHandler::RegisterSocket(TWeakPtr<AudioWebSocket> socket, int bufferMillisecondSize)
 {
@@ -27,22 +23,30 @@ bool AudioCaptureHandler::TryInitializeVoiceCapture(int sampleRate, int numChann
 		return true;
 	}
 
+	if (sampleRate != 16000 || numChannels != 1)
+	{
+		UE_LOGFMT(VoxtaLog, Error, "We only support 16-bit mono 16khz audio.");
+		return false;
+	}
+
 	FVoiceModule& VoiceModule = FVoiceModule::Get();
 	if (VoiceModule.IsVoiceEnabled())
 	{
-		ConfigureSilenceTresholds();
-
 		Audio::FAudioCapture AudioCapture;
 		Audio::FCaptureDeviceInfo OutInfo;
 		if (!AudioCapture.GetCaptureDeviceInfo(OutInfo, INDEX_NONE))
 		{
-			UE_LOGFMT(VoxtaLog, Error, "Failed to fetch microhpone device information {0}", m_deviceName);
+			UE_LOGFMT(VoxtaLog, Error, "Failed to fetch microhpone device information");
 			return false;
 		}
 		m_deviceName = OutInfo.DeviceName;
 		UE_LOGFMT(VoxtaLog, Log, "Using microphone device {0}", m_deviceName);
 
 		m_voiceCaptureDevice = VoiceModule.CreateVoiceCapture(m_deviceName, sampleRate, numChannels);
+	}
+	else
+	{
+		UE_LOGFMT(VoxtaLog, Error, "Voice module is not enabled, cannot start Microphone input.");
 	}
 	if (m_voiceCaptureDevice.IsValid())
 	{
@@ -56,17 +60,25 @@ bool AudioCaptureHandler::TryInitializeVoiceCapture(int sampleRate, int numChann
 	}
 }
 
-void AudioCaptureHandler::ConfigureSilenceTresholds(float micNoiseGateThreshold, float silenceDetectionThreshold, float micInputGain)
+void AudioCaptureHandler::ConfigureSilenceThresholds(float micNoiseGateThreshold, float silenceDetectionThreshold, float micInputGain)
 {
-	static IConsoleVariable* SilenceDetectionReleaseCVar = IConsoleManager::Get().FindConsoleVariable(TEXT("voice.MicNoiseGateThreshold"));
-	static IConsoleVariable* SilenceDetectionThresholdCVar = IConsoleManager::Get().FindConsoleVariable(TEXT("voice.SilenceDetectionThreshold"));
-	static IConsoleVariable* MicInputGain = IConsoleManager::Get().FindConsoleVariable(TEXT("voice.MicInputGain"));
+	static IConsoleVariable* silenceDetectionReleaseCVar = IConsoleManager::Get().FindConsoleVariable(TEXT("voice.MicNoiseGateThreshold"));
+	static IConsoleVariable* silenceDetectionThresholdCVar = IConsoleManager::Get().FindConsoleVariable(TEXT("voice.SilenceDetectionThreshold"));
+	static IConsoleVariable* micInputGainCVar = IConsoleManager::Get().FindConsoleVariable(TEXT("voice.MicInputGain"));
 
-	SilenceDetectionReleaseCVar->Set(micNoiseGateThreshold);
-	SilenceDetectionThresholdCVar->Set(silenceDetectionThreshold);
-	MicInputGain->Set(micInputGain);
+	if (silenceDetectionReleaseCVar)
+	{
+		silenceDetectionReleaseCVar->Set(micNoiseGateThreshold);
+	}
+	if (silenceDetectionThresholdCVar)
+	{
+		silenceDetectionThresholdCVar->Set(silenceDetectionThreshold);
+	}
+	if (micInputGainCVar)
+	{
+		micInputGainCVar->Set(micInputGain);
+	}
 }
-
 bool AudioCaptureHandler::TryStartVoiceCapture()
 {
 	UE_LOGFMT(VoxtaLog, Log, "Starting voice capture.");
@@ -92,6 +104,7 @@ bool AudioCaptureHandler::TryStartVoiceCapture()
 		UE_LOGFMT(VoxtaLog, Error, "VoiceRunnerThread has been destroyed.");
 		return false;
 	}
+	
 
 	if (!m_voiceCaptureDevice->Start())
 	{
@@ -125,19 +138,23 @@ void AudioCaptureHandler::StopCapture()
 	}
 }
 
-void AudioCaptureHandler::ShutDown()
+void AudioCaptureHandler::ShutDown(bool alsoDestroyCaptureDevice)
 {
 	StopCapture();
 	FScopeLock Lock(&m_captureGuard);
 	m_voiceRunnerThread = nullptr;
+	if (alsoDestroyCaptureDevice)
+	{
+		m_voiceCaptureDevice = nullptr;
+	}
 }
 
-void AudioCaptureHandler::CaptureVoiceInternal(TArray<uint8>& voiceDataBuffer, float& decibels) const
+bool AudioCaptureHandler::CaptureVoiceInternal(TArray<uint8>& voiceDataBuffer, float& decibels) const
 {
 	if (!m_voiceCaptureDevice.IsValid())
 	{
 		UE_LOGFMT(VoxtaLog, Warning, "VoiceCapture device has been destroyed, can't capture any more data.");
-		return;
+		return false;
 	}
 
 	uint32 AvailableBytes = 0;
@@ -146,7 +163,7 @@ void AudioCaptureHandler::CaptureVoiceInternal(TArray<uint8>& voiceDataBuffer, f
 	{
 		if (AvailableBytes < 1)
 		{
-			return;
+			return false;
 		}
 		voiceDataBuffer.Reset();
 
@@ -160,11 +177,24 @@ void AudioCaptureHandler::CaptureVoiceInternal(TArray<uint8>& voiceDataBuffer, f
 		);
 
 		decibels = AnalyseDecibels(voiceDataBuffer, VoiceCaptureReadBytes);
+		return true;
 	}
+	return false;
 }
 
-void AudioCaptureHandler::SendInternal(const TArray<uint8> rawData) const
+bool AudioCaptureHandler::IsInputSilent() const
 {
+	FScopeLock Lock(&m_captureGuard);
+	return IsInputSilentInternal();
+}
+
+void AudioCaptureHandler::SendInternal(const TArray<uint8>& rawData) const
+{
+	if (m_isTestMode)
+	{
+		return;
+	}
+
 	if (rawData.Num() > (m_bufferMillisecondSize * 32)) // 16 bits per sample
 	{
 		UE_LOGFMT(VoxtaLog, Warning, "VoiceCapture cannot send data, too big: {0}. Skipping.", rawData.Num());
@@ -184,7 +214,10 @@ void AudioCaptureHandler::SendInternal(const TArray<uint8> rawData) const
 void AudioCaptureHandler::CaptureAndSendVoiceData()
 {
 	FScopeLock Lock(&m_captureGuard);
-	CaptureVoiceInternal(m_socketDataBuffer, m_decibels);
+	if (CaptureVoiceInternal(m_socketDataBuffer, m_decibels))
+	{
+		m_lastVoiceTimestamp = FDateTime::Now();
+	}
 
 	if (m_socketDataBuffer.Num() > 0)
 	{
@@ -197,7 +230,7 @@ void AudioCaptureHandler::CaptureAndSendVoiceData()
 float AudioCaptureHandler::GetDecibels() const
 {
 	FScopeLock Lock(&m_captureGuard);
-	return m_decibels;
+	return IsInputSilentInternal() ? DEFAULT_SILENCE_DECIBELS : m_decibels;
 }
 
 const FString& AudioCaptureHandler::GetDeviceName() const
@@ -205,20 +238,29 @@ const FString& AudioCaptureHandler::GetDeviceName() const
 	return m_deviceName;
 }
 
-float AudioCaptureHandler::AnalyseDecibels(const TArray<uint8>& VoiceData, uint32 DataSize) const
+void AudioCaptureHandler::SetIsTestMode(bool isTestMode)
 {
-	int16 Sample;
-	float SumSquared = 0.0f;
+	m_isTestMode = isTestMode;
+}
 
-	for (uint32 i = 0; i < DataSize / 2; ++i)
+float AudioCaptureHandler::AnalyseDecibels(const TArray<uint8>& voiceInputData, uint32 dataSize) const
+{
+	float sumSquared = 0.f;
+
+	for (uint32 i = 0; i < dataSize / 2; ++i)
 	{
-		Sample = (VoiceData[i * 2 + 1] << 8) | VoiceData[i * 2];
-		SumSquared += static_cast<float>(Sample) * static_cast<float>(Sample);
+		int16 sample = static_cast<int16>(static_cast<uint16>(voiceInputData[i * 2]) | (static_cast<uint16>(voiceInputData[i * 2 + 1]) << 8));
+		sumSquared += static_cast<float>(sample) * static_cast<float>(sample);
 	}
 
-	float MeanSquared = SumSquared / (DataSize / 2.f);
-	float RootMeanSquare = FMath::Sqrt(MeanSquared);
-	float Decibels = 20.0f * FMath::LogX(10.0f, RootMeanSquare / 32768.0f);
+	float rms = FMath::Sqrt(sumSquared / (dataSize / 2.f));
+	float decibels = 20.0f * FMath::LogX(10.f, FMath::Max(rms, 1.f) / 32768.f);
+	return FMath::Max(decibels, DEFAULT_SILENCE_DECIBELS);
+}
 
-	return Decibels;
+bool AudioCaptureHandler::IsInputSilentInternal() const
+{
+	return !m_isCapturing ||
+		FMath::IsNearlyEqual(m_decibels, DEFAULT_SILENCE_DECIBELS) ||
+		(FDateTime::Now() - m_lastVoiceTimestamp).GetTotalSeconds() > 0.1f;
 }

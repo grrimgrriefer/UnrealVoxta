@@ -15,8 +15,8 @@ public:
 	/** Create a deserialized version of the VoxtaServer response represents the 'Error' data. */
 	explicit ServerResponseError(FStringView message,
 			FStringView details) : ServerResponseBase(ServerResponseType::Error),
-		ERROR_MESSAGE(message),
-		ERROR_DETAILS(details)
+		ERROR_MESSAGE(FString(message)),
+		ERROR_DETAILS(FString(details))
 	{
 	}
 #pragma endregion

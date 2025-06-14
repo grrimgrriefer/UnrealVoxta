@@ -3,16 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "VoxtaDefines.h"
 #include "BaseCharData.generated.h"
 
 /**
  * FBaseCharData
- * Read-only data struct containing all the universal information fields. Can be used by systems who don't need to
- * know if this is an AiCharacer or a UserCharacter representing the User (player).
- *
- * Resides in the UVoxtaClient directly.
- * Cannot be retrieved or fetched through any public API, but will be referenced via the
- * VoxtaClientCharMessageAddedEvent when the user has contributed a message to the chat.
+ * Read-only data struct containing all the universal information fields for a character.
+ * Used as a base for both AI and user characters.
+ * Not directly exposed via public API, but referenced in events and chat messages.
  */
 USTRUCT(BlueprintType, Category = "Voxta")
 struct VOXTADATA_API FBaseCharData
@@ -21,34 +19,49 @@ struct VOXTADATA_API FBaseCharData
 
 #pragma region public API
 public:
-	/**  @return Immutable reference to the VoxtaServer assigned id of this character. */
-	const FString& GetId() const { return m_id; }
+	/** @return Immutable reference to the VoxtaServer assigned id of this character. */
+	const FGuid& GetId() const { return m_id; }
 
-	/**  @return Immutable reference to the name of the character who said this message. */
+	/** @return Immutable reference to the name of this character. */
 	FStringView GetName() const { return m_name; }
 
 	/**
-	 * Create an instance of the datacontainer for the CharData.
+	 * Derived classes should override this to provide character-specific thumbnails.
 	 *
-	 * @param id The id (guid in string version) that the VoxtaServer has assigned to this character.
+	 * @return URL to the thumbnail image for this character. Empty by default.
+	 */
+	virtual FStringView GetThumbnailUrl() const PURE_VIRTUAL(FBaseCharData::GetThumbnailUrl, return FString();)
+
+	/**
+	 * Create an instance of the data container for the CharData.
+	 *
+	 * @param id The GUID that the VoxtaServer has assigned to this character.
 	 * @param name The name of this character, as reported by VoxtaServer
 	 */
-	explicit FBaseCharData(FStringView id, FStringView name) :
-		m_id(id),
-		m_name(name)
-	{
-	}
+	explicit FBaseCharData(FGuid id, FStringView name) :
+	m_id(id),
+	m_name(name),
+	m_idAsString(GuidToString(id))
+	{}
 
-	/** Default constructor, should not be used manually, but is enforced by Unreal */
-	explicit FBaseCharData() {};
+	/** Default constructor. */
+	FBaseCharData() = default;
+
+	virtual ~FBaseCharData() = default;
 #pragma endregion
 
 #pragma region data
-private:
+protected:
+	/** Character ID assigned by VoxtaServer. */
 	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Character ID"))
-	FString m_id;
+	FGuid m_id = FGuid();
 
+	/** Name of the character. */
 	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Name"))
-	FString m_name;
+	FString m_name = EMPTY_STRING;
+
+	/** Character ID as formatted string. */
+	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Character ID as formatted string"))
+	FString m_idAsString = EMPTY_STRING;
 #pragma endregion
 };

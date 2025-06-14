@@ -3,49 +3,44 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Dom/JsonObject.h"
 #include "HttpModule.h"
 #include "Interfaces/IHttpRequest.h"
 #include "Interfaces/IHttpResponse.h"
 
 /**
  * Audio2FaceRESTHandler
- * Manages the HTTP REST api for A2F_headless mode.
- * Still very much a work in progress, but we might move things over to the docker API, so I don't want to spend
- * too much time on this.
+ * Manages the HTTP REST API for A2F_headless mode.
+ * Handles initialization, blendshape generation, and state tracking for Audio2Face.
+ * Not intended for parallel generation; manages single-threaded access.
  */
 class VOXTAUTILITY_A2F_API Audio2FaceRESTHandler : public TSharedFromThis<Audio2FaceRESTHandler>
 {
 #pragma region public API
 public:
 	/**
-	 * Check if A2F is running at all. If so, it will attempt to load the usd file that matches the Metahuman ARKit,
-	 * and also set the player root path to our folder so it can read the audio files that we will use as cache.
+	 * Check if A2F is running and attempt to initialize it.
+	 * Loads the USD file for Metahuman ARKit and sets the player root path.
 	 */
 	void TryInitialize();
 
 	/**
-	 * Use that A2F export REST api to generate JSON file containing all the blendshape curve values for the
-	 * ARKit mapping.
-	 * Note: Due to obvious reasons, the wavefile needs to be on the same machine as the A2F instance.
+	 * Use the A2F export REST API to generate a JSON file containing all blendshape curve values for ARKit mapping.
+	 * Note: The wave file must be on the same machine as the A2F instance.
 	 *
-	 * @param wavFileName The name of the audio file, that should be used to generate lipsync data.
-	 * @param shapesFilePath The desired path to write the JSON shapesfile to.
-	 * @param shapesFileName The desired name of the JSON shapesfile.
-	 * @param callback The response after A2F is finished, containing the path of the JSON shapes file and if A2F
-	 * reported the generation of it to be successful or not.
+	 * @param wavFileName The name of the audio file to use for lipsync data generation.
+	 * @param shapesFilePath The path to write the JSON shapes file to.
+	 * @param shapesFileName The name of the JSON shapes file.
+	 * @param callback Callback with the path of the JSON file and success status.
 	 */
-	void GetBlendshapes(FString wavFileName, FString shapesFilePath, FString shapesFileName,
-		TFunction<void(FString shapesFilePath, bool success)> callback);
+	void GetBlendshapes(const FString& wavFileName, const FString& shapesFilePath, const FString& shapesFileName,
+		TFunction<void(const FString&, bool /*success*/)> callback);
 
-	/** @return True if A2F is currently trying to initialize itself. */
+	/** @return True if A2F is currently initializing. */
 	bool IsInitializing() const;
 
-	/**
-	 * A2F headless cannot generate in parallel, which is why we need this.
-	 *
-	 * @return True if A2F is still busy generating lipsync data for an earlier call.
-	 */
-	bool IsBusy() const;
+	/** @return True if A2F is ready to generate new lipsync data. */
+	bool IsAvailable() const;
 #pragma endregion
 
 #pragma region private helper classes
@@ -62,7 +57,7 @@ private:
 
 #pragma region data
 private:
-	CurrentA2FState m_currentState = CurrentA2FState::NotConnected;
+	std::atomic<CurrentA2FState> m_currentState = CurrentA2FState::NotConnected;
 #pragma endregion
 
 #pragma region private API
@@ -73,9 +68,9 @@ private:
 	/** Send a request to the http://localhost:8011/A2F/Player/SetRootPath" REST call (POST) */
 	void SetPlayerRootPath(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> callback) const;
 	/** Send a request to the http://localhost:8011/A2F/Player/SetTrack" REST call (POST) */
-	void SetPlayerTrack(FString fileName, TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> callback) const;
+	void SetPlayerTrack(const FString& fileName, TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> callback) const;
 	/** Send a request to the http://localhost:8011/A2F/Exporter/ExportBlendshapes" REST call (POST) */
-	void GenerateBlendShapes(FString filePath, FString fileName,
+	void GenerateBlendShapes(const FString& filePath, const FString& fileName,
 		TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> callback) const;
 
 	// TODO: implement these, maybe? idk yet
@@ -86,21 +81,21 @@ private:
 	//void GetBlendshapeSolver(TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> callback);
 
 	/**
-	 * Helper utility to serialize a JsonObject into the FString representation.
+	 * Serialize a JsonObject into an FString.
 	 *
-	 * @param JsonObject The object to be converted.
-	 *
-	 * @return The serialized version of the provided object, in FString format.
+	 * @param jsonObject The object to convert.
+	 * 
+	 * @return The serialized JSON as an FString.
 	 */
 	FString JsonToString(TSharedRef<FJsonObject> jsonObject) const;
 
 	/**
-	 * Helper utility to create a generic threadsafe HTTP request that is setup for JSON data.
-	 * Note: This does NOT send the request, it just makes it and binds the callback to the eventual response.
+	 * Create a generic threadsafe HTTP request for JSON data.
+	 * Does not send the request; only prepares it and binds the callback.
 	 *
-	 * @param callback The response of the endpoint for the request.
-	 *
-	 * @return A generic HTTPrequest that is setup to send and receive JSON data.
+	 * @param callback The response callback.
+	 * 
+	 * @return The prepared HTTP request.
 	 */
 	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> GetBaseRequest(
 		TFunction<void(FHttpRequestPtr, FHttpResponsePtr, bool)> callback) const;

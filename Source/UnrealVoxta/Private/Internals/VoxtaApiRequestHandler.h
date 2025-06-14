@@ -22,34 +22,33 @@ public:
 	 *
 	 * @return The SignalR formatted message containing the request.
 	 */
-	FSignalRValue GetAuthenticateRequestData() const;
+	static FSignalRValue GetAuthenticateRequestData();
 
 	/**
 	 * Retrieve a SignalR formatted message to request the list of all characters available.
 	 *
 	 * @return The SignalR formatted message containing the request.
 	 */
-	FSignalRValue GetLoadCharactersListData() const;
+	static FSignalRValue GetLoadCharactersListData();
 
-	/**
-	 * Retrieve a SignalR formatted message to request the loading of a specific character and mark it as 'active'.
-	 *
-	 * Note: Requesting the start of a chat is a seperate request, this only loads the character.
-	 *
-	 * @param characterId The FBaseCharData::m_id of the character that you want to load.
-	 *
-	 * @return The SignalR formatted message containing the request.
-	 */
-	FSignalRValue GetLoadCharacterRequestData(const FString& characterId) const;
+	/** Retrieve a SignalR formatted message to request the list of all scenarios. */
+	static FSignalRValue GetLoadScenariosListData();
+
+	/** Retrieve a SignalR formatted message to request the list of all chats for a character/scenario. */
+	static FSignalRValue GetLoadChatsListData(const FGuid& characterId, const FGuid& scenarioId = FGuid());
 
 	/**
 	 * Retrieve a SignalR formatted message to request a new chat session to be started with a specific character.
 	 *
 	 * @param charData The full metadata of the character that you want to start a chat with.
+	 * @param context Context that will be used for the chat (json value, I think?) TODO
 	 *
 	 * @return The SignalR formatted message containing the request.
 	 */
-	FSignalRValue GetStartChatRequestData(const FAiCharData* charData) const;
+	static FSignalRValue GetStartChatRequestData(const FAiCharData* charData, const FString& context = FString());
+
+	/** Retrieve a SignalR formatted message to request stopping the current chat session. */
+	static FSignalRValue GetStopChatRequestData();
 
 	/**
 	 * Retrieve a SignalR formatted message to request the registration of a user-message to the chat.
@@ -58,10 +57,17 @@ public:
 	 *
 	 * @param sessionId The ChatSession::CHAT_ID of the currently active chat.
 	 * @param userInputText The text that the server should consider as what the user said.
+	 * @param generateReply Should VoxtaServer generate a reply from the AI character(s) after receiving this message.
+	 * @param characterActionInference TODO
 	 *
 	 * @return The SignalR formatted message containing the request.
 	 */
-	FSignalRValue GetSendUserMessageData(const FString& sessionId, const FString& userInputText) const;
+	static FSignalRValue GetSendUserMessageData(const FGuid& sessionId, const FString& userInputText, bool generateReply,
+		bool characterActionInference);
+
+	/** Retrieve a SignalR formatted message to notify the server that audio playback has started. */
+	static FSignalRValue GetNotifyAudioPlaybackStartedData(const FGuid& sessionId, const FGuid& messageId, int startIndex,
+		int endIndex, double duration);
 
 	/**
 	 * Retrieve a SignalR formatted message to inform the VoxtaServer that the playback is completed on the client.
@@ -72,6 +78,22 @@ public:
 	 *
 	 * @return The SignalR formatted message containing the request.
 	 */
-	FSignalRValue GetNotifyAudioPlaybackCompleteData(const FString& sessionId, const FString& messageId) const;
+	static FSignalRValue GetNotifyAudioPlaybackCompletedData(const FGuid& sessionId, const FGuid& messageId);
+
+	/** Retrieve a SignalR formatted message to update the context of the current chat session. */
+	static FSignalRValue GetUpdateContextRequestData(/*const TArray<FString>& actions,*/ const FGuid& sessionId,
+		const FString& context);
+
+	/** Retrieve a SignalR formatted message to request character speech for a session. */
+	static FSignalRValue GetRequestCharacterSpeechRequestData(const FGuid& sessionId, const FString& text);
+
+	/** Retrieve a SignalR formatted message to revert the last sent message in a session. */
+	static FSignalRValue SendRevertLastSentMessage(const FGuid& sessionId);
+
+	/** Retrieve a SignalR formatted message to delete a chat by its ID. */
+	static FSignalRValue SendDeleteChat(const FGuid& chatId);
+
+	/** Retrieve a SignalR formatted message to set flags for a session. */
+	static FSignalRValue SetFlags(const FGuid& sessionId, const TArray<FString>& flags);
 #pragma endregion
 };

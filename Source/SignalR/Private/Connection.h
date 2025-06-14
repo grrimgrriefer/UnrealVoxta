@@ -28,28 +28,95 @@
 #include "IWebSocket.h"
 #include "Interfaces/IHttpRequest.h"
 
+/**
+ * Represents a connection to a SignalR server.
+ * Handles the low-level WebSocket connection, including negotiation, message passing,
+ * and connection lifecycle management. Thread-safe.
+ */
 class SIGNALR_API FConnection : public TSharedFromThis<FConnection>
 {
 public:
+    /**
+     * Creates a new connection to a SignalR server.
+     *
+     * @param InHost The URL of the SignalR server.
+     * @param InHeaders HTTP headers to include in requests to the server.
+     */
     FConnection(const FString& InHost, const TMap<FString, FString>& InHeaders);
 
+    /**
+     * Destructor for the connection with the SignalR server.
+     * Triggers the Close function if the connection is still alive at this point.
+     */
+    virtual ~FConnection();
+
+    FConnection(const FConnection&) = delete;
+    FConnection& operator=(const FConnection&) = delete;
+    FConnection(FConnection&&) = delete;
+    FConnection& operator=(FConnection&&) = delete;
+
+    /**
+     * Initiates the connection process by starting the negotiation with the server.
+     */
     void Connect();
 
-    bool IsConnected();
+    /**
+     * Checks if the connection is currently established.
+     *
+     * @return True if the connection is established, false otherwise.
+     */
+    bool IsConnected() const;
 
+    /**
+     * Sends data over the connection.
+     *
+     * @param Data The data to send.
+     */
     void Send(const FString& Data);
 
+    /**
+     * Closes the connection.
+     *
+     * @param Code The status code for closing the connection. Default is 1000.
+     * @param Reason The reason for closing the connection. Default is empty.
+     */
     void Close(int32 Code = 1000, const FString& Reason = FString());
 
     DECLARE_EVENT(FConnection, FConnectionFailedEvent);
+
+    /**
+     * Gets the event that is triggered when the connection fails to establish.
+     *
+     * @return Reference to the connection failed event.
+     */
     FConnectionFailedEvent& OnConnectionFailed();
 
+    /**
+     * Gets the event that is triggered when the connection is established.
+     *
+     * @return Reference to the connected event.
+     */
     IWebSocket::FWebSocketConnectedEvent& OnConnected();
 
+    /**
+     * Gets the event that is triggered when a connection error occurs.
+     *
+     * @return Reference to the connection error event.
+     */
     IWebSocket::FWebSocketConnectionErrorEvent& OnConnectionError();
 
+    /**
+     * Gets the event that is triggered when the connection is closed.
+     *
+     * @return Reference to the closed event.
+     */
     IWebSocket::FWebSocketClosedEvent& OnClosed();
 
+    /**
+     * Gets the event that is triggered when a message is received.
+     *
+     * @return Reference to the message event.
+     */
     IWebSocket::FWebSocketMessageEvent& OnMessage();
 
 private:

@@ -29,8 +29,6 @@
 #include "SignalRSubsystem.h"
 #include "Engine/Engine.h"
 
- //IMPLEMENT_MODULE(FSignalRModule, SignalR);
-
 DEFINE_LOG_CATEGORY(LogSignalR);
 
 FSignalRModule* FSignalRModule::Singleton = nullptr;
@@ -46,10 +44,19 @@ FSignalRModule& FSignalRModule::Get()
     return *Singleton;
 }
 
-TSharedPtr<IHubConnection> FSignalRModule::CreateHubConnection(const FString& InUrl, const TMap<FString, FString>& InHeaders)
+TSharedPtr<IHubConnection> FSignalRModule::CreateHubConnection(const FString& InUrl, const TMap<FString, FString>& InHeaders) const
 {
+    check(!InUrl.IsEmpty());
     check(bInitialized);
-    return GEngine->GetEngineSubsystem<USignalRSubsystem>()->CreateHubConnection(InUrl, InHeaders);
+    check(GEngine);
+
+    if (USignalRSubsystem* Subsystem = GEngine->GetEngineSubsystem<USignalRSubsystem>())
+    {
+        return Subsystem->CreateHubConnection(InUrl, InHeaders);
+    }
+    
+    UE_LOG(LogSignalR, Error, TEXT("USignalRSubsystem is not available, returning nullptr"));
+    return nullptr;
 }
 
 void FSignalRModule::StartupModule()
@@ -62,4 +69,5 @@ void FSignalRModule::StartupModule()
 void FSignalRModule::ShutdownModule()
 {
     bInitialized = false;
+    Singleton = nullptr;
 }

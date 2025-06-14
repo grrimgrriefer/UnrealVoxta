@@ -27,41 +27,58 @@
 #include "CoreMinimal.h"
 #include "NegotiationResponse.generated.h"
 
+/**
+ * Represents a transport option returned during SignalR negotiation.
+ */
 USTRUCT()
 struct FNegotiationTransport
 {
 	GENERATED_BODY()
 public:
+	/** The type of transport (e.g., "WebSockets") */
 	UPROPERTY()
 	FString Transport;
 
+	/** List of supported transfer formats (e.g., "Text", "Binary") */
 	UPROPERTY()
 	TArray<FString> TransferFormats;
 };
 
+/**
+ * Represents the response from a SignalR server during connection negotiation.
+ * Contains information needed to establish a connection including connection ID,
+ * available transports, and authentication details.
+ */
 USTRUCT()
 struct FNegotiationResponse
 {
 	GENERATED_BODY()
 public:
+	/** The negotiation protocol version */
 	UPROPERTY()
 	int32 NegotiateVersion;
 
+	/** Unique identifier for the connection */
 	UPROPERTY()
 	FString ConnectionId;
 
+	/** Authentication token for the connection */
 	UPROPERTY()
 	FString ConnectionToken;
 
+	/** The URL to connect to after negotiation */
 	UPROPERTY()
 	FString Url;
 
+	/** OAuth or other access token for authentication */
 	UPROPERTY()
 	FString AccessToken;
 
+	/** Error message if negotiation failed */
 	UPROPERTY()
 	FString Error;
 
+	/** List of transports available for this connection */
 	UPROPERTY()
 	TArray<FNegotiationTransport> AvailableTransports;
 };

@@ -6,8 +6,10 @@
 #include "ServerResponseType.h"
 
 /**
+ * ServerResponseBase
  * Abstract read-only data struct that all responses from the VoxtaServer derive from.
- * Main use for this is to ensure a streamlined public API.
+ * Used to ensure a streamlined and type-safe public API for server responses.
+ * Contains the response type for identification.
  */
 struct ServerResponseBase
 {
@@ -17,12 +19,11 @@ public:
 
 	explicit ServerResponseBase(ServerResponseType responseType) :
 		RESPONSE_TYPE(responseType)
-	{
-	}
+	{}
 #pragma endregion
 
 #pragma region data
 public:
+	/** The type of this server response. */
 	const ServerResponseType RESPONSE_TYPE;
-#pragma endregion
 };
