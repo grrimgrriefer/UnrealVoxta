@@ -21,9 +21,9 @@ _Development progress board: https://trello.com/b/Biv7Si4l/unrealvoxta_
 
 ## Latest patch overview
 
-Quick 2min overview on the main changes in the most recent patch (**version 0.1.1**)  
-[![youtubeThumbnailPatch011 image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/youtubeThumbnailPatch011.PNG&resolveLfs=true&%24format=octetStream)](https://youtu.be/LINK_HERE "youtubeThumbnailPatch011 image")  
-https://youtu.be/LINK_HERE
+Quick 2-minute video with an overview & recap for this patch (**version 0.1.1**) available here:  
+[![youtubeThumbnailPatch011 image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/YoutubeThumbnailGithubV0.1.1.PNG&resolveLfs=true&%24format=octetStream)](https://www.youtube.com/watch?v=lxcALWdu3uA "youtubeThumbnailPatch011 image")  
+https://www.youtube.com/watch?v=lxcALWdu3uA
 
 ## Optional prerequisites
 
@@ -47,16 +47,6 @@ Audio input for this plugin relies on Unreal's VoiceInput system, which has to b
 bEnabled=true
 ```
 ![EnableVoiceInput image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.0/Images/EnableVoiceInput.PNG&resolveLfs=true&%24format=octetStream "EnableVoiceInput image.")  
-
-## Tests
-[Basic test coverage](./Tests/VoxtaClientTests.cpp) (85 tests atm) of the main VoxtaClient public C++ API. Additional test coverage for the blueprint API and for audio input & output are scheduled for upcoming releases.  
-
-**Note:**  
-All tests are integration tests and require a valid instance of VoxtaServer to be running (configured on localhost but that can be easily modified).  
-
-⚠️⚠️ **Be mindful running tests when using VoxtaCloud services, especially cloud TTS audio. It is highly adviced to only execute relevant tests during development to avoid draining cloud credits.** ⚠️⚠️
-
-![Tests image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/Tests.PNG&resolveLfs=true&%24format=octetStream "Tests image.")
 
 ## Getting started [C++]
 
@@ -151,6 +141,16 @@ Screen displaying the current chat, minimal UI to avoid blocking the rest of the
 ### Template chat settings screen
 Can be triggered with the cogwheel, shows the current chat and context can be modified. Also displays VoxtaServer services status.  
 ![Template_ChatSettings image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/Template_ChatSettings.PNG&resolveLfs=true&%24format=octetStream "Template_ChatSettings image.")  
+
+## Tests
+[Basic test coverage](./Tests/VoxtaClientTests.cpp) (85 tests atm) of the main VoxtaClient public C++ API. Additional test coverage for the blueprint API and for audio input & output are scheduled for upcoming releases.  
+
+**Note:**  
+All tests are integration tests and require a valid instance of VoxtaServer to be running (configured on localhost but that can be easily modified).  
+
+⚠️⚠️ **Be mindful running tests when using VoxtaCloud services, especially cloud TTS audio. It is highly adviced to only execute relevant tests during development to avoid draining cloud credits.** ⚠️⚠️
+
+![Tests image](https://dev.azure.com/grrimgrriefer/b22f0465-b773-42a3-9f3e-cd0bfb60dd2f/_apis/git/repositories/c5225fce-9f91-406e-9a06-07514397eb7d/items?path=/Documentation/0.1.1/Images/Tests.PNG&resolveLfs=true&%24format=octetStream "Tests image.")
 
 ## Installing Audio2Face lipsync
 
