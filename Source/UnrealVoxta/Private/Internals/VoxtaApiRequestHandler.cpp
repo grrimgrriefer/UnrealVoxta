@@ -1,4 +1,4 @@
-// Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
+// Copyright(c) 2025 grrimgrriefer & DZnnah, see LICENSE for details.
 
 #include "VoxtaApiRequestHandler.h"
 #include "VoxtaDefines.h"
@@ -10,7 +10,7 @@ FSignalRValue VoxtaApiRequestHandler::GetAuthenticateRequestData()
 	return FSignalRValue(TMap<FString, FSignalRValue> {
 		{ EASY_STRING("$type"), SIGNALR_STRING("authenticate") },
 		{ EASY_STRING("client"), SIGNALR_STRING("UnrealVoxta") },
-		{ EASY_STRING("clientVersion"), SIGNALR_STRING("0.1.1a") },
+		{ EASY_STRING("clientVersion"), SIGNALR_STRING("0.1.2a") },
 		{ EASY_STRING("scope"), FSignalRValue(TArray<FSignalRValue> { SIGNALR_STRING("role:app") }) },
 		{ EASY_STRING("capabilities"), FSignalRValue(TMap<FString, FSignalRValue> {
 			{ EASY_STRING("audioInput"),  SIGNALR_STRING("WebSocketStream") },
@@ -170,7 +170,7 @@ FSignalRValue VoxtaApiRequestHandler::GetRequestCharacterSpeechRequestData(const
 	});
 }
 
-FSignalRValue VoxtaApiRequestHandler::SendRevertLastSentMessage(const FGuid& sessionId)
+FSignalRValue VoxtaApiRequestHandler::GetRevertLastSentMessageRequestData(const FGuid& sessionId)
 {
 	return FSignalRValue(TMap<FString, FSignalRValue> {
 		{ EASY_STRING("$type"), SIGNALR_STRING("revert") },
@@ -178,7 +178,7 @@ FSignalRValue VoxtaApiRequestHandler::SendRevertLastSentMessage(const FGuid& ses
 	});
 }
 
-FSignalRValue VoxtaApiRequestHandler::SendDeleteChat(const FGuid& chatId)
+FSignalRValue VoxtaApiRequestHandler::GetDeleteChatRequestData(const FGuid& chatId)
 {
 	return FSignalRValue(TMap<FString, FSignalRValue> {
 		{ EASY_STRING("$type"), SIGNALR_STRING("deleteChat") },
@@ -186,7 +186,7 @@ FSignalRValue VoxtaApiRequestHandler::SendDeleteChat(const FGuid& chatId)
 	});
 }
 
-FSignalRValue VoxtaApiRequestHandler::SetFlags(const FGuid& sessionId, const TArray<FString>& flags)
+FSignalRValue VoxtaApiRequestHandler::GetSetFlagsRequestData(const FGuid& sessionId, const TArray<FString>& flags)
 {
 	TArray<FSignalRValue> serializedFlags = TArray<FSignalRValue>();
 	for (int i = 0; i < flags.Num(); i++)
@@ -198,5 +198,14 @@ FSignalRValue VoxtaApiRequestHandler::SetFlags(const FGuid& sessionId, const TAr
 		{ EASY_STRING("$type"), SIGNALR_STRING("updateContext") },
 		{ EASY_STRING("sessionId"), FSignalRValue(GuidToString(sessionId)) },
 		{ EASY_STRING("setFlags"), FSignalRValue(serializedFlags) }
+	});
+}
+
+FSignalRValue VoxtaApiRequestHandler::GetInspectorRequestData(const FGuid& sessionId, bool enableInspector)
+{
+	return FSignalRValue(TMap<FString, FSignalRValue> {
+		{ EASY_STRING("$type"), SIGNALR_STRING("inspect") },
+		{ EASY_STRING("sessionId"), FSignalRValue(GuidToString(sessionId)) },
+		{ EASY_STRING("enabled"), FSignalRValue(enableInspector) }
 	});
 }

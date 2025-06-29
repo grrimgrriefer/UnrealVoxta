@@ -56,7 +56,7 @@ struct FNegotiationResponse
 public:
 	/** The negotiation protocol version */
 	UPROPERTY()
-	int32 NegotiateVersion;
+	int32 NegotiateVersion = 1;
 
 	/** Unique identifier for the connection */
 	UPROPERTY()

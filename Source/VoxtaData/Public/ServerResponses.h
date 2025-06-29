@@ -16,3 +16,4 @@
 #include "ServerResponses/ServerResponseError.h"
 #include "ServerResponses/ServerResponseContextUpdated.h"
 #include "ServerResponses/ServerResponseChatClosed.h"
+#include "ServerResponses/ServerResponseConfiguration.h"

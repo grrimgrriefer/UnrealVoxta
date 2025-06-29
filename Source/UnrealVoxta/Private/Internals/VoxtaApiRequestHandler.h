@@ -88,12 +88,15 @@ public:
 	static FSignalRValue GetRequestCharacterSpeechRequestData(const FGuid& sessionId, const FString& text);
 
 	/** Retrieve a SignalR formatted message to revert the last sent message in a session. */
-	static FSignalRValue SendRevertLastSentMessage(const FGuid& sessionId);
+	static FSignalRValue GetRevertLastSentMessageRequestData(const FGuid& sessionId);
 
 	/** Retrieve a SignalR formatted message to delete a chat by its ID. */
-	static FSignalRValue SendDeleteChat(const FGuid& chatId);
+	static FSignalRValue GetDeleteChatRequestData(const FGuid& chatId);
 
 	/** Retrieve a SignalR formatted message to set flags for a session. */
-	static FSignalRValue SetFlags(const FGuid& sessionId, const TArray<FString>& flags);
+	static FSignalRValue GetSetFlagsRequestData(const FGuid& sessionId, const TArray<FString>& flags);
+
+	/** Retrieve a SignalR formatted message to (de)activate the inspector (triggering more / less data in responses) */
+	static FSignalRValue GetInspectorRequestData(const FGuid& sessionId, bool enableInspector = true);
 #pragma endregion
 };

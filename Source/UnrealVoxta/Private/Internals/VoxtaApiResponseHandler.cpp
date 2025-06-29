@@ -1,10 +1,10 @@
-// Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
+// Copyright(c) 2025 grrimgrriefer & DZnnah, see LICENSE for details.
 
 #include "VoxtaApiResponseHandler.h"
 #include "Logging/StructuredLog.h"
 #include "SignalR/Public/SignalRValue.h"
 #include "VoxtaData/Public/ServerResponses.h"
-#include "VoxtaData/Public/VoxtaServiceData.h"
+#include "VoxtaData/Public/VoxtaServiceEntryData.h"
 
 #define SAFE_MAP_GET(Map, Key)                                               \
     ([&]() -> const FSignalRValue&                                           \
@@ -29,7 +29,9 @@ const TSet<FString> VoxtaApiResponseHandler::IGNORED_MESSAGE_TYPES{
 		EASY_STRING("recordingRequest"),
 		EASY_STRING("recordingStatus"),
 		EASY_STRING("speechPlaybackComplete"),
-		EASY_STRING("memoryUpdated")
+		EASY_STRING("memoryUpdated"),
+		EASY_STRING("moduleRuntimeInstances"),
+		EASY_STRING("inspectorEnabled")
 };
 
 const TMap<FString, TFunction<TUniquePtr<ServerResponseBase>(const TMap<FString, FSignalRValue>&)>> VoxtaApiResponseHandler::HANDLERS{
@@ -46,7 +48,8 @@ const TMap<FString, TFunction<TUniquePtr<ServerResponseBase>(const TMap<FString,
 	{ TEXT("error"), [] (const auto& data) { return WrapHandler(&VoxtaApiResponseHandler::GetErrorResponse, data); } },
 	{ TEXT("chatSessionError"), [] (const auto& data) { return WrapHandler(&VoxtaApiResponseHandler::GetChatSessionErrorResponse, data); } },
 	{ TEXT("contextUpdated"), [] (const auto& data) { return WrapHandler(&VoxtaApiResponseHandler::GetContextUpdatedResponse, data); } },
-	{ TEXT("chatClosed"), [] (const auto& data) { return WrapHandler(&VoxtaApiResponseHandler::GetChatClosedResponse, data); } }
+	{ TEXT("chatClosed"), [] (const auto& data) { return WrapHandler(&VoxtaApiResponseHandler::GetChatClosedResponse, data); } },
+	{ TEXT("configuration"), [] (const auto& data) { return WrapHandler(&VoxtaApiResponseHandler::GetConfigurationResponse, data); } }
 };
 
 TUniquePtr<ServerResponseBase> VoxtaApiResponseHandler::GetResponseData(
@@ -133,7 +136,7 @@ TUniquePtr<ServerResponseChatStarted> VoxtaApiResponseHandler::GetChatStartedRes
 	// Services
 	TMap<FString, FSignalRValue> servicesMap = SAFE_MAP_GET(serverResponseData, EASY_STRING("services")).AsObject();
 	using enum VoxtaServiceType;
-	TMap<VoxtaServiceType, FVoxtaServiceData> services;
+	TMap<VoxtaServiceType, FVoxtaServiceEntryData> services;
 	TMap<VoxtaServiceType, FString> serviceTypes = {
 		{ TextGen, TEXT("textGen") },
 		{ SpeechToText, TEXT("speechToText") },
@@ -144,7 +147,7 @@ TUniquePtr<ServerResponseChatStarted> VoxtaApiResponseHandler::GetChatStartedRes
 		if (servicesMap.Contains(stringValue))
 		{
 			const TMap<FString, FSignalRValue>& serviceData = servicesMap[stringValue].AsObject();
-			services.Emplace(enumType, FVoxtaServiceData(enumType, SAFE_MAP_GET(serviceData, EASY_STRING("serviceName")).AsString(),
+			services.Emplace(enumType, FVoxtaServiceEntryData(enumType, SAFE_MAP_GET(serviceData, EASY_STRING("serviceName")).AsString(),
 				GetStringAsGuid(SAFE_MAP_GET(serviceData, EASY_STRING("serviceId")))));
 		}
 	}
@@ -254,17 +257,59 @@ TUniquePtr<ServerResponseChatSessionError> VoxtaApiResponseHandler::GetChatSessi
 		SAFE_MAP_GET(serverResponseData, EASY_STRING("message")).AsString());
 }
 
+TUniquePtr<ServerResponseConfiguration> VoxtaApiResponseHandler::GetConfigurationResponse(
+		const TMap<FString, FSignalRValue>& serverResponseData)
+{
+	// Services
+	TMap<FString, FSignalRValue> servicesMap = SAFE_MAP_GET(serverResponseData, EASY_STRING("services")).AsObject();
+	using enum VoxtaServiceType;
+	TArray<FVoxtaServiceGroupData> serviceGroups;
+	TMap<VoxtaServiceType, FString> serviceTypes = {
+		{ TextGen, TEXT("TextGen") },
+		{ SpeechToText, TEXT("SpeechToText") },
+		{ TextToSpeech, TEXT("TextToSpeech") },
+		{ ActionInference, TEXT("ActionInference") }
+	};
+	for (const auto& [enumType, stringValue] : serviceTypes)
+	{
+		if (servicesMap.Contains(stringValue))
+		{
+			const TMap<FString, FSignalRValue>& serviceGroupData = servicesMap[stringValue].AsObject();
+			TArray<FSignalRValue> servicesEntriesOrigin = SAFE_MAP_GET(serviceGroupData, EASY_STRING("services")).AsArray();
+
+			TArray<FVoxtaServiceEntryData> serviceEntries;
+			serviceEntries.Reserve(servicesMap.Num());
+
+			for (const FSignalRValue& serviceEntryElement : servicesEntriesOrigin)
+			{
+				const TMap<FString, FSignalRValue>& entryData = serviceEntryElement.AsObject();
+				serviceEntries.Emplace(FVoxtaServiceEntryData(enumType, 
+					SAFE_MAP_GET(entryData, EASY_STRING("serviceName")).AsString(),
+					GetStringAsGuid(SAFE_MAP_GET(entryData, EASY_STRING("serviceId")))));
+			}
+			serviceGroups.Emplace(FVoxtaServiceGroupData(enumType, GetStringAsGuid(SAFE_MAP_GET(serviceGroupData, EASY_STRING("defaultServiceId"))), serviceEntries));
+		}
+	}
+
+	return MakeUnique<ServerResponseConfiguration>(serviceGroups);
+}
+
 void VoxtaApiResponseHandler::ProcessContextData(const TMap<FString, FSignalRValue>& contextMainObject,
 	FString& outContextValue)
 {
+	outContextValue = FString();
+
 	//TArray<FSignalRValue> flagsArray = SAFE_MAP_GET(contextMainObject, EASY_STRING("flags")).AsArray();
-	TArray<FSignalRValue> contextsArray = SAFE_MAP_GET(contextMainObject, EASY_STRING("contexts")).AsArray();
 	//TArray<FSignalRValue> actionsArray = SAFE_MAP_GET(contextMainObject, EASY_STRING("actions")).AsArray();
 	//TArray<FSignalRValue> charactersArray = SAFE_MAP_GET(contextMainObject, EASY_STRING("characters")).AsArray();
 	//TArray<FSignalRValue> rolesArray = SAFE_MAP_GET(contextMainObject, EASY_STRING("roles")).AsArray();
 
-	outContextValue = FString();
+	if (!contextMainObject.Contains(EASY_STRING("contexts")))
+	{
+		return;
+	}
 
+	TArray<FSignalRValue> contextsArray = SAFE_MAP_GET(contextMainObject, EASY_STRING("contexts")).AsArray();
 	for (const FSignalRValue& context : contextsArray)
 	{
 		const TMap<FString, FSignalRValue>& contextData = context.AsObject();

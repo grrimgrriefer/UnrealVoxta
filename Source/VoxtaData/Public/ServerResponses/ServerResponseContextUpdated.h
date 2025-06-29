@@ -1,4 +1,4 @@
-// Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
+// Copyright(c) 2025 grrimgrriefer & DZnnah, see LICENSE for details.
 
 #pragma once
 
@@ -6,13 +6,20 @@
 #include "ServerResponseBase.h"
 
 /**
+ * ServerResponseContextUpdated
  * Read-only data struct containing the relevant data of the 'ContextUpdated' response from the VoxtaServer.
+ * Contains updated context text and session ID.
  */
 struct ServerResponseContextUpdated : public ServerResponseBase
 {
 #pragma region public API
 public:
-	/** Create a deserialized version of the VoxtaServer response represents the 'contextUpdated' data. */
+	/**
+	 * Construct a context updated response.
+	 *
+	 * @param contextText The updated context text.
+	 * @param sessionId The session ID for which the context was updated.
+	 */
 	explicit ServerResponseContextUpdated(FStringView contextText,
 			FGuid sessionId) : ServerResponseBase(ServerResponseType::ContextUpdated),
 		CONTEXT_TEXT(contextText),
@@ -22,7 +29,9 @@ public:
 
 #pragma region data
 public:
+	/** The updated context text. */
 	const FString CONTEXT_TEXT;
+	/** The session ID for which the context was updated. */
 	const FGuid SESSION_ID;
 #pragma endregion
 };

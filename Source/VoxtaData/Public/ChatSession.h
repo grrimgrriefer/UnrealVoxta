@@ -1,11 +1,11 @@
-// Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
+// Copyright(c) 2025 grrimgrriefer & DZnnah, see LICENSE for details.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "ChatMessage.h"
 #include "VoxtaServiceType.h"
-#include "VoxtaServiceData.h"
+#include "VoxtaServiceEntryData.h"
 #include "AiCharData.h"
 #include "ChatSession.generated.h"
 
@@ -48,7 +48,7 @@ public:
 	 *
 	 * @return The map of active services.
 	 */
-	const TMap<VoxtaServiceType, FVoxtaServiceData>& GetActiveServices() const
+	const TMap<VoxtaServiceType, FVoxtaServiceEntryData>& GetActiveServices() const
 	{
 		return m_services;
 	}
@@ -117,7 +117,7 @@ public:
 	explicit FChatSession(const TArray<const FAiCharData*>& characters,
 			FGuid chatId,
 			FGuid sessionId,
-			const TMap<VoxtaServiceType, FVoxtaServiceData>& services,
+			const TMap<VoxtaServiceType, FVoxtaServiceEntryData>& services,
 			FStringView chatContext) :
 		m_chatId(chatId),
 		m_sessionId(sessionId),
@@ -179,7 +179,7 @@ private:
 
 	TArray<const FAiCharData*> m_characters;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Enabled services"))
-	TMap<VoxtaServiceType, FVoxtaServiceData> m_services;
+	UPROPERTY(BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true", DisplayName = "Services"))
+	TMap<VoxtaServiceType, FVoxtaServiceEntryData> m_services;
 #pragma endregion
 };

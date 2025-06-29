@@ -1,4 +1,4 @@
-// Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
+// Copyright(c) 2025 grrimgrriefer & DZnnah, see LICENSE for details.
 
 #pragma once
 
@@ -24,4 +24,5 @@ enum class ServerResponseType : uint8
 	ContextUpdated			UMETA(DisplayName = "ContextUpdated"),
 	ChatClosed				UMETA(DisplayName = "ChatClosed"),
 	ChatSessionError		UMETA(DisplayName = "ChatSessionError"),
+	Configuration			UMETA(DisplayName = "Configuration")
 };

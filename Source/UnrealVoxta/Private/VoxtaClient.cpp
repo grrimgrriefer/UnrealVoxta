@@ -677,6 +677,9 @@ bool UVoxtaClient::HandleResponse(const TMap<FString, FSignalRValue>& responseDa
 		case ChatSessionError:
 			return HandleResponseHelper<ServerResponseChatSessionError>(response.Get(),
 				TEXT("Chat session error received successfully"), &UVoxtaClient::HandleChatSessionErrorResponse, false);
+		case Configuration:
+			return HandleResponseHelper<ServerResponseConfiguration>(response.Get(),
+				TEXT("Configuration successfully"), &UVoxtaClient::HandleConfigurationResponse, false);
 		default:
 			UE_LOGFMT(VoxtaLog, Error, "No handler available for type a message of type: {0}", responseType);
 			return false;
@@ -758,6 +761,8 @@ bool UVoxtaClient::HandleChatStartedResponse(const ServerResponseChatStarted& re
 		}
 		m_voiceInput->ConnectToCurrentChat();
 	}
+
+	SendMessageToServer(VoxtaApiRequestHandler::GetInspectorRequestData(m_chatSession->GetSessionId()));
 
 	VoxtaClientChatSessionStartedEventNative.Broadcast(*m_chatSession.Get());
 	VoxtaClientChatSessionStartedEvent.Broadcast(*m_chatSession.Get());
@@ -998,9 +1003,16 @@ bool UVoxtaClient::HandleContextUpdateResponse(const ServerResponseContextUpdate
 		return true;
 	}
 
-	m_chatSession->UpdateContext(response.CONTEXT_TEXT);
-	SENSITIVE_LOG1(VoxtaLog, Log, "Updated context of the chat session to: {0}", response.CONTEXT_TEXT)
+	if (m_chatSession->GetChatContext() == response.CONTEXT_TEXT)
+	{
+		SENSITIVE_LOG1(VoxtaLog, Log, "Received context update was identical to the current context: {0}", response.CONTEXT_TEXT)
+		return true;
+	}
 
+	m_chatSession->UpdateContext(response.CONTEXT_TEXT);
+	SENSITIVE_LOG1(VoxtaLog, Log, "Updated context of the chat session to: {0}", m_chatSession->GetChatContext());
+	VoxtaClientChatContextUpdatedEventNative.Broadcast(m_chatSession->GetChatContext().GetData());
+	VoxtaClientChatContextUpdatedEvent.Broadcast(m_chatSession->GetChatContext().GetData());
 	return true;
 }
 
@@ -1030,6 +1042,12 @@ bool UVoxtaClient::HandleChatSessionErrorResponse(const ServerResponseChatSessio
 	UE_LOGFMT(VoxtaLog, Error, "Recieved a chatSessionError, unsure how to proceed. "
 		"Message: {0}, ChatSessionId: {1}, Retry: {2}", response.ERROR_MESSAGE, response.ERROR_CHAT_SESSION_ID, response.ERROR_RETRY);
 
+	return true;
+}
+
+bool UVoxtaClient::HandleConfigurationResponse(const ServerResponseConfiguration& response)
+{
+	UE_LOGFMT(VoxtaLog, Log, "Todo services stuff");
 	return true;
 }
 

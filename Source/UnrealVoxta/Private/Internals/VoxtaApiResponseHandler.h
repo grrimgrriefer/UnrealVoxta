@@ -1,4 +1,4 @@
-// Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
+// Copyright(c) 2025 grrimgrriefer & DZnnah, see LICENSE for details.
 
 #pragma once
 
@@ -20,6 +20,7 @@ struct ServerResponseChatClosed;
 struct ServerResponseSpeechTranscription;
 struct ServerResponseError;
 struct ServerResponseChatSessionError;
+struct ServerResponseConfiguration;
 
 /**
  * VoxtaApiResponseHandler
@@ -108,6 +109,10 @@ private:
 
 	/** Deserialize a chatsession specific  error response. */
 	static TUniquePtr<ServerResponseChatSessionError> GetChatSessionErrorResponse(
+		const TMap<FString, FSignalRValue>& serverResponseData);
+
+	/** Deserialize a configuration response. */
+	static TUniquePtr<ServerResponseConfiguration> GetConfigurationResponse(
 		const TMap<FString, FSignalRValue>& serverResponseData);
 
 	/**

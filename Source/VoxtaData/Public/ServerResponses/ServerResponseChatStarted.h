@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "ServerResponseBase.h"
-#include "VoxtaData/Public/VoxtaServiceData.h"
+#include "VoxtaData/Public/VoxtaServiceEntryData.h"
 
 /**
  * ServerResponseChatStarted
@@ -27,7 +27,7 @@ public:
 	 */
 	explicit ServerResponseChatStarted(FGuid userId,
 		const TArray<FGuid>& characterIds,
-		const TMap<VoxtaServiceType, FVoxtaServiceData>& services,
+		const TMap<VoxtaServiceType, FVoxtaServiceEntryData>& services, // might need group here tho
 		FGuid chatId,
 		FGuid sessionId,
 		FStringView contextText) : ServerResponseBase(ServerResponseType::ChatStarted),
@@ -45,7 +45,7 @@ public:
 	/** The list of character IDs in the chat. */
 	const TArray<FGuid> CHARACTER_IDS;
 	/** The map of enabled services. */
-	const TMap<VoxtaServiceType, FVoxtaServiceData> SERVICES;
+	const TMap<VoxtaServiceType, FVoxtaServiceEntryData> SERVICES;
 	/** The user ID. */
 	const FGuid USER_ID;
 	/** The chat ID. */

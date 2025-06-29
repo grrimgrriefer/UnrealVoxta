@@ -16,8 +16,8 @@ class UTexture2DDynamic;
 /** Macro to make a FSignalRValue from a FStringView the extra overhead. */
 #define SIGNALR_STRINGVIEW(x) ConvertToSignalRValue(x)
 
-#define TARGETED_SERVER_VERSION TEXT("1.0.0-beta.132")
-#define TARGETED_API_VERSION TEXT("2024-11")
+#define TARGETED_SERVER_VERSION TEXT("1.0.0-beta.147")
+#define TARGETED_API_VERSION TEXT("2025-01")
 
 /** Helper function for SIGNALR_STRINGVIEW macro */
 template <typename T, typename = std::enable_if_t<std::is_convertible_v<T, FStringView>>>

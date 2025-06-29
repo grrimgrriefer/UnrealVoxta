@@ -30,6 +30,7 @@ struct ServerResponseSpeechTranscription;
 struct ServerResponseContextUpdated;
 struct ServerResponseChatClosed;
 struct ServerResponseChatSessionError;
+struct ServerResponseConfiguration;
 struct FAiCharData;
 struct FBaseCharData;
 struct FChatSession;
@@ -67,6 +68,8 @@ public:
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientChatSessionStopped, const FChatSession&, chatSession);
 	/** Delegate fired when an audio playback handler is registered. */
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FVoxtaClientAudioPlaybackRegistered, const UVoxtaAudioPlayback*, playbackHandler, const FGuid&, characterId);
+	/** Delegate fired when the context of a chatsession is updated. */
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVoxtaClientChatContextUpdated, const FString&, newContext);
 
 	/** Native C++ delegates for the above events. */
 	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaClientStateChangedNative, VoxtaClientState);
@@ -77,6 +80,7 @@ public:
 	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaClientChatSessionStartedNative, const FChatSession&);
 	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaClientChatSessionStoppedNative, const FChatSession&);
 	DECLARE_MULTICAST_DELEGATE_TwoParams(FVoxtaClientAudioPlaybackRegisteredNative, const UVoxtaAudioPlayback*, const FGuid&);
+	DECLARE_MULTICAST_DELEGATE_OneParam(FVoxtaClientChatContextUpdatedNative, const FString&);
 #pragma endregion
 
 #pragma region events
@@ -120,6 +124,12 @@ public:
 	FVoxtaClientSpeechTranscribed VoxtaClientSpeechTranscribedCompleteEvent;
 	/** Static Event variation of VoxtaClientSpeechTranscribedCompleteEvent */
 	FVoxtaClientSpeechTranscribedNative VoxtaClientSpeechTranscribedCompleteEventNative;
+
+	/** Event fired when the server has finished transcribing speech, it contains the final version of whatever the user said. */
+	UPROPERTY(BlueprintAssignable, Category = "Voxta", meta = (IsBindableEvent = "True"))
+	FVoxtaClientChatContextUpdated VoxtaClientChatContextUpdatedEvent;
+	/** Static Event variation of VoxtaClientSpeechTranscribedCompleteEvent */
+	FVoxtaClientChatContextUpdatedNative VoxtaClientChatContextUpdatedEventNative;
 
 	/**
 	 * Event fired when the chat session has begun.
@@ -442,6 +452,8 @@ private:
 	bool HandleChatClosedResponse(const ServerResponseChatClosed& response);
 	/** Takes care of ServerResponseChatSessionError responses. */
 	bool HandleChatSessionErrorResponse(const ServerResponseChatSessionError& response);
+	/** Takes care of ServerResponseConfiguration responses. */
+	bool HandleConfigurationResponse(const ServerResponseConfiguration& response);
 #pragma endregion
 
 	void StopChatInternal();

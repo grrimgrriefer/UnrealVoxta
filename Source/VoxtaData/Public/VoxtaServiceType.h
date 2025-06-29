@@ -1,4 +1,4 @@
-// Copyright(c) 2024 grrimgrriefer & DZnnah, see LICENSE for details.
+// Copyright(c) 2025 grrimgrriefer & DZnnah, see LICENSE for details.
 
 #pragma once
 
@@ -13,11 +13,14 @@
  * - TextGen: Text generation/chat functionality
  * - SpeechToText: Voice input transcription
  * - TextToSpeech: Voice synthesis for AI responses
+ * - ActionInference: Make the AI trigger predefined actions based on the state of an ongoing conversation.
  */
 UENUM(BlueprintType, Category = "Voxta")
 enum class VoxtaServiceType : uint8
 {
+	Unknown,
 	TextGen,
 	SpeechToText,
-	TextToSpeech
+	TextToSpeech,
+	ActionInference
 };
