@@ -3,9 +3,20 @@
 _By GrrimGrriefer, DZnnah and Barty._  
 _Development progress board: https://trello.com/b/Biv7Si4l/unrealvoxta_
 
-**⚠️ AI characters are not real, always use common sense! ⚠️**  
+> [!CAUTION]
+> Development is on hold and will be revived in <ins>spring of 2026 with UE 5.8 preview<ins>.
+> 
+> Please be adviced that this will result in a full rewrite, breaking most APIs. Plan is to use MetaSounds utility, removing all Animation Blueprints and swapping to Animation Framework (UAF) and maybe Mover 2.0, new Metahuman framework, etc...
+> 
+> No hard promises though :p   
 
-> [!CAUTION]  
+<br/>
+<br/>
+<br/>
+
+> [!IMPORTANT]  
+> **⚠️ AI characters are not real, always use common sense! ⚠️**  
+>
 > This plugin is not affiliated, associated, endorsed by, or in any way officially connected to Voxta.ai  
 >  
 > This plugin currently supports [Voxta](https://voxta.ai/) version **v1.0.0-beta.132** (API **2024-11**), other versions are unlikely to work.  
