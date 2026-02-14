@@ -25,6 +25,8 @@
 
 #include "StringUtils.h"
 
+#include "Internationalization/TextChar.h"
+
 bool StringUtils::IsEmptyOrWhitespace(const FString& InStr)
 {
     if (InStr.IsEmpty())
@@ -34,7 +36,7 @@ bool StringUtils::IsEmptyOrWhitespace(const FString& InStr)
 
     for(const TCHAR Character : InStr)
     {
-        if (!FText::IsWhitespace(Character))
+        if (!FTextChar::IsWhitespace(Character))
         {
             return false;
         }

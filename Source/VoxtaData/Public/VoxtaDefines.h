@@ -3,6 +3,7 @@
 #pragma once
 #include "Logging/LogMacros.h"
 #include "type_traits"
+#include "SignalRValue.h"
 
 class FSignalRValue;
 class UTexture2DDynamic;

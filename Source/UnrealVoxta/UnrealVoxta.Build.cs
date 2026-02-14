@@ -15,7 +15,7 @@ public class UnrealVoxta : ModuleRules
 	public UnrealVoxta(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
-		bUseRTTI = true;
+		//bUseRTTI = true;
 
 		PrivateIncludePaths.AddRange(new [] {
 			Path.Combine(ModuleDirectory, "Public", "UtilityNodes"),

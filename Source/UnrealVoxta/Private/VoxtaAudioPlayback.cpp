@@ -29,7 +29,7 @@ void UVoxtaAudioPlayback::Initialize(const FGuid& characterId, LipSyncType lipSy
 void UVoxtaAudioPlayback::InitializeInternal(bool autoRegisterHandler)
 {
 	m_clientReference = GetWorld()->GetGameInstance()->GetSubsystem<UVoxtaClient>();
-	checkf(m_clientReference, TEXT("VoxtaClient subsystem missing – cannot initialise audio playback"));
+	checkf(m_clientReference, TEXT("VoxtaClient subsystem missing cannot initialise audio playback"));
 
 	if (autoRegisterHandler)
 	{

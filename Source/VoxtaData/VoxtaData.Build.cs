@@ -15,6 +15,8 @@ public class VoxtaData : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new [] { "Core", "CoreUObject" });
+		PublicDependencyModuleNames.AddRange(new [] { "Core", "CoreUObject", "SignalR" });
+		
+		PublicSystemIncludePaths.AddRange(new [] { "/home/overlord/.bin/Linux_Unreal_Engine_5.7.2/Engine/Extras/ThirdPartyNotUE/SDKs/HostLinux/Linux_x64/v26_clang-20.1.8-rockylinux8/x86_64-unknown-linux-gnu/include/c++/v1" });
 	}
 }

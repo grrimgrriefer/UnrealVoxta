@@ -230,7 +230,7 @@ FSignalRValue DeserializeValue(TSharedPtr<FJsonValue> InValue)
     case EJson::Null:
         return FSignalRValue(nullptr);
     default:
-        UE_LOG(LogSignalR, Error, TEXT("Unknown FJsonValue type – deserialising as null"));
+        UE_LOG(LogSignalR, Error, TEXT("Unknown FJsonValue type deserialising as null"));
         return FSignalRValue(nullptr);
     }
 }

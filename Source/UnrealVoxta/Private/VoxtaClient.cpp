@@ -713,7 +713,7 @@ bool UVoxtaClient::HandleWelcomeResponse(const ServerResponseWelcome& response)
 bool UVoxtaClient::HandleCharacterListResponse(const ServerResponseCharacterList& response)
 {
 	m_characterList.Empty();
-	for (const FAiCharData charElement : response.CHARACTERS)
+	for (const FAiCharData& charElement : response.CHARACTERS)
 	{
 		m_characterList.Emplace(MakeUnique<FAiCharData>(charElement));
 		VoxtaClientCharacterRegisteredEventNative.Broadcast(charElement);
