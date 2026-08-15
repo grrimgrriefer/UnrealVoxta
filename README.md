@@ -1,18 +1,22 @@
 # An Unreal Engine plugin for Voxta
 
 _By GrrimGrriefer, DZnnah and Barty._  
-_Development progress board: https://trello.com/b/Biv7Si4l/unrealvoxta_
+
+---
 
 > [!CAUTION]
-> Development is on hold and will be revived in <ins>spring of 2026 with UE 5.8 preview<ins>.
+> A full rewrite is on-going in the v0.2 branch.  
+> v0.1 will no longer receive any updates, please be aware that the new version will have breaking changes in API, support and more.
 > 
-> Please be adviced that this will result in a full rewrite, breaking most APIs. Plan is to use MetaSounds utility, removing all Animation Blueprints and swapping to Animation Framework (UAF) and maybe Mover 2.0, new Metahuman framework, etc...
+> Estimated ETA for v0.2 feature parity is likely December 2026
 > 
 > No hard promises though :p   
 
-<br/>
-<br/>
-<br/>
+---
+
+<br/><br/><br/><br/><br/><br/>
+
+_Development progress board: https://trello.com/b/Biv7Si4l/unrealvoxta_
 
 > [!IMPORTANT]  
 > **⚠️ AI characters are not real, always use common sense! ⚠️**  
