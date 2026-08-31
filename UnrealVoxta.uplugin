@@ -1,0 +1,24 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "0.2.0",
+  "FriendlyName": "UnrealVoxta",
+  "Description": "Unreal Engine client for Voxta [unofficial]",
+  "Category": "Other",
+  "CreatedBy": "grrimgrriefer & DZnnah",
+  "CreatedByURL": "https://github.com/grrimgrriefer/UnrealVoxta",
+  "DocsURL": "",
+  "MarketplaceURL": "",
+  "SupportURL": "",
+  "EngineVersion": "5.8.0",
+  "CanContainContent": true,
+  "IsBetaVersion": true,
+  "Installed": false,
+  "Modules": [
+    {
+      "Name": "UnrealVoxta",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    }
+  ]
+}
