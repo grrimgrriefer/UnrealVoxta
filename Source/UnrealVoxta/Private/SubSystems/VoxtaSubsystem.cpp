@@ -77,11 +77,6 @@ bool UVoxtaSubsystem::IsTickable() const
 #pragma endregion
 
 
-FString UVoxtaSubsystem::GetNpcWelcomeMessage() const
-{
-	// TODO: get response from VoxtaServer
-	return TEXT("Hey there, sweetheart.");
-}
 void UVoxtaSubsystem::OnGameModePostLoginEvent(AGameModeBase* gameMode, APlayerController* newPlayer)
 {
 	if (m_isRunning)

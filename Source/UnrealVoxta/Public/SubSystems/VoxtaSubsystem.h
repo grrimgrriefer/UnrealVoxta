@@ -39,9 +39,6 @@ public:
 	virtual bool IsTickable() const override;
 #pragma endregion
 
-	UFUNCTION()
-	FString GetNpcWelcomeMessage() const;
-
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UStateTree> m_stateTreeAsset;

@@ -6,10 +6,10 @@ public class UnrealVoxta : ModuleRules
 {
 	public UnrealVoxta(ReadOnlyTargetRules target) : base(target)
 	{
-		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
 		PublicDependencyModuleNames.AddRange(["Core", "CoreUObject", "StateTreeModule"]);
 
-		PrivateDependencyModuleNames.AddRange(["Engine"]);
+		PrivateDependencyModuleNames.AddRange(["Engine", "Json", "JsonUtilities"]);
 	}
 }
