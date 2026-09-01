@@ -1,16 +1,15 @@
 // Copyright(c) 2026 grrimgrriefer & DZnnah, see LICENSE for details.
 
-using System.IO;
 using UnrealBuildTool;
 
 public class UnrealVoxta : ModuleRules
 {
-	public UnrealVoxta(ReadOnlyTargetRules Target) : base(Target)
+	public UnrealVoxta(ReadOnlyTargetRules target) : base(target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new [] { "Core", "CoreUObject" } );
+		PublicDependencyModuleNames.AddRange(["Core", "CoreUObject", "StateTreeModule"]);
 
-		PrivateDependencyModuleNames.AddRange(new [] { "Engine" } );
+		PrivateDependencyModuleNames.AddRange(["Engine"]);
 	}
 }
