@@ -115,7 +115,9 @@ bool UVoxtaSubsystem::TrySend(const FString& message) const
 	if (m_hub.IsValid())
 	{
 		m_hub->Invoke(SEND_MESSAGE_EVENT_NAME, message);
+		return true;
 	}
+	return false;
 }
 const VoxtaUserConfiguration& UVoxtaSubsystem::GetVoxtaUserConfiguration() const
 {

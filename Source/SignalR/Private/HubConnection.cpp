@@ -30,7 +30,6 @@
 #include "Connection.h"
 #include "HandshakeProtocol.h"
 #include "StringUtils.h"
-#include "LogUtility/Public/Defines.h"
 
 FHubConnection::FHubConnection(const FString& InUrl, const TMap<FString, FString>& InHeaders) :
 	FTickableGameObject(),

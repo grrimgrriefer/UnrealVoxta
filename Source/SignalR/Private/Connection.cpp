@@ -31,7 +31,6 @@
 #include "Dom/JsonObject.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
-#include "LogUtility/Public/Defines.h"
 
 FConnection::FConnection(const FString& InHost, const TMap<FString, FString>& InHeaders):
     Host(InHost),

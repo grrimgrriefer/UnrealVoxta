@@ -8,7 +8,7 @@ public class UnrealVoxta : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(["Core", "CoreUObject", "StateTreeModule"]);
+		PublicDependencyModuleNames.AddRange(["Core", "CoreUObject", "StateTreeModule", "GameplayTags"]);
 
 		PrivateDependencyModuleNames.AddRange(["Engine", "Json", "JsonUtilities", "SignalR"]);
 	}

@@ -25,6 +25,7 @@
 #include "HandshakeProtocol.h"
 #include "IHubProtocol.h"
 #include "JsonHubProtocol.h"
+#include "Misc/EngineVersionComparison.h"
 #include "Serialization/JsonSerializer.h"
 #include "SignalRModule.h"
 
@@ -32,11 +33,19 @@ FString FHandshakeProtocol::CreateHandshakeMessage(TSharedPtr<IHubProtocol> InPr
 {
     check(InProtocol.IsValid());
 
-    TMap<FString, TSharedPtr<FJsonValue>> Values
-    {
-        { "protocol", MakeShared<FJsonValueString>(InProtocol->Name().ToString()) },
-        { "version", MakeShared<FJsonValueNumber>(InProtocol->Version()) },
-    };
+#if ENGINE_MAJOR_VERSION > 5 || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 8)
+	TMap<UE::FSharedString, TSharedPtr<FJsonValue>> Values
+	{
+		{ TEXT("protocol"), MakeShared<FJsonValueString>(InProtocol->Name().ToString()) },
+		{ TEXT("version"), MakeShared<FJsonValueNumber>(InProtocol->Version()) },
+	};
+#else
+TMap<FString, TSharedPtr<FJsonValue>> Values
+	{
+		{ "protocol", MakeShared<FJsonValueString>(InProtocol->Name().ToString()) },
+		{ "version", MakeShared<FJsonValueNumber>(InProtocol->Version()) },
+	};
+#endif
     TSharedPtr<FJsonObject> Obj = MakeShared<FJsonObject>();
     Obj->Values = Values;
 

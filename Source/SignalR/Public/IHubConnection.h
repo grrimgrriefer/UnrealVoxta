@@ -218,7 +218,25 @@ public:
 	}
 
 protected:
-	virtual ~IHubConnection();
+	virtual ~IHubConnection() = default;
 };
 
 typedef TSharedPtr<IHubConnection> IHubConnectionPtr;
+
+namespace SensitiveLogging
+{
+	inline bool isSensitiveLogsCensored = false;
+	const FString CENSORED_TEXT_CONTENT = TEXT("****censored****");
+}
+
+#define SENSITIVE_LOG_BASIC(LogCategory, Verbosity, Format, Param) \
+{ \
+	if (!SensitiveLogging::isSensitiveLogsCensored) \
+	{ \
+		UE_LOG(LogCategory, Verbosity, Format, Param); \
+	} \
+	else \
+	{ \
+		UE_LOG(LogCategory, Verbosity, Format, *SensitiveLogging::CENSORED_TEXT_CONTENT); \
+	} \
+}

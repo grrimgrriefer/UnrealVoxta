@@ -67,7 +67,7 @@ private:
 
 	UPROPERTY()
 	FStateTreeInstanceData m_instanceData;
-	UPROPERTY()
+
 	TSharedPtr<IHubConnection> m_hub;
 	VoxtaUserConfiguration m_voxtaUserConfiguration;
 
