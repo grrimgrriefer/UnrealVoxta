@@ -1,9 +1,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "SignalRValue.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "Tickable.h"
 #include "StateTreeExecutionContext.h"
+#include "VoxtaUserConfiguration.h"
 #include "VoxtaSubsystem.generated.h"
 
 class IHubConnection;
@@ -43,7 +45,10 @@ public:
 	virtual bool IsTickable() const override;
 #pragma endregion
 
+	void EstablishConnection(const FString& ipv4Address, int port);
+	void Disconnect();
 	bool TrySend(const FString& message) const;
+	const VoxtaUserConfiguration& GetVoxtaUserConfiguration() const;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true"))
@@ -53,12 +58,18 @@ private:
 	static const FString SEND_MESSAGE_EVENT_NAME;
 	static const FString RECEIVE_MESSAGE_EVENT_NAME;
 
+	void OnConnected();
+	void OnConnectionError(const FString& String);
+	void OnClosed();
+	void OnReceivedMessage(const TArray<FSignalRValue>& payload);
 	void OnGameModePostLoginEvent(AGameModeBase* gameMode, APlayerController* newPlayer);
+	bool TrySendFlowEvent(FGameplayTag tag);
 
 	UPROPERTY()
 	FStateTreeInstanceData m_instanceData;
 	UPROPERTY()
 	TSharedPtr<IHubConnection> m_hub;
+	VoxtaUserConfiguration m_voxtaUserConfiguration;
 
 	uint32 m_lastFrameNumberWeTicked = INDEX_NONE;
 	bool m_isRunning = false;

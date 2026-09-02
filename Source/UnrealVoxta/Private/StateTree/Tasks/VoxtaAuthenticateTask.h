@@ -4,28 +4,31 @@
 
 #include "CoreMinimal.h"
 #include "StateTreeTaskBase.h"
-#include "VoxtaConnectTask.generated.h"
+#include "VoxtaAuthenticateTask.generated.h"
 
 class UVoxtaSubsystem;
 
 USTRUCT(BlueprintType)
-struct UNREALVOXTA_API FVoxtaConnectTaskInstanceData
+struct UNREALVOXTA_API FVoxtaAuthenticateTaskInstanceData
 {
 	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, Category = "Parameter")
+	float m_TimeoutSeconds = 15.0f;
 };
 
 /**
- * Handles the lifetime of the connection the VoxtaServer backend.
+ * Handles the lifetime of the authenticated session with the VoxtaServer backend.
  */
 USTRUCT(meta = (DisplayName = "Voxta Authenticate", Category = "Voxta"))
-struct UNREALVOXTA_API FVoxtaConnectTask : public FStateTreeTaskCommonBase
+struct UNREALVOXTA_API FVoxtaAuthenticateTask : public FStateTreeTaskCommonBase
 {
 	GENERATED_BODY()
 
 public:
-	using FInstanceDataType = FVoxtaConnectTaskInstanceData;
+	using FInstanceDataType = FVoxtaAuthenticateTaskInstanceData;
 
-	FVoxtaConnectTask();
+	FVoxtaAuthenticateTask();
 
 	virtual const UStruct* GetInstanceDataType() const override;
 	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& context, const FStateTreeTransitionResult& transitions) const override;
