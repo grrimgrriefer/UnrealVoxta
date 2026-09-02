@@ -6,15 +6,16 @@
 #include "StateTreeExecutionContext.h"
 #include "VoxtaSubsystem.generated.h"
 
+class IHubConnection;
 class UStateTree;
 class AGameModeBase;
 
 /**
  * Low-level subsystem for Voxta integration in the game.
- * Manages the stateful connection to the VoxtaServer by keeping the
- * internal StateTree in sync with the server.
+ * Owns the connection socket to the VoxtaServer and the StateTree that dictates and syncs
+ * with the VoxtaServer backend.
  *
- * Is persistent across the entire game.
+ * Is persistent across the entire gameinstance.
  *
  * Only use this if you know what you're doing, for a simplified API, see UConversationSubsystem.
  */
@@ -24,6 +25,9 @@ class UNREALVOXTA_API UVoxtaSubsystem : public UGameInstanceSubsystem, public FT
 	GENERATED_BODY()
 
 public:
+	static const FName CLIENT_NAME;
+	static const FName CLIENT_VERSION;
+
 #pragma region UGameInstanceSubsystem
 	virtual bool ShouldCreateSubsystem(UObject* outer) const override;
 	virtual void Initialize(FSubsystemCollectionBase& collection) override;
@@ -39,15 +43,22 @@ public:
 	virtual bool IsTickable() const override;
 #pragma endregion
 
+	bool TrySend(const FString& message) const;
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UStateTree> m_stateTreeAsset;
 
 private:
+	static const FString SEND_MESSAGE_EVENT_NAME;
+	static const FString RECEIVE_MESSAGE_EVENT_NAME;
+
 	void OnGameModePostLoginEvent(AGameModeBase* gameMode, APlayerController* newPlayer);
 
 	UPROPERTY()
 	FStateTreeInstanceData m_instanceData;
+	UPROPERTY()
+	TSharedPtr<IHubConnection> m_hub;
 
 	uint32 m_lastFrameNumberWeTicked = INDEX_NONE;
 	bool m_isRunning = false;

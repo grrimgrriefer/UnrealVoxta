@@ -19,6 +19,21 @@
       "Name": "UnrealVoxta",
       "Type": "Runtime",
       "LoadingPhase": "Default"
-    }
+    },
+	{
+	  "Name": "SignalR",
+	  "Type": "Runtime",
+	  "LoadingPhase": "Default"
+	}
+  ],
+  "Plugins": [
+	{
+	  "Name": "StateTree",
+	  "Enabled": true
+	},
+	{
+	  "Name": "GameplayStateTree",
+	  "Enabled": true
+	}
   ]
 }

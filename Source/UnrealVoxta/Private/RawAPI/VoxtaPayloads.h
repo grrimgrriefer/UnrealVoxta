@@ -9,7 +9,7 @@
 // SHARED TYPES
 
 USTRUCT()
-struct UNREALVOXTA_API FVoxtaCharacterData
+struct  FVoxtaCharacterData
 {
 	GENERATED_BODY()
 
@@ -32,11 +32,11 @@ struct FVoxtaAuthenticateRequest
 	GENERATED_BODY()
 
 	UPROPERTY()
-	FString action = TEXT("authenticate");
+	FName action = TEXT("authenticate");
 	UPROPERTY()
-	FString client = TEXT("UnrealEngine");
+	FName client;
 	UPROPERTY()
-	FString clientVersion = TEXT("1.0.0");
+	FName clientVersion;
 };
 
 USTRUCT()
@@ -45,7 +45,7 @@ struct FVoxtaLoadCharactersRequest
 	GENERATED_BODY()
 
 	UPROPERTY()
-	FString action = TEXT("loadCharacters");
+	FName action = TEXT("loadCharacters");
 };
 
 USTRUCT()
@@ -54,7 +54,7 @@ struct FVoxtaStartChatRequest
 	GENERATED_BODY()
 
 	UPROPERTY()
-	FString action = TEXT("startChat");
+	FName action = TEXT("startChat");
 	UPROPERTY()
 	FString characterId;
 };
@@ -65,7 +65,7 @@ struct FVoxtaStopChatRequest
 	GENERATED_BODY()
 
 	UPROPERTY()
-	FString action = TEXT("stopChat");
+	FName action = TEXT("stopChat");
 	UPROPERTY()
 	FString sessionId;
 };
@@ -76,7 +76,7 @@ struct FVoxtaSendTextMessageRequest
 	GENERATED_BODY()
 
 	UPROPERTY()
-	FString action = TEXT("sendTextMessage");
+	FName action = TEXT("sendTextMessage");
 	UPROPERTY()
 	FString sessionId;
 	UPROPERTY()
@@ -88,7 +88,7 @@ struct FVoxtaSendTextMessageRequest
 // ====================
 
 USTRUCT()
-struct UNREALVOXTA_API FVoxtaBaseResponse
+struct  FVoxtaBaseResponse
 {
 	GENERATED_BODY()
 
@@ -99,7 +99,7 @@ struct UNREALVOXTA_API FVoxtaBaseResponse
 };
 
 USTRUCT()
-struct UNREALVOXTA_API FVoxtaWelcomeResponse : public FVoxtaBaseResponse
+struct  FVoxtaWelcomeResponse : public FVoxtaBaseResponse
 {
 	GENERATED_BODY()
 
@@ -110,7 +110,7 @@ struct UNREALVOXTA_API FVoxtaWelcomeResponse : public FVoxtaBaseResponse
 };
 
 USTRUCT()
-struct UNREALVOXTA_API FVoxtaCharacterListLoadedResponse : public FVoxtaBaseResponse
+struct  FVoxtaCharacterListLoadedResponse : public FVoxtaBaseResponse
 {
 	GENERATED_BODY()
 
@@ -119,7 +119,7 @@ struct UNREALVOXTA_API FVoxtaCharacterListLoadedResponse : public FVoxtaBaseResp
 };
 
 USTRUCT()
-struct UNREALVOXTA_API FVoxtaContextUpdatedResponse : public FVoxtaBaseResponse
+struct  FVoxtaContextUpdatedResponse : public FVoxtaBaseResponse
 {
 	GENERATED_BODY()
 
@@ -128,7 +128,7 @@ struct UNREALVOXTA_API FVoxtaContextUpdatedResponse : public FVoxtaBaseResponse
 };
 
 USTRUCT()
-struct UNREALVOXTA_API FVoxtaChatStartedResponse : public FVoxtaBaseResponse
+struct  FVoxtaChatStartedResponse : public FVoxtaBaseResponse
 {
 	GENERATED_BODY()
 
@@ -139,7 +139,7 @@ struct UNREALVOXTA_API FVoxtaChatStartedResponse : public FVoxtaBaseResponse
 };
 
 USTRUCT()
-struct UNREALVOXTA_API FVoxtaReplyStartResponse : public FVoxtaBaseResponse
+struct  FVoxtaReplyStartResponse : public FVoxtaBaseResponse
 {
 	GENERATED_BODY()
 
@@ -150,7 +150,7 @@ struct UNREALVOXTA_API FVoxtaReplyStartResponse : public FVoxtaBaseResponse
 };
 
 USTRUCT()
-struct UNREALVOXTA_API FVoxtaReplyChunkResponse : public FVoxtaBaseResponse
+struct  FVoxtaReplyChunkResponse : public FVoxtaBaseResponse
 {
 	GENERATED_BODY()
 
@@ -163,7 +163,7 @@ struct UNREALVOXTA_API FVoxtaReplyChunkResponse : public FVoxtaBaseResponse
 };
 
 USTRUCT()
-struct UNREALVOXTA_API FVoxtaReplyEndResponse : public FVoxtaBaseResponse
+struct  FVoxtaReplyEndResponse : public FVoxtaBaseResponse
 {
 	GENERATED_BODY()
 
@@ -174,7 +174,7 @@ struct UNREALVOXTA_API FVoxtaReplyEndResponse : public FVoxtaBaseResponse
 };
 
 USTRUCT()
-struct UNREALVOXTA_API FVoxtaReplyCancelledResponse : public FVoxtaBaseResponse
+struct  FVoxtaReplyCancelledResponse : public FVoxtaBaseResponse
 {
 	GENERATED_BODY()
 
@@ -185,7 +185,7 @@ struct UNREALVOXTA_API FVoxtaReplyCancelledResponse : public FVoxtaBaseResponse
 };
 
 USTRUCT()
-struct UNREALVOXTA_API FVoxtaChatUpdateResponse : public FVoxtaBaseResponse
+struct  FVoxtaChatUpdateResponse : public FVoxtaBaseResponse
 {
 	GENERATED_BODY()
 

@@ -10,6 +10,6 @@ public class UnrealVoxta : ModuleRules
 
 		PublicDependencyModuleNames.AddRange(["Core", "CoreUObject", "StateTreeModule"]);
 
-		PrivateDependencyModuleNames.AddRange(["Engine", "Json", "JsonUtilities"]);
+		PrivateDependencyModuleNames.AddRange(["Engine", "Json", "JsonUtilities", "SignalR"]);
 	}
 }

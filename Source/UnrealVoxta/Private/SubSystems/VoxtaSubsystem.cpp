@@ -1,9 +1,16 @@
 // Copyright(c) 2026 grrimgrriefer & DZnnah, see LICENSE for details.
 
 #include "SubSystems/VoxtaSubsystem.h"
+
+#include "IHubConnection.h"
 #include "StateTree.h"
 #include "Engine/World.h"
 #include "GameFramework/GameModeBase.h"
+
+const FName UVoxtaSubsystem::CLIENT_NAME = TEXT("UnrealVoxta");
+const FName UVoxtaSubsystem::CLIENT_VERSION = TEXT("0.2.0");
+const FString UVoxtaSubsystem::SEND_MESSAGE_EVENT_NAME = TEXT("SendMessage");
+const FString UVoxtaSubsystem::RECEIVE_MESSAGE_EVENT_NAME = TEXT("ReceiveMessage");
 
 
 #pragma region UGameInstanceSubsystem
@@ -76,7 +83,14 @@ bool UVoxtaSubsystem::IsTickable() const
 }
 #pragma endregion
 
-
+bool UVoxtaSubsystem::TrySend(const FString& message) const
+{
+	ensure(m_hub.IsValid());
+	if (m_hub.IsValid())
+	{
+		m_hub->Invoke(SEND_MESSAGE_EVENT_NAME, message);
+	}
+}
 void UVoxtaSubsystem::OnGameModePostLoginEvent(AGameModeBase* gameMode, APlayerController* newPlayer)
 {
 	if (m_isRunning)
@@ -97,3 +111,4 @@ void UVoxtaSubsystem::OnGameModePostLoginEvent(AGameModeBase* gameMode, APlayerC
 		UE_LOG(LogTemp, Log, TEXT("%s: VoxtaStateTree started."), *GetNameSafe(this));
 	}
 }
+
