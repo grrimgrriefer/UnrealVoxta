@@ -22,9 +22,12 @@ class UVoxtaSocketHandler : public UObject
 	GENERATED_BODY()
 
 public:
+	static const FName CLIENT_NAME;
+	static const FName CLIENT_VERSION;
+
 	void EstablishConnection(const FString& ipv4Address, int port);
 	void Disconnect();
-	bool TrySendThroughSocket(const FString& message) const;
+	bool TrySendPayload(const FString& message) const;
 
 private:
 	static const FString SEND_MESSAGE_EVENT_NAME;

@@ -5,6 +5,8 @@
 #include "SignalRSubsystem.h"
 #include "Engine/Engine.h"
 
+const FName UVoxtaSocketHandler::CLIENT_NAME = TEXT("UnrealVoxta");
+const FName UVoxtaSocketHandler::CLIENT_VERSION = TEXT("0.2.0");
 const FString UVoxtaSocketHandler::SEND_MESSAGE_EVENT_NAME = TEXT("SendMessage");
 const FString UVoxtaSocketHandler::RECEIVE_MESSAGE_EVENT_NAME = TEXT("ReceiveMessage");
 
@@ -34,7 +36,7 @@ void UVoxtaSocketHandler::Disconnect()
 		m_hub->Stop();
 	}
 }
-bool UVoxtaSocketHandler::TrySendThroughSocket(const FString& message) const
+bool UVoxtaSocketHandler::TrySendPayload(const FString& message) const
 {
 	ensure(m_hub.IsValid());
 	if (m_hub.IsValid())

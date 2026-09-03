@@ -2,6 +2,7 @@
 
 #include "VoxtaConnectTask.h"
 #include "StateTreeExecutionContext.h"
+#include "VoxtaSocketHandler.h"
 #include "SubSystems/VoxtaSubsystem.h"
 
 FVoxtaConnectTask::FVoxtaConnectTask()
@@ -15,27 +16,27 @@ const UStruct* FVoxtaConnectTask::GetInstanceDataType() const
 EStateTreeRunStatus FVoxtaConnectTask::EnterState(FStateTreeExecutionContext& context, const FStateTreeTransitionResult& transitions) const
 {
 	FInstanceDataType& instanceData = context.GetInstanceData(*this);
-	UVoxtaSubsystem* voxtaSubsystem = context.GetExternalDataPtr(m_VoxtaSocketHandlerHandle);
-	ensure(voxtaSubsystem);
+	UVoxtaSocketHandler* voxtaSocketHandler = context.GetExternalDataPtr(m_VoxtaSocketHandlerHandle);
+	ensure(voxtaSocketHandler);
 
-	if (!voxtaSubsystem)
+	if (!voxtaSocketHandler)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[VoxtaConnectTask] Failed to resolve UVoxtaSubsystem."));
 		return EStateTreeRunStatus::Failed;
 	}
 
-	const VoxtaUserConfiguration configuration = voxtaSubsystem->GetVoxtaUserConfiguration();
-	voxtaSubsystem->EstablishConnection(configuration.m_VoxtaServerIpv4, configuration.m_VoxtaServerPort);
+	const VoxtaUserConfiguration configuration = VoxtaUserConfiguration(); // TODO: Get configuration out of the event payload
+	voxtaSocketHandler->EstablishConnection(configuration.m_VoxtaServerIpv4, configuration.m_VoxtaServerPort);
 
 	return EStateTreeRunStatus::Running;
 }
 void FVoxtaConnectTask::ExitState(FStateTreeExecutionContext& context, const FStateTreeTransitionResult& transitions) const
 {
-	UVoxtaSubsystem* voxtaSubsystem = context.GetExternalDataPtr(m_VoxtaSocketHandlerHandle);
-	ensure(voxtaSubsystem);
+	UVoxtaSocketHandler* voxtaSocketHandler = context.GetExternalDataPtr(m_VoxtaSocketHandlerHandle);
+	ensure(voxtaSocketHandler);
 
-	if (voxtaSubsystem)
+	if (voxtaSocketHandler)
 	{
-		voxtaSubsystem->Disconnect();
+		voxtaSocketHandler->Disconnect();
 	}
 }

@@ -1,17 +1,13 @@
 // Copyright(c) 2026 grrimgrriefer & DZnnah, see LICENSE for details.
 
 #include "SubSystems/VoxtaSubsystem.h"
-
 #include "IHubConnection.h"
-#include "SignalRSubsystem.h"
 #include "StateTree.h"
+#include "VoxtaSocketHandler.h"
 #include "VoxtaStateTreeTags.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "GameFramework/GameModeBase.h"
-
-const FName UVoxtaSubsystem::CLIENT_NAME = TEXT("UnrealVoxta");
-const FName UVoxtaSubsystem::CLIENT_VERSION = TEXT("0.2.0");
 
 
 #pragma region UGameInstanceSubsystem
@@ -22,6 +18,7 @@ bool UVoxtaSubsystem::ShouldCreateSubsystem(UObject* outer) const
 void UVoxtaSubsystem::Initialize(FSubsystemCollectionBase& collection)
 {
 	Super::Initialize(collection);
+	m_voxtaSocketHandler = NewObject<UVoxtaSocketHandler>(this);
 	FGameModeEvents::GameModePostLoginEvent.AddUObject(this, &UVoxtaSubsystem::OnGameModePostLoginEvent);
 }
 void UVoxtaSubsystem::Deinitialize()
@@ -35,7 +32,7 @@ void UVoxtaSubsystem::Deinitialize()
 		m_isRunning = false;
 		UE_LOG(LogTemp, Log, TEXT("%s: VoxtaStateTree stopped."), *GetNameSafe(this));
 	}
-	Disconnect();
+	m_voxtaSocketHandler->Disconnect();
 	Super::Deinitialize();
 }
 #pragma endregion
@@ -89,6 +86,11 @@ bool UVoxtaSubsystem::IsTickable() const
 const VoxtaUserConfiguration& UVoxtaSubsystem::GetVoxtaUserConfiguration() const
 {
 	return m_voxtaUserConfiguration;
+}
+void UVoxtaSubsystem::EnsureConnectionWithServer() const
+{
+	// TODO check current state if we're authenticated or not (how? huh?)
+	// If not, request connection and/or authentication
 }
 void UVoxtaSubsystem::OnGameModePostLoginEvent(AGameModeBase* gameMode, APlayerController* newPlayer)
 {

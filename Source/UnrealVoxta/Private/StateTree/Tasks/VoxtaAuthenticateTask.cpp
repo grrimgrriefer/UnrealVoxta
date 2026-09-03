@@ -2,6 +2,7 @@
 
 #include "VoxtaAuthenticateTask.h"
 #include "StateTreeExecutionContext.h"
+#include "VoxtaSocketHandler.h"
 #include "RawAPI/VoxtaApiHandler.h"
 
 FVoxtaAuthenticateTask::FVoxtaAuthenticateTask()
@@ -15,17 +16,17 @@ const UStruct* FVoxtaAuthenticateTask::GetInstanceDataType() const
 EStateTreeRunStatus FVoxtaAuthenticateTask::EnterState(FStateTreeExecutionContext& context, const FStateTreeTransitionResult& transitions) const
 {
 	FInstanceDataType& instanceData = context.GetInstanceData(*this);
-	UVoxtaSubsystem* voxtaSubsystem = context.GetExternalDataPtr(m_VoxtaSocketHandlerHandle);
-	ensure(voxtaSubsystem);
+	UVoxtaSocketHandler* voxtaSocketHandler = context.GetExternalDataPtr(m_VoxtaSocketHandlerHandle);
+	ensure(voxtaSocketHandler);
 
-    if (!voxtaSubsystem)
+    if (!voxtaSocketHandler)
     {
         UE_LOG(LogTemp, Error, TEXT("[FVoxtaAuthenticateTask] Failed to resolve UVoxtaSubsystem."));
         return EStateTreeRunStatus::Failed;
     }
 
-	const FString payload = FVoxtaApiHandler::BuildAuthenticatePayload(UVoxtaSubsystem::CLIENT_NAME, UVoxtaSubsystem::CLIENT_VERSION);
-    bool sentRequest = voxtaSubsystem->TrySendThroughSocket(payload);
+	const FString payload = FVoxtaApiHandler::BuildAuthenticatePayload(UVoxtaSocketHandler::CLIENT_NAME, UVoxtaSocketHandler::CLIENT_VERSION);
+    bool sentRequest = voxtaSocketHandler->TrySendPayload(payload);
 
     if (!sentRequest)
     {

@@ -7,6 +7,7 @@
 #include "VoxtaConnectTask.generated.h"
 
 class UVoxtaSocketHandler;
+class UVoxtaSubsystem;
 
 USTRUCT(BlueprintType)
 struct UNREALVOXTA_API FVoxtaConnectTaskInstanceData
@@ -31,5 +32,6 @@ public:
 	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& context, const FStateTreeTransitionResult& transitions) const override;
 	virtual void ExitState(FStateTreeExecutionContext& context, const FStateTreeTransitionResult& transitions) const override;
 
+	TStateTreeExternalDataHandle<UVoxtaSubsystem> m_VoxtaSubSystemHandle;
 	TStateTreeExternalDataHandle<UVoxtaSocketHandler> m_VoxtaSocketHandlerHandle;
 };

@@ -1,8 +1,22 @@
 // Copyright(c) 2026 grrimgrriefer & DZnnah, see LICENSE for details.
 
 #include "SubSystems/ConversationSubsystem.h"
+#include "Engine/GameInstance.h"
+#include "Engine/World.h"
 #include "GameFramework/Pawn.h"
+#include "SubSystems/VoxtaSubsystem.h"
 
+void UConversationSubsystem::PostInitialize()
+{
+	Super::PostInitialize();
+	m_voxtaSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UVoxtaSubsystem>();
+	m_voxtaSubsystem->EnsureConnectionWithServer();
+}
+void UConversationSubsystem::Deinitialize()
+{
+	Super::Deinitialize();
+
+}
 void UConversationSubsystem::RegisterNPC(APawn* npc)
 {
 	if (IsValid(npc))
