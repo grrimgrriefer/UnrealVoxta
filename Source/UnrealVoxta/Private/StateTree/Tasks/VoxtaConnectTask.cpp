@@ -3,7 +3,7 @@
 #include "VoxtaConnectTask.h"
 #include "StateTreeExecutionContext.h"
 #include "VoxtaSocketHandler.h"
-#include "SubSystems/VoxtaSubsystem.h"
+#include "SubSystems/VoxtaStateTreeSubsystem.h"
 
 FVoxtaConnectTask::FVoxtaConnectTask()
 {

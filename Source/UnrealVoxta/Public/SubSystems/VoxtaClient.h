@@ -3,13 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "VoxtaSubsystem.h"
 #include "Engine/GameInstance.h"
 #include "Subsystems/WorldSubsystem.h"
-#include "ConversationSubsystem.generated.h"
+#include "VoxtaClient.generated.h"
 
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnTranscriptEntryAdded, const FText&, const FText&);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnActiveNpcChanged, APawn*);
+
+class UVoxtaStateTreeSubsystem;
 
 /**
  * High-level subsystem for Voxta integration.
@@ -21,7 +22,7 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnActiveNpcChanged, APawn*);
  * Internally relies on the UVoxtaSubsystem to sync with the server.
  */
 UCLASS()
-class UNREALVOXTA_API UConversationSubsystem : public UWorldSubsystem
+class UNREALVOXTA_API UVoxtaClient : public UWorldSubsystem
 {
 	GENERATED_BODY()
 
@@ -48,5 +49,5 @@ private:
 	UPROPERTY(Transient)
 	TArray<TWeakObjectPtr<APawn>> m_registeredNpcs;
 	UPROPERTY(Transient)
-	TWeakObjectPtr<UVoxtaSubsystem> m_voxtaSubsystem;
+	TWeakObjectPtr<UVoxtaStateTreeSubsystem> m_voxtaSubsystem;
 };

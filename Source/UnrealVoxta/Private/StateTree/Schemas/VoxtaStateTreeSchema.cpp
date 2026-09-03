@@ -1,10 +1,10 @@
 // Copyright(c) 2026 grrimgrriefer & DZnnah, see LICENSE for details.
 
 #include "VoxtaStateTreeSchema.h"
-#include "SubSystems/VoxtaSubsystem.h"
 #include "StateTreeConditionBase.h"
 #include "StateTreeEvaluatorBase.h"
 #include "StateTreeTaskBase.h"
+#include "VoxtaSocketHandler.h"
 #include "UObject/Package.h"
 
 const FName UVoxtaStateTreeSchema::m_SocketHandlerName = TEXT("Subsystem");
@@ -29,7 +29,7 @@ bool UVoxtaStateTreeSchema::IsExternalItemAllowed(const UStruct& inStruct) const
 {
 	if (const UClass* itemClass = Cast<const UClass>(&inStruct))
 	{
-		return itemClass->IsChildOf(UGameInstanceSubsystem::StaticClass());
+		return itemClass->IsChildOf(UVoxtaSocketHandler::StaticClass());
 	}
 	return false;
 }

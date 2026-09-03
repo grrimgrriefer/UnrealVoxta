@@ -1,6 +1,6 @@
 // Copyright(c) 2026 grrimgrriefer & DZnnah, see LICENSE for details.
 
-#include "SubSystems/VoxtaSubsystem.h"
+#include "SubSystems/VoxtaStateTreeSubsystem.h"
 #include "IHubConnection.h"
 #include "StateTree.h"
 #include "VoxtaSocketHandler.h"
@@ -11,17 +11,17 @@
 
 
 #pragma region UGameInstanceSubsystem
-bool UVoxtaSubsystem::ShouldCreateSubsystem(UObject* outer) const
+bool UVoxtaStateTreeSubsystem::ShouldCreateSubsystem(UObject* outer) const
 {
 	return GetClass() != StaticClass();
 }
-void UVoxtaSubsystem::Initialize(FSubsystemCollectionBase& collection)
+void UVoxtaStateTreeSubsystem::Initialize(FSubsystemCollectionBase& collection)
 {
 	Super::Initialize(collection);
 	m_voxtaSocketHandler = NewObject<UVoxtaSocketHandler>(this);
-	FGameModeEvents::GameModePostLoginEvent.AddUObject(this, &UVoxtaSubsystem::OnGameModePostLoginEvent);
+	FGameModeEvents::GameModePostLoginEvent.AddUObject(this, &UVoxtaStateTreeSubsystem::OnGameModePostLoginEvent);
 }
-void UVoxtaSubsystem::Deinitialize()
+void UVoxtaStateTreeSubsystem::Deinitialize()
 {
 	FGameModeEvents::GameModePostLoginEvent.RemoveAll(this);
 	if (m_isRunning && IsValid(m_stateTreeAsset))
@@ -39,7 +39,7 @@ void UVoxtaSubsystem::Deinitialize()
 
 
 #pragma region FTickableGameObject
-void UVoxtaSubsystem::Tick(const float deltaTime)
+void UVoxtaStateTreeSubsystem::Tick(const float deltaTime)
 {
 	if (m_lastFrameNumberWeTicked == GFrameCounter)
 	{
@@ -60,39 +60,39 @@ void UVoxtaSubsystem::Tick(const float deltaTime)
 		context.Tick(deltaTime);
 	}
 }
-ETickableTickType UVoxtaSubsystem::GetTickableTickType() const
+ETickableTickType UVoxtaStateTreeSubsystem::GetTickableTickType() const
 {
 	return ETickableTickType::Conditional;
 }
-TStatId UVoxtaSubsystem::GetStatId() const
+TStatId UVoxtaStateTreeSubsystem::GetStatId() const
 {
 	RETURN_QUICK_DECLARE_CYCLE_STAT(UVoxtaSubsystem, STATGROUP_Tickables);
 }
-bool UVoxtaSubsystem::IsTickableWhenPaused() const
+bool UVoxtaStateTreeSubsystem::IsTickableWhenPaused() const
 {
 	return true;
 }
-bool UVoxtaSubsystem::IsTickableInEditor() const
+bool UVoxtaStateTreeSubsystem::IsTickableInEditor() const
 {
 	return false;
 }
-bool UVoxtaSubsystem::IsTickable() const
+bool UVoxtaStateTreeSubsystem::IsTickable() const
 {
 	return !HasAnyFlags(RF_ClassDefaultObject) && m_isRunning && IsValid(m_stateTreeAsset);
 }
 #pragma endregion
 
 
-const VoxtaUserConfiguration& UVoxtaSubsystem::GetVoxtaUserConfiguration() const
+const VoxtaUserConfiguration& UVoxtaStateTreeSubsystem::GetVoxtaUserConfiguration() const
 {
 	return m_voxtaUserConfiguration;
 }
-void UVoxtaSubsystem::EnsureConnectionWithServer() const
+void UVoxtaStateTreeSubsystem::EnsureConnectionWithServer() const
 {
 	// TODO check current state if we're authenticated or not (how? huh?)
 	// If not, request connection and/or authentication
 }
-void UVoxtaSubsystem::OnGameModePostLoginEvent(AGameModeBase* gameMode, APlayerController* newPlayer)
+void UVoxtaStateTreeSubsystem::OnGameModePostLoginEvent(AGameModeBase* gameMode, APlayerController* newPlayer)
 {
 	if (m_isRunning)
 	{
@@ -112,7 +112,7 @@ void UVoxtaSubsystem::OnGameModePostLoginEvent(AGameModeBase* gameMode, APlayerC
 		UE_LOG(LogTemp, Log, TEXT("%s: VoxtaStateTree started."), *GetNameSafe(this));
 	}
 }
-bool UVoxtaSubsystem::TrySendFlowEvent(const FGameplayTag tag)
+bool UVoxtaStateTreeSubsystem::TrySendFlowEvent(const FGameplayTag tag)
 {
 	const UWorld* world = GetWorld();
 

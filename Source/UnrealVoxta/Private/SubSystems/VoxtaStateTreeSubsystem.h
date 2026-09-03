@@ -5,7 +5,7 @@
 #include "Tickable.h"
 #include "StateTreeExecutionContext.h"
 #include "VoxtaUserConfiguration.h"
-#include "VoxtaSubsystem.generated.h"
+#include "VoxtaStateTreeSubsystem.generated.h"
 
 class UStateTree;
 class AGameModeBase;
@@ -18,7 +18,7 @@ class UVoxtaSocketHandler;
  * Is persistent across the entire gameinstance.
  */
 UCLASS(Abstract, Blueprintable)
-class UVoxtaSubsystem : public UGameInstanceSubsystem, public FTickableGameObject
+class UVoxtaStateTreeSubsystem : public UGameInstanceSubsystem, public FTickableGameObject
 {
 	GENERATED_BODY()
 
