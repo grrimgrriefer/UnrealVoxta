@@ -6,7 +6,7 @@
 #include "StateTreeTaskBase.h"
 #include "VoxtaConnectTask.generated.h"
 
-class UVoxtaSubsystem;
+class UVoxtaSocketHandler;
 
 USTRUCT(BlueprintType)
 struct UNREALVOXTA_API FVoxtaConnectTaskInstanceData
@@ -17,7 +17,7 @@ struct UNREALVOXTA_API FVoxtaConnectTaskInstanceData
 /**
  * Handles the lifetime of the connection the VoxtaServer backend.
  */
-USTRUCT(meta = (DisplayName = "Voxta Authenticate", Category = "Voxta"))
+USTRUCT(meta = (DisplayName = "Voxta Connect", Category = "Voxta"))
 struct UNREALVOXTA_API FVoxtaConnectTask : public FStateTreeTaskCommonBase
 {
 	GENERATED_BODY()
@@ -29,6 +29,7 @@ public:
 
 	virtual const UStruct* GetInstanceDataType() const override;
 	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& context, const FStateTreeTransitionResult& transitions) const override;
+	virtual void ExitState(FStateTreeExecutionContext& context, const FStateTreeTransitionResult& transitions) const override;
 
-	TStateTreeExternalDataHandle<UVoxtaSubsystem> m_VoxtaSubsystemHandle;
+	TStateTreeExternalDataHandle<UVoxtaSocketHandler> m_VoxtaSocketHandlerHandle;
 };

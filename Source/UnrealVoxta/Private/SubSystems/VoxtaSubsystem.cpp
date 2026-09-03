@@ -12,8 +12,6 @@
 
 const FName UVoxtaSubsystem::CLIENT_NAME = TEXT("UnrealVoxta");
 const FName UVoxtaSubsystem::CLIENT_VERSION = TEXT("0.2.0");
-const FString UVoxtaSubsystem::SEND_MESSAGE_EVENT_NAME = TEXT("SendMessage");
-const FString UVoxtaSubsystem::RECEIVE_MESSAGE_EVENT_NAME = TEXT("ReceiveMessage");
 
 
 #pragma region UGameInstanceSubsystem
@@ -88,56 +86,9 @@ bool UVoxtaSubsystem::IsTickable() const
 #pragma endregion
 
 
-void UVoxtaSubsystem::EstablishConnection(const FString& ipv4Address, int port)
-{
-	m_hub = GEngine->GetEngineSubsystem<USignalRSubsystem>()->CreateHubConnection(
-		FString::Format(*FString(TEXT("http://{0}:{1}/hub")), {
-			ipv4Address,
-			port
-		}));
-
-	m_hub->OnConnected().AddUObject(this, &UVoxtaSubsystem::OnConnected);
-	m_hub->OnConnectionError().AddUObject(this, &UVoxtaSubsystem::OnConnectionError);
-	m_hub->OnClosed().AddUObject(this, &UVoxtaSubsystem::OnClosed);
-	m_hub->On(RECEIVE_MESSAGE_EVENT_NAME).BindUObject(this, &UVoxtaSubsystem::OnReceivedMessage);
-	m_hub->Start();
-}
-void UVoxtaSubsystem::Disconnect()
-{
-	if (m_hub.IsValid())
-	{
-		m_hub->Stop();
-	}
-}
-bool UVoxtaSubsystem::TrySend(const FString& message) const
-{
-	ensure(m_hub.IsValid());
-	if (m_hub.IsValid())
-	{
-		m_hub->Invoke(SEND_MESSAGE_EVENT_NAME, message);
-		return true;
-	}
-	return false;
-}
 const VoxtaUserConfiguration& UVoxtaSubsystem::GetVoxtaUserConfiguration() const
 {
 	return m_voxtaUserConfiguration;
-}
-void UVoxtaSubsystem::OnConnected()
-{
-	TrySendFlowEvent(TAG_Voxta_Socket_Connected);
-}
-void UVoxtaSubsystem::OnConnectionError(const FString& String)
-{
-	TrySendFlowEvent(TAG_Voxta_Socket_ConnectionError);
-}
-void UVoxtaSubsystem::OnClosed()
-{
-	TrySendFlowEvent(TAG_Voxta_Socket_Closed);
-}
-void UVoxtaSubsystem::OnReceivedMessage(const TArray<FSignalRValue>& payload)
-{
-	// TODO generic deserializeation
 }
 void UVoxtaSubsystem::OnGameModePostLoginEvent(AGameModeBase* gameMode, APlayerController* newPlayer)
 {

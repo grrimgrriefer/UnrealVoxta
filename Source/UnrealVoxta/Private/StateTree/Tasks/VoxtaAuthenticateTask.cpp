@@ -3,7 +3,6 @@
 #include "VoxtaAuthenticateTask.h"
 #include "StateTreeExecutionContext.h"
 #include "RawAPI/VoxtaApiHandler.h"
-#include "SubSystems/VoxtaSubsystem.h"
 
 FVoxtaAuthenticateTask::FVoxtaAuthenticateTask()
 {
@@ -16,7 +15,7 @@ const UStruct* FVoxtaAuthenticateTask::GetInstanceDataType() const
 EStateTreeRunStatus FVoxtaAuthenticateTask::EnterState(FStateTreeExecutionContext& context, const FStateTreeTransitionResult& transitions) const
 {
 	FInstanceDataType& instanceData = context.GetInstanceData(*this);
-	UVoxtaSubsystem* voxtaSubsystem = context.GetExternalDataPtr(m_VoxtaSubsystemHandle);
+	UVoxtaSubsystem* voxtaSubsystem = context.GetExternalDataPtr(m_VoxtaSocketHandlerHandle);
 	ensure(voxtaSubsystem);
 
     if (!voxtaSubsystem)
@@ -26,7 +25,7 @@ EStateTreeRunStatus FVoxtaAuthenticateTask::EnterState(FStateTreeExecutionContex
     }
 
 	const FString payload = FVoxtaApiHandler::BuildAuthenticatePayload(UVoxtaSubsystem::CLIENT_NAME, UVoxtaSubsystem::CLIENT_VERSION);
-    bool sentRequest = voxtaSubsystem->TrySend(payload);
+    bool sentRequest = voxtaSubsystem->TrySendThroughSocket(payload);
 
     if (!sentRequest)
     {

@@ -19,7 +19,7 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnActiveNpcChanged, APawn*);
  * Internally relies on the UVoxtaSubsystem to sync with the server.
  * You can use that one directly if needed, and if you know what you're doing.
  */
-UCLASS(Abstract, Blueprintable)
+UCLASS()
 class UNREALVOXTA_API UConversationSubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()

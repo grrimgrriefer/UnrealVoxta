@@ -15,7 +15,7 @@ const UStruct* FVoxtaConnectTask::GetInstanceDataType() const
 EStateTreeRunStatus FVoxtaConnectTask::EnterState(FStateTreeExecutionContext& context, const FStateTreeTransitionResult& transitions) const
 {
 	FInstanceDataType& instanceData = context.GetInstanceData(*this);
-	UVoxtaSubsystem* voxtaSubsystem = context.GetExternalDataPtr(m_VoxtaSubsystemHandle);
+	UVoxtaSubsystem* voxtaSubsystem = context.GetExternalDataPtr(m_VoxtaSocketHandlerHandle);
 	ensure(voxtaSubsystem);
 
 	if (!voxtaSubsystem)
@@ -28,4 +28,14 @@ EStateTreeRunStatus FVoxtaConnectTask::EnterState(FStateTreeExecutionContext& co
 	voxtaSubsystem->EstablishConnection(configuration.m_VoxtaServerIpv4, configuration.m_VoxtaServerPort);
 
 	return EStateTreeRunStatus::Running;
+}
+void FVoxtaConnectTask::ExitState(FStateTreeExecutionContext& context, const FStateTreeTransitionResult& transitions) const
+{
+	UVoxtaSubsystem* voxtaSubsystem = context.GetExternalDataPtr(m_VoxtaSocketHandlerHandle);
+	ensure(voxtaSubsystem);
+
+	if (voxtaSubsystem)
+	{
+		voxtaSubsystem->Disconnect();
+	}
 }

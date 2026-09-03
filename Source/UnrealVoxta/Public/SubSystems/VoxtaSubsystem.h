@@ -1,25 +1,22 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "SignalRValue.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "Tickable.h"
 #include "StateTreeExecutionContext.h"
 #include "VoxtaUserConfiguration.h"
+#include "VoxtaSocketHandler.h"
 #include "VoxtaSubsystem.generated.h"
 
-class IHubConnection;
 class UStateTree;
 class AGameModeBase;
 
 /**
  * Low-level subsystem for Voxta integration in the game.
- * Owns the connection socket to the VoxtaServer and the StateTree that dictates and syncs
- * with the VoxtaServer backend.
+ * Owns and controls the internal StateTree which dictates the communication between the game
+ * and the VoxtaServer.
  *
  * Is persistent across the entire gameinstance.
- *
- * Only use this if you know what you're doing, for a simplified API, see UConversationSubsystem.
  */
 UCLASS(Abstract, Blueprintable)
 class UNREALVOXTA_API UVoxtaSubsystem : public UGameInstanceSubsystem, public FTickableGameObject
@@ -45,30 +42,21 @@ public:
 	virtual bool IsTickable() const override;
 #pragma endregion
 
-	void EstablishConnection(const FString& ipv4Address, int port);
-	void Disconnect();
-	bool TrySend(const FString& message) const;
 	const VoxtaUserConfiguration& GetVoxtaUserConfiguration() const;
 
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Voxta", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Voxta", meta=(RequiredAssetDataTags="Schema=UVoxtaTreeSchema"))
 	TObjectPtr<UStateTree> m_stateTreeAsset;
 
 private:
-	static const FString SEND_MESSAGE_EVENT_NAME;
-	static const FString RECEIVE_MESSAGE_EVENT_NAME;
-
-	void OnConnected();
-	void OnConnectionError(const FString& String);
-	void OnClosed();
-	void OnReceivedMessage(const TArray<FSignalRValue>& payload);
 	void OnGameModePostLoginEvent(AGameModeBase* gameMode, APlayerController* newPlayer);
 	bool TrySendFlowEvent(FGameplayTag tag);
 
 	UPROPERTY()
 	FStateTreeInstanceData m_instanceData;
+	UPROPERTY()
+	UVoxtaSocketHandler m_voxtaSocketHandler;
 
-	TSharedPtr<IHubConnection> m_hub;
 	VoxtaUserConfiguration m_voxtaUserConfiguration;
 
 	uint32 m_lastFrameNumberWeTicked = INDEX_NONE;
