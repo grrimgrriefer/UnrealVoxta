@@ -3,51 +3,29 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Engine/GameInstance.h"
-#include "Subsystems/WorldSubsystem.h"
+#include "UObject/Interface.h"
 #include "VoxtaClient.generated.h"
 
-DECLARE_MULTICAST_DELEGATE_TwoParams(FOnTranscriptEntryAdded, const FText&, const FText&);
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnActiveNpcChanged, APawn*);
+struct FVoxtaUserConfiguration;
 
-class UVoxtaStateTreeSubsystem;
+UINTERFACE()
+class UVoxtaClient : public UInterface
+{
+	GENERATED_BODY()
+};
 
 /**
- * High-level subsystem for Voxta integration.
- * Provides public-facing API for generic interactions with objects in the level.
- * (e.g. start conversations, register npcs, send messages, etc.)
+ * Lower-level subsystem for Voxta integration.
  *
- * Is persistent within the loaded level.
- *
- * Internally relies on the UVoxtaSubsystem to sync with the server.
+ * Can be used if you don't intend on using APawns to map VoxtaCharacters onto via the UCharacterSubsystem.
  */
-UCLASS()
-class UNREALVOXTA_API UVoxtaClient : public UWorldSubsystem
+class UNREALVOXTA_API IVoxtaClient
 {
 	GENERATED_BODY()
 
 public:
-	FOnTranscriptEntryAdded m_OnTranscriptEntryAdded;
-	FOnActiveNpcChanged m_OnCurrentConversableNpcChanged;
+	static IVoxtaClient* Get(const UObject* worldContextObject);
 
-	virtual void PostInitialize() override;
-	virtual void Deinitialize() override;
-
-	void RegisterNPC(APawn* npc);
-	void UnregisterNPC(APawn* npc);
-
-	void StartConversation(APawn* npc);
-	void SubmitMessageFromPlayer(const FText& messageText) const;
-
-	APawn* GetCurrentConversationNpc() const;
-	bool IsInOngoingConversation() const;
-	APawn* TryGetNearestNPC(const APawn* player) const;
-
-private:
-	UPROPERTY(Transient)
-	TWeakObjectPtr<APawn> m_activeNpc = nullptr;
-	UPROPERTY(Transient)
-	TArray<TWeakObjectPtr<APawn>> m_registeredNpcs;
-	UPROPERTY(Transient)
-	TWeakObjectPtr<UVoxtaStateTreeSubsystem> m_voxtaSubsystem;
+	virtual const FVoxtaUserConfiguration& GetVoxtaUserConfiguration() const;
+	virtual void EnsureConnectionWithServer() const = 0;
 };

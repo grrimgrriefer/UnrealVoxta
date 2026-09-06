@@ -4,13 +4,13 @@
 #include "StateTreeConditionBase.h"
 #include "StateTreeEvaluatorBase.h"
 #include "StateTreeTaskBase.h"
-#include "VoxtaSocketHandler.h"
+#include "RawAPI/VoxtaApiHandler.h"
 #include "UObject/Package.h"
 
 const FName UVoxtaStateTreeSchema::m_SocketHandlerName = TEXT("Subsystem");
 
 UVoxtaStateTreeSchema::UVoxtaStateTreeSchema() : m_socketHandlerData(m_SocketHandlerName,
-																UVoxtaSocketHandler::StaticClass(),
+																UVoxtaApiHandler::StaticClass(),
 																FGuid::NewDeterministicGuid(m_SocketHandlerName.ToString()))
 {
 	m_contextDescs = { m_socketHandlerData };
@@ -29,7 +29,7 @@ bool UVoxtaStateTreeSchema::IsExternalItemAllowed(const UStruct& inStruct) const
 {
 	if (const UClass* itemClass = Cast<const UClass>(&inStruct))
 	{
-		return itemClass->IsChildOf(UVoxtaSocketHandler::StaticClass());
+		return itemClass->IsChildOf(UVoxtaApiHandler::StaticClass());
 	}
 	return false;
 }

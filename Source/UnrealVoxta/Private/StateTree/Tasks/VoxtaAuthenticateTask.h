@@ -6,7 +6,7 @@
 #include "StateTreeTaskBase.h"
 #include "VoxtaAuthenticateTask.generated.h"
 
-class UVoxtaSocketHandler;
+class UVoxtaApiHandler;
 
 USTRUCT(BlueprintType)
 struct UNREALVOXTA_API FVoxtaAuthenticateTaskInstanceData
@@ -33,5 +33,5 @@ public:
 	virtual const UStruct* GetInstanceDataType() const override;
 	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& context, const FStateTreeTransitionResult& transitions) const override;
 
-	TStateTreeExternalDataHandle<UVoxtaSocketHandler> m_VoxtaSocketHandlerHandle;
+	TStateTreeExternalDataHandle<UVoxtaApiHandler> m_VoxtaApiHandlerHandle;
 };

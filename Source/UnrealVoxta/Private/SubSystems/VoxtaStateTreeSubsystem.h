@@ -5,11 +5,12 @@
 #include "Tickable.h"
 #include "StateTreeExecutionContext.h"
 #include "VoxtaUserConfiguration.h"
+#include "SubSystems/VoxtaClient.h"
 #include "VoxtaStateTreeSubsystem.generated.h"
 
 class UStateTree;
 class AGameModeBase;
-class UVoxtaSocketHandler;
+class UVoxtaApiHandler;
 
 /**
  * Holds the persistent StateTree that manages the Voxta integration.
@@ -18,7 +19,7 @@ class UVoxtaSocketHandler;
  * Is persistent across the entire gameinstance.
  */
 UCLASS(Abstract, Blueprintable)
-class UVoxtaStateTreeSubsystem : public UGameInstanceSubsystem, public FTickableGameObject
+class UVoxtaStateTreeSubsystem : public UGameInstanceSubsystem, public FTickableGameObject, public IVoxtaClient
 {
 	GENERATED_BODY()
 
@@ -38,8 +39,10 @@ public:
 	virtual bool IsTickable() const override;
 #pragma endregion
 
-	const VoxtaUserConfiguration& GetVoxtaUserConfiguration() const;
-	void EnsureConnectionWithServer() const;
+#pragma region IVoxtaClient
+	virtual const FVoxtaUserConfiguration& GetVoxtaUserConfiguration() const override;
+	virtual void EnsureConnectionWithServer() const override;
+#pragma endregion
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Voxta", meta=(RequiredAssetDataTags="Schema=UVoxtaTreeSchema"))
@@ -52,9 +55,9 @@ private:
 	UPROPERTY()
 	FStateTreeInstanceData m_instanceData;
 	UPROPERTY()
-	TObjectPtr<UVoxtaSocketHandler> m_voxtaSocketHandler;
-
-	VoxtaUserConfiguration m_voxtaUserConfiguration;
+	FVoxtaUserConfiguration m_voxtaUserConfiguration;
+	UPROPERTY()
+	TObjectPtr<UVoxtaApiHandler> m_voxtaApiHandler;
 
 	uint32 m_lastFrameNumberWeTicked = INDEX_NONE;
 	bool m_isRunning = false;

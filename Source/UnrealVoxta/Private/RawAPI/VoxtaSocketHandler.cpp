@@ -5,8 +5,6 @@
 #include "SignalRSubsystem.h"
 #include "Engine/Engine.h"
 
-const FName UVoxtaSocketHandler::CLIENT_NAME = TEXT("UnrealVoxta");
-const FName UVoxtaSocketHandler::CLIENT_VERSION = TEXT("0.2.0");
 const FString UVoxtaSocketHandler::SEND_MESSAGE_EVENT_NAME = TEXT("SendMessage");
 const FString UVoxtaSocketHandler::RECEIVE_MESSAGE_EVENT_NAME = TEXT("ReceiveMessage");
 
@@ -24,7 +22,7 @@ void UVoxtaSocketHandler::EstablishConnection(const FString& ipv4Address, int po
 	m_hub->On(RECEIVE_MESSAGE_EVENT_NAME).BindUObject(this, &UVoxtaSocketHandler::OnReceivedMessage);
 	m_hub->Start();
 }
-void UVoxtaSocketHandler::Disconnect()
+void UVoxtaSocketHandler::Disconnect() const
 {
 	m_hub->OnConnected().RemoveAll(this);
 	m_hub->OnConnectionError().RemoveAll(this);

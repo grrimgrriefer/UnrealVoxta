@@ -1,6 +1,6 @@
 ## Elements
-* External: The invoking code outside the plugin. Can be anything but must be running on the gamethread.
-* IVoxtaClient: The public-facing API of the plugin. Physically lives on the UVoxtaStateTreeSubsystem but hides derived functionality from the subsystem itself.
+* UCharacterSubsystem: The public-facing 'high level' API of the plugin. Provides utility to control the behavior of APawns in the level and trigger them to do general things that utilize Voxta integration. (e.g. start conversations, decide where in the level to move towards based on 'mood' and 'points of interest' in the level, etc...)
+* IVoxtaClient: The public-facing 'lower level' API of the plugin. Physically lives on the UVoxtaStateTreeSubsystem but hides derived functionality from the subsystem itself.
 * UVoxtaStateTreeSubsystem: Main 'container' that persists across the entire gameinstance and effectively holds all (sub)components either directly or indirectly. Important: Takes zero action by itself, only forwards Interface requests to it's statetree.
   * Holds the StateTree component and thus indirectly owns all its tasks.
   * Holds the UserConfigData compoment and thus, which itself contains the user provided ipv4 and port for the VoxtaServer host.
@@ -17,10 +17,8 @@ config:
   theme: dark
 ---
 sequenceDiagram
-
-	participant External
-
-	External->>+IVoxtaClient: Ensure connection
+	Note over UCharacterSubsystem,IVoxtaClient: Public facing API
+	UCharacterSubsystem->>+IVoxtaClient: Ensure connection
 
 	alt any first request while disconnected
 		UVoxtaStateTreeSubsystem->>+UVoxtaStateTreeSubsystem: Check current status: disconnected
@@ -63,7 +61,7 @@ sequenceDiagram
 		Note over IVoxtaClient: Broadcast states update: Idle
 	end
 
-	External->>+IVoxtaClient: Get character list
+	UCharacterSubsystem->>+IVoxtaClient: Get character list
 
-	IVoxtaClient->>+External: Provide list of available characters
+	IVoxtaClient->>+UCharacterSubsystem: Provide list of available characters
 ```

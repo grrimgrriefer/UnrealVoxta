@@ -22,11 +22,8 @@ class UVoxtaSocketHandler : public UObject
 	GENERATED_BODY()
 
 public:
-	static const FName CLIENT_NAME;
-	static const FName CLIENT_VERSION;
-
 	void EstablishConnection(const FString& ipv4Address, int port);
-	void Disconnect();
+	void Disconnect() const;
 	bool TrySendPayload(const FString& message) const;
 
 private:

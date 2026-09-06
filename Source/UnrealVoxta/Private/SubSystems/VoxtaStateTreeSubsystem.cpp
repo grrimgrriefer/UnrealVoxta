@@ -3,7 +3,7 @@
 #include "SubSystems/VoxtaStateTreeSubsystem.h"
 #include "IHubConnection.h"
 #include "StateTree.h"
-#include "VoxtaSocketHandler.h"
+#include "RawAPI/VoxtaApiHandler.h"
 #include "VoxtaStateTreeTags.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
@@ -18,7 +18,7 @@ bool UVoxtaStateTreeSubsystem::ShouldCreateSubsystem(UObject* outer) const
 void UVoxtaStateTreeSubsystem::Initialize(FSubsystemCollectionBase& collection)
 {
 	Super::Initialize(collection);
-	m_voxtaSocketHandler = NewObject<UVoxtaSocketHandler>(this);
+	m_voxtaApiHandler = NewObject<UVoxtaApiHandler>(this);
 	FGameModeEvents::GameModePostLoginEvent.AddUObject(this, &UVoxtaStateTreeSubsystem::OnGameModePostLoginEvent);
 }
 void UVoxtaStateTreeSubsystem::Deinitialize()
@@ -32,7 +32,7 @@ void UVoxtaStateTreeSubsystem::Deinitialize()
 		m_isRunning = false;
 		UE_LOG(LogTemp, Log, TEXT("%s: VoxtaStateTree stopped."), *GetNameSafe(this));
 	}
-	m_voxtaSocketHandler->Disconnect();
+	m_voxtaApiHandler->Disconnect();
 	Super::Deinitialize();
 }
 #pragma endregion
@@ -83,7 +83,7 @@ bool UVoxtaStateTreeSubsystem::IsTickable() const
 #pragma endregion
 
 
-const VoxtaUserConfiguration& UVoxtaStateTreeSubsystem::GetVoxtaUserConfiguration() const
+const FVoxtaUserConfiguration& UVoxtaStateTreeSubsystem::GetVoxtaUserConfiguration() const
 {
 	return m_voxtaUserConfiguration;
 }

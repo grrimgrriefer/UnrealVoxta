@@ -2,7 +2,6 @@
 
 #include "VoxtaAuthenticateTask.h"
 #include "StateTreeExecutionContext.h"
-#include "VoxtaSocketHandler.h"
 #include "RawAPI/VoxtaApiHandler.h"
 
 FVoxtaAuthenticateTask::FVoxtaAuthenticateTask()
@@ -16,7 +15,7 @@ const UStruct* FVoxtaAuthenticateTask::GetInstanceDataType() const
 EStateTreeRunStatus FVoxtaAuthenticateTask::EnterState(FStateTreeExecutionContext& context, const FStateTreeTransitionResult& transitions) const
 {
 	FInstanceDataType& instanceData = context.GetInstanceData(*this);
-	UVoxtaSocketHandler* voxtaSocketHandler = context.GetExternalDataPtr(m_VoxtaSocketHandlerHandle);
+	UVoxtaApiHandler* voxtaSocketHandler = context.GetExternalDataPtr(m_VoxtaApiHandlerHandle);
 	ensure(voxtaSocketHandler);
 
     if (!voxtaSocketHandler)
@@ -25,9 +24,7 @@ EStateTreeRunStatus FVoxtaAuthenticateTask::EnterState(FStateTreeExecutionContex
         return EStateTreeRunStatus::Failed;
     }
 
-	const FString payload = FVoxtaApiHandler::BuildAuthenticatePayload(UVoxtaSocketHandler::CLIENT_NAME, UVoxtaSocketHandler::CLIENT_VERSION);
-    bool sentRequest = voxtaSocketHandler->TrySendPayload(payload);
-
+    bool sentRequest = voxtaSocketHandler->TrySendAuthenticatePayload(UVoxtaApiHandler::CLIENT_NAME, UVoxtaApiHandler::CLIENT_VERSION);
     if (!sentRequest)
     {
         UE_LOG(LogTemp, Warning, TEXT("[FVoxtaAuthenticateTask] Authenticate request failed to initiate."));

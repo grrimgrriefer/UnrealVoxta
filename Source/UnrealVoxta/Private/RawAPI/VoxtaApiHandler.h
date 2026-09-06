@@ -3,22 +3,37 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "UObject/Object.h"
 #include "VoxtaPayloads.h"
+#include "VoxtaApiHandler.generated.h"
+
+class UVoxtaSocketHandler;
 
 /**
+ * Lower level API, internal use only.
+ * Owns the socket connection and handles the translation (serialization/deserialization) of requests and responses
+ * between strongly-typed objects and raw string SignalR messages.
  * Helper class to serialize requests and deserialize responses using VoxtaPayloads.
  */
-class FVoxtaApiHandler
+UCLASS()
+class UVoxtaApiHandler : public UObject
 {
-public:
-	// Request Builders
-	static FString BuildAuthenticatePayload(const FName& clientName, const FName& version);
-	static FString BuildLoadCharactersPayload();
-	static FString BuildStartChatPayload(const FString& characterId);
-	static FString BuildStopChatPayload(const FString& sessionId);
-	static FString BuildSendTextMessagePayload(const FString& sessionId, const FString& text);
+	GENERATED_BODY()
 
-	// Response Parsers
+public:
+	static const FName CLIENT_NAME;
+	static const FName CLIENT_VERSION;
+
+	void EstablishConnection(const FString& ipv4Address, int port) const;
+	void Disconnect() const;
+
+	bool TrySendAuthenticatePayload(const FName& clientName, const FName& version) const;
+	bool TrySendLoadCharactersPayload() const;
+	bool TrySendStartChatPayload(const FString& characterId) const;
+	bool TrySendStopChatPayload(const FString& sessionId) const;
+	bool TrySendSendTextMessagePayload(const FString& sessionId, const FString& text) const;
+
+private:
 	static bool TryExtractAction(const FString& jsonString, FString& outAction);
 	static bool ParseWelcomeResponse(const FString& jsonString, FVoxtaWelcomeResponse& outResponse);
 	static bool ParseCharacterListLoadedResponse(const FString& jsonString, FVoxtaCharacterListLoadedResponse& outResponse);
@@ -29,4 +44,7 @@ public:
 	static bool ParseReplyEndResponse(const FString& jsonString, FVoxtaReplyEndResponse& outResponse);
 	static bool ParseReplyCancelledResponse(const FString& jsonString, FVoxtaReplyCancelledResponse& outResponse);
 	static bool ParseChatUpdateResponse(const FString& jsonString, FVoxtaChatUpdateResponse& outResponse);
+
+	UPROPERTY()
+	TObjectPtr<UVoxtaSocketHandler> m_voxtaSocketHandler;
 };
