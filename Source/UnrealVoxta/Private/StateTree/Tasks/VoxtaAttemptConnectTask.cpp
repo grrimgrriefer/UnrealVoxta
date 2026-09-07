@@ -5,10 +5,6 @@
 #include "RawAPI/VoxtaApiHandler.h"
 #include "SubSystems/VoxtaStateTreeSubsystem.h"
 
-FVoxtaAttemptConnectTask::FVoxtaAttemptConnectTask()
-{
-	bShouldCallTick = false;
-}
 const UStruct* FVoxtaAttemptConnectTask::GetInstanceDataType() const
 {
 	return FInstanceDataType::StaticStruct();

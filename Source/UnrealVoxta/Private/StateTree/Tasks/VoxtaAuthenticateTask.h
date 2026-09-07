@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "StateTreeTaskBase.h"
+#include "VoxtaBaseTask.h"
 #include "VoxtaAuthenticateTask.generated.h"
 
 class UVoxtaApiHandler;
@@ -21,17 +21,19 @@ struct UNREALVOXTA_API FVoxtaAuthenticateTaskInstanceData
  * Handles the lifetime of the authenticated session with the VoxtaServer backend.
  */
 USTRUCT(meta = (DisplayName = "Voxta Authenticate", Category = "Voxta"))
-struct UNREALVOXTA_API FVoxtaAuthenticateTask : public FStateTreeTaskCommonBase
+struct UNREALVOXTA_API FVoxtaAuthenticateTask : public FVoxtaBaseTask
 {
 	GENERATED_BODY()
 
 public:
 	using FInstanceDataType = FVoxtaAuthenticateTaskInstanceData;
 
-	FVoxtaAuthenticateTask();
-
 	virtual const UStruct* GetInstanceDataType() const override;
 	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& context, const FStateTreeTransitionResult& transitions) const override;
 
+protected:
+	virtual VoxtaClientState GetStateForTask(FStateTreeExecutionContext& context) const override { return VoxtaClientState::AttemptingToAuthenticate; }
+
+private:
 	TStateTreeExternalDataHandle<UVoxtaApiHandler> m_VoxtaApiHandlerHandle;
 };

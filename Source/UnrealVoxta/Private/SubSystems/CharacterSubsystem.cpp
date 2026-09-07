@@ -1,6 +1,7 @@
 // Copyright(c) 2026 grrimgrriefer & DZnnah, see LICENSE for details.
 
 #include "SubSystems/CharacterSubsystem.h"
+#include "VoxtaClientState.h"
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
 #include "SubSystems/VoxtaStateTreeSubsystem.h"
@@ -9,7 +10,10 @@ void UCharacterSubsystem::PostInitialize()
 {
 	Super::PostInitialize();
 	m_voxtaSubsystem = IVoxtaClient::Get(GetWorld());
-	m_voxtaSubsystem->EnsureConnectionWithServer();
+	if (m_voxtaSubsystem->GetStates().Contains(VoxtaClientState::Authenticated))
+	{
+		m_voxtaSubsystem->EnsureConnectionWithServer();
+	}
 }
 void UCharacterSubsystem::Deinitialize()
 {

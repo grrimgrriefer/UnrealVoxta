@@ -4,10 +4,6 @@
 #include "StateTreeExecutionContext.h"
 #include "RawAPI/VoxtaApiHandler.h"
 
-FVoxtaAuthenticateTask::FVoxtaAuthenticateTask()
-{
-	bShouldCallTick = false;
-}
 const UStruct* FVoxtaAuthenticateTask::GetInstanceDataType() const
 {
     return FInstanceDataType::StaticStruct();

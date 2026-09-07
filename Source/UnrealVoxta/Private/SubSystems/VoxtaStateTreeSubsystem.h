@@ -40,9 +40,13 @@ public:
 #pragma endregion
 
 #pragma region IVoxtaClient
-	virtual const FVoxtaUserConfiguration& GetVoxtaUserConfiguration() const override;
+	virtual const TSet<VoxtaClientState>& GetStates() const override;
+	virtual const FVoxtaUserConfiguration& GetUserConfiguration() const override;
 	virtual void EnsureConnectionWithServer() const override;
 #pragma endregion
+
+	bool TryMarkNewStateActive(VoxtaClientState voxtaClientState);
+	bool TryMarkStateInactive(VoxtaClientState voxtaClientState);
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Voxta", meta=(RequiredAssetDataTags="Schema=UVoxtaTreeSchema"))
@@ -61,4 +65,5 @@ private:
 
 	uint32 m_lastFrameNumberWeTicked = INDEX_NONE;
 	bool m_isRunning = false;
+	TSet<VoxtaClientState> m_currentStates;
 };

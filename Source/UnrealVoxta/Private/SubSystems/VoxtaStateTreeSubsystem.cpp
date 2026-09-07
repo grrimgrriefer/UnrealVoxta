@@ -4,7 +4,7 @@
 #include "IHubConnection.h"
 #include "StateTree.h"
 #include "RawAPI/VoxtaApiHandler.h"
-#include "VoxtaStateTreeTags.h"
+#include "StateTree/VoxtaStateTreeTags.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "GameFramework/GameModeBase.h"
@@ -83,7 +83,12 @@ bool UVoxtaStateTreeSubsystem::IsTickable() const
 #pragma endregion
 
 
-const FVoxtaUserConfiguration& UVoxtaStateTreeSubsystem::GetVoxtaUserConfiguration() const
+#pragma region IVoxtaClient
+const TSet<VoxtaClientState>& UVoxtaStateTreeSubsystem::GetStates() const
+{
+	return m_currentStates;
+}
+const FVoxtaUserConfiguration& UVoxtaStateTreeSubsystem::GetUserConfiguration() const
 {
 	return m_voxtaUserConfiguration;
 }
@@ -91,6 +96,19 @@ void UVoxtaStateTreeSubsystem::EnsureConnectionWithServer() const
 {
 	// TODO check current state if we're authenticated or not (how? huh?)
 	// If not, request connection and/or authentication
+}
+#pragma endregion
+
+
+bool UVoxtaStateTreeSubsystem::TryMarkNewStateActive(VoxtaClientState voxtaClientState)
+{
+	bool alreadyActive = false;
+	m_currentStates.Emplace(voxtaClientState, &alreadyActive);
+	return !alreadyActive;
+}
+bool UVoxtaStateTreeSubsystem::TryMarkStateInactive(VoxtaClientState voxtaClientState)
+{
+	return m_currentStates.Remove(voxtaClientState) > 0;
 }
 void UVoxtaStateTreeSubsystem::OnGameModePostLoginEvent(AGameModeBase* gameMode, APlayerController* newPlayer)
 {

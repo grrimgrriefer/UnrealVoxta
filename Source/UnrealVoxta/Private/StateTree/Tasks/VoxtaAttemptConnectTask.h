@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "StateTreeTaskBase.h"
+#include "VoxtaBaseTask.h"
 #include "VoxtaUserConfiguration.h"
 #include "VoxtaAttemptConnectTask.generated.h"
 
@@ -31,17 +31,19 @@ struct UNREALVOXTA_API FVoxtaConnectTaskInstanceData
  * Handles the lifetime of the connection the VoxtaServer backend.
  */
 USTRUCT(meta = (DisplayName = "Voxta Connect", Category = "Voxta"))
-struct UNREALVOXTA_API FVoxtaAttemptConnectTask : public FStateTreeTaskCommonBase
+struct UNREALVOXTA_API FVoxtaAttemptConnectTask : public FVoxtaBaseTask
 {
 	GENERATED_BODY()
 
 public:
 	using FInstanceDataType = FVoxtaConnectTaskInstanceData;
 
-	FVoxtaAttemptConnectTask();
-
 	virtual const UStruct* GetInstanceDataType() const override;
 	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& context, const FStateTreeTransitionResult& transitions) const override;
 
+protected:
+	virtual VoxtaClientState GetStateForTask(FStateTreeExecutionContext& context) const override { return VoxtaClientState::AttemptingToConnect; }
+
+private:
 	TStateTreeExternalDataHandle<UVoxtaApiHandler> m_VoxtaApiHandlerHandle;
 };

@@ -7,6 +7,7 @@
 #include "VoxtaClient.generated.h"
 
 struct FVoxtaUserConfiguration;
+enum class VoxtaClientState : uint8;
 
 UINTERFACE()
 class UVoxtaClient : public UInterface
@@ -26,6 +27,7 @@ class UNREALVOXTA_API IVoxtaClient
 public:
 	static IVoxtaClient* Get(const UObject* worldContextObject);
 
-	virtual const FVoxtaUserConfiguration& GetVoxtaUserConfiguration() const;
+	virtual const TSet<VoxtaClientState>& GetStates() const = 0;
+	virtual const FVoxtaUserConfiguration& GetUserConfiguration() const = 0;
 	virtual void EnsureConnectionWithServer() const = 0;
 };
