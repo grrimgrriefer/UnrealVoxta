@@ -11,6 +11,11 @@ const UStruct* FVoxtaTryConnectTask::GetInstanceDataType() const
 }
 EStateTreeRunStatus FVoxtaTryConnectTask::EnterState(FStateTreeExecutionContext& context, const FStateTreeTransitionResult& transitions) const
 {
+	if (Super::EnterState(context, transitions) == EStateTreeRunStatus::Failed)
+	{
+		return EStateTreeRunStatus::Failed;
+	}
+
 	FInstanceDataType& instanceData = context.GetInstanceData(*this);
 	UVoxtaApiHandler* voxtaSocketHandler = context.GetExternalDataPtr(m_VoxtaApiHandlerHandle);
 	ensure(voxtaSocketHandler);

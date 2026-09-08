@@ -16,17 +16,20 @@ class UNREALVOXTA_API UVoxtaStateTreeSchema : public UStateTreeSchema
 	GENERATED_BODY()
 
 public:
+	static const FName VOXTA_API_HANDLER_NAME;
+	static const FName VOXTA_STATE_TREE_SUBSYSTEM_NAME;
+
 	UVoxtaStateTreeSchema();
 
 	virtual TConstArrayView<FStateTreeExternalDataDesc> GetContextDataDescs() const override;
 	virtual bool IsStructAllowed(const UScriptStruct* inScriptStruct) const override;
 	virtual bool IsExternalItemAllowed(const UStruct& inStruct) const override;
 
-	static const FName m_SocketHandlerName;
-
 protected:
 	UPROPERTY()
 	FStateTreeExternalDataDesc m_socketHandlerData;
+	UPROPERTY()
+	FStateTreeExternalDataDesc m_voxtaSubsystemData;
 
 	TArray<FStateTreeExternalDataDesc> m_contextDescs;
 };

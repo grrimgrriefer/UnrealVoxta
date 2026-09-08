@@ -29,7 +29,7 @@ public:
 	FOnActiveNpcChanged m_OnCurrentConversableNpcChanged;
 
 	virtual bool ShouldCreateSubsystem(UObject* outer) const override;
-	virtual void PostInitialize() override;
+    virtual void OnWorldBeginPlay(UWorld& InWorld) override;
 	virtual void Deinitialize() override;
 
 	void RegisterNPC(APawn* npc);

@@ -2,6 +2,7 @@
 
 #include "VoxtaBaseTask.h"
 #include "StateTreeExecutionContext.h"
+#include "StateTreeLinker.h"
 #include "VoxtaClientState.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
@@ -11,16 +12,23 @@ FVoxtaBaseTask::FVoxtaBaseTask()
 {
 	bShouldCallTick = true;
 }
+bool FVoxtaBaseTask::Link(FStateTreeLinker& linker)
+{
+	linker.LinkExternalData(m_VoxtaStateTreeSubsystemHandle);
+	return true;
+}
 EStateTreeRunStatus FVoxtaBaseTask::EnterState(FStateTreeExecutionContext& context, const FStateTreeTransitionResult& transitions) const
 {
-	UVoxtaStateTreeSubsystem* subsystem = GetSubsystem(context);
+	UVoxtaStateTreeSubsystem* subsystem = context.GetExternalDataPtr(m_VoxtaStateTreeSubsystemHandle);
+	ensureAlways(subsystem);
 	return IsValid(subsystem) && subsystem->TryMarkNewStateActive(GetStateForTask(context))
 		? EStateTreeRunStatus::Running
 		: EStateTreeRunStatus::Failed;
 }
 void FVoxtaBaseTask::ExitState(FStateTreeExecutionContext& context, const FStateTreeTransitionResult& transitions) const
 {
-	UVoxtaStateTreeSubsystem* subsystem = GetSubsystem(context);
+	UVoxtaStateTreeSubsystem* subsystem = context.GetExternalDataPtr(m_VoxtaStateTreeSubsystemHandle);
+	ensureAlways(subsystem);
 	if (IsValid(subsystem))
 	{
 		subsystem->TryMarkStateInactive(GetStateForTask(context));
@@ -29,16 +37,4 @@ void FVoxtaBaseTask::ExitState(FStateTreeExecutionContext& context, const FState
 VoxtaClientState FVoxtaBaseTask::GetStateForTask(FStateTreeExecutionContext& context) const
 {
 	return VoxtaClientState::Invalid;
-}
-UVoxtaStateTreeSubsystem* FVoxtaBaseTask::GetSubsystem(FStateTreeExecutionContext& context) const
-{
-	auto world = context.GetWorld();
-	ensureAlways(world);
-	if (!IsValid(world)) return nullptr;
-	auto gameInstance = world->GetGameInstance();
-	ensureAlways(gameInstance);
-	if (!IsValid(gameInstance)) return nullptr;
-	auto subsystem = gameInstance->GetSubsystem<UVoxtaStateTreeSubsystem>();
-	ensureAlways(subsystem);
-	return subsystem;
 }

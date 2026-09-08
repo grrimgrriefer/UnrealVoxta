@@ -4,6 +4,7 @@
 #include "IHubConnection.h"
 #include "StateTree.h"
 #include "VoxtaClientState.h"
+#include "VoxtaPluginSettings.h"
 #include "RawAPI/VoxtaApiHandler.h"
 #include "StateTree/VoxtaStateTreeTags.h"
 #include "Engine/Engine.h"
@@ -13,13 +14,16 @@
 
 
 #pragma region UGameInstanceSubsystem
-bool UVoxtaStateTreeSubsystem::ShouldCreateSubsystem(UObject* outer) const
-{
-	return GetClass() != StaticClass();
-}
 void UVoxtaStateTreeSubsystem::Initialize(FSubsystemCollectionBase& collection)
 {
 	Super::Initialize(collection);
+
+	const UVoxtaPluginSettings* settings = GetDefault<UVoxtaPluginSettings>();
+	if (settings && settings->m_stateTreeAsset.IsValid())
+	{
+		m_stateTreeAsset = Cast<UStateTree>(settings->m_stateTreeAsset.TryLoad());
+	}
+
 	m_voxtaApiHandler = NewObject<UVoxtaApiHandler>(this);
 	FGameModeEvents::GameModePostLoginEvent.AddUObject(this, &UVoxtaStateTreeSubsystem::OnGameModePostLoginEvent);
 }
@@ -29,12 +33,13 @@ void UVoxtaStateTreeSubsystem::Deinitialize()
 	if (m_isRunning && IsValid(m_stateTreeAsset))
 	{
 		FStateTreeExecutionContext context(*this, *m_stateTreeAsset, m_instanceData);
-		context.Stop();
-
+		if (m_contextBinder.SetContextRequirements(context, m_stateTreeAsset, this))
+		{
+			context.Stop();
+		}
 		m_isRunning = false;
-		UE_LOG(LogTemp, Log, TEXT("%s: VoxtaStateTree stopped."), *GetNameSafe(this));
+		UE_LOG(LogTemp, Log, TEXT("%s: StateTree stopped."), *GetNameSafe(this));
 	}
-	m_voxtaApiHandler->Disconnect();
 	Super::Deinitialize();
 }
 #pragma endregion
@@ -59,7 +64,10 @@ void UVoxtaStateTreeSubsystem::Tick(const float deltaTime)
 	if (m_isRunning && IsValid(m_stateTreeAsset))
 	{
 		FStateTreeExecutionContext context(*this, *m_stateTreeAsset, m_instanceData);
-		context.Tick(deltaTime);
+		if (m_contextBinder.SetContextRequirements(context, m_stateTreeAsset, this))
+		{
+			context.Tick(deltaTime);
+		}
 	}
 }
 ETickableTickType UVoxtaStateTreeSubsystem::GetTickableTickType() const
@@ -136,11 +144,23 @@ bool UVoxtaStateTreeSubsystem::TrySendFlowEvent(const FGameplayTag tag, bool has
 	if (m_isRunning && world && world->IsPreparingMapChange() && !IsValid(m_stateTreeAsset))
 	{
 		FStateTreeExecutionContext context(*this, *m_stateTreeAsset, m_instanceData);
-		hasPayload
-			? context.SendEvent(tag, payload)
-			: context.SendEvent(tag);
+		if (m_contextBinder.SetContextRequirements(context, m_stateTreeAsset, this))
+		{
+			hasPayload
+				? context.SendEvent(tag, payload)
+				: context.SendEvent(tag);
+			return true;
+		}
 	}
 	return false;
+}
+bool UVoxtaStateTreeSubsystem::TryBindContextData(UObject* data)
+{
+	return m_contextBinder.TryBindContextData(data);
+}
+bool UVoxtaStateTreeSubsystem::TryUnbindContextData(UObject* data)
+{
+	return m_contextBinder.TryUnbindContextData(data);
 }
 void UVoxtaStateTreeSubsystem::InitializeInternalRuntimeInfo(FString userName, UObject characterList)
 {
@@ -159,10 +179,15 @@ void UVoxtaStateTreeSubsystem::OnGameModePostLoginEvent(AGameModeBase* gameMode,
 		return;
 	}
 
+	TryBindContextData(this);
+	TryBindContextData(m_voxtaApiHandler);
 	FStateTreeExecutionContext context(*this, *m_stateTreeAsset, m_instanceData);
-	if (context.Start() == EStateTreeRunStatus::Running)
+	if (m_contextBinder.SetContextRequirements(context, m_stateTreeAsset, this))
 	{
-		m_isRunning = true;
-		UE_LOG(LogTemp, Log, TEXT("%s: VoxtaStateTree started."), *GetNameSafe(this));
+		if (context.Start() == EStateTreeRunStatus::Running)
+		{
+			m_isRunning = true;
+			UE_LOG(LogTemp, Log, TEXT("%s: StateTree started."), *GetNameSafe(this));
+		}
 	}
 }

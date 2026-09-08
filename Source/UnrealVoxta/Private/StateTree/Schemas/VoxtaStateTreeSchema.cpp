@@ -5,15 +5,23 @@
 #include "StateTreeEvaluatorBase.h"
 #include "StateTreeTaskBase.h"
 #include "RawAPI/VoxtaApiHandler.h"
+#include "SubSystems/VoxtaStateTreeSubsystem.h"
 #include "UObject/Package.h"
 
-const FName UVoxtaStateTreeSchema::m_SocketHandlerName = TEXT("Subsystem");
+const FName UVoxtaStateTreeSchema::VOXTA_API_HANDLER_NAME = TEXT("VOXTA_API_HANDLER");
+const FName UVoxtaStateTreeSchema::VOXTA_STATE_TREE_SUBSYSTEM_NAME = TEXT("VOXTA_STATE_TREE_SUBSYSTEM");
 
-UVoxtaStateTreeSchema::UVoxtaStateTreeSchema() : m_socketHandlerData(m_SocketHandlerName,
-																UVoxtaApiHandler::StaticClass(),
-																FGuid::NewDeterministicGuid(m_SocketHandlerName.ToString()))
+UVoxtaStateTreeSchema::UVoxtaStateTreeSchema() : m_socketHandlerData(VOXTA_API_HANDLER_NAME,
+																	UVoxtaApiHandler::StaticClass(),
+																	FGuid::NewDeterministicGuid(VOXTA_API_HANDLER_NAME.ToString())),
+												m_voxtaSubsystemData(VOXTA_STATE_TREE_SUBSYSTEM_NAME,
+																	UVoxtaStateTreeSubsystem::StaticClass(),
+																	FGuid::NewDeterministicGuid(VOXTA_STATE_TREE_SUBSYSTEM_NAME.ToString()))
 {
-	m_contextDescs = { m_socketHandlerData };
+	m_socketHandlerData.Requirement = EStateTreeExternalDataRequirement::Required;
+	m_voxtaSubsystemData.Requirement = EStateTreeExternalDataRequirement::Required;
+
+	m_contextDescs = { m_socketHandlerData, m_voxtaSubsystemData };
 }
 TConstArrayView<FStateTreeExternalDataDesc> UVoxtaStateTreeSchema::GetContextDataDescs() const
 {
@@ -29,7 +37,8 @@ bool UVoxtaStateTreeSchema::IsExternalItemAllowed(const UStruct& inStruct) const
 {
 	if (const UClass* itemClass = Cast<const UClass>(&inStruct))
 	{
-		return itemClass->IsChildOf(UVoxtaApiHandler::StaticClass());
+		return itemClass->IsChildOf(UVoxtaApiHandler::StaticClass())
+			|| itemClass->IsChildOf(UVoxtaStateTreeSubsystem::StaticClass());
 	}
 	return false;
 }

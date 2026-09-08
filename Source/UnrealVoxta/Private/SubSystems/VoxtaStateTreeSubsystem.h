@@ -5,6 +5,7 @@
 #include "Tickable.h"
 #include "StateTreeExecutionContext.h"
 #include "VoxtaUserConfiguration.h"
+#include "StateTree/StateTreeContextBinder.h"
 #include "SubSystems/VoxtaClient.h"
 #include "VoxtaStateTreeSubsystem.generated.h"
 
@@ -18,14 +19,13 @@ class UVoxtaApiHandler;
  *
  * Is persistent across the entire gameinstance.
  */
-UCLASS(Abstract, Blueprintable)
+UCLASS()
 class UVoxtaStateTreeSubsystem : public UGameInstanceSubsystem, public FTickableGameObject, public IVoxtaClient
 {
 	GENERATED_BODY()
 
 public:
 #pragma region UGameInstanceSubsystem
-	virtual bool ShouldCreateSubsystem(UObject* outer) const override;
 	virtual void Initialize(FSubsystemCollectionBase& collection) override;
 	virtual void Deinitialize() override;
 #pragma endregion
@@ -48,6 +48,8 @@ public:
 	bool TryMarkNewStateActive(VoxtaClientState voxtaClientState);
 	bool TryMarkStateInactive(VoxtaClientState voxtaClientState);
 	bool TrySendFlowEvent(FGameplayTag tag, bool hasPayload, const FConstStructView& payload);
+	bool TryBindContextData(UObject* data);
+	bool TryUnbindContextData(UObject* data);
 
 	void InitializeInternalRuntimeInfo(FString userName, UObject characterList); // TODO: figure out what character list should be like
 
@@ -65,6 +67,7 @@ private:
 	UPROPERTY()
 	TObjectPtr<UVoxtaApiHandler> m_voxtaApiHandler;
 
+	StateTreeContextBinder m_contextBinder;
 	uint32 m_lastFrameNumberWeTicked = INDEX_NONE;
 	bool m_isRunning = false;
 	TSet<VoxtaClientState> m_currentStates;

@@ -16,9 +16,10 @@ bool UCharacterSubsystem::ShouldCreateSubsystem(UObject* outer) const
 	const UWorld* world = Cast<UWorld>(outer);
 	return world && world->IsGameWorld();
 }
-void UCharacterSubsystem::PostInitialize()
+void UCharacterSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 {
-	Super::PostInitialize();
+	Super::OnWorldBeginPlay(InWorld);
+
 	m_voxtaClient = IVoxtaClient::Get(GetWorld());
 	m_voxtaClient->EnsureConnectionWithServer();
 }

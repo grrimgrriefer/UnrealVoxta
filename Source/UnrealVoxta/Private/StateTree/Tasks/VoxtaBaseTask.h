@@ -18,10 +18,12 @@ struct UNREALVOXTA_API FVoxtaBaseTask : public FStateTreeTaskBase
 
 	FVoxtaBaseTask();
 
+	virtual bool Link(FStateTreeLinker& linker) override;
 	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& context, const FStateTreeTransitionResult& transitions) const override;
 	virtual void ExitState(FStateTreeExecutionContext& context, const FStateTreeTransitionResult& transitions) const override;
 
 protected:
 	virtual VoxtaClientState GetStateForTask(FStateTreeExecutionContext& context) const;
-	virtual UVoxtaStateTreeSubsystem* GetSubsystem(FStateTreeExecutionContext& context) const;
+
+	TStateTreeExternalDataHandle<UVoxtaStateTreeSubsystem> m_VoxtaStateTreeSubsystemHandle;
 };
