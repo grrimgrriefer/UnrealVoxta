@@ -4,7 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "VoxtaBaseTask.h"
-#include "VoxtaAuthenticateTask.generated.h"
+#include "VoxtaClientState.h"
+#include "VoxtaTryAuthenticateTask.generated.h"
 
 class UVoxtaApiHandler;
 
@@ -12,16 +13,13 @@ USTRUCT(BlueprintType)
 struct UNREALVOXTA_API FVoxtaAuthenticateTaskInstanceData
 {
 	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, Category = "Parameter")
-	float m_TimeoutSeconds = 15.0f;
 };
 
 /**
- * Handles the lifetime of the authenticated session with the VoxtaServer backend.
+ * Triggers an attempt to connect to the VoxtaServer
  */
-USTRUCT(meta = (DisplayName = "Voxta Authenticate", Category = "Voxta"))
-struct UNREALVOXTA_API FVoxtaAuthenticateTask : public FVoxtaBaseTask
+USTRUCT(meta = (DisplayName = "Voxta Attempt to authenticate", Category = "Voxta"))
+struct UNREALVOXTA_API FVoxtaTryAuthenticateTask : public FVoxtaBaseTask
 {
 	GENERATED_BODY()
 

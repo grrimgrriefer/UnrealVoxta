@@ -6,14 +6,21 @@
 #include "GameFramework/Pawn.h"
 #include "SubSystems/VoxtaStateTreeSubsystem.h"
 
+bool UCharacterSubsystem::ShouldCreateSubsystem(UObject* outer) const
+{
+	if (!Super::ShouldCreateSubsystem(outer))
+	{
+		return false;
+	}
+
+	const UWorld* world = Cast<UWorld>(outer);
+	return world && world->IsGameWorld();
+}
 void UCharacterSubsystem::PostInitialize()
 {
 	Super::PostInitialize();
-	m_voxtaSubsystem = IVoxtaClient::Get(GetWorld());
-	if (m_voxtaSubsystem->GetStates().Contains(VoxtaClientState::Authenticated))
-	{
-		m_voxtaSubsystem->EnsureConnectionWithServer();
-	}
+	m_voxtaClient = IVoxtaClient::Get(GetWorld());
+	m_voxtaClient->EnsureConnectionWithServer();
 }
 void UCharacterSubsystem::Deinitialize()
 {

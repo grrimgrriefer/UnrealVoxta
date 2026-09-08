@@ -1,15 +1,15 @@
 // Copyright(c) 2026 grrimgrriefer & DZnnah, see LICENSE for details.
 
-#include "VoxtaAttemptConnectTask.h"
+#include "VoxtaTryConnectTask.h"
 #include "StateTreeExecutionContext.h"
 #include "RawAPI/VoxtaApiHandler.h"
 #include "SubSystems/VoxtaStateTreeSubsystem.h"
 
-const UStruct* FVoxtaAttemptConnectTask::GetInstanceDataType() const
+const UStruct* FVoxtaTryConnectTask::GetInstanceDataType() const
 {
 	return FInstanceDataType::StaticStruct();
 }
-EStateTreeRunStatus FVoxtaAttemptConnectTask::EnterState(FStateTreeExecutionContext& context, const FStateTreeTransitionResult& transitions) const
+EStateTreeRunStatus FVoxtaTryConnectTask::EnterState(FStateTreeExecutionContext& context, const FStateTreeTransitionResult& transitions) const
 {
 	FInstanceDataType& instanceData = context.GetInstanceData(*this);
 	UVoxtaApiHandler* voxtaSocketHandler = context.GetExternalDataPtr(m_VoxtaApiHandlerHandle);
@@ -21,7 +21,7 @@ EStateTreeRunStatus FVoxtaAttemptConnectTask::EnterState(FStateTreeExecutionCont
 		return EStateTreeRunStatus::Failed;
 	}
 
-	voxtaSocketHandler->EstablishConnection(instanceData.m_UserConfig.m_VoxtaServerIpv4, instanceData.m_UserConfig.m_VoxtaServerPort);
+	voxtaSocketHandler->EstablishConnection(instanceData.m_VoxtaServerIpv4, instanceData.m_VoxtaServerPort);
 
 	return EStateTreeRunStatus::Running;
 }

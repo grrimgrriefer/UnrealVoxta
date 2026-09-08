@@ -28,6 +28,7 @@ public:
 	FOnTranscriptEntryAdded m_OnTranscriptEntryAdded;
 	FOnActiveNpcChanged m_OnCurrentConversableNpcChanged;
 
+	virtual bool ShouldCreateSubsystem(UObject* outer) const override;
 	virtual void PostInitialize() override;
 	virtual void Deinitialize() override;
 
@@ -47,5 +48,5 @@ private:
 	UPROPERTY(Transient)
 	TArray<TWeakObjectPtr<APawn>> m_registeredNpcs;
 
-	TWeakInterfacePtr<IVoxtaClient> m_voxtaSubsystem;
+	TWeakInterfacePtr<IVoxtaClient> m_voxtaClient;
 };

@@ -42,11 +42,14 @@ public:
 #pragma region IVoxtaClient
 	virtual const TSet<VoxtaClientState>& GetStates() const override;
 	virtual const FVoxtaUserConfiguration& GetUserConfiguration() const override;
-	virtual void EnsureConnectionWithServer() const override;
+	virtual void EnsureConnectionWithServer() override;
 #pragma endregion
 
 	bool TryMarkNewStateActive(VoxtaClientState voxtaClientState);
 	bool TryMarkStateInactive(VoxtaClientState voxtaClientState);
+	bool TrySendFlowEvent(FGameplayTag tag, bool hasPayload, const FConstStructView& payload);
+
+	void InitializeInternalRuntimeInfo(FString userName, UObject characterList); // TODO: figure out what character list should be like
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Voxta", meta=(RequiredAssetDataTags="Schema=UVoxtaTreeSchema"))
@@ -54,7 +57,6 @@ protected:
 
 private:
 	void OnGameModePostLoginEvent(AGameModeBase* gameMode, APlayerController* newPlayer);
-	bool TrySendFlowEvent(FGameplayTag tag);
 
 	UPROPERTY()
 	FStateTreeInstanceData m_instanceData;

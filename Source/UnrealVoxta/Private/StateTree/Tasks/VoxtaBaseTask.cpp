@@ -2,6 +2,7 @@
 
 #include "VoxtaBaseTask.h"
 #include "StateTreeExecutionContext.h"
+#include "VoxtaClientState.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "SubSystems/VoxtaStateTreeSubsystem.h"

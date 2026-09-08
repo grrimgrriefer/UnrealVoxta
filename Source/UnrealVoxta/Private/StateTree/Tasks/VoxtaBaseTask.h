@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/StateTreeTaskBlueprintBase.h"
-#include "VoxtaClientState.h"
 #include "SubSystems/VoxtaStateTreeSubsystem.h"
 #include "VoxtaBaseTask.generated.h"
 
@@ -24,7 +23,5 @@ struct UNREALVOXTA_API FVoxtaBaseTask : public FStateTreeTaskBase
 
 protected:
 	virtual VoxtaClientState GetStateForTask(FStateTreeExecutionContext& context) const;
-
-private:
 	virtual UVoxtaStateTreeSubsystem* GetSubsystem(FStateTreeExecutionContext& context) const;
 };

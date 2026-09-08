@@ -4,18 +4,20 @@
 
 #include "CoreMinimal.h"
 #include "VoxtaBaseTask.h"
-#include "VoxtaUserConfiguration.h"
-#include "VoxtaAttemptConnectTask.generated.h"
+#include "VoxtaClientState.h"
+#include "VoxtaTryConnectTask.generated.h"
 
 class UVoxtaApiHandler;
 
 USTRUCT(BlueprintType)
-struct FVoxtaConnectPayload
+struct UNREALVOXTA_API FVoxtaConnectPayload
 {
 	GENERATED_BODY()
 
-	UPROPERTY(BlueprintReadOnly, Category = "UserConfig")
-	FVoxtaUserConfiguration m_UserConfig;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UserConfig")
+	FString m_VoxtaServerIpv4 = TEXT("127.0.0.1");
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UserConfig")
+	int32 m_VoxtaServerPort = 5384;
 };
 
 USTRUCT()
@@ -24,14 +26,16 @@ struct UNREALVOXTA_API FVoxtaConnectTaskInstanceData
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, Category = "Input")
-	FVoxtaUserConfiguration m_UserConfig;
+	FString m_VoxtaServerIpv4 = TEXT("127.0.0.1");
+	UPROPERTY(EditAnywhere, Category = "Input")
+	int32 m_VoxtaServerPort = 5384;
 };
 
 /**
- * Handles the lifetime of the connection the VoxtaServer backend.
+ * Triggers an attempt to connect to the VoxtaServer
  */
-USTRUCT(meta = (DisplayName = "Voxta Connect", Category = "Voxta"))
-struct UNREALVOXTA_API FVoxtaAttemptConnectTask : public FVoxtaBaseTask
+USTRUCT(meta = (DisplayName = "Voxta Attempt to connect", Category = "Voxta"))
+struct UNREALVOXTA_API FVoxtaTryConnectTask : public FVoxtaBaseTask
 {
 	GENERATED_BODY()
 

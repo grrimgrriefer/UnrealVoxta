@@ -4,6 +4,6 @@
 
 #include "NativeGameplayTags.h"
 
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Voxta_Socket_Connected);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Voxta_Socket_Closed);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Voxta_Socket_ConnectionError);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Voxta_Request_Connection);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Voxta_Mark_Connected);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Voxta_Mark_Authenticated);

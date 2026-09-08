@@ -29,5 +29,5 @@ public:
 
 	virtual const TSet<VoxtaClientState>& GetStates() const = 0;
 	virtual const FVoxtaUserConfiguration& GetUserConfiguration() const = 0;
-	virtual void EnsureConnectionWithServer() const = 0;
+	virtual void EnsureConnectionWithServer() = 0;
 };

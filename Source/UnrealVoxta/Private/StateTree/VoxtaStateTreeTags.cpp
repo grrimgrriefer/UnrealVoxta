@@ -2,6 +2,6 @@
 
 #include "VoxtaStateTreeTags.h"
 
-UE_DEFINE_GAMEPLAY_TAG(TAG_Voxta_Socket_Connected, "Voxta.Socket.Connected");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Voxta_Socket_Closed, "Voxta.Socket.Closed");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Voxta_Socket_ConnectionError, "Voxta.Socket.ConnectionError");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Voxta_Request_Connection, "Voxta.RequestConnection");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Voxta_Mark_Connected, "Voxta.MarkConnected");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Voxta_Mark_Authenticated, "Voxta.MarkAuthenticated");

@@ -3,11 +3,13 @@
 #include "SubSystems/VoxtaStateTreeSubsystem.h"
 #include "IHubConnection.h"
 #include "StateTree.h"
+#include "VoxtaClientState.h"
 #include "RawAPI/VoxtaApiHandler.h"
 #include "StateTree/VoxtaStateTreeTags.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "GameFramework/GameModeBase.h"
+#include "StateTree/Tasks/VoxtaTryConnectTask.h"
 
 
 #pragma region UGameInstanceSubsystem
@@ -92,10 +94,23 @@ const FVoxtaUserConfiguration& UVoxtaStateTreeSubsystem::GetUserConfiguration() 
 {
 	return m_voxtaUserConfiguration;
 }
-void UVoxtaStateTreeSubsystem::EnsureConnectionWithServer() const
+void UVoxtaStateTreeSubsystem::EnsureConnectionWithServer()
 {
-	// TODO check current state if we're authenticated or not (how? huh?)
-	// If not, request connection and/or authentication
+	if (m_currentStates.Contains(VoxtaClientState::Authenticated))
+	{
+		return;
+	}
+
+	if (m_currentStates.Contains(VoxtaClientState::AttemptingToConnect) ||
+		m_currentStates.Contains(VoxtaClientState::AttemptingToAuthenticate))
+	{
+		return; // TODO: not sure what to do with additional Ensure calls if the connection fails tbh
+	}
+
+	FVoxtaConnectPayload payload;
+	payload.m_VoxtaServerIpv4 = m_voxtaUserConfiguration.m_VoxtaServerIpv4;
+	payload.m_VoxtaServerPort = m_voxtaUserConfiguration.m_VoxtaServerPort;
+	TrySendFlowEvent(TAG_Voxta_Request_Connection, true, FConstStructView::Make(payload));
 }
 #pragma endregion
 
@@ -109,6 +124,27 @@ bool UVoxtaStateTreeSubsystem::TryMarkNewStateActive(VoxtaClientState voxtaClien
 bool UVoxtaStateTreeSubsystem::TryMarkStateInactive(VoxtaClientState voxtaClientState)
 {
 	return m_currentStates.Remove(voxtaClientState) > 0;
+}
+bool UVoxtaStateTreeSubsystem::TrySendFlowEvent(const FGameplayTag tag, bool hasPayload, const FConstStructView& payload)
+{
+	const UWorld* world = GetWorld();
+
+	ensure(world);
+	ensure(!world->IsPreparingMapChange());
+	ensure(IsValid(m_stateTreeAsset));
+
+	if (m_isRunning && world && world->IsPreparingMapChange() && !IsValid(m_stateTreeAsset))
+	{
+		FStateTreeExecutionContext context(*this, *m_stateTreeAsset, m_instanceData);
+		hasPayload
+			? context.SendEvent(tag, payload)
+			: context.SendEvent(tag);
+	}
+	return false;
+}
+void UVoxtaStateTreeSubsystem::InitializeInternalRuntimeInfo(FString userName, UObject characterList)
+{
+	// TODO: store this in a separate component of this subsystem, (runtime data component or something)
 }
 void UVoxtaStateTreeSubsystem::OnGameModePostLoginEvent(AGameModeBase* gameMode, APlayerController* newPlayer)
 {
@@ -129,20 +165,4 @@ void UVoxtaStateTreeSubsystem::OnGameModePostLoginEvent(AGameModeBase* gameMode,
 		m_isRunning = true;
 		UE_LOG(LogTemp, Log, TEXT("%s: VoxtaStateTree started."), *GetNameSafe(this));
 	}
-}
-bool UVoxtaStateTreeSubsystem::TrySendFlowEvent(const FGameplayTag tag)
-{
-	const UWorld* world = GetWorld();
-
-	ensure(world);
-	ensure(!world->IsPreparingMapChange());
-	ensure(IsValid(m_stateTreeAsset));
-
-	if (m_isRunning && world && world->IsPreparingMapChange() && !IsValid(m_stateTreeAsset))
-	{
-		FStateTreeExecutionContext context(*this, *m_stateTreeAsset, m_instanceData);
-		context.SendEvent(tag);
-		return true;
-	}
-	return false;
 }

@@ -23,7 +23,7 @@ enum class VoxtaClientState : uint8
 	AttemptingToAuthenticate	UMETA(DisplayName = "AttemptingToAuthenticate"),
 	Authenticated				UMETA(DisplayName = "Authenticated"),
 
-//	Idle						UMETA(DisplayName = "Idle"),
+	Idle						UMETA(DisplayName = "Idle"),
 //	StartingChat				UMETA(DisplayName = "StartingChat"),
 //	GeneratingReply				UMETA(DisplayName = "GeneratingReply"),
 //	AudioPlayback				UMETA(DisplayName = "AudioPlayback"),

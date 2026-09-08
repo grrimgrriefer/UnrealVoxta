@@ -4,10 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "VoxtaBaseTask.h"
+#include "VoxtaClientState.h"
 #include "Blueprint/StateTreeTaskBlueprintBase.h"
 #include "VoxtaEmptyTask.generated.h"
-
-enum class VoxtaClientState : uint8;
 
 USTRUCT()
 struct FVoxtaEmptyTaskInstanceData
@@ -15,13 +14,13 @@ struct FVoxtaEmptyTaskInstanceData
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, Category = "Voxta Client State")
-	VoxtaClientState m_ClientStateForThisTask;
+	VoxtaClientState m_ClientStateForThisTask = VoxtaClientState::Invalid;
 };
 
 /**
- * Empty task to keep track of states that don't actively do anything
+ * Empty task to keep track of states that don't actively 'do' anything
  */
-USTRUCT(meta = (DisplayName = "Empty Task", Category = "Voxta"))
+USTRUCT(meta = (DisplayName = "Voxta Empty Task", Category = "Voxta"))
 struct UNREALVOXTA_API FVoxtaEmptyTask : public FVoxtaBaseTask
 {
 	GENERATED_BODY()

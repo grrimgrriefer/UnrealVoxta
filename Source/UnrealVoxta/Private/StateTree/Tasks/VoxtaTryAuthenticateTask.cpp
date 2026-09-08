@@ -1,14 +1,15 @@
 // Copyright(c) 2026 grrimgrriefer & DZnnah, see LICENSE for details.
 
-#include "VoxtaAuthenticateTask.h"
+#include "VoxtaTryAuthenticateTask.h"
 #include "StateTreeExecutionContext.h"
 #include "RawAPI/VoxtaApiHandler.h"
+#include "StateTree/VoxtaStateTreeTags.h"
 
-const UStruct* FVoxtaAuthenticateTask::GetInstanceDataType() const
+const UStruct* FVoxtaTryAuthenticateTask::GetInstanceDataType() const
 {
     return FInstanceDataType::StaticStruct();
 }
-EStateTreeRunStatus FVoxtaAuthenticateTask::EnterState(FStateTreeExecutionContext& context, const FStateTreeTransitionResult& transitions) const
+EStateTreeRunStatus FVoxtaTryAuthenticateTask::EnterState(FStateTreeExecutionContext& context, const FStateTreeTransitionResult& transitions) const
 {
 	FInstanceDataType& instanceData = context.GetInstanceData(*this);
 	UVoxtaApiHandler* voxtaSocketHandler = context.GetExternalDataPtr(m_VoxtaApiHandlerHandle);
@@ -26,6 +27,9 @@ EStateTreeRunStatus FVoxtaAuthenticateTask::EnterState(FStateTreeExecutionContex
         UE_LOG(LogTemp, Warning, TEXT("[FVoxtaAuthenticateTask] Authenticate request failed to initiate."));
         return EStateTreeRunStatus::Failed;
     }
+
+	// TODO: Trigger TAG_Voxta_Mark_Authenticated once the server resonds with username and character list
+	// GetSubsystem(context)->TrySendFlowEvent(TAG_Voxta_Mark_Authenticated, false, FConstStructView());
 
     return EStateTreeRunStatus::Running;
 }
