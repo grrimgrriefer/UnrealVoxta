@@ -46,15 +46,15 @@ bool UVoxtaSocketHandler::TrySendPayload(const FString& message) const
 }
 void UVoxtaSocketHandler::OnConnected()
 {
-	// TODO notify the VoxtaConnectTask somehow
+	m_OnSocketConnected.Broadcast();
 }
-void UVoxtaSocketHandler::OnConnectionError(const FString& String)
+void UVoxtaSocketHandler::OnConnectionError(const FString& error)
 {
-	// TODO notify the VoxtaConnectTask somehow
+	m_OnSocketConnectionError.Broadcast(error);
 }
 void UVoxtaSocketHandler::OnClosed()
 {
-	// TODO notify the VoxtaConnectTask somehow
+	m_OnSocketClosed.Broadcast();
 }
 void UVoxtaSocketHandler::OnReceivedMessage(const TArray<FSignalRValue>& payload)
 {

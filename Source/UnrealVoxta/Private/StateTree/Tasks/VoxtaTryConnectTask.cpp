@@ -17,16 +17,16 @@ EStateTreeRunStatus FVoxtaTryConnectTask::EnterState(FStateTreeExecutionContext&
 	}
 
 	FInstanceDataType& instanceData = context.GetInstanceData(*this);
-	UVoxtaApiHandler* voxtaSocketHandler = context.GetExternalDataPtr(m_VoxtaApiHandlerHandle);
-	ensure(voxtaSocketHandler);
+	UVoxtaApiHandler* voxtaApiHandler = context.GetExternalDataPtr(m_VoxtaApiHandlerHandle);
+	ensure(voxtaApiHandler);
 
-	if (!voxtaSocketHandler)
+	if (!voxtaApiHandler)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[VoxtaConnectTask] Failed to resolve UVoxtaSubsystem."));
 		return EStateTreeRunStatus::Failed;
 	}
 
-	voxtaSocketHandler->EstablishConnection(instanceData.m_VoxtaServerIpv4, instanceData.m_VoxtaServerPort);
+	voxtaApiHandler->EstablishConnection(instanceData.m_VoxtaServerIpv4, instanceData.m_VoxtaServerPort);
 
 	return EStateTreeRunStatus::Running;
 }

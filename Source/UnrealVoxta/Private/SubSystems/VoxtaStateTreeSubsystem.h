@@ -58,6 +58,9 @@ protected:
 	TObjectPtr<UStateTree> m_stateTreeAsset;
 
 private:
+	void OnVoxtaConnected();
+	void OnVoxtaConnectionError(const FString& error);
+	void OnVoxtaDisconnected();
 	void OnGameModePostLoginEvent(AGameModeBase* gameMode, APlayerController* newPlayer);
 
 	UPROPERTY()

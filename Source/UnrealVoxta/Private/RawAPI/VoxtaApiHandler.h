@@ -9,6 +9,10 @@
 
 class UVoxtaSocketHandler;
 
+DECLARE_MULTICAST_DELEGATE(FOnVoxtaConnected);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnVoxtaConnectionError, const FString&);
+DECLARE_MULTICAST_DELEGATE(FOnVoxtaDisconnected);
+
 /**
  * Lower level API, internal use only.
  * Owns the socket connection and handles the translation (serialization/deserialization) of requests and responses
@@ -24,6 +28,12 @@ public:
 	static const FName CLIENT_NAME;
 	static const FName CLIENT_VERSION;
 
+	UVoxtaApiHandler();
+
+	FOnVoxtaConnected m_OnConnected;
+	FOnVoxtaConnectionError m_OnConnectionError;
+	FOnVoxtaDisconnected m_OnDisconnected;
+
 	void EstablishConnection(const FString& ipv4Address, int port) const;
 	void Disconnect() const;
 
@@ -34,6 +44,10 @@ public:
 	bool TrySendSendTextMessagePayload(const FString& sessionId, const FString& text) const;
 
 private:
+	void OnSocketConnected();
+	void OnSocketConnectionError(const FString& error);
+	void OnSocketClosed();
+
 	static bool TryExtractAction(const FString& jsonString, FString& outAction);
 	static bool ParseWelcomeResponse(const FString& jsonString, FVoxtaWelcomeResponse& outResponse);
 	static bool ParseCharacterListLoadedResponse(const FString& jsonString, FVoxtaCharacterListLoadedResponse& outResponse);

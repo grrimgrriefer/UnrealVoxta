@@ -25,11 +25,23 @@ void UVoxtaStateTreeSubsystem::Initialize(FSubsystemCollectionBase& collection)
 	}
 
 	m_voxtaApiHandler = NewObject<UVoxtaApiHandler>(this);
+	m_voxtaApiHandler->m_OnConnected.AddUObject(this, &UVoxtaStateTreeSubsystem::OnVoxtaConnected);
+	m_voxtaApiHandler->m_OnConnectionError.AddUObject(this, &UVoxtaStateTreeSubsystem::OnVoxtaConnectionError);
+	m_voxtaApiHandler->m_OnDisconnected.AddUObject(this, &UVoxtaStateTreeSubsystem::OnVoxtaDisconnected);
+
 	FGameModeEvents::GameModePostLoginEvent.AddUObject(this, &UVoxtaStateTreeSubsystem::OnGameModePostLoginEvent);
 }
 void UVoxtaStateTreeSubsystem::Deinitialize()
 {
 	FGameModeEvents::GameModePostLoginEvent.RemoveAll(this);
+
+	if (m_voxtaApiHandler)
+	{
+		m_voxtaApiHandler->m_OnConnected.RemoveAll(this);
+		m_voxtaApiHandler->m_OnConnectionError.RemoveAll(this);
+		m_voxtaApiHandler->m_OnDisconnected.RemoveAll(this);
+	}
+
 	if (m_isRunning && IsValid(m_stateTreeAsset))
 	{
 		FStateTreeExecutionContext context(*this, *m_stateTreeAsset, m_instanceData);
@@ -165,6 +177,21 @@ bool UVoxtaStateTreeSubsystem::TryUnbindContextData(UObject* data)
 void UVoxtaStateTreeSubsystem::InitializeInternalRuntimeInfo(FString userName, UObject characterList)
 {
 	// TODO: store this in a separate component of this subsystem, (runtime data component or something)
+}
+void UVoxtaStateTreeSubsystem::OnVoxtaConnected()
+{
+	UE_LOG(LogTemp, Warning, TEXT("[UVoxtaStateTreeSubsystem] Voxta Connected."));
+	TrySendFlowEvent(TAG_Voxta_Notify_SocketConnected, false, FConstStructView());
+}
+void UVoxtaStateTreeSubsystem::OnVoxtaConnectionError(const FString& error)
+{
+	UE_LOG(LogTemp, Error, TEXT("[UVoxtaStateTreeSubsystem] Voxta Connection Error: %s"), *error);
+	// TODO: handle this in the statetree
+}
+void UVoxtaStateTreeSubsystem::OnVoxtaDisconnected()
+{
+	UE_LOG(LogTemp, Warning, TEXT("[UVoxtaStateTreeSubsystem] Voxta Socket Disconnected."));
+	// TODO: handle this in the statetree
 }
 void UVoxtaStateTreeSubsystem::OnGameModePostLoginEvent(AGameModeBase* gameMode, APlayerController* newPlayer)
 {

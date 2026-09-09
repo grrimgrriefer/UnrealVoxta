@@ -7,6 +7,15 @@
 const FName UVoxtaApiHandler::CLIENT_NAME = TEXT("UnrealVoxta");
 const FName UVoxtaApiHandler::CLIENT_VERSION = TEXT("0.2.0");
 
+UVoxtaApiHandler::UVoxtaApiHandler()
+{
+	m_voxtaSocketHandler = CreateDefaultSubobject<UVoxtaSocketHandler>(TEXT("VoxtaSocketHandler"));
+
+	m_voxtaSocketHandler->m_OnSocketConnected.AddUObject(this, &UVoxtaApiHandler::OnSocketConnected);
+	m_voxtaSocketHandler->m_OnSocketConnectionError.AddUObject(this, &UVoxtaApiHandler::OnSocketConnectionError);
+	m_voxtaSocketHandler->m_OnSocketClosed.AddUObject(this, &UVoxtaApiHandler::OnSocketClosed);
+}
+
 // ====================
 // REQUESTS
 // ====================
@@ -83,6 +92,23 @@ bool UVoxtaApiHandler::TrySendSendTextMessagePayload(const FString& sessionId, c
 	}
 	UE_LOG(LogTemp, Error, TEXT("[VoxtaApiHandler] Failed to serialize FVoxtaSendTextMessageRequest."));
 	return false;
+}
+
+// ====================
+// SOCKET CALLBACKS
+// ====================
+
+void UVoxtaApiHandler::OnSocketConnected()
+{
+	m_OnConnected.Broadcast();
+}
+void UVoxtaApiHandler::OnSocketConnectionError(const FString& error)
+{
+	m_OnConnectionError.Broadcast(error);
+}
+void UVoxtaApiHandler::OnSocketClosed()
+{
+	m_OnDisconnected.Broadcast();
 }
 
 // ====================

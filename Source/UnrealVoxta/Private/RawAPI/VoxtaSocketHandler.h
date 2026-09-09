@@ -12,6 +12,10 @@ class IHubConnection;
 class APlayerController;
 struct FGameplayTag;
 
+DECLARE_MULTICAST_DELEGATE(FOnVoxtaSocketConnected);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnVoxtaSocketConnectionError, const FString&);
+DECLARE_MULTICAST_DELEGATE(FOnVoxtaSocketClosed);
+
 /**
  * Owns the low-level socket.
  * Is controlled by the Tasks in the StateTree of the VoxtaSubsystem.
@@ -22,6 +26,10 @@ class UVoxtaSocketHandler : public UObject
 	GENERATED_BODY()
 
 public:
+	FOnVoxtaSocketConnected m_OnSocketConnected;
+	FOnVoxtaSocketConnectionError m_OnSocketConnectionError;
+	FOnVoxtaSocketClosed m_OnSocketClosed;
+
 	void EstablishConnection(const FString& ipv4Address, int port);
 	void Disconnect() const;
 	bool TrySendPayload(const FString& message) const;
@@ -31,7 +39,7 @@ private:
 	static const FString RECEIVE_MESSAGE_EVENT_NAME;
 
 	void OnConnected();
-	void OnConnectionError(const FString& String);
+	void OnConnectionError(const FString& error);
 	void OnClosed();
 	void OnReceivedMessage(const TArray<FSignalRValue>& payload);
 

@@ -17,16 +17,16 @@ EStateTreeRunStatus FVoxtaTryAuthenticateTask::EnterState(FStateTreeExecutionCon
 	}
 
 	FInstanceDataType& instanceData = context.GetInstanceData(*this);
-	UVoxtaApiHandler* voxtaSocketHandler = context.GetExternalDataPtr(m_VoxtaApiHandlerHandle);
-	ensure(voxtaSocketHandler);
+	UVoxtaApiHandler* voxtaApiHandler = context.GetExternalDataPtr(m_VoxtaApiHandlerHandle);
+	ensure(voxtaApiHandler);
 
-    if (!voxtaSocketHandler)
+    if (!voxtaApiHandler)
     {
         UE_LOG(LogTemp, Error, TEXT("[FVoxtaAuthenticateTask] Failed to resolve UVoxtaSubsystem."));
         return EStateTreeRunStatus::Failed;
     }
 
-    bool sentRequest = voxtaSocketHandler->TrySendAuthenticatePayload(UVoxtaApiHandler::CLIENT_NAME, UVoxtaApiHandler::CLIENT_VERSION);
+    bool sentRequest = voxtaApiHandler->TrySendAuthenticatePayload(UVoxtaApiHandler::CLIENT_NAME, UVoxtaApiHandler::CLIENT_VERSION);
     if (!sentRequest)
     {
         UE_LOG(LogTemp, Warning, TEXT("[FVoxtaAuthenticateTask] Authenticate request failed to initiate."));

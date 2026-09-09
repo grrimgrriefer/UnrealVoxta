@@ -18,27 +18,32 @@ config:
 ---
 sequenceDiagram
 	Note over UCharacterSubsystem,IVoxtaClient: Public facing API
+    participant UVoxtaStateTreeSubsystem
+
+    Internal StateTree->>+UVoxtaStateTreeSubsystem: Update status
+
 	UCharacterSubsystem->>+IVoxtaClient: Ensure connection
+	UVoxtaStateTreeSubsystem->>+UVoxtaStateTreeSubsystem: Check current status
 
-	alt any first request while disconnected
-		UVoxtaStateTreeSubsystem->>+UVoxtaStateTreeSubsystem: Check current status: disconnected
-		IVoxtaClient->>+UVoxtaStateTreeSubsystem: Start Connection
-
+	alt IF NOT AUTHORIZED AND NOT ALREADY TRYING TO CONNECT
 		UVoxtaStateTreeSubsystem->>+Internal StateTree: Request connection
-			Note over UVoxtaStateTreeSubsystem,Internal StateTree: Event payload includes user config
+			Note over UVoxtaStateTreeSubsystem,Internal StateTree: Event payload includes <br /> ipv4&port from user config
 		Internal StateTree->>+Internal StateTree: Activate AttemptConnect sub-state
+            Internal StateTree->>+UVoxtaStateTreeSubsystem: Update status
+
 		Internal StateTree->>+UVoxtaApiHandler: EstablishConnection
-			Note over Internal StateTree,UVoxtaApiHandler: Includes ipv4&port from user config
+			Note over Internal StateTree,UVoxtaApiHandler: Forwarding ipv4&port payload
 
 		UVoxtaApiHandler->>+UVoxtaSocketHandler: Trigger raw SignalR message
 		UVoxtaSocketHandler->>+UVoxtaApiHandler: Return raw SignalR response
 			Note over UVoxtaApiHandler: Broadcast connected event
 
 		Internal StateTree->>+Internal StateTree: Deactivate both Disconnected and AttemptConnect substate<br /> and activate Connected state transition
-		Internal StateTree->>+UVoxtaStateTreeSubsystem: Update current states
-			Note over UVoxtaStateTreeSubsystem: Broadcast states update: Connected
+		Internal StateTree->>+UVoxtaStateTreeSubsystem: Update status
 
 		Internal StateTree->>+Internal StateTree: Auto-activate AttemptAuth sub-state
+            Internal StateTree->>+UVoxtaStateTreeSubsystem: Update status
+
 		Internal StateTree->>+UVoxtaApiHandler: SendMessage
 			Note over Internal StateTree,UVoxtaApiHandler: Authentication handshake request
 
@@ -50,15 +55,14 @@ sequenceDiagram
 		Internal StateTree->>+Internal StateTree: Deactivate AttemptAuth substate<br /> and activate Authenticated state transition
 			Note over Internal StateTree: Event payload includes both username from <br />welcomeReponse and characterList info
 
+        Internal StateTree->>+UVoxtaStateTreeSubsystem: Update status
+
 		Internal StateTree->>+UVoxtaStateTreeSubsystem: Update runtime info
 			Note over UVoxtaStateTreeSubsystem: Save username & available characters
-		Internal StateTree->>+UVoxtaStateTreeSubsystem: Update current states
-			Note over UVoxtaStateTreeSubsystem: Broadcast states update: Authenticated
 
 		Internal StateTree->>+Internal StateTree: Auto-activate Idle sub-state transition
-		Internal StateTree->>+UVoxtaStateTreeSubsystem: Update current states
-			Note over UVoxtaStateTreeSubsystem: Broadcast states update: Idle
-		Note over IVoxtaClient: Broadcast states update: Idle
+		    Internal StateTree->>+UVoxtaStateTreeSubsystem: Update status
+		Note over IVoxtaClient:  Broadcast status update: Ready
 	end
 
 	UCharacterSubsystem->>+IVoxtaClient: Get character list
