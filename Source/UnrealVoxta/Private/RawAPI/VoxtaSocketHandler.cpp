@@ -3,6 +3,7 @@
 #include "VoxtaSocketHandler.h"
 #include "IHubConnection.h"
 #include "SignalRSubsystem.h"
+#include "Dom/JsonObject.h"
 #include "Engine/Engine.h"
 
 const FString UVoxtaSocketHandler::SEND_MESSAGE_EVENT_NAME = TEXT("SendMessage");
@@ -34,12 +35,12 @@ void UVoxtaSocketHandler::Disconnect() const
 		m_hub->Stop();
 	}
 }
-bool UVoxtaSocketHandler::TrySendPayload(const FString& message) const
+bool UVoxtaSocketHandler::TrySendPayload(const TSharedPtr<FJsonObject>& payload) const
 {
 	ensureAlways(m_hub.IsValid());
 	if (m_hub.IsValid())
 	{
-		m_hub->Invoke(SEND_MESSAGE_EVENT_NAME, message);
+		m_hub->Invoke(SEND_MESSAGE_EVENT_NAME, JsonObjectToSignalRValue(payload));
 		return true;
 	}
 	return false;
@@ -59,4 +60,74 @@ void UVoxtaSocketHandler::OnClosed()
 void UVoxtaSocketHandler::OnReceivedMessage(const TArray<FSignalRValue>& payload)
 {
 	// TODO generic deserializeation
+}
+FSignalRValue UVoxtaSocketHandler::JsonValueToSignalRValue(const TSharedPtr<FJsonValue>& jsonValue) const
+{
+	if (!jsonValue.IsValid() || jsonValue->IsNull())
+	{
+		return FSignalRValue(nullptr);
+	}
+
+	switch (jsonValue->Type)
+	{
+	case EJson::Boolean:
+		return FSignalRValue(jsonValue->AsBool());
+
+	case EJson::Number:
+		return FSignalRValue(jsonValue->AsNumber());
+
+	case EJson::String:
+		return FSignalRValue(jsonValue->AsString());
+
+	case EJson::Array:
+		{
+			TArray<FSignalRValue> array;
+			for (const TSharedPtr<FJsonValue>& item : jsonValue->AsArray())
+			{
+				array.Add(JsonValueToSignalRValue(item));
+			}
+			return FSignalRValue(MoveTemp(array));
+		}
+
+	case EJson::Object:
+		{
+			TMap<FString, FSignalRValue> map;
+			for (const auto& pair : jsonValue->AsObject()->Values)
+			{
+				map.Add(FString(pair.Key), JsonValueToSignalRValue(pair.Value));
+			}
+			return FSignalRValue(MoveTemp(map));
+		}
+
+	default:
+		return FSignalRValue(nullptr);
+	}
+}
+FSignalRValue UVoxtaSocketHandler::JsonObjectToSignalRValue(const TSharedPtr<FJsonObject>& jsonObject) const
+{
+	if (!jsonObject.IsValid())
+	{
+		return FSignalRValue(nullptr);
+	}
+
+	TMap<FString, FSignalRValue> map;
+
+	// Ensure that $type is the first one, because the server demands it to be first
+	if (const TSharedPtr<FJsonValue> actionValue = jsonObject->TryGetField(TEXT("action")))
+	{
+		map.Add(TEXT("$type"), JsonValueToSignalRValue(actionValue));
+	}
+	else if (const TSharedPtr<FJsonValue> typeValue = jsonObject->TryGetField(TEXT("$type")))
+	{
+		map.Add(TEXT("$type"), JsonValueToSignalRValue(typeValue));
+	}
+
+	for (const auto& pair : jsonObject->Values)
+	{
+		if (pair.Key != TEXT("action") && pair.Key != TEXT("$type"))
+		{
+			map.Add(FString(pair.Key), JsonValueToSignalRValue(pair.Value));
+		}
+	}
+	return FSignalRValue(MoveTemp(map));
 }

@@ -6,6 +6,7 @@
 #include "UObject/Object.h"
 #include "VoxtaSocketHandler.generated.h"
 
+class FJsonObject;
 class FSignalRValue;
 class AGameModeBase;
 class IHubConnection;
@@ -32,7 +33,7 @@ public:
 
 	void EstablishConnection(const FString& ipv4Address, int port);
 	void Disconnect() const;
-	bool TrySendPayload(const FString& message) const;
+	bool TrySendPayload(const TSharedPtr<FJsonObject>& payload) const;
 
 private:
 	static const FString SEND_MESSAGE_EVENT_NAME;
@@ -42,6 +43,9 @@ private:
 	void OnConnectionError(const FString& error);
 	void OnClosed();
 	void OnReceivedMessage(const TArray<FSignalRValue>& payload);
+
+	FSignalRValue JsonValueToSignalRValue(const TSharedPtr<FJsonValue>& jsonValue) const;
+	FSignalRValue JsonObjectToSignalRValue(const TSharedPtr<FJsonObject>& jsonObject) const;
 
 	TSharedPtr<IHubConnection> m_hub;
 };

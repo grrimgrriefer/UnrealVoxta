@@ -2,6 +2,7 @@
 
 #include "VoxtaApiHandler.h"
 #include "JsonObjectConverter.h"
+#include "SignalRValue.h"
 #include "VoxtaSocketHandler.h"
 
 const FName UVoxtaApiHandler::CLIENT_NAME = TEXT("UnrealVoxta");
@@ -34,10 +35,10 @@ bool UVoxtaApiHandler::TrySendAuthenticatePayload(const FName& clientName, const
 	requestPayload.client = clientName;
 	requestPayload.clientVersion = version;
 
-	FString outputJson;
-	if (FJsonObjectConverter::UStructToJsonObjectString(requestPayload, outputJson))
+	TSharedPtr<FJsonObject> jsonObject = FJsonObjectConverter::UStructToJsonObject(requestPayload);
+	if (jsonObject.IsValid())
 	{
-		return m_voxtaSocketHandler->TrySendPayload(outputJson);
+		return m_voxtaSocketHandler->TrySendPayload(jsonObject);
 	}
 	UE_LOG(LogTemp, Error, TEXT("[VoxtaApiHandler] Failed to serialize FVoxtaAuthenticateRequest."));
 	return false;
@@ -45,10 +46,10 @@ bool UVoxtaApiHandler::TrySendAuthenticatePayload(const FName& clientName, const
 bool UVoxtaApiHandler::TrySendLoadCharactersPayload() const
 {
 	const FVoxtaLoadCharactersRequest requestPayload;
-	FString outputJson;
-	if (FJsonObjectConverter::UStructToJsonObjectString(requestPayload, outputJson))
+	TSharedPtr<FJsonObject> jsonObject = FJsonObjectConverter::UStructToJsonObject(requestPayload);
+	if (jsonObject.IsValid())
 	{
-		return m_voxtaSocketHandler->TrySendPayload(outputJson);
+		return m_voxtaSocketHandler->TrySendPayload(jsonObject);
 	}
 	UE_LOG(LogTemp, Error, TEXT("[VoxtaApiHandler] Failed to serialize FVoxtaLoadCharactersRequest."));
 	return false;
@@ -56,12 +57,12 @@ bool UVoxtaApiHandler::TrySendLoadCharactersPayload() const
 bool UVoxtaApiHandler::TrySendStartChatPayload(const FString& characterId) const
 {
 	FVoxtaStartChatRequest requestPayload;
-	requestPayload.characterId = characterId;
+	requestPayload.characterIds.Add(characterId);
 
-	FString outputJson;
-	if (FJsonObjectConverter::UStructToJsonObjectString(requestPayload, outputJson))
+	TSharedPtr<FJsonObject> jsonObject = FJsonObjectConverter::UStructToJsonObject(requestPayload);
+	if (jsonObject.IsValid())
 	{
-		return m_voxtaSocketHandler->TrySendPayload(outputJson);
+		return m_voxtaSocketHandler->TrySendPayload(jsonObject);
 	}
 	UE_LOG(LogTemp, Error, TEXT("[VoxtaApiHandler] Failed to serialize FVoxtaStartChatRequest."));
 	return false;
@@ -71,10 +72,10 @@ bool UVoxtaApiHandler::TrySendStopChatPayload(const FString& sessionId) const
 	FVoxtaStopChatRequest requestPayload;
 	requestPayload.sessionId = sessionId;
 
-	FString outputJson;
-	if (FJsonObjectConverter::UStructToJsonObjectString(requestPayload, outputJson))
+	TSharedPtr<FJsonObject> jsonObject = FJsonObjectConverter::UStructToJsonObject(requestPayload);
+	if (jsonObject.IsValid())
 	{
-		return m_voxtaSocketHandler->TrySendPayload(outputJson);
+		return m_voxtaSocketHandler->TrySendPayload(jsonObject);
 	}
 	UE_LOG(LogTemp, Error, TEXT("[VoxtaApiHandler] Failed to serialize FVoxtaStopChatRequest."));
 	return false;
@@ -85,10 +86,10 @@ bool UVoxtaApiHandler::TrySendSendTextMessagePayload(const FString& sessionId, c
 	requestPayload.sessionId = sessionId;
 	requestPayload.text = text;
 
-	FString outputJson;
-	if (FJsonObjectConverter::UStructToJsonObjectString(requestPayload, outputJson))
+	TSharedPtr<FJsonObject> jsonObject = FJsonObjectConverter::UStructToJsonObject(requestPayload);
+	if (jsonObject.IsValid())
 	{
-		return m_voxtaSocketHandler->TrySendPayload(outputJson);
+		return m_voxtaSocketHandler->TrySendPayload(jsonObject);
 	}
 	UE_LOG(LogTemp, Error, TEXT("[VoxtaApiHandler] Failed to serialize FVoxtaSendTextMessageRequest."));
 	return false;
