@@ -26,4 +26,5 @@ protected:
 	virtual VoxtaClientState GetStateForTask(FStateTreeExecutionContext& context) const;
 
 	TStateTreeExternalDataHandle<UVoxtaStateTreeSubsystem> m_VoxtaStateTreeSubsystemHandle;
+	TStateTreeExternalDataHandle<UVoxtaApiHandler> m_VoxtaApiHandlerHandle;
 };

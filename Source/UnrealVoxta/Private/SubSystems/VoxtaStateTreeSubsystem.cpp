@@ -137,27 +137,30 @@ void UVoxtaStateTreeSubsystem::EnsureConnectionWithServer()
 
 bool UVoxtaStateTreeSubsystem::TryMarkNewStateActive(VoxtaClientState voxtaClientState)
 {
+	UE_LOG(LogTemp, Warning, TEXT("[UVoxtaStateTreeSubsystem] TryMarkNewStateActive: %s"), *UEnum::GetValueAsString(voxtaClientState));
 	bool alreadyActive = false;
 	m_currentStates.Emplace(voxtaClientState, &alreadyActive);
 	return !alreadyActive;
 }
 bool UVoxtaStateTreeSubsystem::TryMarkStateInactive(VoxtaClientState voxtaClientState)
 {
+	UE_LOG(LogTemp, Warning, TEXT("[UVoxtaStateTreeSubsystem] TryMarkStateInactive: %s"), *UEnum::GetValueAsString(voxtaClientState));
 	return m_currentStates.Remove(voxtaClientState) > 0;
 }
 bool UVoxtaStateTreeSubsystem::TrySendFlowEvent(const FGameplayTag tag, bool hasPayload, const FConstStructView& payload)
 {
 	const UWorld* world = GetWorld();
 
-	ensure(world);
-	ensure(!world->IsPreparingMapChange());
-	ensure(IsValid(m_stateTreeAsset));
+	ensureAlways(world);
+	ensureAlways(!world->IsPreparingMapChange());
+	ensureAlways(IsValid(m_stateTreeAsset));
 
-	if (m_isRunning && world && world->IsPreparingMapChange() && !IsValid(m_stateTreeAsset))
+	if (m_isRunning && world && !world->IsPreparingMapChange() && IsValid(m_stateTreeAsset))
 	{
 		FStateTreeExecutionContext context(*this, *m_stateTreeAsset, m_instanceData);
 		if (m_contextBinder.SetContextRequirements(context, m_stateTreeAsset, this))
 		{
+			UE_LOG(LogTemp, Warning, TEXT("[UVoxtaStateTreeSubsystem] Sending event %s"), *tag.ToString());
 			hasPayload
 				? context.SendEvent(tag, payload)
 				: context.SendEvent(tag);
@@ -200,7 +203,7 @@ void UVoxtaStateTreeSubsystem::OnGameModePostLoginEvent(AGameModeBase* gameMode,
 		return;
 	}
 
-	ensure(IsValid(m_stateTreeAsset));
+	ensureAlways(IsValid(m_stateTreeAsset));
 	if (!IsValid(m_stateTreeAsset))
 	{
 		return;

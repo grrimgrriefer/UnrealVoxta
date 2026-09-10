@@ -15,6 +15,10 @@ FVoxtaBaseTask::FVoxtaBaseTask()
 bool FVoxtaBaseTask::Link(FStateTreeLinker& linker)
 {
 	linker.LinkExternalData(m_VoxtaStateTreeSubsystemHandle);
+	linker.LinkExternalData(m_VoxtaApiHandlerHandle);
+
+	ensureAlways(m_VoxtaStateTreeSubsystemHandle.IsValid());
+	ensureAlways(m_VoxtaApiHandlerHandle.IsValid());
 	return true;
 }
 EStateTreeRunStatus FVoxtaBaseTask::EnterState(FStateTreeExecutionContext& context, const FStateTreeTransitionResult& transitions) const

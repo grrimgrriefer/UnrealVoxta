@@ -36,7 +36,7 @@ void UVoxtaSocketHandler::Disconnect() const
 }
 bool UVoxtaSocketHandler::TrySendPayload(const FString& message) const
 {
-	ensure(m_hub.IsValid());
+	ensureAlways(m_hub.IsValid());
 	if (m_hub.IsValid())
 	{
 		m_hub->Invoke(SEND_MESSAGE_EVENT_NAME, message);

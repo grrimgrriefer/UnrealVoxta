@@ -18,7 +18,7 @@ EStateTreeRunStatus FVoxtaTryAuthenticateTask::EnterState(FStateTreeExecutionCon
 
 	FInstanceDataType& instanceData = context.GetInstanceData(*this);
 	UVoxtaApiHandler* voxtaApiHandler = context.GetExternalDataPtr(m_VoxtaApiHandlerHandle);
-	ensure(voxtaApiHandler);
+	ensureAlways(voxtaApiHandler);
 
     if (!voxtaApiHandler)
     {
