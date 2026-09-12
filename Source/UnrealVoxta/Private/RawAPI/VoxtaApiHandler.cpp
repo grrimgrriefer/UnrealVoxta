@@ -10,8 +10,11 @@ const FName UVoxtaApiHandler::CLIENT_VERSION = TEXT("0.2.0");
 
 UVoxtaApiHandler::UVoxtaApiHandler()
 {
-	m_voxtaSocketHandler = CreateDefaultSubobject<UVoxtaSocketHandler>(TEXT("VoxtaSocketHandler"));
+	m_voxtaSocketHandler = NewObject<UVoxtaSocketHandler>(this);
+}
 
+void UVoxtaApiHandler::Initialize()
+{
 	m_voxtaSocketHandler->m_OnSocketConnected.AddUObject(this, &UVoxtaApiHandler::OnSocketConnected);
 	m_voxtaSocketHandler->m_OnSocketConnectionError.AddUObject(this, &UVoxtaApiHandler::OnSocketConnectionError);
 	m_voxtaSocketHandler->m_OnSocketClosed.AddUObject(this, &UVoxtaApiHandler::OnSocketClosed);

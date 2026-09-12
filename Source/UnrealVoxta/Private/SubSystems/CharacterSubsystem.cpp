@@ -21,7 +21,11 @@ void UCharacterSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 	Super::OnWorldBeginPlay(InWorld);
 
 	m_voxtaClient = IVoxtaClient::Get(GetWorld());
-	m_voxtaClient->EnsureConnectionWithServer();
+	ensureAlways(m_voxtaClient.IsValid());
+	if (m_voxtaClient.IsValid())
+	{
+		m_voxtaClient->EnsureConnectionWithServer();
+	}
 }
 void UCharacterSubsystem::Deinitialize()
 {
@@ -48,6 +52,11 @@ void UCharacterSubsystem::StartConversation(APawn* npc)
 		m_activeNpc = npc;
 		m_OnCurrentConversableNpcChanged.Broadcast(m_activeNpc.Get());
 	}
+}
+void UCharacterSubsystem::StopConversation()
+{
+	m_activeNpc = nullptr;
+	m_OnCurrentConversableNpcChanged.Broadcast(nullptr);
 }
 APawn* UCharacterSubsystem::GetCurrentConversationNpc() const
 {

@@ -34,6 +34,8 @@ public:
 	FOnVoxtaConnectionError m_OnConnectionError;
 	FOnVoxtaDisconnected m_OnDisconnected;
 
+	void Initialize();
+
 	void EstablishConnection(const FString& ipv4Address, int port) const;
 	void Disconnect() const;
 

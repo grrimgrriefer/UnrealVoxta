@@ -22,7 +22,7 @@ EStateTreeRunStatus FVoxtaTryAuthenticateTask::EnterState(FStateTreeExecutionCon
 
     if (!voxtaApiHandler)
     {
-        UE_LOG(LogTemp, Error, TEXT("[FVoxtaAuthenticateTask] Failed to resolve UVoxtaSubsystem."));
+        UE_LOG(LogTemp, Error, TEXT("[FVoxtaAuthenticateTask] Failed to resolve UVoxtaApiHandler."));
         return EStateTreeRunStatus::Failed;
     }
 

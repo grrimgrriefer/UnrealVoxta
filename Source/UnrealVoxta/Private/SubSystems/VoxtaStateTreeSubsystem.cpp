@@ -25,6 +25,7 @@ void UVoxtaStateTreeSubsystem::Initialize(FSubsystemCollectionBase& collection)
 	}
 
 	m_voxtaApiHandler = NewObject<UVoxtaApiHandler>(this);
+	m_voxtaApiHandler->Initialize();
 	m_voxtaApiHandler->m_OnConnected.AddUObject(this, &UVoxtaStateTreeSubsystem::OnVoxtaConnected);
 	m_voxtaApiHandler->m_OnConnectionError.AddUObject(this, &UVoxtaStateTreeSubsystem::OnVoxtaConnectionError);
 	m_voxtaApiHandler->m_OnDisconnected.AddUObject(this, &UVoxtaStateTreeSubsystem::OnVoxtaDisconnected);

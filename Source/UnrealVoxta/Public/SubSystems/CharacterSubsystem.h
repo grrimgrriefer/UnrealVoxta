@@ -36,6 +36,7 @@ public:
 	void UnregisterNPC(APawn* npc);
 
 	void StartConversation(APawn* npc);
+	void StopConversation();
 	void SubmitMessageFromPlayer(const FText& messageText) const;
 
 	APawn* GetCurrentConversationNpc() const;

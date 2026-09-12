@@ -25,13 +25,13 @@ void UVoxtaSocketHandler::EstablishConnection(const FString& ipv4Address, int po
 }
 void UVoxtaSocketHandler::Disconnect() const
 {
-	m_hub->OnConnected().RemoveAll(this);
-	m_hub->OnConnectionError().RemoveAll(this);
-	m_hub->OnClosed().RemoveAll(this);
-	m_hub->On(RECEIVE_MESSAGE_EVENT_NAME).Unbind();
-
 	if (m_hub.IsValid())
 	{
+		m_hub->OnConnected().RemoveAll(this);
+		m_hub->OnConnectionError().RemoveAll(this);
+		m_hub->OnClosed().RemoveAll(this);
+		m_hub->On(RECEIVE_MESSAGE_EVENT_NAME).Unbind();
+
 		m_hub->Stop();
 	}
 }
