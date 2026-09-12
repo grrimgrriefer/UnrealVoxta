@@ -51,7 +51,7 @@ public:
 	bool TryBindContextData(UObject* data);
 	bool TryUnbindContextData(UObject* data);
 
-	void InitializeInternalRuntimeInfo(FString userName, UObject characterList); // TODO: figure out what character list should be like
+	void InitializeInternalRuntimeInfo(const FString& userName, UObject* characterList); // TODO: figure out what character list should be like
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Voxta", meta=(RequiredAssetDataTags="Schema=UVoxtaTreeSchema"))

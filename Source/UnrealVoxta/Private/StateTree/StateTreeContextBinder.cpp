@@ -1,6 +1,6 @@
 // Copyright(c) 2026 grrimgrriefer & DZnnah, see LICENSE for details.
 
-#include "StateTreeContextBinder.h"
+#include "StateTree/StateTreeContextBinder.h"
 #include "StateTreeExecutionContext.h"
 
 bool StateTreeContextBinder::TryBindContextData(UObject* data)

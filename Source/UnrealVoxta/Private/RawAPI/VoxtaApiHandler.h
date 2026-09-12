@@ -28,14 +28,11 @@ public:
 	static const FName CLIENT_NAME;
 	static const FName CLIENT_VERSION;
 
-	UVoxtaApiHandler();
-
 	FOnVoxtaConnected m_OnConnected;
 	FOnVoxtaConnectionError m_OnConnectionError;
 	FOnVoxtaDisconnected m_OnDisconnected;
 
 	void Initialize();
-
 	void EstablishConnection(const FString& ipv4Address, int port) const;
 	void Disconnect() const;
 
@@ -49,6 +46,11 @@ private:
 	void OnSocketConnected();
 	void OnSocketConnectionError(const FString& error);
 	void OnSocketClosed();
+
+	template <class T>
+	bool TrySendPayloadInternal(const T& payload, const TCHAR* payloadName) const;
+	template <class T>
+	static bool ParseResponseInternal(const FString& jsonString, T& outResponse);
 
 	static bool TryExtractAction(const FString& jsonString, FString& outAction);
 	static bool ParseWelcomeResponse(const FString& jsonString, FVoxtaWelcomeResponse& outResponse);

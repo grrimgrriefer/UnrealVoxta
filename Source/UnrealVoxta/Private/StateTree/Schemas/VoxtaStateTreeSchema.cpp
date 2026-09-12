@@ -11,17 +11,17 @@
 const FName UVoxtaStateTreeSchema::VOXTA_API_HANDLER_NAME = TEXT("VOXTA_API_HANDLER");
 const FName UVoxtaStateTreeSchema::VOXTA_STATE_TREE_SUBSYSTEM_NAME = TEXT("VOXTA_STATE_TREE_SUBSYSTEM");
 
-UVoxtaStateTreeSchema::UVoxtaStateTreeSchema() : m_socketHandlerData(VOXTA_API_HANDLER_NAME,
+UVoxtaStateTreeSchema::UVoxtaStateTreeSchema() : m_voxtaApiHandlerData(VOXTA_API_HANDLER_NAME,
 																	UVoxtaApiHandler::StaticClass(),
 																	FGuid::NewDeterministicGuid(VOXTA_API_HANDLER_NAME.ToString())),
 												m_voxtaSubsystemData(VOXTA_STATE_TREE_SUBSYSTEM_NAME,
 																	UVoxtaStateTreeSubsystem::StaticClass(),
 																	FGuid::NewDeterministicGuid(VOXTA_STATE_TREE_SUBSYSTEM_NAME.ToString()))
 {
-	m_socketHandlerData.Requirement = EStateTreeExternalDataRequirement::Required;
+	m_voxtaApiHandlerData.Requirement = EStateTreeExternalDataRequirement::Required;
 	m_voxtaSubsystemData.Requirement = EStateTreeExternalDataRequirement::Required;
 
-	m_contextDescs = { m_socketHandlerData, m_voxtaSubsystemData };
+	m_contextDescs = { m_voxtaApiHandlerData, m_voxtaSubsystemData };
 }
 TConstArrayView<FStateTreeExternalDataDesc> UVoxtaStateTreeSchema::GetContextDataDescs() const
 {

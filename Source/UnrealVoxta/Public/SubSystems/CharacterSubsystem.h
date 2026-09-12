@@ -37,7 +37,7 @@ public:
 
 	void StartConversation(APawn* npc);
 	void StopConversation();
-	void SubmitMessageFromPlayer(const FText& messageText) const;
+	void SubmitMessageFromPlayer(const FText& messageText);
 
 	APawn* GetCurrentConversationNpc() const;
 	bool IsInOngoingConversation() const;

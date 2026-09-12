@@ -27,7 +27,7 @@ public:
 
 protected:
 	UPROPERTY()
-	FStateTreeExternalDataDesc m_socketHandlerData;
+	FStateTreeExternalDataDesc m_voxtaApiHandlerData;
 	UPROPERTY()
 	FStateTreeExternalDataDesc m_voxtaSubsystemData;
 

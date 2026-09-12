@@ -35,7 +35,7 @@ void UVoxtaSocketHandler::Disconnect() const
 		m_hub->Stop();
 	}
 }
-bool UVoxtaSocketHandler::TrySendPayload(const TSharedPtr<FJsonObject>& payload) const
+bool UVoxtaSocketHandler::TrySendPayload(const FJsonObject* payload) const
 {
 	ensureAlways(m_hub.IsValid());
 	if (m_hub.IsValid())
@@ -61,9 +61,9 @@ void UVoxtaSocketHandler::OnReceivedMessage(const TArray<FSignalRValue>& payload
 {
 	// TODO generic deserializeation
 }
-FSignalRValue UVoxtaSocketHandler::JsonValueToSignalRValue(const TSharedPtr<FJsonValue>& jsonValue) const
+FSignalRValue UVoxtaSocketHandler::JsonValueToSignalRValue(const FJsonValue* jsonValue) const
 {
-	if (!jsonValue.IsValid() || jsonValue->IsNull())
+	if (jsonValue == nullptr)
 	{
 		return FSignalRValue(nullptr);
 	}
@@ -84,7 +84,7 @@ FSignalRValue UVoxtaSocketHandler::JsonValueToSignalRValue(const TSharedPtr<FJso
 			TArray<FSignalRValue> array;
 			for (const TSharedPtr<FJsonValue>& item : jsonValue->AsArray())
 			{
-				array.Add(JsonValueToSignalRValue(item));
+				array.Add(JsonValueToSignalRValue(item.Get()));
 			}
 			return FSignalRValue(MoveTemp(array));
 		}
@@ -94,7 +94,7 @@ FSignalRValue UVoxtaSocketHandler::JsonValueToSignalRValue(const TSharedPtr<FJso
 			TMap<FString, FSignalRValue> map;
 			for (const auto& pair : jsonValue->AsObject()->Values)
 			{
-				map.Add(FString(pair.Key), JsonValueToSignalRValue(pair.Value));
+				map.Add(FString(pair.Key), JsonValueToSignalRValue(pair.Value.Get()));
 			}
 			return FSignalRValue(MoveTemp(map));
 		}
@@ -103,9 +103,9 @@ FSignalRValue UVoxtaSocketHandler::JsonValueToSignalRValue(const TSharedPtr<FJso
 		return FSignalRValue(nullptr);
 	}
 }
-FSignalRValue UVoxtaSocketHandler::JsonObjectToSignalRValue(const TSharedPtr<FJsonObject>& jsonObject) const
+FSignalRValue UVoxtaSocketHandler::JsonObjectToSignalRValue(const FJsonObject* jsonObject) const
 {
-	if (!jsonObject.IsValid())
+	if (jsonObject == nullptr)
 	{
 		return FSignalRValue(nullptr);
 	}
@@ -115,18 +115,18 @@ FSignalRValue UVoxtaSocketHandler::JsonObjectToSignalRValue(const TSharedPtr<FJs
 	// Ensure that $type is the first one, because the server demands it to be first
 	if (const TSharedPtr<FJsonValue> actionValue = jsonObject->TryGetField(TEXT("action")))
 	{
-		map.Add(TEXT("$type"), JsonValueToSignalRValue(actionValue));
+		map.Add(TEXT("$type"), JsonValueToSignalRValue(actionValue.Get()));
 	}
 	else if (const TSharedPtr<FJsonValue> typeValue = jsonObject->TryGetField(TEXT("$type")))
 	{
-		map.Add(TEXT("$type"), JsonValueToSignalRValue(typeValue));
+		map.Add(TEXT("$type"), JsonValueToSignalRValue(typeValue.Get()));
 	}
 
 	for (const auto& pair : jsonObject->Values)
 	{
 		if (pair.Key != TEXT("action") && pair.Key != TEXT("$type"))
 		{
-			map.Add(FString(pair.Key), JsonValueToSignalRValue(pair.Value));
+			map.Add(FString(pair.Key), JsonValueToSignalRValue(pair.Value.Get()));
 		}
 	}
 	return FSignalRValue(MoveTemp(map));

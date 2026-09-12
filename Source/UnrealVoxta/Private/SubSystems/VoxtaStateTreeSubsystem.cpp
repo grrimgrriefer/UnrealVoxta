@@ -178,7 +178,7 @@ bool UVoxtaStateTreeSubsystem::TryUnbindContextData(UObject* data)
 {
 	return m_contextBinder.TryUnbindContextData(data);
 }
-void UVoxtaStateTreeSubsystem::InitializeInternalRuntimeInfo(FString userName, UObject characterList)
+void UVoxtaStateTreeSubsystem::InitializeInternalRuntimeInfo(const FString& userName, UObject* characterList)
 {
 	// TODO: store this in a separate component of this subsystem, (runtime data component or something)
 }

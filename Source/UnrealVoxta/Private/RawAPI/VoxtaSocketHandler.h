@@ -33,7 +33,7 @@ public:
 
 	void EstablishConnection(const FString& ipv4Address, int port);
 	void Disconnect() const;
-	bool TrySendPayload(const TSharedPtr<FJsonObject>& payload) const;
+	bool TrySendPayload(const FJsonObject* payload) const;
 
 private:
 	static const FString SEND_MESSAGE_EVENT_NAME;
@@ -44,8 +44,8 @@ private:
 	void OnClosed();
 	void OnReceivedMessage(const TArray<FSignalRValue>& payload);
 
-	FSignalRValue JsonValueToSignalRValue(const TSharedPtr<FJsonValue>& jsonValue) const;
-	FSignalRValue JsonObjectToSignalRValue(const TSharedPtr<FJsonObject>& jsonObject) const;
+	FSignalRValue JsonValueToSignalRValue(const FJsonValue* jsonValue) const;
+	FSignalRValue JsonObjectToSignalRValue(const FJsonObject* jsonObject) const;
 
 	TSharedPtr<IHubConnection> m_hub;
 };

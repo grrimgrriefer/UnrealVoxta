@@ -92,7 +92,7 @@ APawn* UCharacterSubsystem::TryGetNearestNPC(const APawn* player) const
 
 	return nearestNpc;
 }
-void UCharacterSubsystem::SubmitMessageFromPlayer(const FText& messageText) const
+void UCharacterSubsystem::SubmitMessageFromPlayer(const FText& messageText)
 {
 	if (messageText.IsEmptyOrWhitespace())
 	{
