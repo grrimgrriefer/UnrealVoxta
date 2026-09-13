@@ -16,6 +16,7 @@ struct FGameplayTag;
 DECLARE_MULTICAST_DELEGATE(FOnVoxtaSocketConnected);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnVoxtaSocketConnectionError, const FString&);
 DECLARE_MULTICAST_DELEGATE(FOnVoxtaSocketClosed);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnVoxtaMessageReceived, const FString&);
 
 /**
  * Owns the low-level socket.
@@ -30,6 +31,7 @@ public:
 	FOnVoxtaSocketConnected m_OnSocketConnected;
 	FOnVoxtaSocketConnectionError m_OnSocketConnectionError;
 	FOnVoxtaSocketClosed m_OnSocketClosed;
+	FOnVoxtaMessageReceived m_OnMessageReceived;
 
 	void EstablishConnection(const FString& ipv4Address, int port);
 	void Disconnect() const;

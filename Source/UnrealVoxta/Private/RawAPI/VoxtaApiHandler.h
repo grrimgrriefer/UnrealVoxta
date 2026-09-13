@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
-#include "VoxtaPayloads.h"
+#include "VoxtaResponseDispatcher.h"
 #include "VoxtaApiHandler.generated.h"
 
 class UVoxtaSocketHandler;
@@ -42,27 +42,31 @@ public:
 	bool TrySendStopChatPayload(const FString& sessionId) const;
 	bool TrySendSendTextMessagePayload(const FString& sessionId, const FString& text) const;
 
+	template <typename T>
+	TMulticastDelegate<void(const T&)>& OnResponse();
+
 private:
 	void OnSocketConnected();
 	void OnSocketConnectionError(const FString& error);
 	void OnSocketClosed();
+	void OnMessageReceived(const FString& jsonString);
 
 	template <class T>
 	bool TrySendPayloadInternal(const T& payload, const TCHAR* payloadName) const;
+	template <typename T>
+	void RegisterResponseRoute(const FString& actionName);
+	template <typename T>
+	void BroadcastResponse(const T& response);
+
 	template <class T>
 	static bool ParseResponseInternal(const FString& jsonString, T& outResponse);
 
 	static bool TryExtractAction(const FString& jsonString, FString& outAction);
-	static bool ParseWelcomeResponse(const FString& jsonString, FVoxtaWelcomeResponse& outResponse);
-	static bool ParseCharacterListLoadedResponse(const FString& jsonString, FVoxtaCharacterListLoadedResponse& outResponse);
-	static bool ParseContextUpdatedResponse(const FString& jsonString, FVoxtaContextUpdatedResponse& outResponse);
-	static bool ParseChatStartedResponse(const FString& jsonString, FVoxtaChatStartedResponse& outResponse);
-	static bool ParseReplyStartResponse(const FString& jsonString, FVoxtaReplyStartResponse& outResponse);
-	static bool ParseReplyChunkResponse(const FString& jsonString, FVoxtaReplyChunkResponse& outResponse);
-	static bool ParseReplyEndResponse(const FString& jsonString, FVoxtaReplyEndResponse& outResponse);
-	static bool ParseReplyCancelledResponse(const FString& jsonString, FVoxtaReplyCancelledResponse& outResponse);
-	static bool ParseChatUpdateResponse(const FString& jsonString, FVoxtaChatUpdateResponse& outResponse);
 
 	UPROPERTY()
 	TObjectPtr<UVoxtaSocketHandler> m_voxtaSocketHandler;
+
+	TMap<FString, TFunction<void(const FString&)>> m_responseRoutes;
+	TMap<FName, TSharedPtr<IVoxtaResponseDispatcher>> m_responseDispatchers;
+
 };

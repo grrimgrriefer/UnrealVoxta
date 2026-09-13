@@ -2,6 +2,8 @@
 
 #include "VoxtaApiHandler.h"
 #include "JsonObjectConverter.h"
+#include "VoxtaPayloads.h"
+#include "VoxtaResponseDispatcher.h"
 #include "VoxtaSocketHandler.h"
 
 const FName UVoxtaApiHandler::CLIENT_NAME = TEXT("UnrealVoxta");
@@ -13,12 +15,22 @@ void UVoxtaApiHandler::Initialize()
 	m_voxtaSocketHandler->m_OnSocketConnected.AddUObject(this, &UVoxtaApiHandler::OnSocketConnected);
 	m_voxtaSocketHandler->m_OnSocketConnectionError.AddUObject(this, &UVoxtaApiHandler::OnSocketConnectionError);
 	m_voxtaSocketHandler->m_OnSocketClosed.AddUObject(this, &UVoxtaApiHandler::OnSocketClosed);
+	m_voxtaSocketHandler->m_OnMessageReceived.AddUObject(this, &UVoxtaApiHandler::OnMessageReceived);
+
+	RegisterResponseRoute<FVoxtaWelcomeResponse>(TEXT("welcome"));
+	RegisterResponseRoute<FVoxtaCharacterListLoadedResponse>(TEXT("charactersListLoaded"));
+	RegisterResponseRoute<FVoxtaCharacterListLoadedResponse>(TEXT("characterListLoaded"));
+	RegisterResponseRoute<FVoxtaContextUpdatedResponse>(TEXT("contextUpdated"));
+	RegisterResponseRoute<FVoxtaChatStartedResponse>(TEXT("chatStarted"));
+	RegisterResponseRoute<FVoxtaReplyStartResponse>(TEXT("replyStart"));
+	RegisterResponseRoute<FVoxtaReplyChunkResponse>(TEXT("replyChunk"));
+	RegisterResponseRoute<FVoxtaReplyEndResponse>(TEXT("replyEnd"));
+	RegisterResponseRoute<FVoxtaReplyCancelledResponse>(TEXT("replyCancelled"));
+	RegisterResponseRoute<FVoxtaChatUpdateResponse>(TEXT("update"));
+	RegisterResponseRoute<FVoxtaChatClosedResponse>(TEXT("chatClosed"));
+	RegisterResponseRoute<FVoxtaSpeechRecognitionResponse>(TEXT("speechRecognitionPartial"));
+	RegisterResponseRoute<FVoxtaSpeechRecognitionResponse>(TEXT("speechRecognitionEnd"));
 }
-
-// ====================
-// REQUESTS
-// ====================
-
 void UVoxtaApiHandler::EstablishConnection(const FString& ipv4Address, int port) const
 {
 	m_voxtaSocketHandler->EstablishConnection(ipv4Address, port);
@@ -57,11 +69,17 @@ bool UVoxtaApiHandler::TrySendSendTextMessagePayload(const FString& sessionId, c
 	requestPayload.text = text;
 	return TrySendPayloadInternal(requestPayload, TEXT("FVoxtaSendTextMessageRequest"));
 }
-
-// ====================
-// SOCKET CALLBACKS
-// ====================
-
+template <typename T>
+TMulticastDelegate<void(const T&)>& UVoxtaApiHandler::OnResponse()
+{
+	const FName structName = T::StaticStruct()->GetFName();
+	TSharedPtr<IVoxtaResponseDispatcher>& dispatcher = m_responseDispatchers.FindOrAdd(structName);
+	if (!dispatcher.IsValid())
+	{
+		dispatcher = MakeShared<TVoxtaResponseDispatcher<T>>();
+	}
+	return StaticCastSharedPtr<TVoxtaResponseDispatcher<T>>(dispatcher)->m_delegate;
+}
 void UVoxtaApiHandler::OnSocketConnected()
 {
 	m_OnConnected.Broadcast();
@@ -74,11 +92,24 @@ void UVoxtaApiHandler::OnSocketClosed()
 {
 	m_OnDisconnected.Broadcast();
 }
+void UVoxtaApiHandler::OnMessageReceived(const FString& jsonString)
+{
+	FString action;
+	if (!TryExtractAction(jsonString, action))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[VoxtaApiHandler] Failed to extract action from message: %s"), *jsonString);
+		return;
+	}
 
-// ====================
-// HELPER TEMPLATES
-// ====================
-
+	if (const TFunction<void(const FString&)>* route = m_responseRoutes.Find(action))
+	{
+		(*route)(jsonString);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Verbose, TEXT("[VoxtaApiHandler] No route registered for action: %s"), *action);
+	}
+}
 template <typename T>
 bool UVoxtaApiHandler::TrySendPayloadInternal(const T& payload, const TCHAR* payloadName) const
 {
@@ -95,54 +126,47 @@ bool UVoxtaApiHandler::ParseResponseInternal(const FString& jsonString, T& outRe
 {
 	return FJsonObjectConverter::JsonObjectStringToUStruct(jsonString, &outResponse, 0, 0);
 }
-
-// ====================
-// RESPONSE PARSERS
-// ====================
-
+template <typename T>
+void UVoxtaApiHandler::RegisterResponseRoute(const FString& actionName)
+{
+	m_responseRoutes.Add(actionName, {
+		[this](const FString& jsonString)
+		{
+			T response;
+			if (FJsonObjectConverter::JsonObjectStringToUStruct(jsonString, &response, 0, 0))
+			{
+				BroadcastResponse<T>(response);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Error, TEXT("Failed to deserialize %s"), *T::StaticStruct()->GetName());
+			}
+		}
+	});
+}
+template <typename T>
+void UVoxtaApiHandler::BroadcastResponse(const T& response)
+{
+	const FName structName = T::StaticStruct()->GetFName();
+	if (const TSharedPtr<IVoxtaResponseDispatcher>* dispatcher = m_responseDispatchers.Find(structName))
+	{
+		if (dispatcher->IsValid())
+		{
+			StaticCastSharedPtr<TVoxtaResponseDispatcher<T>>(*dispatcher)->m_Delegate.Broadcast(response);
+		}
+	}
+}
 bool UVoxtaApiHandler::TryExtractAction(const FString& jsonString, FString& outAction)
 {
-	FVoxtaBaseResponse baseResponse;
-	if (ParseResponseInternal(jsonString, baseResponse))
+	TSharedPtr<FJsonObject> jsonObject;
+	const TSharedRef<TJsonReader<>> reader = TJsonReaderFactory<>::Create(jsonString);
+	if (FJsonSerializer::Deserialize(reader, jsonObject) && jsonObject.IsValid())
 	{
-		outAction = baseResponse.action;
-		return !outAction.IsEmpty();
+		if (jsonObject->TryGetStringField(TEXT("action"), outAction) ||
+			jsonObject->TryGetStringField(TEXT("$type"), outAction))
+		{
+			return !outAction.IsEmpty();
+		}
 	}
 	return false;
-}
-bool UVoxtaApiHandler::ParseWelcomeResponse(const FString& jsonString, FVoxtaWelcomeResponse& outResponse)
-{
-	return ParseResponseInternal(jsonString, outResponse);
-}
-bool UVoxtaApiHandler::ParseCharacterListLoadedResponse(const FString& jsonString, FVoxtaCharacterListLoadedResponse& outResponse)
-{
-	return ParseResponseInternal(jsonString, outResponse);
-}
-bool UVoxtaApiHandler::ParseContextUpdatedResponse(const FString& jsonString, FVoxtaContextUpdatedResponse& outResponse)
-{
-	return ParseResponseInternal(jsonString, outResponse);
-}
-bool UVoxtaApiHandler::ParseChatStartedResponse(const FString& jsonString, FVoxtaChatStartedResponse& outResponse)
-{
-	return ParseResponseInternal(jsonString, outResponse);
-}
-bool UVoxtaApiHandler::ParseReplyStartResponse(const FString& jsonString, FVoxtaReplyStartResponse& outResponse)
-{
-	return ParseResponseInternal(jsonString, outResponse);
-}
-bool UVoxtaApiHandler::ParseReplyChunkResponse(const FString& jsonString, FVoxtaReplyChunkResponse& outResponse)
-{
-	return ParseResponseInternal(jsonString, outResponse);
-}
-bool UVoxtaApiHandler::ParseReplyEndResponse(const FString& jsonString, FVoxtaReplyEndResponse& outResponse)
-{
-	return ParseResponseInternal(jsonString, outResponse);
-}
-bool UVoxtaApiHandler::ParseReplyCancelledResponse(const FString& jsonString, FVoxtaReplyCancelledResponse& outResponse)
-{
-	return ParseResponseInternal(jsonString, outResponse);
-}
-bool UVoxtaApiHandler::ParseChatUpdateResponse(const FString& jsonString, FVoxtaChatUpdateResponse& outResponse)
-{
-	return ParseResponseInternal(jsonString, outResponse);
 }
