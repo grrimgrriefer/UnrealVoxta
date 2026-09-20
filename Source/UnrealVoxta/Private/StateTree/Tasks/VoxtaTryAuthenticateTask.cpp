@@ -2,6 +2,7 @@
 
 #include "VoxtaTryAuthenticateTask.h"
 #include "StateTreeExecutionContext.h"
+#include "VoxtaGlobals.h"
 #include "RawAPI/VoxtaApiHandler.h"
 #include "StateTree/VoxtaStateTreeTags.h"
 
@@ -22,14 +23,14 @@ EStateTreeRunStatus FVoxtaTryAuthenticateTask::EnterState(FStateTreeExecutionCon
 
     if (!voxtaApiHandler)
     {
-        UE_LOG(LogTemp, Error, TEXT("[FVoxtaAuthenticateTask] Failed to resolve UVoxtaApiHandler."));
+		UE_LOGFMT(LogVoxta, Error, "[{0}] Failed to resolve UVoxtaApiHandler.", StaticStruct()->GetName());
         return EStateTreeRunStatus::Failed;
     }
 
     bool sentRequest = voxtaApiHandler->TrySendAuthenticatePayload(UVoxtaApiHandler::CLIENT_NAME, UVoxtaApiHandler::CLIENT_VERSION);
     if (!sentRequest)
     {
-        UE_LOG(LogTemp, Warning, TEXT("[FVoxtaAuthenticateTask] Authenticate request failed to initiate."));
+        UE_LOGFMT(LogVoxta, Warning, "[{0}] Authenticate request failed to initiate.", StaticStruct()->GetName());
         return EStateTreeRunStatus::Failed;
     }
 

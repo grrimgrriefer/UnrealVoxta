@@ -54,7 +54,7 @@ public:
 	void InitializeInternalRuntimeInfo(const FString& userName, UObject* characterList); // TODO: figure out what character list should be like
 
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Voxta", meta=(RequiredAssetDataTags="Schema=UVoxtaTreeSchema"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Voxta", meta=(RequiredAssetDataTags="Schema=UVoxtaStateTreeSchema"))
 	TObjectPtr<UStateTree> m_stateTreeAsset;
 
 private:

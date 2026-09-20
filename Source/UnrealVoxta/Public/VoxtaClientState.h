@@ -15,7 +15,7 @@
 UENUM(BlueprintType, Category = "Voxta")
 enum class VoxtaClientState : uint8
 {
-	Invalid = -1,
+	Invalid = 255,
 	Disconnected = 0			UMETA(DisplayName = "Disconnected"),
 	AttemptingToConnect			UMETA(DisplayName = "AttemptingToConnect"),
 	Connected					UMETA(DisplayName = "Connected"),

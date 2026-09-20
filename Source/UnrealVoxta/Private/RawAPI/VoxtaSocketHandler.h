@@ -6,6 +6,7 @@
 #include "UObject/Object.h"
 #include "VoxtaSocketHandler.generated.h"
 
+class FJsonValue;
 class FJsonObject;
 class FSignalRValue;
 class AGameModeBase;
@@ -16,7 +17,7 @@ struct FGameplayTag;
 DECLARE_MULTICAST_DELEGATE(FOnVoxtaSocketConnected);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnVoxtaSocketConnectionError, const FString&);
 DECLARE_MULTICAST_DELEGATE(FOnVoxtaSocketClosed);
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnVoxtaMessageReceived, const FString&);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnVoxtaMessageReceived, const TSharedPtr<FJsonObject>&);
 
 /**
  * Owns the low-level socket.
@@ -31,7 +32,7 @@ public:
 	FOnVoxtaSocketConnected m_OnSocketConnected;
 	FOnVoxtaSocketConnectionError m_OnSocketConnectionError;
 	FOnVoxtaSocketClosed m_OnSocketClosed;
-	FOnVoxtaMessageReceived m_OnMessageReceived;
+	FOnVoxtaMessageReceived m_OnSocketMessageReceived;
 
 	void EstablishConnection(const FString& ipv4Address, int port);
 	void Disconnect() const;
@@ -48,6 +49,8 @@ private:
 
 	FSignalRValue JsonValueToSignalRValue(const FJsonValue* jsonValue) const;
 	FSignalRValue JsonObjectToSignalRValue(const FJsonObject* jsonObject) const;
+	TSharedPtr<FJsonValue> SignalRValueToJsonValue(const FSignalRValue& value) const;
+	TSharedPtr<FJsonObject> SignalRValueToJsonObject(const FSignalRValue& value) const;
 
 	TSharedPtr<IHubConnection> m_hub;
 };

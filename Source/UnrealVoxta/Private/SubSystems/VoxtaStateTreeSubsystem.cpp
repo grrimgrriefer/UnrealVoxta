@@ -4,6 +4,7 @@
 #include "IHubConnection.h"
 #include "StateTree.h"
 #include "VoxtaClientState.h"
+#include "VoxtaGlobals.h"
 #include "VoxtaPluginSettings.h"
 #include "RawAPI/VoxtaApiHandler.h"
 #include "StateTree/VoxtaStateTreeTags.h"
@@ -11,7 +12,6 @@
 #include "Engine/World.h"
 #include "GameFramework/GameModeBase.h"
 #include "StateTree/Tasks/VoxtaTryConnectTask.h"
-
 
 #pragma region UGameInstanceSubsystem
 void UVoxtaStateTreeSubsystem::Initialize(FSubsystemCollectionBase& collection)
@@ -51,7 +51,7 @@ void UVoxtaStateTreeSubsystem::Deinitialize()
 			context.Stop();
 		}
 		m_isRunning = false;
-		UE_LOG(LogTemp, Log, TEXT("%s: StateTree stopped."), *GetNameSafe(this));
+		UE_LOGFMT(LogVoxta, Log, "[{0}] {1}: StateTree stopped.", StaticClass()->GetName(), GetNameSafe(this));
 	}
 	Super::Deinitialize();
 }
@@ -138,14 +138,14 @@ void UVoxtaStateTreeSubsystem::EnsureConnectionWithServer()
 
 bool UVoxtaStateTreeSubsystem::TryMarkNewStateActive(VoxtaClientState voxtaClientState)
 {
-	UE_LOG(LogTemp, Warning, TEXT("[UVoxtaStateTreeSubsystem] TryMarkNewStateActive: %s"), *UEnum::GetValueAsString(voxtaClientState));
+	UE_LOGFMT(LogVoxta, Warning, "[{0}] TryMarkNewStateActive: {1}", StaticClass()->GetName(), UEnum::GetValueAsString(voxtaClientState));
 	bool alreadyActive = false;
 	m_currentStates.Emplace(voxtaClientState, &alreadyActive);
 	return !alreadyActive;
 }
 bool UVoxtaStateTreeSubsystem::TryMarkStateInactive(VoxtaClientState voxtaClientState)
 {
-	UE_LOG(LogTemp, Warning, TEXT("[UVoxtaStateTreeSubsystem] TryMarkStateInactive: %s"), *UEnum::GetValueAsString(voxtaClientState));
+	UE_LOGFMT(LogVoxta, Warning, "[{0}] TryMarkStateInactive: {1}", StaticClass()->GetName(), UEnum::GetValueAsString(voxtaClientState));
 	return m_currentStates.Remove(voxtaClientState) > 0;
 }
 bool UVoxtaStateTreeSubsystem::TrySendFlowEvent(const FGameplayTag tag, bool hasPayload, const FConstStructView& payload)
@@ -161,7 +161,7 @@ bool UVoxtaStateTreeSubsystem::TrySendFlowEvent(const FGameplayTag tag, bool has
 		FStateTreeExecutionContext context(*this, *m_stateTreeAsset, m_instanceData);
 		if (m_contextBinder.SetContextRequirements(context, m_stateTreeAsset, this))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("[UVoxtaStateTreeSubsystem] Sending event %s"), *tag.ToString());
+			UE_LOGFMT(LogVoxta, Warning, "[{0}] Sending event {1}", StaticClass()->GetName(), tag.ToString());
 			hasPayload
 				? context.SendEvent(tag, payload)
 				: context.SendEvent(tag);
@@ -184,17 +184,17 @@ void UVoxtaStateTreeSubsystem::InitializeInternalRuntimeInfo(const FString& user
 }
 void UVoxtaStateTreeSubsystem::OnVoxtaConnected()
 {
-	UE_LOG(LogTemp, Warning, TEXT("[UVoxtaStateTreeSubsystem] Voxta Connected."));
+	UE_LOGFMT(LogVoxta, Warning, "[{0}] Voxta Connected.", StaticClass()->GetName());
 	TrySendFlowEvent(TAG_Voxta_Notify_SocketConnected, false, FConstStructView());
 }
 void UVoxtaStateTreeSubsystem::OnVoxtaConnectionError(const FString& error)
 {
-	UE_LOG(LogTemp, Error, TEXT("[UVoxtaStateTreeSubsystem] Voxta Connection Error: %s"), *error);
+	UE_LOGFMT(LogVoxta, Error, "[{0}] Voxta Connection Error {1}", StaticClass()->GetName(), error);
 	// TODO: handle this in the statetree
 }
 void UVoxtaStateTreeSubsystem::OnVoxtaDisconnected()
 {
-	UE_LOG(LogTemp, Warning, TEXT("[UVoxtaStateTreeSubsystem] Voxta Socket Disconnected."));
+	UE_LOGFMT(LogVoxta, Warning, "[{0}] Voxta Socket Disconnected.", StaticClass()->GetName());
 	// TODO: handle this in the statetree
 }
 void UVoxtaStateTreeSubsystem::OnGameModePostLoginEvent(AGameModeBase* gameMode, APlayerController* newPlayer)
@@ -218,7 +218,7 @@ void UVoxtaStateTreeSubsystem::OnGameModePostLoginEvent(AGameModeBase* gameMode,
 		if (context.Start() == EStateTreeRunStatus::Running)
 		{
 			m_isRunning = true;
-			UE_LOG(LogTemp, Log, TEXT("%s: StateTree started."), *GetNameSafe(this));
+			UE_LOGFMT(LogVoxta, Log, "[{0}] {1}: StateTree started.", StaticClass()->GetName(), GetNameSafe(this));
 		}
 	}
 }

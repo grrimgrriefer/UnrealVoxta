@@ -3,6 +3,7 @@
 #include "VoxtaSocketHandler.h"
 #include "IHubConnection.h"
 #include "SignalRSubsystem.h"
+#include "VoxtaGlobals.h"
 #include "Dom/JsonObject.h"
 #include "Engine/Engine.h"
 
@@ -47,10 +48,12 @@ bool UVoxtaSocketHandler::TrySendPayload(const FJsonObject* payload) const
 }
 void UVoxtaSocketHandler::OnConnected()
 {
+	UE_LOGFMT(LogVoxta, Warning, "[{0}] Socket connected", StaticClass()->GetName());
 	m_OnSocketConnected.Broadcast();
 }
 void UVoxtaSocketHandler::OnConnectionError(const FString& error)
 {
+	UE_LOGFMT(LogVoxta, Warning, "[{0}] Socket connection error: {1}", StaticClass()->GetName(), error);
 	m_OnSocketConnectionError.Broadcast(error);
 }
 void UVoxtaSocketHandler::OnClosed()
@@ -59,7 +62,16 @@ void UVoxtaSocketHandler::OnClosed()
 }
 void UVoxtaSocketHandler::OnReceivedMessage(const TArray<FSignalRValue>& payload)
 {
-	// TODO generic deserializeation
+	if (payload.IsEmpty() || payload[0].GetType() != FSignalRValue::EValueType::Object)
+	{
+		UE_LOGFMT(LogVoxta, Error, "[{0}] Received invalid message from server.", StaticClass()->GetName());
+		return;
+	}
+	const TSharedPtr<FJsonObject> jsonObject = SignalRValueToJsonObject(payload[0]);
+	if (jsonObject.IsValid())
+	{
+		m_OnSocketMessageReceived.Broadcast(jsonObject);
+	}
 }
 FSignalRValue UVoxtaSocketHandler::JsonValueToSignalRValue(const FJsonValue* jsonValue) const
 {
@@ -70,37 +82,32 @@ FSignalRValue UVoxtaSocketHandler::JsonValueToSignalRValue(const FJsonValue* jso
 
 	switch (jsonValue->Type)
 	{
-	case EJson::Boolean:
-		return FSignalRValue(jsonValue->AsBool());
-
-	case EJson::Number:
-		return FSignalRValue(jsonValue->AsNumber());
-
-	case EJson::String:
-		return FSignalRValue(jsonValue->AsString());
-
-	case EJson::Array:
-		{
-			TArray<FSignalRValue> array;
-			for (const TSharedPtr<FJsonValue>& item : jsonValue->AsArray())
+		case EJson::Boolean:
+			return FSignalRValue(jsonValue->AsBool());
+		case EJson::Number:
+			return FSignalRValue(jsonValue->AsNumber());
+		case EJson::String:
+			return FSignalRValue(jsonValue->AsString());
+		case EJson::Array:
 			{
-				array.Add(JsonValueToSignalRValue(item.Get()));
+				TArray<FSignalRValue> array;
+				for (const TSharedPtr<FJsonValue>& item : jsonValue->AsArray())
+				{
+					array.Add(JsonValueToSignalRValue(item.Get()));
+				}
+				return FSignalRValue(MoveTemp(array));
 			}
-			return FSignalRValue(MoveTemp(array));
-		}
-
-	case EJson::Object:
-		{
-			TMap<FString, FSignalRValue> map;
-			for (const auto& pair : jsonValue->AsObject()->Values)
+		case EJson::Object:
 			{
-				map.Add(FString(pair.Key), JsonValueToSignalRValue(pair.Value.Get()));
+				TMap<FString, FSignalRValue> map;
+				for (const auto& pair : jsonValue->AsObject()->Values)
+				{
+					map.Add(FString(pair.Key), JsonValueToSignalRValue(pair.Value.Get()));
+				}
+				return FSignalRValue(MoveTemp(map));
 			}
-			return FSignalRValue(MoveTemp(map));
-		}
-
-	default:
-		return FSignalRValue(nullptr);
+		default:
+			return FSignalRValue(nullptr);
 	}
 }
 FSignalRValue UVoxtaSocketHandler::JsonObjectToSignalRValue(const FJsonObject* jsonObject) const
@@ -131,3 +138,54 @@ FSignalRValue UVoxtaSocketHandler::JsonObjectToSignalRValue(const FJsonObject* j
 	}
 	return FSignalRValue(MoveTemp(map));
 }
+TSharedPtr<FJsonValue> UVoxtaSocketHandler::SignalRValueToJsonValue(const FSignalRValue& value) const
+{
+	switch (value.GetType())
+	{
+		case FSignalRValue::EValueType::Null:
+			return MakeShared<FJsonValueNull>();
+		case FSignalRValue::EValueType::Boolean:
+			return MakeShared<FJsonValueBoolean>(value.AsBool());
+		case FSignalRValue::EValueType::Number:
+			return MakeShared<FJsonValueNumber>(value.AsNumber());
+		case FSignalRValue::EValueType::String:
+			return MakeShared<FJsonValueString>(value.AsString());
+		case FSignalRValue::EValueType::Array:
+			{
+				TArray<TSharedPtr<FJsonValue>> jsonArray;
+				for (const FSignalRValue& item : value.AsArray())
+				{
+					jsonArray.Add(SignalRValueToJsonValue(item));
+				}
+				return MakeShared<FJsonValueArray>(MoveTemp(jsonArray));
+			}
+		case FSignalRValue::EValueType::Object:
+			{
+				TSharedRef<FJsonObject> jsonObject = MakeShared<FJsonObject>();
+				for (const auto& pair : value.AsObject())
+				{
+					jsonObject->SetField(pair.Key, SignalRValueToJsonValue(pair.Value));
+				}
+				return MakeShared<FJsonValueObject>(jsonObject);
+			}
+		case FSignalRValue::EValueType::Binary:
+		default:
+			return MakeShared<FJsonValueNull>();
+	}
+}
+
+TSharedPtr<FJsonObject> UVoxtaSocketHandler::SignalRValueToJsonObject(const FSignalRValue& value) const
+{
+	if (!value.IsObject())
+	{
+		return nullptr;
+	}
+
+	TSharedRef<FJsonObject> jsonObject = MakeShared<FJsonObject>();
+	for (const auto& pair : value.AsObject())
+	{
+		jsonObject->SetField(pair.Key, SignalRValueToJsonValue(pair.Value));
+	}
+	return jsonObject;
+}
+

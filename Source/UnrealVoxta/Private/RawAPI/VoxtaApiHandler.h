@@ -7,6 +7,7 @@
 #include "VoxtaResponseDispatcher.h"
 #include "VoxtaApiHandler.generated.h"
 
+class FJsonObject;
 class UVoxtaSocketHandler;
 
 DECLARE_MULTICAST_DELEGATE(FOnVoxtaConnected);
@@ -27,6 +28,7 @@ class UVoxtaApiHandler : public UObject
 public:
 	static const FName CLIENT_NAME;
 	static const FName CLIENT_VERSION;
+	static const FName COMPATIBLE_SERVER_VERSION;
 
 	FOnVoxtaConnected m_OnConnected;
 	FOnVoxtaConnectionError m_OnConnectionError;
@@ -49,7 +51,7 @@ private:
 	void OnSocketConnected();
 	void OnSocketConnectionError(const FString& error);
 	void OnSocketClosed();
-	void OnMessageReceived(const FString& jsonString);
+	void OnMessageReceived(const TSharedPtr<FJsonObject>& jsonObject);
 
 	template <class T>
 	bool TrySendPayloadInternal(const T& payload, const TCHAR* payloadName) const;
@@ -61,12 +63,10 @@ private:
 	template <class T>
 	static bool ParseResponseInternal(const FString& jsonString, T& outResponse);
 
-	static bool TryExtractAction(const FString& jsonString, FString& outAction);
-
 	UPROPERTY()
 	TObjectPtr<UVoxtaSocketHandler> m_voxtaSocketHandler;
 
-	TMap<FString, TFunction<void(const FString&)>> m_responseRoutes;
+	TMap<FString, const TFunction<void(const TSharedPtr<FJsonObject>&)>> m_responseRoutes;
 	TMap<FName, TSharedPtr<IVoxtaResponseDispatcher>> m_responseDispatchers;
 
 };

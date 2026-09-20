@@ -324,6 +324,8 @@ struct FVoxtaWelcomeResponse : public FVoxtaBaseResponse
 	FString voxtaServerVersion;
 	UPROPERTY()
 	FString apiVersion;
+	UPROPERTY()
+	FString registeredClientVersion;
 };
 
 USTRUCT()

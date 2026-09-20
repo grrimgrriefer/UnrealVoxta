@@ -2,6 +2,7 @@
 
 #include "VoxtaTryConnectTask.h"
 #include "StateTreeExecutionContext.h"
+#include "VoxtaGlobals.h"
 #include "RawAPI/VoxtaApiHandler.h"
 #include "SubSystems/VoxtaStateTreeSubsystem.h"
 
@@ -22,7 +23,7 @@ EStateTreeRunStatus FVoxtaTryConnectTask::EnterState(FStateTreeExecutionContext&
 
 	if (!voxtaApiHandler)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[VoxtaConnectTask] Failed to resolve UVoxtaApiHandler."));
+		UE_LOGFMT(LogVoxta, Error, "[{0}] Failed to resolve UVoxtaApiHandler.", StaticStruct()->GetName());
 		return EStateTreeRunStatus::Failed;
 	}
 

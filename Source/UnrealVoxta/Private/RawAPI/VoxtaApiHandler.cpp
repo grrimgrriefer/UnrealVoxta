@@ -2,12 +2,14 @@
 
 #include "VoxtaApiHandler.h"
 #include "JsonObjectConverter.h"
+#include "VoxtaGlobals.h"
 #include "VoxtaPayloads.h"
 #include "VoxtaResponseDispatcher.h"
 #include "VoxtaSocketHandler.h"
 
 const FName UVoxtaApiHandler::CLIENT_NAME = TEXT("UnrealVoxta");
 const FName UVoxtaApiHandler::CLIENT_VERSION = TEXT("0.2.0");
+const FName UVoxtaApiHandler::COMPATIBLE_SERVER_VERSION = TEXT("2025-11");
 
 void UVoxtaApiHandler::Initialize()
 {
@@ -15,10 +17,9 @@ void UVoxtaApiHandler::Initialize()
 	m_voxtaSocketHandler->m_OnSocketConnected.AddUObject(this, &UVoxtaApiHandler::OnSocketConnected);
 	m_voxtaSocketHandler->m_OnSocketConnectionError.AddUObject(this, &UVoxtaApiHandler::OnSocketConnectionError);
 	m_voxtaSocketHandler->m_OnSocketClosed.AddUObject(this, &UVoxtaApiHandler::OnSocketClosed);
-	m_voxtaSocketHandler->m_OnMessageReceived.AddUObject(this, &UVoxtaApiHandler::OnMessageReceived);
+	m_voxtaSocketHandler->m_OnSocketMessageReceived.AddUObject(this, &UVoxtaApiHandler::OnMessageReceived);
 
 	RegisterResponseRoute<FVoxtaWelcomeResponse>(TEXT("welcome"));
-	RegisterResponseRoute<FVoxtaCharacterListLoadedResponse>(TEXT("charactersListLoaded"));
 	RegisterResponseRoute<FVoxtaCharacterListLoadedResponse>(TEXT("characterListLoaded"));
 	RegisterResponseRoute<FVoxtaContextUpdatedResponse>(TEXT("contextUpdated"));
 	RegisterResponseRoute<FVoxtaChatStartedResponse>(TEXT("chatStarted"));
@@ -72,13 +73,13 @@ bool UVoxtaApiHandler::TrySendSendTextMessagePayload(const FString& sessionId, c
 template <typename T>
 TMulticastDelegate<void(const T&)>& UVoxtaApiHandler::OnResponse()
 {
-	const FName structName = T::StaticStruct()->GetFName();
-	TSharedPtr<IVoxtaResponseDispatcher>& dispatcher = m_responseDispatchers.FindOrAdd(structName);
-	if (!dispatcher.IsValid())
-	{
-		dispatcher = MakeShared<TVoxtaResponseDispatcher<T>>();
-	}
-	return StaticCastSharedPtr<TVoxtaResponseDispatcher<T>>(dispatcher)->m_delegate;
+    const FName structName = T::StaticStruct()->GetFName();
+    TSharedPtr<IVoxtaResponseDispatcher>& dispatcher = m_responseDispatchers.FindOrAdd(structName);
+    if (!dispatcher.IsValid())
+    {
+        dispatcher = MakeShared<TVoxtaResponseDispatcher<T>>();
+    }
+    return StaticCastSharedPtr<TVoxtaResponseDispatcher<T>>(dispatcher)->m_Delegate;
 }
 void UVoxtaApiHandler::OnSocketConnected()
 {
@@ -92,22 +93,28 @@ void UVoxtaApiHandler::OnSocketClosed()
 {
 	m_OnDisconnected.Broadcast();
 }
-void UVoxtaApiHandler::OnMessageReceived(const FString& jsonString)
+void UVoxtaApiHandler::OnMessageReceived(const TSharedPtr<FJsonObject>& jsonObject)
 {
-	FString action;
-	if (!TryExtractAction(jsonString, action))
+	if (!jsonObject.IsValid())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[VoxtaApiHandler] Failed to extract action from message: %s"), *jsonString);
 		return;
 	}
 
-	if (const TFunction<void(const FString&)>* route = m_responseRoutes.Find(action))
+	FString action;
+	if (!jsonObject->TryGetStringField(TEXT("$type"), action) &&
+		!jsonObject->TryGetStringField(TEXT("action"), action))
 	{
-		(*route)(jsonString);
+		UE_LOGFMT(LogVoxta, Error, "[{0}] Failed to extract action from message: {1}", StaticClass()->GetName());
+		return;
+	}
+
+	if (const TFunction<void(const TSharedPtr<FJsonObject>&)>* route = m_responseRoutes.Find(action))
+	{
+		(*route)(jsonObject);
 	}
 	else
 	{
-		UE_LOG(LogTemp, Verbose, TEXT("[VoxtaApiHandler] No route registered for action: %s"), *action);
+		UE_LOGFMT(LogVoxta, Warning, "[{0}] No route registered for action: {1}", StaticClass()->GetName(), action);
 	}
 }
 template <typename T>
@@ -118,7 +125,7 @@ bool UVoxtaApiHandler::TrySendPayloadInternal(const T& payload, const TCHAR* pay
 	{
 		return m_voxtaSocketHandler->TrySendPayload(jsonObject.Get());
 	}
-	UE_LOG(LogTemp, Error, TEXT("[VoxtaApiHandler] Failed to serialize %s."), payloadName);
+	UE_LOGFMT(LogVoxta, Error, "[{0}] Failed to serialize {1}.", StaticClass()->GetName(), payloadName);
 	return false;
 }
 template <typename T>
@@ -129,18 +136,16 @@ bool UVoxtaApiHandler::ParseResponseInternal(const FString& jsonString, T& outRe
 template <typename T>
 void UVoxtaApiHandler::RegisterResponseRoute(const FString& actionName)
 {
-	m_responseRoutes.Add(actionName, {
-		[this](const FString& jsonString)
+	m_responseRoutes.Add(actionName, [this](const TSharedPtr<FJsonObject>& jsonObject)
+	{
+		T response;
+		if (FJsonObjectConverter::JsonObjectToUStruct(jsonObject.ToSharedRef(), &response))
 		{
-			T response;
-			if (FJsonObjectConverter::JsonObjectStringToUStruct(jsonString, &response, 0, 0))
-			{
-				BroadcastResponse<T>(response);
-			}
-			else
-			{
-				UE_LOG(LogTemp, Error, TEXT("Failed to deserialize %s"), *T::StaticStruct()->GetName());
-			}
+			BroadcastResponse<T>(response);
+		}
+		else
+		{
+			UE_LOGFMT(LogVoxta, Error,"[{0}] Failed to deserialize {1}", StaticClass()->GetName(), *T::StaticStruct()->GetName());
 		}
 	});
 }
@@ -155,18 +160,4 @@ void UVoxtaApiHandler::BroadcastResponse(const T& response)
 			StaticCastSharedPtr<TVoxtaResponseDispatcher<T>>(*dispatcher)->m_Delegate.Broadcast(response);
 		}
 	}
-}
-bool UVoxtaApiHandler::TryExtractAction(const FString& jsonString, FString& outAction)
-{
-	TSharedPtr<FJsonObject> jsonObject;
-	const TSharedRef<TJsonReader<>> reader = TJsonReaderFactory<>::Create(jsonString);
-	if (FJsonSerializer::Deserialize(reader, jsonObject) && jsonObject.IsValid())
-	{
-		if (jsonObject->TryGetStringField(TEXT("action"), outAction) ||
-			jsonObject->TryGetStringField(TEXT("$type"), outAction))
-		{
-			return !outAction.IsEmpty();
-		}
-	}
-	return false;
 }
