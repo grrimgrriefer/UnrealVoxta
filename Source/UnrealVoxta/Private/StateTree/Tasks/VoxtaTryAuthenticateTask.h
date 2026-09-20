@@ -13,6 +13,9 @@ USTRUCT(BlueprintType)
 struct UNREALVOXTA_API FVoxtaAuthenticateTaskInstanceData
 {
 	GENERATED_BODY()
+
+	FDelegateHandle m_WelcomeDelegateHandle;
+	FDelegateHandle m_ConfigurationDelegateHandle;
 };
 
 /**
@@ -28,6 +31,7 @@ public:
 
 	virtual const UStruct* GetInstanceDataType() const override;
 	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& context, const FStateTreeTransitionResult& transitions) const override;
+	virtual void ExitState(FStateTreeExecutionContext& context, const FStateTreeTransitionResult& transitions) const override;
 
 protected:
 	virtual VoxtaClientState GetStateForTask(FStateTreeExecutionContext& context) const override { return VoxtaClientState::AttemptingToAuthenticate; }

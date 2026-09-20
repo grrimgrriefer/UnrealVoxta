@@ -4,6 +4,7 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "Tickable.h"
 #include "StateTreeExecutionContext.h"
+#include "VoxtaRuntimeData.h"
 #include "VoxtaUserConfiguration.h"
 #include "StateTree/StateTreeContextBinder.h"
 #include "SubSystems/VoxtaClient.h"
@@ -51,7 +52,7 @@ public:
 	bool TryBindContextData(UObject* data);
 	bool TryUnbindContextData(UObject* data);
 
-	void InitializeInternalRuntimeInfo(const FString& userName, UObject* characterList); // TODO: figure out what character list should be like
+	void SetRuntimeData(const FVoxtaRuntimeData& RuntimeData);
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Voxta", meta=(RequiredAssetDataTags="Schema=UVoxtaStateTreeSchema"))

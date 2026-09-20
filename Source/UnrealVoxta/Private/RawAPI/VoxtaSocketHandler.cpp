@@ -70,7 +70,12 @@ void UVoxtaSocketHandler::OnReceivedMessage(const TArray<FSignalRValue>& payload
 	const TSharedPtr<FJsonObject> jsonObject = SignalRValueToJsonObject(payload[0]);
 	if (jsonObject.IsValid())
 	{
+		UE_LOGFMT(LogVoxta, Warning, "[{0}] Broadcasting message...", StaticClass()->GetName());
 		m_OnSocketMessageReceived.Broadcast(jsonObject);
+	}
+	else
+	{
+		UE_LOGFMT(LogVoxta, Error, "[{0}] Failed to convert VoxtaServer message to jsonobjectr.", StaticClass()->GetName());
 	}
 }
 FSignalRValue UVoxtaSocketHandler::JsonValueToSignalRValue(const FJsonValue* jsonValue) const

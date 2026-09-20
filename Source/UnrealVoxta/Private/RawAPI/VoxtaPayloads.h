@@ -5,12 +5,15 @@
 #include "CoreMinimal.h"
 #include "VoxtaPayloads.generated.h"
 
+// The structs in this file map 1:1 to the data structures that the VoxtaServer expects in requests/responses
+// These should be kept exclusive for communication through the SignalR socket, and should not be used by any other system.
+
 // ====================
 // SHARED & NESTED TYPES
 // ====================
 
 USTRUCT()
-struct FVoxtaUserData
+struct FVoxtaPayload_EntityData
 {
 	GENERATED_BODY()
 
@@ -21,7 +24,7 @@ struct FVoxtaUserData
 };
 
 USTRUCT()
-struct FVoxtaCharacterData
+struct FVoxtaPayload_CharacterData
 {
 	GENERATED_BODY()
 
@@ -44,7 +47,7 @@ struct FVoxtaCharacterData
 };
 
 USTRUCT()
-struct FVoxtaAudioCapabilities
+struct FVoxtaPayload_AudioCapabilities
 {
 	GENERATED_BODY()
 
@@ -57,7 +60,7 @@ struct FVoxtaAudioCapabilities
 };
 
 USTRUCT()
-struct FVoxtaContextData
+struct FVoxtaPayload_ContextData
 {
 	GENERATED_BODY()
 
@@ -68,40 +71,81 @@ struct FVoxtaContextData
 };
 
 USTRUCT()
-struct FVoxtaServiceEntryData
+struct FVoxtaPayload_ServiceEntryData
 {
 	GENERATED_BODY()
 
 	UPROPERTY()
-	FString serviceName;
+	FString serviceLabel;
 	UPROPERTY()
-	FString serviceId;
+	FString id;
+	UPROPERTY()
+	bool enabled;
 };
 
 USTRUCT()
-struct FVoxtaServiceGroupData
+struct FVoxtaPayload_ServiceGroupData
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FString defaultServiceId;
+};
+
+USTRUCT()
+struct FVoxtaPayload_Services
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TArray<FVoxtaPayload_ServiceEntryData> textGen;
+	UPROPERTY()
+	TArray<FVoxtaPayload_ServiceEntryData> speechToText;
+	UPROPERTY()
+	TArray<FVoxtaPayload_ServiceEntryData> textToSpeech;
+	UPROPERTY()
+	TArray<FVoxtaPayload_ServiceEntryData> actionInference;
+};
+
+USTRUCT()
+struct FVoxtaPayload_ConfigurationService
 {
 	GENERATED_BODY()
 
 	UPROPERTY()
 	FString defaultServiceId;
 	UPROPERTY()
-	TArray<FVoxtaServiceEntryData> services;
+	bool enabled;
 };
 
 USTRUCT()
-struct FVoxtaServicesConfig
+struct FVoxtaPayload_ConfigurationServices
 {
 	GENERATED_BODY()
 
 	UPROPERTY()
-	FVoxtaServiceGroupData textGen;
+	FVoxtaPayload_ConfigurationService textGen;
 	UPROPERTY()
-	FVoxtaServiceGroupData speechToText;
+	FVoxtaPayload_ConfigurationService speechToText;
 	UPROPERTY()
-	FVoxtaServiceGroupData textToSpeech;
+	FVoxtaPayload_ConfigurationService textToSpeech;
 	UPROPERTY()
-	FVoxtaServiceGroupData actionInference;
+	FVoxtaPayload_ConfigurationService actionInference;
+};
+
+USTRUCT()
+struct FVoxtaPayload_Configuration
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FString id;
+	UPROPERTY()
+	FString name;
+	UPROPERTY()
+	bool isDefault;
+	UPROPERTY()
+	FVoxtaPayload_ConfigurationServices services;
 };
 
 // ====================
@@ -109,7 +153,7 @@ struct FVoxtaServicesConfig
 // ====================
 
 USTRUCT()
-struct FVoxtaAuthenticateRequest
+struct FVoxtaPayload_AuthenticateRequest
 {
 	GENERATED_BODY()
 
@@ -122,11 +166,11 @@ struct FVoxtaAuthenticateRequest
 	UPROPERTY()
 	TArray<FString> scope = { TEXT("role:app") };
 	UPROPERTY()
-	FVoxtaAudioCapabilities capabilities;
+	FVoxtaPayload_AudioCapabilities capabilities;
 };
 
 USTRUCT()
-struct FVoxtaLoadCharactersRequest
+struct FVoxtaPayload_LoadCharactersRequest
 {
 	GENERATED_BODY()
 
@@ -135,7 +179,7 @@ struct FVoxtaLoadCharactersRequest
 };
 
 USTRUCT()
-struct FVoxtaLoadScenariosRequest
+struct FVoxtaPayload_LoadScenariosRequest
 {
 	GENERATED_BODY()
 
@@ -144,7 +188,7 @@ struct FVoxtaLoadScenariosRequest
 };
 
 USTRUCT()
-struct FVoxtaLoadChatsRequest
+struct FVoxtaPayload_LoadChatsRequest
 {
 	GENERATED_BODY()
 
@@ -157,7 +201,7 @@ struct FVoxtaLoadChatsRequest
 };
 
 USTRUCT()
-struct FVoxtaStartChatRequest
+struct FVoxtaPayload_StartChatRequest
 {
 	GENERATED_BODY()
 
@@ -168,11 +212,11 @@ struct FVoxtaStartChatRequest
 	UPROPERTY()
 	TArray<FString> characterIds;
 	UPROPERTY()
-	TArray<FVoxtaContextData> contexts;
+	TArray<FVoxtaPayload_ContextData> contexts;
 };
 
 USTRUCT()
-struct FVoxtaStopChatRequest
+struct FVoxtaPayload_StopChatRequest
 {
 	GENERATED_BODY()
 
@@ -183,7 +227,7 @@ struct FVoxtaStopChatRequest
 };
 
 USTRUCT()
-struct FVoxtaSendTextMessageRequest
+struct FVoxtaPayload_SendTextMessageRequest
 {
 	GENERATED_BODY()
 
@@ -200,7 +244,7 @@ struct FVoxtaSendTextMessageRequest
 };
 
 USTRUCT()
-struct FVoxtaSpeechPlaybackStartRequest
+struct FVoxtaPayload_SpeechPlaybackStartRequest
 {
 	GENERATED_BODY()
 
@@ -219,7 +263,7 @@ struct FVoxtaSpeechPlaybackStartRequest
 };
 
 USTRUCT()
-struct FVoxtaSpeechPlaybackCompleteRequest
+struct FVoxtaPayload_SpeechPlaybackCompleteRequest
 {
 	GENERATED_BODY()
 
@@ -232,7 +276,7 @@ struct FVoxtaSpeechPlaybackCompleteRequest
 };
 
 USTRUCT()
-struct FVoxtaUpdateContextRequest
+struct FVoxtaPayload_UpdateContextRequest
 {
 	GENERATED_BODY()
 
@@ -243,13 +287,13 @@ struct FVoxtaUpdateContextRequest
 	UPROPERTY()
 	FString contextKey;
 	UPROPERTY()
-	TArray<FVoxtaContextData> contexts;
+	TArray<FVoxtaPayload_ContextData> contexts;
 	UPROPERTY()
 	TArray<FString> setFlags;
 };
 
 USTRUCT()
-struct FVoxtaCharacterSpeechRequest
+struct FVoxtaPayload_CharacterSpeechRequest
 {
 	GENERATED_BODY()
 
@@ -262,7 +306,7 @@ struct FVoxtaCharacterSpeechRequest
 };
 
 USTRUCT()
-struct FVoxtaRevertRequest
+struct FVoxtaPayload_RevertRequest
 {
 	GENERATED_BODY()
 
@@ -273,7 +317,7 @@ struct FVoxtaRevertRequest
 };
 
 USTRUCT()
-struct FVoxtaDeleteChatRequest
+struct FVoxtaPayload_DeleteChatRequest
 {
 	GENERATED_BODY()
 
@@ -284,7 +328,7 @@ struct FVoxtaDeleteChatRequest
 };
 
 USTRUCT()
-struct FVoxtaInspectRequest
+struct FVoxtaPayload_InspectRequest
 {
 	GENERATED_BODY()
 
@@ -301,7 +345,7 @@ struct FVoxtaInspectRequest
 // ====================
 
 USTRUCT()
-struct FVoxtaBaseResponse
+struct FVoxtaPayload_BaseResponse
 {
 	GENERATED_BODY()
 
@@ -312,14 +356,16 @@ struct FVoxtaBaseResponse
 };
 
 USTRUCT()
-struct FVoxtaWelcomeResponse : public FVoxtaBaseResponse
+struct FVoxtaPayload_WelcomeResponse : public FVoxtaPayload_BaseResponse
 {
 	GENERATED_BODY()
 
 	UPROPERTY()
-	FVoxtaUserData user;
+	FVoxtaPayload_EntityData user;
 	UPROPERTY()
-	FVoxtaUserData assistant;
+	FVoxtaPayload_EntityData assistant;
+	UPROPERTY()
+	FVoxtaPayload_EntityData favorite;
 	UPROPERTY()
 	FString voxtaServerVersion;
 	UPROPERTY()
@@ -329,42 +375,54 @@ struct FVoxtaWelcomeResponse : public FVoxtaBaseResponse
 };
 
 USTRUCT()
-struct FVoxtaCharacterListLoadedResponse : public FVoxtaBaseResponse
+struct FVoxtaPayload_ConfigurationResponse : public FVoxtaPayload_BaseResponse
 {
 	GENERATED_BODY()
 
 	UPROPERTY()
-	TArray<FVoxtaCharacterData> characters;
+	FVoxtaPayload_Services services;
+
+	UPROPERTY()
+	TArray<FVoxtaPayload_Configuration> configurations;
 };
 
 USTRUCT()
-struct FVoxtaContextUpdatedResponse : public FVoxtaBaseResponse
+struct FVoxtaPayload_CharacterListLoadedResponse : public FVoxtaPayload_BaseResponse
 {
 	GENERATED_BODY()
 
 	UPROPERTY()
-	TArray<FVoxtaContextData> contexts;
+	TArray<FVoxtaPayload_CharacterData> characters;
 };
 
 USTRUCT()
-struct FVoxtaChatStartedResponse : public FVoxtaBaseResponse
+struct FVoxtaPayload_ContextUpdatedResponse : public FVoxtaPayload_BaseResponse
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TArray<FVoxtaPayload_ContextData> contexts;
+};
+
+USTRUCT()
+struct FVoxtaPayload_ChatStartedResponse : public FVoxtaPayload_BaseResponse
 {
 	GENERATED_BODY()
 
 	UPROPERTY()
 	FString chatId;
 	UPROPERTY()
-	FVoxtaUserData user;
+	FVoxtaPayload_EntityData user;
 	UPROPERTY()
-	TArray<FVoxtaUserData> characters;
+	TArray<FVoxtaPayload_EntityData> characters;
 	UPROPERTY()
-	FVoxtaServicesConfig services;
+	FVoxtaPayload_Services services;
 	UPROPERTY()
-	TArray<FVoxtaContextData> context;
+	TArray<FVoxtaPayload_ContextData> context;
 };
 
 USTRUCT()
-struct FVoxtaReplyStartResponse : public FVoxtaBaseResponse
+struct FVoxtaPayload_ReplyStartResponse : public FVoxtaPayload_BaseResponse
 {
 	GENERATED_BODY()
 
@@ -375,7 +433,7 @@ struct FVoxtaReplyStartResponse : public FVoxtaBaseResponse
 };
 
 USTRUCT()
-struct FVoxtaReplyChunkResponse : public FVoxtaBaseResponse
+struct FVoxtaPayload_ReplyChunkResponse : public FVoxtaPayload_BaseResponse
 {
 	GENERATED_BODY()
 
@@ -396,7 +454,7 @@ struct FVoxtaReplyChunkResponse : public FVoxtaBaseResponse
 };
 
 USTRUCT()
-struct FVoxtaReplyEndResponse : public FVoxtaBaseResponse
+struct FVoxtaPayload_ReplyEndResponse : public FVoxtaPayload_BaseResponse
 {
 	GENERATED_BODY()
 
@@ -407,7 +465,7 @@ struct FVoxtaReplyEndResponse : public FVoxtaBaseResponse
 };
 
 USTRUCT()
-struct FVoxtaReplyCancelledResponse : public FVoxtaBaseResponse
+struct FVoxtaPayload_ReplyCancelledResponse : public FVoxtaPayload_BaseResponse
 {
 	GENERATED_BODY()
 
@@ -418,7 +476,7 @@ struct FVoxtaReplyCancelledResponse : public FVoxtaBaseResponse
 };
 
 USTRUCT()
-struct FVoxtaChatUpdateResponse : public FVoxtaBaseResponse
+struct FVoxtaPayload_ChatUpdateResponse : public FVoxtaPayload_BaseResponse
 {
 	GENERATED_BODY()
 
@@ -433,7 +491,7 @@ struct FVoxtaChatUpdateResponse : public FVoxtaBaseResponse
 };
 
 USTRUCT()
-struct FVoxtaChatClosedResponse : public FVoxtaBaseResponse
+struct FVoxtaPayload_ChatClosedResponse : public FVoxtaPayload_BaseResponse
 {
 	GENERATED_BODY()
 
@@ -442,7 +500,7 @@ struct FVoxtaChatClosedResponse : public FVoxtaBaseResponse
 };
 
 USTRUCT()
-struct FVoxtaSpeechRecognitionResponse : public FVoxtaBaseResponse
+struct FVoxtaPayload_SpeechRecognitionResponse : public FVoxtaPayload_BaseResponse
 {
 	GENERATED_BODY()
 
@@ -451,7 +509,7 @@ struct FVoxtaSpeechRecognitionResponse : public FVoxtaBaseResponse
 };
 
 USTRUCT()
-struct FVoxtaErrorResponse : public FVoxtaBaseResponse
+struct FVoxtaPayload_ErrorResponse : public FVoxtaPayload_BaseResponse
 {
 	GENERATED_BODY()
 
@@ -462,7 +520,7 @@ struct FVoxtaErrorResponse : public FVoxtaBaseResponse
 };
 
 USTRUCT()
-struct FVoxtaChatSessionErrorResponse : public FVoxtaBaseResponse
+struct FVoxtaPayload_ChatSessionErrorResponse : public FVoxtaPayload_BaseResponse
 {
 	GENERATED_BODY()
 
@@ -470,13 +528,4 @@ struct FVoxtaChatSessionErrorResponse : public FVoxtaBaseResponse
 	bool retry = false;
 	UPROPERTY()
 	FString message;
-};
-
-USTRUCT()
-struct FVoxtaConfigurationResponse : public FVoxtaBaseResponse
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	FVoxtaServicesConfig services;
 };

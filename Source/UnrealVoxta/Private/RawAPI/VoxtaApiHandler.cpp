@@ -19,18 +19,19 @@ void UVoxtaApiHandler::Initialize()
 	m_voxtaSocketHandler->m_OnSocketClosed.AddUObject(this, &UVoxtaApiHandler::OnSocketClosed);
 	m_voxtaSocketHandler->m_OnSocketMessageReceived.AddUObject(this, &UVoxtaApiHandler::OnMessageReceived);
 
-	RegisterResponseRoute<FVoxtaWelcomeResponse>(TEXT("welcome"));
-	RegisterResponseRoute<FVoxtaCharacterListLoadedResponse>(TEXT("characterListLoaded"));
-	RegisterResponseRoute<FVoxtaContextUpdatedResponse>(TEXT("contextUpdated"));
-	RegisterResponseRoute<FVoxtaChatStartedResponse>(TEXT("chatStarted"));
-	RegisterResponseRoute<FVoxtaReplyStartResponse>(TEXT("replyStart"));
-	RegisterResponseRoute<FVoxtaReplyChunkResponse>(TEXT("replyChunk"));
-	RegisterResponseRoute<FVoxtaReplyEndResponse>(TEXT("replyEnd"));
-	RegisterResponseRoute<FVoxtaReplyCancelledResponse>(TEXT("replyCancelled"));
-	RegisterResponseRoute<FVoxtaChatUpdateResponse>(TEXT("update"));
-	RegisterResponseRoute<FVoxtaChatClosedResponse>(TEXT("chatClosed"));
-	RegisterResponseRoute<FVoxtaSpeechRecognitionResponse>(TEXT("speechRecognitionPartial"));
-	RegisterResponseRoute<FVoxtaSpeechRecognitionResponse>(TEXT("speechRecognitionEnd"));
+	RegisterResponseRoute<FVoxtaPayload_WelcomeResponse>(TEXT("welcome"));
+	RegisterResponseRoute<FVoxtaPayload_ConfigurationResponse>(TEXT("configuration"));
+	RegisterResponseRoute<FVoxtaPayload_CharacterListLoadedResponse>(TEXT("charactersListLoaded"));
+	RegisterResponseRoute<FVoxtaPayload_ContextUpdatedResponse>(TEXT("contextUpdated"));
+	RegisterResponseRoute<FVoxtaPayload_ChatStartedResponse>(TEXT("chatStarted"));
+	RegisterResponseRoute<FVoxtaPayload_ReplyStartResponse>(TEXT("replyStart"));
+	RegisterResponseRoute<FVoxtaPayload_ReplyChunkResponse>(TEXT("replyChunk"));
+	RegisterResponseRoute<FVoxtaPayload_ReplyEndResponse>(TEXT("replyEnd"));
+	RegisterResponseRoute<FVoxtaPayload_ReplyCancelledResponse>(TEXT("replyCancelled"));
+	RegisterResponseRoute<FVoxtaPayload_ChatUpdateResponse>(TEXT("update"));
+	RegisterResponseRoute<FVoxtaPayload_ChatClosedResponse>(TEXT("chatClosed"));
+	RegisterResponseRoute<FVoxtaPayload_SpeechRecognitionResponse>(TEXT("speechRecognitionPartial"));
+	RegisterResponseRoute<FVoxtaPayload_SpeechRecognitionResponse>(TEXT("speechRecognitionEnd"));
 }
 void UVoxtaApiHandler::EstablishConnection(const FString& ipv4Address, int port) const
 {
@@ -42,30 +43,30 @@ void UVoxtaApiHandler::Disconnect() const
 }
 bool UVoxtaApiHandler::TrySendAuthenticatePayload(const FName& clientName, const FName& version) const
 {
-	FVoxtaAuthenticateRequest requestPayload;
+	FVoxtaPayload_AuthenticateRequest requestPayload;
 	requestPayload.client = clientName;
 	requestPayload.clientVersion = version;
 	return TrySendPayloadInternal(requestPayload, TEXT("FVoxtaAuthenticateRequest"));
 }
 bool UVoxtaApiHandler::TrySendLoadCharactersPayload() const
 {
-	return TrySendPayloadInternal(FVoxtaLoadCharactersRequest(), TEXT("FVoxtaLoadCharactersRequest"));
+	return TrySendPayloadInternal(FVoxtaPayload_LoadCharactersRequest(), TEXT("FVoxtaLoadCharactersRequest"));
 }
 bool UVoxtaApiHandler::TrySendStartChatPayload(const FString& characterId) const
 {
-	FVoxtaStartChatRequest requestPayload;
+	FVoxtaPayload_StartChatRequest requestPayload;
 	requestPayload.characterIds.Add(characterId);
 	return TrySendPayloadInternal(requestPayload, TEXT("FVoxtaStartChatRequest"));
 }
 bool UVoxtaApiHandler::TrySendStopChatPayload(const FString& sessionId) const
 {
-	FVoxtaStopChatRequest requestPayload;
+	FVoxtaPayload_StopChatRequest requestPayload;
 	requestPayload.sessionId = sessionId;
 	return TrySendPayloadInternal(requestPayload, TEXT("FVoxtaStopChatRequest"));
 }
 bool UVoxtaApiHandler::TrySendSendTextMessagePayload(const FString& sessionId, const FString& text) const
 {
-	FVoxtaSendTextMessageRequest requestPayload;
+	FVoxtaPayload_SendTextMessageRequest requestPayload;
 	requestPayload.sessionId = sessionId;
 	requestPayload.text = text;
 	return TrySendPayloadInternal(requestPayload, TEXT("FVoxtaSendTextMessageRequest"));
@@ -95,10 +96,7 @@ void UVoxtaApiHandler::OnSocketClosed()
 }
 void UVoxtaApiHandler::OnMessageReceived(const TSharedPtr<FJsonObject>& jsonObject)
 {
-	if (!jsonObject.IsValid())
-	{
-		return;
-	}
+	ensureAlways(jsonObject.IsValid());
 
 	FString action;
 	if (!jsonObject->TryGetStringField(TEXT("$type"), action) &&
@@ -110,6 +108,7 @@ void UVoxtaApiHandler::OnMessageReceived(const TSharedPtr<FJsonObject>& jsonObje
 
 	if (const TFunction<void(const TSharedPtr<FJsonObject>&)>* route = m_responseRoutes.Find(action))
 	{
+		UE_LOGFMT(LogVoxta, Warning, "[{0}] Calling response handler for action {1} ...", StaticClass()->GetName(), action);
 		(*route)(jsonObject);
 	}
 	else
@@ -141,6 +140,7 @@ void UVoxtaApiHandler::RegisterResponseRoute(const FString& actionName)
 		T response;
 		if (FJsonObjectConverter::JsonObjectToUStruct(jsonObject.ToSharedRef(), &response))
 		{
+			UE_LOGFMT(LogVoxta, Warning, "[{0}] Broadcasting response...", StaticClass()->GetName());
 			BroadcastResponse<T>(response);
 		}
 		else
@@ -153,11 +153,14 @@ template <typename T>
 void UVoxtaApiHandler::BroadcastResponse(const T& response)
 {
 	const FName structName = T::StaticStruct()->GetFName();
-	if (const TSharedPtr<IVoxtaResponseDispatcher>* dispatcher = m_responseDispatchers.Find(structName))
+	const TSharedPtr<IVoxtaResponseDispatcher>* dispatcher = m_responseDispatchers.Find(structName);
+
+	if (!dispatcher || dispatcher->IsValid())
 	{
-		if (dispatcher->IsValid())
-		{
-			StaticCastSharedPtr<TVoxtaResponseDispatcher<T>>(*dispatcher)->m_Delegate.Broadcast(response);
-		}
+		UE_LOGFMT(LogVoxta, Warning, "[{0}] No listeners registered for response {1}.", StaticClass()->GetName(), structName.ToString());
+		return;
 	}
+
+	UE_LOGFMT(LogVoxta, Warning, "[{0}] Dispatching response...", StaticClass()->GetName());
+	StaticCastSharedPtr<TVoxtaResponseDispatcher<T>>(*dispatcher)->m_Delegate.Broadcast(response);
 }
