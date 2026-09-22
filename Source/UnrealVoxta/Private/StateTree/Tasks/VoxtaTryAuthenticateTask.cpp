@@ -14,10 +14,13 @@ struct FResponseContainer
 {
 	TOptional<FVoxtaPayload_WelcomeResponse> m_welcomeResponse;
 	TOptional<FVoxtaPayload_ConfigurationResponse> m_configResponse;
+	TOptional<FVoxtaPayload_CharacterListLoadedResponse> m_characterListResponse;
 
 	bool IsComplete() const
 	{
-		return m_welcomeResponse.IsSet() && m_configResponse.IsSet();
+		return m_welcomeResponse.IsSet() &&
+			m_configResponse.IsSet() &&
+			m_characterListResponse.IsSet();
 	}
 };
 
@@ -62,10 +65,8 @@ EStateTreeRunStatus FVoxtaTryAuthenticateTask::EnterState(FStateTreeExecutionCon
 			FVoxtaRuntimeData runtimeData;
 			runtimeData.m_User.m_Id = responseContainer->m_welcomeResponse->user.id;
 			runtimeData.m_User.m_Name = responseContainer->m_welcomeResponse->user.name;
-
 			runtimeData.m_Assistant.m_Id = responseContainer->m_welcomeResponse->assistant.id;
 			runtimeData.m_Assistant.m_Name = responseContainer->m_welcomeResponse->assistant.name;
-
 			runtimeData.m_ServerVersion = responseContainer->m_welcomeResponse->voxtaServerVersion;
 
 			// TODO: Figure out if we actually need this or not
@@ -81,8 +82,20 @@ EStateTreeRunStatus FVoxtaTryAuthenticateTask::EnterState(FStateTreeExecutionCon
 	instanceData.m_WelcomeDelegateHandle = voxtaApiHandler->OnResponse<FVoxtaPayload_WelcomeResponse>().AddLambda(
 		[responseContainer, CheckAndFinish, voxtaApiHandler](const FVoxtaPayload_WelcomeResponse& response)
 		{
+			if (response.apiVersion != UVoxtaApiHandler::COMPATIBLE_SERVER_VERSION)
+			{
+				UE_LOGFMT(LogVoxta, Error, "[{0}] Incompatible server version. Expecting [{1}] but received [{2}]",
+					StaticStruct()->GetName(),
+					UVoxtaApiHandler::COMPATIBLE_SERVER_VERSION,
+					response.apiVersion);
+
+				// TODO: what do we do here? Need to trigger event for UI prolly
+			}
+
 			UE_LOGFMT(LogVoxta, Log, "[{0}] Received Welcome response for user: {1}", StaticStruct()->GetName(), response.user.name);
 			responseContainer->m_welcomeResponse = response;
+
+			voxtaApiHandler->TrySendLoadCharactersPayload();
 			CheckAndFinish();
 		});
 
@@ -91,6 +104,14 @@ EStateTreeRunStatus FVoxtaTryAuthenticateTask::EnterState(FStateTreeExecutionCon
 		{
 			UE_LOGFMT(LogVoxta, Log, "[{0}] Received Configuration response.", StaticStruct()->GetName());
 			responseContainer->m_configResponse = response;
+			CheckAndFinish();
+		});
+
+	instanceData.m_CharacterListDelegateHandle = voxtaApiHandler->OnResponse<FVoxtaPayload_CharacterListLoadedResponse>().AddLambda(
+		[responseContainer, CheckAndFinish](const FVoxtaPayload_CharacterListLoadedResponse& response)
+		{
+			UE_LOGFMT(LogVoxta, Log, "[{0}] Received CharacterList response.", StaticStruct()->GetName());
+			responseContainer->m_characterListResponse = response;
 			CheckAndFinish();
 		});
 
@@ -120,6 +141,11 @@ void FVoxtaTryAuthenticateTask::ExitState(FStateTreeExecutionContext& context, c
 		{
 			voxtaApiHandler->OnResponse<FVoxtaPayload_ConfigurationResponse>().Remove(instanceData.m_ConfigurationDelegateHandle);
 			instanceData.m_ConfigurationDelegateHandle.Reset();
+		}
+		if (instanceData.m_CharacterListDelegateHandle.IsValid())
+		{
+			voxtaApiHandler->OnResponse<FVoxtaPayload_CharacterListLoadedResponse>().Remove(instanceData.m_CharacterListDelegateHandle);
+			instanceData.m_CharacterListDelegateHandle.Reset();
 		}
 	}
 

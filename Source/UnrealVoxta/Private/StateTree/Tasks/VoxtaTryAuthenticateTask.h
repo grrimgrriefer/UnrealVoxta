@@ -16,10 +16,12 @@ struct UNREALVOXTA_API FVoxtaAuthenticateTaskInstanceData
 
 	FDelegateHandle m_WelcomeDelegateHandle;
 	FDelegateHandle m_ConfigurationDelegateHandle;
+	FDelegateHandle m_CharacterListDelegateHandle;
 };
 
 /**
- * Triggers an attempt to connect to the VoxtaServer
+ * Triggers an attempt to authenticate to the VoxtaServer
+ * Also fetches the core info (user, characters, services-config)
  */
 USTRUCT(meta = (DisplayName = "Voxta Attempt to authenticate", Category = "Voxta"))
 struct UNREALVOXTA_API FVoxtaTryAuthenticateTask : public FVoxtaBaseTask
