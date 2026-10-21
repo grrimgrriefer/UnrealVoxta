@@ -7,6 +7,7 @@
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "SubSystems/VoxtaStateTreeSubsystem.h"
+#include "VoxtaGlobals.h"
 
 FVoxtaBaseTask::FVoxtaBaseTask()
 {
@@ -23,6 +24,8 @@ bool FVoxtaBaseTask::Link(FStateTreeLinker& linker)
 }
 EStateTreeRunStatus FVoxtaBaseTask::EnterState(FStateTreeExecutionContext& context, const FStateTreeTransitionResult& transitions) const
 {
+	UE_LOGFMT(LogVoxta, Verbose, "[{0}] ++ Entered state {1}.", StaticStruct()->GetName(), UEnum::GetValueAsString(GetStateForTask(context)));
+
 	UVoxtaStateTreeSubsystem* subsystem = context.GetExternalDataPtr(m_VoxtaStateTreeSubsystemHandle);
 	ensureAlways(subsystem);
 	return IsValid(subsystem) && subsystem->TryMarkNewStateActive(GetStateForTask(context))
@@ -37,6 +40,7 @@ void FVoxtaBaseTask::ExitState(FStateTreeExecutionContext& context, const FState
 	{
 		subsystem->TryMarkStateInactive(GetStateForTask(context));
 	}
+	UE_LOGFMT(LogVoxta, Verbose, "[{0}] -- Exited state {1}.", StaticStruct()->GetName(), UEnum::GetValueAsString(GetStateForTask(context)));
 }
 VoxtaClientState FVoxtaBaseTask::GetStateForTask(FStateTreeExecutionContext& context) const
 {

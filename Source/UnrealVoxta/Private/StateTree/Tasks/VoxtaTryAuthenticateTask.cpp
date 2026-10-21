@@ -79,9 +79,9 @@ EStateTreeRunStatus FVoxtaTryAuthenticateTask::EnterState(FStateTreeExecutionCon
 	};
 
 	instanceData.m_WelcomeDelegateHandle = voxtaApiHandler->OnResponse<FVoxtaPayload_WelcomeResponse>().AddLambda(
-		[responseContainer, CheckAndFinish](const FVoxtaPayload_WelcomeResponse& response)
+		[responseContainer, CheckAndFinish, voxtaApiHandler](const FVoxtaPayload_WelcomeResponse& response)
 		{
-			UE_LOGFMT(LogVoxta, Log, "Received Welcome response for user: {0}", response.user.name);
+			UE_LOGFMT(LogVoxta, Log, "[{0}] Received Welcome response for user: {1}", StaticStruct()->GetName(), response.user.name);
 			responseContainer->m_welcomeResponse = response;
 			CheckAndFinish();
 		});
@@ -89,7 +89,7 @@ EStateTreeRunStatus FVoxtaTryAuthenticateTask::EnterState(FStateTreeExecutionCon
 	instanceData.m_ConfigurationDelegateHandle = voxtaApiHandler->OnResponse<FVoxtaPayload_ConfigurationResponse>().AddLambda(
 		[responseContainer, CheckAndFinish](const FVoxtaPayload_ConfigurationResponse& response)
 		{
-			UE_LOGFMT(LogVoxta, Log, "Received Configuration response.");
+			UE_LOGFMT(LogVoxta, Log, "[{0}] Received Configuration response.", StaticStruct()->GetName());
 			responseContainer->m_configResponse = response;
 			CheckAndFinish();
 		});
@@ -97,7 +97,7 @@ EStateTreeRunStatus FVoxtaTryAuthenticateTask::EnterState(FStateTreeExecutionCon
 	const bool sentRequest = voxtaApiHandler->TrySendAuthenticatePayload(UVoxtaApiHandler::CLIENT_NAME, UVoxtaApiHandler::CLIENT_VERSION);
 	if (!sentRequest)
 	{
-		UE_LOGFMT(LogVoxta, Warning, "[{0}] Authenticate request failed to initiate.", StaticStruct()->GetName());
+		UE_LOGFMT(LogVoxta, Error, "[{0}] Authenticate request failed to initiate.", StaticStruct()->GetName());
 		return EStateTreeRunStatus::Failed;
 	}
 

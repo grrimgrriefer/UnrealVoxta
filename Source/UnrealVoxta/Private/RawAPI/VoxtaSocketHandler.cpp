@@ -48,12 +48,12 @@ bool UVoxtaSocketHandler::TrySendPayload(const FJsonObject* payload) const
 }
 void UVoxtaSocketHandler::OnConnected()
 {
-	UE_LOGFMT(LogVoxta, Warning, "[{0}] Socket connected", StaticClass()->GetName());
+	UE_LOGFMT(LogVoxta, Log, "[{0}] Socket connected", StaticClass()->GetName());
 	m_OnSocketConnected.Broadcast();
 }
 void UVoxtaSocketHandler::OnConnectionError(const FString& error)
 {
-	UE_LOGFMT(LogVoxta, Warning, "[{0}] Socket connection error: {1}", StaticClass()->GetName(), error);
+	UE_LOGFMT(LogVoxta, Error, "[{0}] Socket connection error: {1}", StaticClass()->GetName(), error);
 	m_OnSocketConnectionError.Broadcast(error);
 }
 void UVoxtaSocketHandler::OnClosed()
@@ -70,7 +70,6 @@ void UVoxtaSocketHandler::OnReceivedMessage(const TArray<FSignalRValue>& payload
 	const TSharedPtr<FJsonObject> jsonObject = SignalRValueToJsonObject(payload[0]);
 	if (jsonObject.IsValid())
 	{
-		UE_LOGFMT(LogVoxta, Warning, "[{0}] Broadcasting message...", StaticClass()->GetName());
 		m_OnSocketMessageReceived.Broadcast(jsonObject);
 	}
 	else

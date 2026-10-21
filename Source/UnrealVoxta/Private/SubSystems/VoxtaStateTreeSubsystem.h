@@ -52,7 +52,7 @@ public:
 	bool TryBindContextData(UObject* data);
 	bool TryUnbindContextData(UObject* data);
 
-	void SetRuntimeData(const FVoxtaRuntimeData& RuntimeData);
+	void SetRuntimeData(const FVoxtaRuntimeData& runtimeData);
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Voxta", meta=(RequiredAssetDataTags="Schema=UVoxtaStateTreeSchema"))
@@ -71,8 +71,10 @@ private:
 	UPROPERTY()
 	TObjectPtr<UVoxtaApiHandler> m_voxtaApiHandler;
 
-	StateTreeContextBinder m_contextBinder;
 	uint32 m_lastFrameNumberWeTicked = INDEX_NONE;
 	bool m_isRunning = false;
+
+	StateTreeContextBinder m_contextBinder;
 	TSet<VoxtaClientState> m_currentStates;
+	FVoxtaRuntimeData m_runtimeData;
 };

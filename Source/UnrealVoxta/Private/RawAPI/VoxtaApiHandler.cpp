@@ -108,7 +108,7 @@ void UVoxtaApiHandler::OnMessageReceived(const TSharedPtr<FJsonObject>& jsonObje
 
 	if (const TFunction<void(const TSharedPtr<FJsonObject>&)>* route = m_responseRoutes.Find(action))
 	{
-		UE_LOGFMT(LogVoxta, Warning, "[{0}] Calling response handler for action {1} ...", StaticClass()->GetName(), action);
+		UE_LOGFMT(LogVoxta, Verbose, "[{0}] Calling response handler for action {1} ...", StaticClass()->GetName(), action);
 		(*route)(jsonObject);
 	}
 	else
@@ -140,7 +140,7 @@ void UVoxtaApiHandler::RegisterResponseRoute(const FString& actionName)
 		T response;
 		if (FJsonObjectConverter::JsonObjectToUStruct(jsonObject.ToSharedRef(), &response))
 		{
-			UE_LOGFMT(LogVoxta, Warning, "[{0}] Broadcasting response...", StaticClass()->GetName());
+			UE_LOGFMT(LogVoxta, Verbose, "[{0}] Broadcasting response...", StaticClass()->GetName());
 			BroadcastResponse<T>(response);
 		}
 		else
@@ -155,12 +155,12 @@ void UVoxtaApiHandler::BroadcastResponse(const T& response)
 	const FName structName = T::StaticStruct()->GetFName();
 	const TSharedPtr<IVoxtaResponseDispatcher>* dispatcher = m_responseDispatchers.Find(structName);
 
-	if (!dispatcher || dispatcher->IsValid())
+	if (!dispatcher || !dispatcher->IsValid())
 	{
 		UE_LOGFMT(LogVoxta, Warning, "[{0}] No listeners registered for response {1}.", StaticClass()->GetName(), structName.ToString());
 		return;
 	}
 
-	UE_LOGFMT(LogVoxta, Warning, "[{0}] Dispatching response...", StaticClass()->GetName());
+	UE_LOGFMT(LogVoxta, Verbose, "[{0}] Dispatching response...", StaticClass()->GetName());
 	StaticCastSharedPtr<TVoxtaResponseDispatcher<T>>(*dispatcher)->m_Delegate.Broadcast(response);
 }

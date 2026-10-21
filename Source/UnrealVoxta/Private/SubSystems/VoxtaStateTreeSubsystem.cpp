@@ -138,14 +138,14 @@ void UVoxtaStateTreeSubsystem::EnsureConnectionWithServer()
 
 bool UVoxtaStateTreeSubsystem::TryMarkNewStateActive(VoxtaClientState voxtaClientState)
 {
-	UE_LOGFMT(LogVoxta, Warning, "[{0}] TryMarkNewStateActive: {1}", StaticClass()->GetName(), UEnum::GetValueAsString(voxtaClientState));
+	UE_LOGFMT(LogVoxta, Verbose, "[{0}] TryMarkNewStateActive: {1}", StaticClass()->GetName(), UEnum::GetValueAsString(voxtaClientState));
 	bool alreadyActive = false;
 	m_currentStates.Emplace(voxtaClientState, &alreadyActive);
 	return !alreadyActive;
 }
 bool UVoxtaStateTreeSubsystem::TryMarkStateInactive(VoxtaClientState voxtaClientState)
 {
-	UE_LOGFMT(LogVoxta, Warning, "[{0}] TryMarkStateInactive: {1}", StaticClass()->GetName(), UEnum::GetValueAsString(voxtaClientState));
+	UE_LOGFMT(LogVoxta, Verbose, "[{0}] TryMarkStateInactive: {1}", StaticClass()->GetName(), UEnum::GetValueAsString(voxtaClientState));
 	return m_currentStates.Remove(voxtaClientState) > 0;
 }
 bool UVoxtaStateTreeSubsystem::TrySendFlowEvent(const FGameplayTag tag, bool hasPayload, const FConstStructView& payload)
@@ -161,7 +161,7 @@ bool UVoxtaStateTreeSubsystem::TrySendFlowEvent(const FGameplayTag tag, bool has
 		FStateTreeExecutionContext context(*this, *m_stateTreeAsset, m_instanceData);
 		if (m_contextBinder.SetContextRequirements(context, m_stateTreeAsset, this))
 		{
-			UE_LOGFMT(LogVoxta, Warning, "[{0}] Sending event {1}", StaticClass()->GetName(), tag.ToString());
+			UE_LOGFMT(LogVoxta, Verbose, "[{0}] Sending event {1}", StaticClass()->GetName(), tag.ToString());
 			hasPayload
 				? context.SendEvent(tag, payload)
 				: context.SendEvent(tag);
@@ -178,13 +178,13 @@ bool UVoxtaStateTreeSubsystem::TryUnbindContextData(UObject* data)
 {
 	return m_contextBinder.TryUnbindContextData(data);
 }
-void UVoxtaStateTreeSubsystem::SetRuntimeData(const FVoxtaRuntimeData& RuntimeData)
+void UVoxtaStateTreeSubsystem::SetRuntimeData(const FVoxtaRuntimeData& runtimeData)
 {
-
+	m_runtimeData = runtimeData;;
 }
 void UVoxtaStateTreeSubsystem::OnVoxtaConnected()
 {
-	UE_LOGFMT(LogVoxta, Warning, "[{0}] Voxta Connected.", StaticClass()->GetName());
+	UE_LOGFMT(LogVoxta, Log, "[{0}] Voxta Connected.", StaticClass()->GetName());
 	TrySendFlowEvent(TAG_Voxta_Notify_SocketConnected, false, FConstStructView());
 }
 void UVoxtaStateTreeSubsystem::OnVoxtaConnectionError(const FString& error)
