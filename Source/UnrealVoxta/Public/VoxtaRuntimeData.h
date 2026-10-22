@@ -18,18 +18,6 @@ struct UNREALVOXTA_API FVoxtaUserInfo
 };
 
 USTRUCT(BlueprintType)
-struct UNREALVOXTA_API FVoxtaServiceEntry
-{
-	GENERATED_BODY()
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Voxta")
-	FString m_ServiceName;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Voxta")
-	FString m_ServiceId;
-};
-
-USTRUCT(BlueprintType)
 struct UNREALVOXTA_API FVoxtaServicesInfo
 {
 	GENERATED_BODY()

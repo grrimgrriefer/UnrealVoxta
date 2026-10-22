@@ -26,7 +26,7 @@ struct UNREALVOXTA_API FVoxtaEmptyTask : public FVoxtaBaseTask
 	GENERATED_BODY()
 
 public:
-	using FInstanceDataType =FVoxtaEmptyTaskInstanceData;
+	using FInstanceDataType = FVoxtaEmptyTaskInstanceData;
 
 	virtual const UScriptStruct* GetInstanceDataType() const override;
 
