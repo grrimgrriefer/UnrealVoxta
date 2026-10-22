@@ -4,6 +4,7 @@
 
 // Request meaning external asked and Subsystem invoked on statetree
 UE_DEFINE_GAMEPLAY_TAG(TAG_Voxta_Request_Connection, "Voxta.Request.Connection");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Voxta_Request_StartChat, "Voxta.Request.StartChat");
 
 // Notify meaning internal invoked and Subsystem forwarded to statetree
 UE_DEFINE_GAMEPLAY_TAG(TAG_Voxta_Notify_SocketConnected, "Voxta.Notify.SocketConnected");

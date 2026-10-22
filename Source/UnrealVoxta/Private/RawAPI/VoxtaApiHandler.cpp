@@ -10,6 +10,7 @@
 const FName UVoxtaApiHandler::CLIENT_NAME = TEXT("UnrealVoxta");
 const FName UVoxtaApiHandler::CLIENT_VERSION = TEXT("0.2.0");
 const FName UVoxtaApiHandler::COMPATIBLE_SERVER_VERSION = TEXT("2025-11");
+const FName UVoxtaApiHandler::VOXTA_CONTEXT_KEY = TEXT("UnrealVoxta - SimpleChat");
 
 void UVoxtaApiHandler::Initialize()
 {
@@ -52,10 +53,15 @@ bool UVoxtaApiHandler::TrySendLoadCharactersPayload() const
 {
 	return TrySendPayloadInternal(FVoxtaPayload_LoadCharactersRequest(), TEXT("FVoxtaLoadCharactersRequest"));
 }
-bool UVoxtaApiHandler::TrySendStartChatPayload(const FString& characterId) const
+bool UVoxtaApiHandler::TrySendStartChatPayload(const FString& characterId, const FString& chatContext) const
 {
+	FVoxtaPayload_ContextData contextData;
+	contextData.text = chatContext;
+
 	FVoxtaPayload_StartChatRequest requestPayload;
 	requestPayload.characterIds.Add(characterId);
+	requestPayload.contextKey = VOXTA_CONTEXT_KEY;
+	requestPayload.contexts.Add(contextData);
 	return TrySendPayloadInternal(requestPayload, TEXT("FVoxtaStartChatRequest"));
 }
 bool UVoxtaApiHandler::TrySendStopChatPayload(const FString& sessionId) const

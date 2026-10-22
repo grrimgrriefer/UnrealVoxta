@@ -29,6 +29,7 @@ public:
 	static const FName CLIENT_NAME;
 	static const FName CLIENT_VERSION;
 	static const FName COMPATIBLE_SERVER_VERSION;
+	static const FName VOXTA_CONTEXT_KEY;
 
 	FOnVoxtaConnected m_OnConnected;
 	FOnVoxtaConnectionError m_OnConnectionError;
@@ -40,7 +41,7 @@ public:
 
 	bool TrySendAuthenticatePayload(const FName& clientName, const FName& version) const;
 	bool TrySendLoadCharactersPayload() const;
-	bool TrySendStartChatPayload(const FString& characterId) const;
+	bool TrySendStartChatPayload(const FString& characterId, const FString& chatContext) const;
 	bool TrySendStopChatPayload(const FString& sessionId) const;
 	bool TrySendSendTextMessagePayload(const FString& sessionId, const FString& text) const;
 
