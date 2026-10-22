@@ -4,6 +4,8 @@
 #include "VoxtaClientState.h"
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
+#include "StateTree/VoxtaStateTreeTags.h"
+#include "StateTree/Tasks/VoxtaTryStartChatTask.h"
 #include "SubSystems/VoxtaStateTreeSubsystem.h"
 
 bool UCharacterSubsystem::ShouldCreateSubsystem(UObject* outer) const
@@ -50,6 +52,15 @@ void UCharacterSubsystem::StartConversation(APawn* npc)
 	if (m_activeNpc.Get() != npc)
 	{
 		m_activeNpc = npc;
+
+		// TODO: do we do this here, or internally inside o the VoxtaStateTreeSubsystem
+		// I.e. does the StateTreeSubsystem 'have' the state tree, or exclusively drive it? Hmm...
+		FVoxtaTryStartChatPayload payload;
+		payload.m_ChatCharacter = npc->m_UserId; // Who sets up that binding? I presume this class?
+		m_voxtaClient->TrySendFlowEvent(TAG_Voxta_Request_StartChat, true, FConstStructView::Make(payload));
+
+		// TOOD: this probably should get fired by that Task that is entered/left that handles the actual chat
+		// or do we want to trigger this while the chat is still being started in the background? Not sure.
 		m_OnCurrentConversableNpcChanged.Broadcast(m_activeNpc.Get());
 	}
 }

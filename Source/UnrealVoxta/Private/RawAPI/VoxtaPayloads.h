@@ -40,10 +40,6 @@ struct FVoxtaPayload_CharacterData
 	bool favorite = false;
 	UPROPERTY()
 	FString thumbnailUrl;
-	UPROPERTY()
-	FString packageId;
-	UPROPERTY()
-	FString packageName;
 };
 
 USTRUCT()
@@ -64,8 +60,6 @@ struct FVoxtaPayload_ContextData
 {
 	GENERATED_BODY()
 
-	UPROPERTY()
-	FString contextKey;
 	UPROPERTY()
 	FString text;
 };
@@ -208,7 +202,7 @@ struct FVoxtaPayload_StartChatRequest
 	UPROPERTY()
 	FName action = TEXT("startChat");
 	UPROPERTY()
-	FString contextKey;
+	FName contextKey;
 	UPROPERTY()
 	TArray<FString> characterIds;
 	UPROPERTY()

@@ -6,6 +6,8 @@
 #include "UObject/Interface.h"
 #include "VoxtaClient.generated.h"
 
+struct FGameplayTag;
+struct FConstStructView;
 struct FVoxtaUserConfiguration;
 enum class VoxtaClientState : uint8;
 
@@ -30,4 +32,5 @@ public:
 	virtual const TSet<VoxtaClientState>& GetStates() const = 0;
 	virtual const FVoxtaUserConfiguration& GetUserConfiguration() const = 0;
 	virtual void EnsureConnectionWithServer() = 0;
+	virtual bool TrySendFlowEvent(FGameplayTag tag, bool hasPayload, const FConstStructView& payload) = 0;
 };
