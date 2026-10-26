@@ -7,7 +7,7 @@
 #include "VoxtaRuntimeData.h"
 #include "VoxtaUserConfiguration.h"
 #include "StateTree/StateTreeContextBinder.h"
-#include "SubSystems/VoxtaClient.h"
+#include "Interfaces/VoxtaClient.h"
 #include "VoxtaStateTreeSubsystem.generated.h"
 
 class UStateTree;
@@ -41,14 +41,16 @@ public:
 #pragma endregion
 
 #pragma region IVoxtaClient
+	virtual FOnVoxtaCharactersLoaded& OnCharactersLoaded() override;
+	virtual void EnsureConnectionWithServer() override;
+	virtual bool TrySendFlowEvent(FGameplayTag tag, bool hasPayload, const FConstStructView& payload) override;
 	virtual const TSet<VoxtaClientState>& GetStates() const override;
 	virtual const FVoxtaUserConfiguration& GetUserConfiguration() const override;
-	virtual void EnsureConnectionWithServer() override;
+	virtual TConstArrayView<FVoxtaCharacterData> GetAvailableCharacters() const override;
 #pragma endregion
 
 	bool TryMarkNewStateActive(VoxtaClientState voxtaClientState);
 	bool TryMarkStateInactive(VoxtaClientState voxtaClientState);
-	bool TrySendFlowEvent(FGameplayTag tag, bool hasPayload, const FConstStructView& payload);
 	bool TryBindContextData(UObject* data);
 	bool TryUnbindContextData(UObject* data);
 

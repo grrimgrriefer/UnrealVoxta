@@ -375,7 +375,6 @@ struct FVoxtaPayload_ConfigurationResponse : public FVoxtaPayload_BaseResponse
 
 	UPROPERTY()
 	FVoxtaPayload_Services services;
-
 	UPROPERTY()
 	TArray<FVoxtaPayload_Configuration> configurations;
 };

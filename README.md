@@ -38,6 +38,8 @@ sequenceDiagram
 		UVoxtaSocketHandler->>+UVoxtaApiHandler: Return raw SignalR response
 			Note over UVoxtaApiHandler: Broadcast connected event
 
+		UVoxtaStateTreeSubsystem->>+Internal StateTree: Notify that VoxtaSocket is connected
+
 		Internal StateTree->>+Internal StateTree: Deactivate both Disconnected and AttemptConnect substate<br /> and activate Connected state transition
 		Internal StateTree->>+UVoxtaStateTreeSubsystem: Update status
 
@@ -50,22 +52,27 @@ sequenceDiagram
 		UVoxtaApiHandler->>+UVoxtaSocketHandler: Trigger raw SignalR message
 		UVoxtaSocketHandler->>+UVoxtaApiHandler: Return raw SignalR response
 			Note over UVoxtaApiHandler: Broadcast message: welcomeResponse
-			Note over UVoxtaApiHandler: Broadcast message: characterList
 
-		Internal StateTree->>+Internal StateTree: Deactivate AttemptAuth substate<br /> and activate Authenticated state transition
-			Note over Internal StateTree: Event payload includes both username from <br />welcomeReponse and characterList info
+		par [Receive configuration]
+				UVoxtaSocketHandler->>+UVoxtaApiHandler: Return raw SignalR response
+					Note over UVoxtaApiHandler: Broadcast message: configurationResponse
+		and [Request available characters]
+				Internal StateTree->>+UVoxtaApiHandler: SendMessage
+					Note over Internal StateTree,UVoxtaApiHandler: Load Characters request
 
-        Internal StateTree->>+UVoxtaStateTreeSubsystem: Update status
+				UVoxtaApiHandler->>+UVoxtaSocketHandler: Trigger raw SignalR message
+				UVoxtaSocketHandler->>+UVoxtaApiHandler: Return raw SignalR response
+					Note over UVoxtaApiHandler: Broadcast message: characterList response
+		end		
 
 		Internal StateTree->>+UVoxtaStateTreeSubsystem: Update runtime info
 			Note over UVoxtaStateTreeSubsystem: Save username & available characters
+
+		Internal StateTree->>+Internal StateTree: Deactivate AttemptAuth substate<br /> and activate Authenticated state transition
+        Internal StateTree->>+UVoxtaStateTreeSubsystem: Update status
 
 		Internal StateTree->>+Internal StateTree: Auto-activate Idle sub-state transition
 		    Internal StateTree->>+UVoxtaStateTreeSubsystem: Update status
 		Note over IVoxtaClient:  Broadcast status update: Ready
 	end
-
-	UCharacterSubsystem->>+IVoxtaClient: Get character list
-
-	IVoxtaClient->>+UCharacterSubsystem: Provide list of available characters
 ```

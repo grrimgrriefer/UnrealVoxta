@@ -4,6 +4,7 @@
 #include "VoxtaClientState.h"
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
+#include "Interfaces/VoxtaClient.h"
 #include "StateTree/VoxtaStateTreeTags.h"
 #include "StateTree/Tasks/VoxtaTryStartChatTask.h"
 #include "SubSystems/VoxtaStateTreeSubsystem.h"

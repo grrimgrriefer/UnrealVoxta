@@ -1,4 +1,4 @@
-// Copyright(c) 2026 grrimgrriefer & DZnnah, see LICENSE for details.
+// Copyright(c) 2026 grrimgrriefer & DZnnah, see LICENSE for details.De
 
 #include "VoxtaApiHandler.h"
 #include "JsonObjectConverter.h"

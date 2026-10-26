@@ -107,13 +107,9 @@ bool UVoxtaStateTreeSubsystem::IsTickable() const
 
 
 #pragma region IVoxtaClient
-const TSet<VoxtaClientState>& UVoxtaStateTreeSubsystem::GetStates() const
+FOnVoxtaCharactersLoaded& UVoxtaStateTreeSubsystem::OnCharactersLoaded()
 {
-	return m_currentStates;
-}
-const FVoxtaUserConfiguration& UVoxtaStateTreeSubsystem::GetUserConfiguration() const
-{
-	return m_voxtaUserConfiguration;
+
 }
 void UVoxtaStateTreeSubsystem::EnsureConnectionWithServer()
 {
@@ -132,21 +128,6 @@ void UVoxtaStateTreeSubsystem::EnsureConnectionWithServer()
 	payload.m_VoxtaServerIpv4 = m_voxtaUserConfiguration.m_VoxtaServerIpv4;
 	payload.m_VoxtaServerPort = m_voxtaUserConfiguration.m_VoxtaServerPort;
 	TrySendFlowEvent(TAG_Voxta_Request_Connection, true, FConstStructView::Make(payload));
-}
-#pragma endregion
-
-
-bool UVoxtaStateTreeSubsystem::TryMarkNewStateActive(VoxtaClientState voxtaClientState)
-{
-	UE_LOGFMT(LogVoxta, Verbose, "[{0}] TryMarkNewStateActive: {1}", StaticClass()->GetName(), UEnum::GetValueAsString(voxtaClientState));
-	bool alreadyActive = false;
-	m_currentStates.Emplace(voxtaClientState, &alreadyActive);
-	return !alreadyActive;
-}
-bool UVoxtaStateTreeSubsystem::TryMarkStateInactive(VoxtaClientState voxtaClientState)
-{
-	UE_LOGFMT(LogVoxta, Verbose, "[{0}] TryMarkStateInactive: {1}", StaticClass()->GetName(), UEnum::GetValueAsString(voxtaClientState));
-	return m_currentStates.Remove(voxtaClientState) > 0;
 }
 bool UVoxtaStateTreeSubsystem::TrySendFlowEvent(const FGameplayTag tag, bool hasPayload, const FConstStructView& payload)
 {
@@ -170,6 +151,33 @@ bool UVoxtaStateTreeSubsystem::TrySendFlowEvent(const FGameplayTag tag, bool has
 	}
 	return false;
 }
+const TSet<VoxtaClientState>& UVoxtaStateTreeSubsystem::GetStates() const
+{
+	return m_currentStates;
+}
+const FVoxtaUserConfiguration& UVoxtaStateTreeSubsystem::GetUserConfiguration() const
+{
+	return m_voxtaUserConfiguration;
+}
+TConstArrayView<FVoxtaCharacterData> UVoxtaStateTreeSubsystem::GetAvailableCharacters() const
+{
+	return m_runtimeData.m_Characters;
+}
+#pragma endregion
+
+
+bool UVoxtaStateTreeSubsystem::TryMarkNewStateActive(VoxtaClientState voxtaClientState)
+{
+	UE_LOGFMT(LogVoxta, Verbose, "[{0}] TryMarkNewStateActive: {1}", StaticClass()->GetName(), UEnum::GetValueAsString(voxtaClientState));
+	bool alreadyActive = false;
+	m_currentStates.Emplace(voxtaClientState, &alreadyActive);
+	return !alreadyActive;
+}
+bool UVoxtaStateTreeSubsystem::TryMarkStateInactive(VoxtaClientState voxtaClientState)
+{
+	UE_LOGFMT(LogVoxta, Verbose, "[{0}] TryMarkStateInactive: {1}", StaticClass()->GetName(), UEnum::GetValueAsString(voxtaClientState));
+	return m_currentStates.Remove(voxtaClientState) > 0;
+}
 bool UVoxtaStateTreeSubsystem::TryBindContextData(UObject* data)
 {
 	return m_contextBinder.TryBindContextData(data);
@@ -180,7 +188,8 @@ bool UVoxtaStateTreeSubsystem::TryUnbindContextData(UObject* data)
 }
 void UVoxtaStateTreeSubsystem::SetRuntimeData(const FVoxtaRuntimeData& runtimeData)
 {
-	m_runtimeData = runtimeData;;
+	m_runtimeData = runtimeData;
+	OnCharactersLoaded().Broadcast(m_runtimeData.m_Characters);
 }
 void UVoxtaStateTreeSubsystem::OnVoxtaConnected()
 {

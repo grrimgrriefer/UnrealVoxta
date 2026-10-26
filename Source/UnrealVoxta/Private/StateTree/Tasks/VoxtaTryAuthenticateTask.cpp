@@ -65,14 +65,26 @@ EStateTreeRunStatus FVoxtaTryAuthenticateTask::EnterState(FStateTreeExecutionCon
 			FVoxtaRuntimeData runtimeData;
 			runtimeData.m_User.m_Id = responseContainer->m_welcomeResponse->user.id;
 			runtimeData.m_User.m_Name = responseContainer->m_welcomeResponse->user.name;
-			runtimeData.m_Assistant.m_Id = responseContainer->m_welcomeResponse->assistant.id;
-			runtimeData.m_Assistant.m_Name = responseContainer->m_welcomeResponse->assistant.name;
 			runtimeData.m_ServerVersion = responseContainer->m_welcomeResponse->voxtaServerVersion;
 
-			// TODO: Figure out if we actually need this or not
-		//	runtimeData.m_Services.m_DefaultTextGenId = responseContainer->m_configResponse->configurations[0].services.textGen.defaultServiceId;
-		//	runtimeData.m_Services.m_DefaultSpeechToTextId = responseContainer->m_configResponse->configurations[0].services.speechToText.defaultServiceId;
-		//	runtimeData.m_Services.m_DefaultTextToSpeechId = responseContainer->m_configResponse->configurations[0].services.textToSpeech.defaultServiceId;
+			for (const FVoxtaPayload_CharacterData& responsePayloadChar : responseContainer->m_characterListResponse->characters)
+			{
+				FVoxtaCharacterData charData;
+				charData.m_Id = responsePayloadChar.id;
+				charData.m_Name = responsePayloadChar.name;
+				charData.m_CreatorNotes = responsePayloadChar.creatorNotes;
+				charData.m_IsAllowExplicitContent = responsePayloadChar.explicitContent;
+				charData.m_IsFavorite = responsePayloadChar.favorite;
+				charData.m_ThumbnailUrl = responsePayloadChar.thumbnailUrl;
+				runtimeData.m_Characters.Add(MoveTemp(charData));
+			}
+
+			// TODO: Figure out if we actually need these or not
+//			runtimeData.m_Assistant.m_Id = responseContainer->m_welcomeResponse->assistant.id;
+//			runtimeData.m_Assistant.m_Name = responseContainer->m_welcomeResponse->assistant.name;
+//			runtimeData.m_Services.m_DefaultTextGenId = responseContainer->m_configResponse->configurations[0].services.textGen.defaultServiceId;
+//			runtimeData.m_Services.m_DefaultSpeechToTextId = responseContainer->m_configResponse->configurations[0].services.speechToText.defaultServiceId;
+//			runtimeData.m_Services.m_DefaultTextToSpeechId = responseContainer->m_configResponse->configurations[0].services.textToSpeech.defaultServiceId;
 
 			subsystem->SetRuntimeData(runtimeData);
 			subsystem->TrySendFlowEvent(TAG_Voxta_Signal_Authenticated, false, FConstStructView());

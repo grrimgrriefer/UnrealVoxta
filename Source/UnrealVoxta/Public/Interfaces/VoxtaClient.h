@@ -6,6 +6,8 @@
 #include "UObject/Interface.h"
 #include "VoxtaClient.generated.h"
 
+struct FVoxtaCharacterData;
+struct FVoxtaRuntimeData;
 struct FGameplayTag;
 struct FConstStructView;
 struct FVoxtaUserConfiguration;
@@ -16,6 +18,8 @@ class UVoxtaClient : public UInterface
 {
 	GENERATED_BODY()
 };
+
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnVoxtaCharactersLoaded, TConstArrayView<FVoxtaCharacterData>);
 
 /**
  * Lower-level subsystem for Voxta integration.
@@ -29,8 +33,12 @@ class UNREALVOXTA_API IVoxtaClient
 public:
 	static IVoxtaClient* Get(const UObject* worldContextObject);
 
-	virtual const TSet<VoxtaClientState>& GetStates() const = 0;
-	virtual const FVoxtaUserConfiguration& GetUserConfiguration() const = 0;
+	virtual FOnVoxtaCharactersLoaded& OnCharactersLoaded() = 0;
+
 	virtual void EnsureConnectionWithServer() = 0;
 	virtual bool TrySendFlowEvent(FGameplayTag tag, bool hasPayload, const FConstStructView& payload) = 0;
+
+	virtual const TSet<VoxtaClientState>& GetStates() const = 0;
+	virtual const FVoxtaUserConfiguration& GetUserConfiguration() const = 0;
+	virtual TConstArrayView<FVoxtaCharacterData> GetAvailableCharacters() const = 0;
 };

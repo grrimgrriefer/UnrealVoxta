@@ -2,8 +2,8 @@
 
 #pragma once
 
-#include "SubSystems/VoxtaClient.h"
-#include "VoxtaStateTreeSubsystem.h"
+#include "Interfaces/VoxtaClient.h"
+#include "SubSystems/VoxtaStateTreeSubsystem.h"
 #include "Engine/GameInstance.h"
 #include "Kismet/GameplayStatics.h"
 
