@@ -7,10 +7,11 @@
 #include "UObject/WeakInterfacePtr.h"
 #include "CharacterSubsystem.generated.h"
 
+class IVoxtaClient;
+struct FVoxtaCharacterData;
+
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnTranscriptEntryAdded, const FText&, const FText&);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnActiveNpcChanged, APawn*);
-
-class IVoxtaClient;
 
 /**
  * High-level subsystem for Voxta integration.
@@ -32,10 +33,10 @@ public:
     virtual void OnWorldBeginPlay(UWorld& InWorld) override;
 	virtual void Deinitialize() override;
 
-	void RegisterNPC(APawn* npc);
+	bool TryRegisterNPC(APawn* npc, const FVoxtaCharacterData& voxtaChardata);
 	void UnregisterNPC(APawn* npc);
 
-	void StartConversation(APawn* npc);
+	bool TryStartConversation(APawn* npc);
 	void StopConversation();
 	void SubmitMessageFromPlayer(const FText& messageText);
 
@@ -47,7 +48,7 @@ private:
 	UPROPERTY(Transient)
 	TWeakObjectPtr<APawn> m_activeNpc = nullptr;
 	UPROPERTY(Transient)
-	TArray<TWeakObjectPtr<APawn>> m_registeredNpcs;
+	TMap<TWeakObjectPtr<APawn>, FString> m_registeredNpcs;
 
 	TWeakInterfacePtr<IVoxtaClient> m_voxtaClient;
 };

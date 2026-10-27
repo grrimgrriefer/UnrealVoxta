@@ -41,7 +41,7 @@ public:
 #pragma endregion
 
 #pragma region IVoxtaClient
-	virtual FOnVoxtaCharactersLoaded& OnCharactersLoaded() override;
+	virtual TMulticastDelegate<void(const TConstArrayView<FVoxtaCharacterData>&)>& OnCharactersLoaded() override;
 	virtual void EnsureConnectionWithServer() override;
 	virtual bool TrySendFlowEvent(FGameplayTag tag, bool hasPayload, const FConstStructView& payload) override;
 	virtual const TSet<VoxtaClientState>& GetStates() const override;
@@ -76,6 +76,7 @@ private:
 	uint32 m_lastFrameNumberWeTicked = INDEX_NONE;
 	bool m_isRunning = false;
 
+	TMulticastDelegate<void(const TConstArrayView<FVoxtaCharacterData>&)> m_charactersLoadedDelegate;
 	StateTreeContextBinder m_contextBinder;
 	TSet<VoxtaClientState> m_currentStates;
 	FVoxtaRuntimeData m_runtimeData;

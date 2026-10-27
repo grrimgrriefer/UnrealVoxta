@@ -107,9 +107,9 @@ bool UVoxtaStateTreeSubsystem::IsTickable() const
 
 
 #pragma region IVoxtaClient
-FOnVoxtaCharactersLoaded& UVoxtaStateTreeSubsystem::OnCharactersLoaded()
+TMulticastDelegate<void(const TConstArrayView<FVoxtaCharacterData>&)>& UVoxtaStateTreeSubsystem::OnCharactersLoaded()
 {
-
+	return m_charactersLoadedDelegate;
 }
 void UVoxtaStateTreeSubsystem::EnsureConnectionWithServer()
 {

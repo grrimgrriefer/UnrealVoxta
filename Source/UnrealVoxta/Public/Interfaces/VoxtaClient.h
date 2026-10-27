@@ -33,7 +33,7 @@ class UNREALVOXTA_API IVoxtaClient
 public:
 	static IVoxtaClient* Get(const UObject* worldContextObject);
 
-	virtual FOnVoxtaCharactersLoaded& OnCharactersLoaded() = 0;
+	virtual TMulticastDelegate<void(const TConstArrayView<FVoxtaCharacterData>&)>& OnCharactersLoaded() = 0;
 
 	virtual void EnsureConnectionWithServer() = 0;
 	virtual bool TrySendFlowEvent(FGameplayTag tag, bool hasPayload, const FConstStructView& payload) = 0;

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "VoxtaRuntimeData.h"
 #include "UObject/Interface.h"
 #include "VoxtaCharacter.generated.h"
 
@@ -22,6 +23,6 @@ class UNREALVOXTA_API IVoxtaCharacter
 	GENERATED_BODY()
 
 public:
-	virtual FString GetVoxtaCharacterName() const = 0;
-	virtual FString GetVoxtaCharacterId() const { return FString(); }
+	virtual void OnRegistered(const FVoxtaCharacterData& VoxtaCharData) {};
+	virtual void OnUnregistered() {};
 };
