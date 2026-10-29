@@ -47,6 +47,7 @@ public:
 	virtual const TSet<VoxtaClientState>& GetStates() const override;
 	virtual const FVoxtaUserConfiguration& GetUserConfiguration() const override;
 	virtual TConstArrayView<FVoxtaCharacterData> GetAvailableCharacters() const override;
+	virtual const FVoxtaCharacterData* TryGetCharacterById(const FString& charId) const override;
 #pragma endregion
 
 	bool TryMarkNewStateActive(VoxtaClientState voxtaClientState);

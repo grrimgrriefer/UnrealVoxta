@@ -83,6 +83,10 @@ bool UCharacterSubsystem::TryRegisterNPC(APawn* npc, const FVoxtaCharacterData& 
 
 	return true;
 }
+bool UCharacterSubsystem::IsNpcRegistered(const APawn* npc) const
+{
+	return m_registeredNpcs.Contains(npc);
+}
 void UCharacterSubsystem::UnregisterNPC(APawn* npc)
 {
 	ensureAlways(IsValid(npc));

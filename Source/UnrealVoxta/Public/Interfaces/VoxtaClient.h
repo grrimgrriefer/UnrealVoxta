@@ -41,4 +41,5 @@ public:
 	virtual const TSet<VoxtaClientState>& GetStates() const = 0;
 	virtual const FVoxtaUserConfiguration& GetUserConfiguration() const = 0;
 	virtual TConstArrayView<FVoxtaCharacterData> GetAvailableCharacters() const = 0;
+	virtual const FVoxtaCharacterData* TryGetCharacterById(const FString& charId) const = 0;
 };

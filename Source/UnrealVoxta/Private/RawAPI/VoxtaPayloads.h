@@ -74,7 +74,7 @@ struct FVoxtaPayload_ServiceEntryData
 	UPROPERTY()
 	FString id;
 	UPROPERTY()
-	bool enabled;
+	bool enabled = false;
 };
 
 USTRUCT()
@@ -109,7 +109,7 @@ struct FVoxtaPayload_ConfigurationService
 	UPROPERTY()
 	FString defaultServiceId;
 	UPROPERTY()
-	bool enabled;
+	bool enabled = false;
 };
 
 USTRUCT()
@@ -137,7 +137,7 @@ struct FVoxtaPayload_Configuration
 	UPROPERTY()
 	FString name;
 	UPROPERTY()
-	bool isDefault;
+	bool isDefault = false;
 	UPROPERTY()
 	FVoxtaPayload_ConfigurationServices services;
 };

@@ -163,6 +163,13 @@ TConstArrayView<FVoxtaCharacterData> UVoxtaStateTreeSubsystem::GetAvailableChara
 {
 	return m_runtimeData.m_Characters;
 }
+const FVoxtaCharacterData* UVoxtaStateTreeSubsystem::TryGetCharacterById(const FString& charId) const
+{
+	return m_runtimeData.m_Characters.FindByPredicate([&charId](const FVoxtaCharacterData& charData)
+	{
+		return charData.m_Id.Equals(charId, ESearchCase::IgnoreCase);
+	});
+}
 #pragma endregion
 
 

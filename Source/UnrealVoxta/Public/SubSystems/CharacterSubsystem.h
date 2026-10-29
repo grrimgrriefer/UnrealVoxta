@@ -34,6 +34,7 @@ public:
 	virtual void Deinitialize() override;
 
 	bool TryRegisterNPC(APawn* npc, const FVoxtaCharacterData& voxtaChardata);
+	bool IsNpcRegistered(const APawn* conversableNPC) const;
 	void UnregisterNPC(APawn* npc);
 
 	bool TryStartConversation(APawn* npc);
