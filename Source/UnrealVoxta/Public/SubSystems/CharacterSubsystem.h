@@ -10,8 +10,10 @@
 class IVoxtaClient;
 struct FVoxtaCharacterData;
 
-DECLARE_MULTICAST_DELEGATE_TwoParams(FOnTranscriptEntryAdded, const FText&, const FText&);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnActiveNpcChanged, APawn*);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnChatLoadingProgress, const FText&, float);
+DECLARE_MULTICAST_DELEGATE(FOnChatStarted);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnTranscriptEntryAdded, const FText&, const FText&);
 
 /**
  * High-level subsystem for Voxta integration.
@@ -26,8 +28,10 @@ class UNREALVOXTA_API UCharacterSubsystem : public UWorldSubsystem
 	GENERATED_BODY()
 
 public:
-	FOnTranscriptEntryAdded m_OnTranscriptEntryAdded;
 	FOnActiveNpcChanged m_OnCurrentConversableNpcChanged;
+	FOnChatLoadingProgress m_OnChatLoadingProgress;
+	FOnChatStarted m_OnChatStarted;
+	FOnTranscriptEntryAdded m_OnTranscriptEntryAdded;
 
 	virtual bool ShouldCreateSubsystem(UObject* outer) const override;
     virtual void OnWorldBeginPlay(UWorld& InWorld) override;
@@ -52,4 +56,7 @@ private:
 	TMap<TWeakObjectPtr<APawn>, FString> m_registeredNpcs;
 
 	TWeakInterfacePtr<IVoxtaClient> m_voxtaClient;
+
+	FDelegateHandle m_chatLoadingHandle;
+	FDelegateHandle m_chatStartedHandle;
 };

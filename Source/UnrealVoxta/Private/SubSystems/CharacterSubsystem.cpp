@@ -30,10 +30,35 @@ void UCharacterSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 	if (m_voxtaClient.IsValid())
 	{
 		m_voxtaClient->EnsureConnectionWithServer();
+
+		m_chatLoadingHandle = m_voxtaClient->OnChatLoadingProgress().AddLambda(
+			[this](const FText& statusText, float progress)
+			{
+				m_OnChatLoadingProgress.Broadcast(statusText, progress);
+			});
+
+		m_chatStartedHandle = m_voxtaClient->OnChatStarted().AddLambda(
+			[this](const FString& chatId)
+			{
+				m_OnChatStarted.Broadcast();
+			});
 	}
 }
 void UCharacterSubsystem::Deinitialize()
 {
+	if (m_voxtaClient.IsValid())
+	{
+		if (m_chatLoadingHandle.IsValid())
+		{
+			m_voxtaClient->OnChatLoadingProgress().Remove(m_chatLoadingHandle);
+			m_chatLoadingHandle.Reset();
+		}
+		if (m_chatStartedHandle.IsValid())
+		{
+			m_voxtaClient->OnChatStarted().Remove(m_chatStartedHandle);
+			m_chatStartedHandle.Reset();
+		}
+	}
 	Super::Deinitialize();
 }
 bool UCharacterSubsystem::TryRegisterNPC(APawn* npc, const FVoxtaCharacterData& voxtaChardata)
