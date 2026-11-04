@@ -24,6 +24,8 @@ void UVoxtaApiHandler::Initialize()
 	RegisterResponseRoute<FVoxtaPayload_ConfigurationResponse>(TEXT("configuration"));
 	RegisterResponseRoute<FVoxtaPayload_CharacterListLoadedResponse>(TEXT("charactersListLoaded"));
 	RegisterResponseRoute<FVoxtaPayload_ContextUpdatedResponse>(TEXT("contextUpdated"));
+	RegisterResponseRoute<FVoxtaPayload_ChatStartingResponse>(TEXT("chatStarting"));
+	RegisterResponseRoute<FVoxtaPayload_ChatLoadingMessageResponse>(TEXT("chatLoadingMessage"));
 	RegisterResponseRoute<FVoxtaPayload_ChatStartedResponse>(TEXT("chatStarted"));
 	RegisterResponseRoute<FVoxtaPayload_ReplyStartResponse>(TEXT("replyStart"));
 	RegisterResponseRoute<FVoxtaPayload_ReplyChunkResponse>(TEXT("replyChunk"));

@@ -19,7 +19,18 @@ class UVoxtaClient : public UInterface
 	GENERATED_BODY()
 };
 
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnVoxtaCharactersLoaded, TConstArrayView<FVoxtaCharacterData>);
+DECLARE_MULTICAST_DELEGATE_TwoParams(
+	FOnVoxtaChatLoadingProgress,
+	const FText& /*statusText*/,
+	float /*progress*/
+);
+DECLARE_MULTICAST_DELEGATE_OneParam(
+	FOnVoxtaChatStarted,
+	const FString& /*chatId*/
+);
+DECLARE_MULTICAST_DELEGATE_OneParam(
+	FOnVoxtaCharactersLoaded,
+	const TConstArrayView<FVoxtaCharacterData>&) /*characters*/;
 
 /**
  * Lower-level subsystem for Voxta integration.
@@ -33,7 +44,9 @@ class UNREALVOXTA_API IVoxtaClient
 public:
 	static IVoxtaClient* Get(const UObject* worldContextObject);
 
-	virtual TMulticastDelegate<void(const TConstArrayView<FVoxtaCharacterData>&)>& OnCharactersLoaded() = 0;
+	virtual FOnVoxtaChatLoadingProgress& OnChatLoadingProgress() = 0;
+	virtual FOnVoxtaChatStarted& OnChatStarted() = 0;
+	virtual FOnVoxtaCharactersLoaded& OnCharactersLoaded() = 0;
 
 	virtual void EnsureConnectionWithServer() = 0;
 	virtual bool TrySendFlowEvent(FGameplayTag tag, bool hasPayload, const FConstStructView& payload) = 0;

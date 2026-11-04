@@ -345,8 +345,6 @@ struct FVoxtaPayload_BaseResponse
 
 	UPROPERTY()
 	FString action;
-	UPROPERTY()
-	FString sessionId;
 };
 
 USTRUCT()
@@ -398,6 +396,34 @@ struct FVoxtaPayload_ContextUpdatedResponse : public FVoxtaPayload_BaseResponse
 };
 
 USTRUCT()
+struct FVoxtaPayload_ChatStartingResponse : public FVoxtaPayload_BaseResponse
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FString chatId;
+	UPROPERTY()
+	FString chatStyle;
+	UPROPERTY()
+	FString servicesConfigurationsSetId;
+	UPROPERTY()
+	FString sessionId;
+};
+
+USTRUCT()
+struct FVoxtaPayload_ChatLoadingMessageResponse : public FVoxtaPayload_BaseResponse
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FString text;
+	UPROPERTY()
+	uint8 progress = 0;
+	UPROPERTY()
+	FString sessionId;
+};
+
+USTRUCT()
 struct FVoxtaPayload_ChatStartedResponse : public FVoxtaPayload_BaseResponse
 {
 	GENERATED_BODY()
@@ -412,6 +438,8 @@ struct FVoxtaPayload_ChatStartedResponse : public FVoxtaPayload_BaseResponse
 	FVoxtaPayload_Services services;
 	UPROPERTY()
 	TArray<FVoxtaPayload_ContextData> context;
+	UPROPERTY()
+	FString sessionId;
 };
 
 USTRUCT()

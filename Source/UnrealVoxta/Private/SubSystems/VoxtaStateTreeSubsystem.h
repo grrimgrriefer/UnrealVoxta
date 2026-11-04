@@ -41,7 +41,9 @@ public:
 #pragma endregion
 
 #pragma region IVoxtaClient
-	virtual TMulticastDelegate<void(const TConstArrayView<FVoxtaCharacterData>&)>& OnCharactersLoaded() override;
+	virtual FOnVoxtaChatLoadingProgress& OnChatLoadingProgress() override;
+	virtual FOnVoxtaChatStarted& OnChatStarted() override;
+	virtual FOnVoxtaCharactersLoaded& OnCharactersLoaded() override;
 	virtual void EnsureConnectionWithServer() override;
 	virtual bool TrySendFlowEvent(FGameplayTag tag, bool hasPayload, const FConstStructView& payload) override;
 	virtual const TSet<VoxtaClientState>& GetStates() const override;
@@ -55,6 +57,8 @@ public:
 	bool TryBindContextData(UObject* data);
 	bool TryUnbindContextData(UObject* data);
 
+	void NotifyChatLoadingProgress(const FString& sessionId, const FText& text, float progress);
+	void NotifyChatStarted(const FString& sessionId, const FString& chatId);
 	void SetRuntimeData(const FVoxtaRuntimeData& runtimeData);
 
 protected:
@@ -77,7 +81,10 @@ private:
 	uint32 m_lastFrameNumberWeTicked = INDEX_NONE;
 	bool m_isRunning = false;
 
-	TMulticastDelegate<void(const TConstArrayView<FVoxtaCharacterData>&)> m_charactersLoadedDelegate;
+	FOnVoxtaChatLoadingProgress m_chatLoadingProgressDelegate;
+	FOnVoxtaChatStarted m_chatStartedDelegate;
+	FOnVoxtaCharactersLoaded m_charactersLoadedDelegate;
+
 	StateTreeContextBinder m_contextBinder;
 	TSet<VoxtaClientState> m_currentStates;
 	FVoxtaRuntimeData m_runtimeData;

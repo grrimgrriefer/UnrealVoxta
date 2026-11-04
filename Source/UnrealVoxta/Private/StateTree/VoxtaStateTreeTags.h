@@ -10,6 +10,7 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Voxta_Request_StartChat);
 
 // Notify meaning internal invoked and Subsystem forwarded to statetree
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Voxta_Notify_SocketConnected);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Voxta_Notify_StartedChat);
 
 // Signal meaning invoked from a statetree task itself
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Voxta_Signal_Authenticated);

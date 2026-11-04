@@ -107,7 +107,15 @@ bool UVoxtaStateTreeSubsystem::IsTickable() const
 
 
 #pragma region IVoxtaClient
-TMulticastDelegate<void(const TConstArrayView<FVoxtaCharacterData>&)>& UVoxtaStateTreeSubsystem::OnCharactersLoaded()
+FOnVoxtaChatLoadingProgress& UVoxtaStateTreeSubsystem::OnChatLoadingProgress()
+{
+	return m_chatLoadingProgressDelegate;
+}
+FOnVoxtaChatStarted& UVoxtaStateTreeSubsystem::OnChatStarted()
+{
+	return m_chatStartedDelegate;
+}
+FOnVoxtaCharactersLoaded& UVoxtaStateTreeSubsystem::OnCharactersLoaded()
 {
 	return m_charactersLoadedDelegate;
 }
@@ -192,6 +200,16 @@ bool UVoxtaStateTreeSubsystem::TryBindContextData(UObject* data)
 bool UVoxtaStateTreeSubsystem::TryUnbindContextData(UObject* data)
 {
 	return m_contextBinder.TryUnbindContextData(data);
+}
+void UVoxtaStateTreeSubsystem::NotifyChatLoadingProgress(const FString& sessionId, const FText& text, float progress)
+{
+	// TODO: validate the session to the current chat
+	m_chatLoadingProgressDelegate.Broadcast(text, progress);
+}
+void UVoxtaStateTreeSubsystem::NotifyChatStarted(const FString& sessionId, const FString& chatId)
+{
+	m_chatStartedDelegate.Broadcast(chatId);
+	TrySendFlowEvent(TAG_Voxta_Notify_StartedChat, false, FConstStructView());
 }
 void UVoxtaStateTreeSubsystem::SetRuntimeData(const FVoxtaRuntimeData& runtimeData)
 {

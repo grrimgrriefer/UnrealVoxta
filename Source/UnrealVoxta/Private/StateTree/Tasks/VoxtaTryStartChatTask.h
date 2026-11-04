@@ -25,6 +25,10 @@ struct UNREALVOXTA_API FVoxtaTryStartChatTaskInstanceData
 
 	UPROPERTY(EditAnywhere, Category = "Input")
 	FString m_ChatCharacter = TEXT("");
+
+	FDelegateHandle m_ChatStartingDelegateHandle;
+	FDelegateHandle m_ChatLoadingDelegateHandle;
+	FDelegateHandle m_ChatStartedDelegateHandle;
 };
 
 /**
@@ -40,6 +44,7 @@ public:
 
 	virtual const UStruct* GetInstanceDataType() const override;
 	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& context, const FStateTreeTransitionResult& transitions) const override;
+	virtual void ExitState(FStateTreeExecutionContext& context, const FStateTreeTransitionResult& transitions) const override;
 
 protected:
 	virtual VoxtaClientState GetStateForTask(FStateTreeExecutionContext& context) const override { return VoxtaClientState::AttemptingToStartChat; }
