@@ -70,20 +70,9 @@ struct FVoxtaPayload_ServiceEntryData
 	GENERATED_BODY()
 
 	UPROPERTY()
-	FString serviceLabel;
+	FString serviceName;
 	UPROPERTY()
-	FString id;
-	UPROPERTY()
-	bool enabled = false;
-};
-
-USTRUCT()
-struct FVoxtaPayload_ServiceGroupData
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	FString defaultServiceId;
+	FString serviceId;
 };
 
 USTRUCT()
@@ -92,13 +81,11 @@ struct FVoxtaPayload_Services
 	GENERATED_BODY()
 
 	UPROPERTY()
-	TArray<FVoxtaPayload_ServiceEntryData> textGen;
+	FVoxtaPayload_ServiceEntryData textGen;
 	UPROPERTY()
-	TArray<FVoxtaPayload_ServiceEntryData> speechToText;
+	FVoxtaPayload_ServiceEntryData speechToText;
 	UPROPERTY()
-	TArray<FVoxtaPayload_ServiceEntryData> textToSpeech;
-	UPROPERTY()
-	TArray<FVoxtaPayload_ServiceEntryData> actionInference;
+	FVoxtaPayload_ServiceEntryData textToSpeech;
 };
 
 USTRUCT()
@@ -170,28 +157,6 @@ struct FVoxtaPayload_LoadCharactersRequest
 
 	UPROPERTY()
 	FName action = TEXT("loadCharactersList");
-};
-
-USTRUCT()
-struct FVoxtaPayload_LoadScenariosRequest
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	FName action = TEXT("loadScenariosList");
-};
-
-USTRUCT()
-struct FVoxtaPayload_LoadChatsRequest
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	FName action = TEXT("loadChatsList");
-	UPROPERTY()
-	FString characterId;
-	UPROPERTY()
-	FString scenarioId;
 };
 
 USTRUCT()
@@ -299,41 +264,6 @@ struct FVoxtaPayload_CharacterSpeechRequest
 	FString text;
 };
 
-USTRUCT()
-struct FVoxtaPayload_RevertRequest
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	FName action = TEXT("revert");
-	UPROPERTY()
-	FString sessionId;
-};
-
-USTRUCT()
-struct FVoxtaPayload_DeleteChatRequest
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	FName action = TEXT("deleteChat");
-	UPROPERTY()
-	FString chatId;
-};
-
-USTRUCT()
-struct FVoxtaPayload_InspectRequest
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	FName action = TEXT("inspect");
-	UPROPERTY()
-	FString sessionId;
-	UPROPERTY()
-	bool enabled = false;
-};
-
 // ====================
 // RESPONSE PAYLOADS
 // ====================
@@ -437,8 +367,6 @@ struct FVoxtaPayload_ChatStartedResponse : public FVoxtaPayload_BaseResponse
 	UPROPERTY()
 	FVoxtaPayload_Services services;
 	UPROPERTY()
-	TArray<FVoxtaPayload_ContextData> context;
-	UPROPERTY()
 	FString sessionId;
 };
 
@@ -527,26 +455,4 @@ struct FVoxtaPayload_SpeechRecognitionResponse : public FVoxtaPayload_BaseRespon
 
 	UPROPERTY()
 	FString text;
-};
-
-USTRUCT()
-struct FVoxtaPayload_ErrorResponse : public FVoxtaPayload_BaseResponse
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	FString message;
-	UPROPERTY()
-	FString details;
-};
-
-USTRUCT()
-struct FVoxtaPayload_ChatSessionErrorResponse : public FVoxtaPayload_BaseResponse
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	bool retry = false;
-	UPROPERTY()
-	FString message;
 };
