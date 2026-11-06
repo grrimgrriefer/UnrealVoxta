@@ -64,6 +64,15 @@ private:
 	template <class T>
 	static bool ParseResponseInternal(const FString& jsonString, T& outResponse);
 
+#if WITH_EDITOR
+	static bool ValidateJsonObjectAgainstStruct(
+		const UStruct* structDefinition,
+		const TSharedPtr<FJsonObject>& jsonObject,
+		FString& outError,
+		const FString& pathPrefix = TEXT("")
+	);
+#endif
+
 	UPROPERTY()
 	TObjectPtr<UVoxtaSocketHandler> m_voxtaSocketHandler;
 

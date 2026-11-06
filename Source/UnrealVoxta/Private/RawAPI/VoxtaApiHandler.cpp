@@ -6,6 +6,7 @@
 #include "VoxtaPayloads.h"
 #include "VoxtaResponseDispatcher.h"
 #include "VoxtaSocketHandler.h"
+#include "UObject/FieldIterator.h"
 
 const FName UVoxtaApiHandler::CLIENT_NAME = TEXT("UnrealVoxta");
 const FName UVoxtaApiHandler::CLIENT_VERSION = TEXT("0.2.0");
@@ -137,15 +138,19 @@ bool UVoxtaApiHandler::TrySendPayloadInternal(const T& payload, const TCHAR* pay
 	return false;
 }
 template <typename T>
-bool UVoxtaApiHandler::ParseResponseInternal(const FString& jsonString, T& outResponse)
-{
-	return FJsonObjectConverter::JsonObjectStringToUStruct(jsonString, &outResponse, 0, 0);
-}
-template <typename T>
 void UVoxtaApiHandler::RegisterResponseRoute(const FString& actionName)
 {
 	m_responseRoutes.Add(actionName, [this](const TSharedPtr<FJsonObject>& jsonObject)
 	{
+#if WITH_EDITOR
+		FString validationError;
+		if (!ValidateJsonObjectAgainstStruct(T::StaticStruct(), jsonObject, validationError))
+		{
+			UE_LOGFMT(LogVoxta, Error, "[{0}] Validation failed for {1}: {2}", StaticClass()->GetName(), T::StaticStruct()->GetName(), validationError);
+			return;
+		}
+#endif
+
 		T response;
 		if (FJsonObjectConverter::JsonObjectToUStruct(jsonObject.ToSharedRef(), &response))
 		{
@@ -154,7 +159,7 @@ void UVoxtaApiHandler::RegisterResponseRoute(const FString& actionName)
 		}
 		else
 		{
-			UE_LOGFMT(LogVoxta, Error,"[{0}] Failed to deserialize {1}", StaticClass()->GetName(), *T::StaticStruct()->GetName());
+			UE_LOGFMT(LogVoxta, Error, "[{0}] Failed to deserialize {1}", StaticClass()->GetName(), *T::StaticStruct()->GetName());
 		}
 	});
 }
@@ -173,3 +178,104 @@ void UVoxtaApiHandler::BroadcastResponse(const T& response)
 	UE_LOGFMT(LogVoxta, Verbose, "[{0}] Dispatching response...", StaticClass()->GetName());
 	StaticCastSharedPtr<TVoxtaResponseDispatcher<T>>(*dispatcher)->m_Delegate.Broadcast(response);
 }
+template <typename T>
+bool UVoxtaApiHandler::ParseResponseInternal(const FString& jsonString, T& outResponse)
+{
+	return FJsonObjectConverter::JsonObjectStringToUStruct(jsonString, &outResponse, 0, 0);
+}
+#if WITH_EDITOR
+bool UVoxtaApiHandler::ValidateJsonObjectAgainstStruct(
+	const UStruct* structDefinition,
+	const TSharedPtr<FJsonObject>& jsonObject,
+	FString& outError,
+	const FString& pathPrefix)
+{
+	if (!structDefinition || !jsonObject.IsValid())
+	{
+		outError = TEXT("Invalid struct definition or null JSON object.");
+		return false;
+	}
+
+	for (TFieldIterator<FProperty> it(structDefinition); it; ++it)
+	{
+		const FProperty* property = *it;
+		if (!property)
+		{
+			continue;
+		}
+
+		if (property->HasAnyPropertyFlags(CPF_Transient) || property->HasMetaData(TEXT("Optional")))
+		{
+			continue;
+		}
+
+		const FString propName = property->GetName();
+		const FString fullPath = pathPrefix.IsEmpty()
+			? propName
+			: FString::Printf(TEXT("%s.%s"), *pathPrefix, *propName);
+
+		if (propName.Equals(TEXT("action"), ESearchCase::IgnoreCase))
+		{
+			if (jsonObject->HasField(TEXT("action")) || jsonObject->HasField(TEXT("$type")))
+			{
+				continue;
+			}
+		}
+
+		const TSharedPtr<FJsonValue> fieldValue = jsonObject->TryGetField(propName);
+		if (!fieldValue.IsValid() || fieldValue->IsNull())
+		{
+			outError = FString::Printf(TEXT("Missing or null required field: '%s'"), *fullPath);
+			return false;
+		}
+
+		if (const FStructProperty* structProp = CastField<FStructProperty>(property))
+		{
+			const TSharedPtr<FJsonObject>* childObject = nullptr;
+			if (jsonObject->TryGetObjectField(propName, childObject) && childObject && childObject->IsValid())
+			{
+				if (!ValidateJsonObjectAgainstStruct(structProp->Struct, *childObject, outError, fullPath))
+				{
+					return false;
+				}
+			}
+			else
+			{
+				outError = FString::Printf(TEXT("Field '%s' was expected to be a JSON Object."), *fullPath);
+				return false;
+			}
+		}
+		else if (const FArrayProperty* arrayProp = CastField<FArrayProperty>(property))
+		{
+			if (const FStructProperty* innerStructProp = CastField<FStructProperty>(arrayProp->Inner))
+			{
+				const TArray<TSharedPtr<FJsonValue>>* childArray = nullptr;
+				if (jsonObject->TryGetArrayField(propName, childArray) && childArray)
+				{
+					for (int32 i = 0; i < childArray->Num(); ++i)
+					{
+						const TSharedPtr<FJsonValue>& itemValue = (*childArray)[i];
+						if (!itemValue.IsValid() || itemValue->Type != EJson::Object)
+						{
+							outError = FString::Printf(TEXT("Element %d in array '%s' is not an Object."), i, *fullPath);
+							return false;
+						}
+
+						const FString elemPath = FString::Printf(TEXT("%s[%d]"), *fullPath, i);
+						if (!ValidateJsonObjectAgainstStruct(innerStructProp->Struct, itemValue->AsObject(), outError, elemPath))
+						{
+							return false;
+						}
+					}
+				}
+				else
+				{
+					outError = FString::Printf(TEXT("Field '%s' was expected to be a JSON Array."), *fullPath);
+					return false;
+				}
+			}
+		}
+	}
+	return true;
+}
+#endif
