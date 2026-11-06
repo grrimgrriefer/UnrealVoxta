@@ -44,6 +44,7 @@ class UNREALVOXTA_API IVoxtaClient
 public:
 	static IVoxtaClient* Get(const UObject* worldContextObject);
 
+
 	virtual FOnVoxtaChatLoadingProgress& OnChatLoadingProgress() = 0;
 	virtual FOnVoxtaChatStarted& OnChatStarted() = 0;
 	virtual FOnVoxtaCharactersLoaded& OnCharactersLoaded() = 0;
@@ -51,6 +52,7 @@ public:
 	virtual void EnsureConnectionWithServer() = 0;
 	virtual bool TrySendFlowEvent(FGameplayTag tag, bool hasPayload, const FConstStructView& payload) = 0;
 
+	virtual bool AreServicesRunning() const = 0;
 	virtual const TSet<VoxtaClientState>& GetStates() const = 0;
 	virtual const FVoxtaUserConfiguration& GetUserConfiguration() const = 0;
 	virtual TConstArrayView<FVoxtaCharacterData> GetAvailableCharacters() const = 0;

@@ -65,6 +65,23 @@ struct FVoxtaPayload_ContextData
 };
 
 USTRUCT()
+struct FVoxtaPayload_ModuleRuntimeInstance
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FString id;
+	UPROPERTY()
+	FString name;
+	UPROPERTY()
+	FString label;
+	UPROPERTY()
+	FString status;
+	UPROPERTY()
+	FString createdAt;
+};
+
+USTRUCT()
 struct FVoxtaPayload_ServiceEntryData
 {
 	GENERATED_BODY()
@@ -294,6 +311,15 @@ struct FVoxtaPayload_WelcomeResponse : public FVoxtaPayload_BaseResponse
 	FString apiVersion;
 	UPROPERTY()
 	FString registeredClientVersion;
+};
+
+USTRUCT()
+struct FVoxtaPayload_ModuleRuntimeInstancesResponse : public FVoxtaPayload_BaseResponse
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TArray<FVoxtaPayload_ModuleRuntimeInstance> instances;
 };
 
 USTRUCT()

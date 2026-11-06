@@ -7,6 +7,7 @@
 #include "VoxtaGlobals.h"
 #include "VoxtaPluginSettings.h"
 #include "RawAPI/VoxtaApiHandler.h"
+#include "RawAPI/VoxtaPayloads.h"
 #include "StateTree/VoxtaStateTreeTags.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
@@ -29,6 +30,7 @@ void UVoxtaStateTreeSubsystem::Initialize(FSubsystemCollectionBase& collection)
 	m_voxtaApiHandler->m_OnConnected.AddUObject(this, &UVoxtaStateTreeSubsystem::OnVoxtaConnected);
 	m_voxtaApiHandler->m_OnConnectionError.AddUObject(this, &UVoxtaStateTreeSubsystem::OnVoxtaConnectionError);
 	m_voxtaApiHandler->m_OnDisconnected.AddUObject(this, &UVoxtaStateTreeSubsystem::OnVoxtaDisconnected);
+	m_voxtaApiHandler->OnResponse<FVoxtaPayload_ModuleRuntimeInstancesResponse>().AddUObject(this, &UVoxtaStateTreeSubsystem::OnVoxtaServicesUpdated);
 
 	FGameModeEvents::GameModePostLoginEvent.AddUObject(this, &UVoxtaStateTreeSubsystem::OnGameModePostLoginEvent);
 }
@@ -41,6 +43,7 @@ void UVoxtaStateTreeSubsystem::Deinitialize()
 		m_voxtaApiHandler->m_OnConnected.RemoveAll(this);
 		m_voxtaApiHandler->m_OnConnectionError.RemoveAll(this);
 		m_voxtaApiHandler->m_OnDisconnected.RemoveAll(this);
+		m_voxtaApiHandler->OnResponse<FVoxtaPayload_ModuleRuntimeInstancesResponse>().RemoveAll(this);
 	}
 
 	if (m_isRunning && IsValid(m_stateTreeAsset))
@@ -159,6 +162,10 @@ bool UVoxtaStateTreeSubsystem::TrySendFlowEvent(const FGameplayTag tag, bool has
 	}
 	return false;
 }
+bool UVoxtaStateTreeSubsystem::AreServicesRunning() const
+{
+	return m_runtimeData.AreServicesRunning();
+}
 const TSet<VoxtaClientState>& UVoxtaStateTreeSubsystem::GetStates() const
 {
 	return m_currentStates;
@@ -230,6 +237,22 @@ void UVoxtaStateTreeSubsystem::OnVoxtaDisconnected()
 {
 	UE_LOGFMT(LogVoxta, Warning, "[{0}] Voxta Socket Disconnected.", StaticClass()->GetName());
 	// TODO: handle this in the statetree
+}
+void UVoxtaStateTreeSubsystem::OnVoxtaServicesUpdated(const FVoxtaPayload_ModuleRuntimeInstancesResponse& response)
+{
+	m_runtimeData.m_Services.Empty();
+
+	for (const FVoxtaPayload_ModuleRuntimeInstance& instance : response.instances)
+	{
+		FVoxtaServiceStatus serviceStatus;
+		serviceStatus.m_Name = instance.name;
+		serviceStatus.m_RuntimeInstanceId = instance.id;
+		serviceStatus.m_Status = instance.status;
+		serviceStatus.m_IsRunning = instance.status.Equals(TEXT("Running"), ESearchCase::IgnoreCase);
+		m_runtimeData.m_Services.Add(MoveTemp(serviceStatus));
+
+		UE_LOGFMT(LogVoxta, Log, "[{0}] Service '{1}' status updated to '{2}'", StaticClass()->GetName(), instance.name, instance.status);
+	}
 }
 void UVoxtaStateTreeSubsystem::OnGameModePostLoginEvent(AGameModeBase* gameMode, APlayerController* newPlayer)
 {

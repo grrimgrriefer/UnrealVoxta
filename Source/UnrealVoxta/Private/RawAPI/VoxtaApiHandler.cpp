@@ -21,6 +21,7 @@ void UVoxtaApiHandler::Initialize()
 	m_voxtaSocketHandler->m_OnSocketMessageReceived.AddUObject(this, &UVoxtaApiHandler::OnMessageReceived);
 
 	RegisterResponseRoute<FVoxtaPayload_WelcomeResponse>(TEXT("welcome"));
+	RegisterResponseRoute<FVoxtaPayload_ModuleRuntimeInstancesResponse>(TEXT("moduleRuntimeInstances"));
 	RegisterResponseRoute<FVoxtaPayload_ConfigurationResponse>(TEXT("configuration"));
 	RegisterResponseRoute<FVoxtaPayload_CharacterListLoadedResponse>(TEXT("charactersListLoaded"));
 	RegisterResponseRoute<FVoxtaPayload_ContextUpdatedResponse>(TEXT("contextUpdated"));

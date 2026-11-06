@@ -131,6 +131,12 @@ void UCharacterSubsystem::UnregisterNPC(APawn* npc)
 bool UCharacterSubsystem::TryStartConversation(APawn* npc)
 {
 	ensureAlways(IsValid(npc));
+	ensureAlways(m_voxtaClient.IsValid());
+
+	if (!m_voxtaClient->AreServicesRunning())
+	{
+		UE_LOGFMT(LogVoxta, Warning, "[{0}] Voxta services (STT/TTS/TextGen) are not running!", StaticClass()->GetName());
+	}
 
 	if (m_activeNpc.Get() == npc)
 	{

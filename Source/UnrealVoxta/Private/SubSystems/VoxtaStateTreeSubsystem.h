@@ -10,6 +10,7 @@
 #include "Interfaces/VoxtaClient.h"
 #include "VoxtaStateTreeSubsystem.generated.h"
 
+struct FVoxtaPayload_ModuleRuntimeInstancesResponse;
 class UStateTree;
 class AGameModeBase;
 class UVoxtaApiHandler;
@@ -46,6 +47,7 @@ public:
 	virtual FOnVoxtaCharactersLoaded& OnCharactersLoaded() override;
 	virtual void EnsureConnectionWithServer() override;
 	virtual bool TrySendFlowEvent(FGameplayTag tag, bool hasPayload, const FConstStructView& payload) override;
+	virtual bool AreServicesRunning() const override;
 	virtual const TSet<VoxtaClientState>& GetStates() const override;
 	virtual const FVoxtaUserConfiguration& GetUserConfiguration() const override;
 	virtual TConstArrayView<FVoxtaCharacterData> GetAvailableCharacters() const override;
@@ -69,6 +71,7 @@ private:
 	void OnVoxtaConnected();
 	void OnVoxtaConnectionError(const FString& error);
 	void OnVoxtaDisconnected();
+	void OnVoxtaServicesUpdated(const FVoxtaPayload_ModuleRuntimeInstancesResponse& response);
 	void OnGameModePostLoginEvent(AGameModeBase* gameMode, APlayerController* newPlayer);
 
 	UPROPERTY()
