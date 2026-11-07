@@ -11,6 +11,44 @@
 * UVoxtaApiHandler: Low level translation layer that serializes and deserializes information between the plugin's objects and raw SignalR messages. This should be the only object that handles the raw SignalR messages, all other systems will use strongly typed objects to avoid and ease future version upgrades. NOTE: maybe also responsible for caching responses if that becomes needed, but not sure yet.
 * UVoxtaSocketHandler: Lowest level layer that owns the socket connection directly and passes messages through.
 
+## High level states
+```mermaid
+---
+config:
+  theme: dark
+---
+stateDiagram-v2
+	state StateTree {
+		state Disconnected {
+			[*] --> AttemptingToConnect : Open socket connection
+		}
+		
+		state Connected {
+			[*] --> AttemptingToAuthenticate : Start handshake
+
+			state Authenticated {
+				Idle --> StartingChat : User or NPC initiated chat
+
+				state Chatting {
+					GeneratingReply --> AudioPlayback : Audio generated and imported into UE
+					AudioPlayback --> WaitingForUserResponse : Audio finished & Mic is activated
+					GeneratingReply --> WaitingForUserResponse : Reply was text-only
+					WaitingForUserResponse --> GeneratingReply : Speech started & completed events triggered
+				}
+				
+				StartingChat --> Chatting : Sever is ready for chat
+				Chatting --> Idle : User or NPC ended chat
+			}
+
+			AttemptingToAuthenticate --> Authenticated : Handshake successful
+		}    
+
+		Disconnected --> Connected : Socket creating successful
+		Connected --> Disconnected : Socket closed / connection loss
+	}
+```
+
+## Auth flow
 ```mermaid
 ---
 config:
@@ -75,4 +113,65 @@ sequenceDiagram
 		    Internal StateTree->>+UVoxtaStateTreeSubsystem: Update status
 		Note over IVoxtaClient:  Broadcast status update: Ready
 	end
+
+	rect rgb(28, 33, 44)
+		Note over UVoxtaSocketHandler,UVoxtaStateTreeSubsystem: Continuous / Asynchronous Lifecycle Monitoring
+		loop At any time during session (Service starts, preloads, crashes, or stops)
+			UVoxtaSocketHandler->>+UVoxtaApiHandler: Push message: moduleRuntimeInstances
+			UVoxtaApiHandler->>+UVoxtaStateTreeSubsystem: Broadcast & update service status (Running vs Cold)
+		end
+	end
+```
+
+## Conversation flow
+```mermaid
+---
+config:
+  theme: dark
+---
+sequenceDiagram
+	Note over UCharacterSubsystem,IVoxtaClient: Public facing API
+
+	UCharacterSubsystem->>+IVoxtaClient: Check if services are running
+	IVoxtaClient-->>+UCharacterSubsystem: Return service status (Running or not)
+
+	UCharacterSubsystem->>+IVoxtaClient: Request start conversation
+		Note over UCharacterSubsystem,IVoxtaClient: Event payload includes Character ID
+	UVoxtaStateTreeSubsystem->>+Internal StateTree: Forward Request event
+		Note over UVoxtaStateTreeSubsystem,Internal StateTree: Forwarding includes Character ID payload
+
+	Internal StateTree->>+Internal StateTree: Activate StartingChat sub-state
+	Internal StateTree->>+UVoxtaStateTreeSubsystem: Update status (AttemptingToStartChat)
+
+	Internal StateTree->>+UVoxtaApiHandler: SendMessage
+		Note over Internal StateTree,UVoxtaApiHandler: Start chat request (Character ID, Context)
+
+	UVoxtaApiHandler->>+UVoxtaSocketHandler: Trigger raw SignalR message
+		Note over UVoxtaApiHandler,UVoxtaSocketHandler: Action: startChat
+
+	UVoxtaSocketHandler->>+UVoxtaApiHandler: Return raw SignalR response
+		Note over UVoxtaApiHandler: Broadcast message: chatStarting
+	Internal StateTree->>+UVoxtaStateTreeSubsystem: Store current chat sessionId 
+
+	rect rgb(28, 33, 44)
+		Note over UVoxtaSocketHandler,UCharacterSubsystem: Asynchronous Chat Loading Progress
+		loop While waiting on VoxtaServer services to get started up (0% to 100%)
+			UVoxtaSocketHandler->>+UVoxtaApiHandler: Return raw SignalR response
+				Note over UVoxtaApiHandler: Broadcast message: chatLoadingMessage
+			Internal StateTree->>+UVoxtaStateTreeSubsystem: NotifyChatLoadingProgress(sessionId, text, progress)
+			IVoxtaClient->>+UCharacterSubsystem: Broadcast chat loading
+				Note over UCharacterSubsystem: Forward broadcast to external listeners (includes progress percentage and text)
+		end
+	end
+
+	UVoxtaSocketHandler->>+UVoxtaApiHandler: Return raw SignalR response
+		Note over UVoxtaApiHandler: Broadcast message: chatStarted
+	Internal StateTree->>+UVoxtaStateTreeSubsystem: NotifyChatStarted(sessionId, chatId)
+
+
+	IVoxtaClient->>+UCharacterSubsystem: Broadcast chat started
+		Note over UCharacterSubsystem: Forward broadcast to external listeners
+	UVoxtaStateTreeSubsystem->>+Internal StateTree: Send event to trigger Chatting state
+	Internal StateTree->>+Internal StateTree: Deactivate StartingChat sub-state<br /> and activate Chatting state transition
+	Internal StateTree->>+UVoxtaStateTreeSubsystem: Update status (Chatting)
 ```
